@@ -5,6 +5,7 @@ import { actions } from '../shared'
 /* CtaSheet: the one signal sheet a page is allowed, closing every content page before the footer. */
 export const CtaSheet: Block = {
   slug: 'ctaSheet',
+  dbName: 'ctas', // Postgres identifiers are limited to 63 characters; keep block table names short.
   interfaceName: 'CtaSheetBlock',
   labels: { singular: 'Closing call to action', plural: 'Closing calls to action' },
   fields: [

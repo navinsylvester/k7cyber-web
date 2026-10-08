@@ -12,6 +12,13 @@ export const icons = {
   certificate: { d: 'M4 4h18l6 6v18H4z M9 16l5 5 9-9', px: [7, 7] },
   pulse: { d: 'M4 16h8l3-8 5 16 3-8h5', px: [14.5, 14.5] },
   document: { d: 'M7 4h13l5 5v19H7z M20 4v5h5 M11 15h10 M11 20h10', px: [11, 8.5] },
+  screen: { d: 'M4 6h24v16H4z M12 26h8 M16 22v4', px: [7, 9] },
+  lock: { d: 'M7 14h18v14H7z M11 14V7h10v7', px: [14.5, 19] },
+  ledger: { d: 'M7 4h18v24H7z M11 11h10 M11 16h10 M11 21h6', px: [20, 19.5] },
+  devices: { d: 'M4 8h18v12H4z M10 24h6 M13 20v4 M24 12h4v12h-4z', px: [7, 11] },
+  archive: { d: 'M10 4h13l5 5v18H10z M23 4v5h5 M6 8v23h17', px: [14, 13] },
+  key: { d: 'M18 4h10v10H18z M18 14L4 28 M8 24l4 4 M12 20l3 3', px: [21.5, 7.5] },
+  network: { d: 'M4 24h8v4H4z M20 24h8v4h-8z M12 4h8v4h-8z M16 8v8 M8 24v-8h16v8', px: [14.5, 14.5] },
 } as const
 
 export type IconName = keyof typeof icons

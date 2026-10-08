@@ -6,6 +6,7 @@ import { actions, rowLabel, sheetFields, sheetHeadFields } from '../shared'
    body copy, an optional architecture figure (the MDR "how it fits together" grid) and an optional coverage tag row. */
 export const Intro: Block = {
   slug: 'intro',
+  dbName: 'intro', // Postgres identifiers are limited to 63 characters; keep block table names short.
   interfaceName: 'IntroBlock',
   labels: { singular: 'Intro copy', plural: 'Intro copy' },
   fields: [
@@ -14,9 +15,22 @@ export const Intro: Block = {
     {
       name: 'paragraphs',
       type: 'array',
-      maxRows: 2,
-      admin: { description: 'Up to two columns of body copy.', ...rowLabel },
+      maxRows: 4,
+      admin: { description: 'Two columns of body copy, or a stack beside the fact ledger.', ...rowLabel },
       fields: [{ name: 'text', type: 'textarea', required: true }],
+    },
+    { name: 'notice', type: 'text', admin: { description: 'Optional framed advisory with a pixel, e.g. **K7 is empanelled by CERT-In** for …' } },
+    {
+      name: 'specs',
+      type: 'array',
+      admin: { initCollapsed: true, ...rowLabel, description: 'Optional spec strip beside the first paragraph: label + value (Agentic SOC · Simplified cybersecurity).' },
+      fields: [{ type: 'row', fields: [{ name: 'label', type: 'text', required: true, admin: { width: '40%' } }, { name: 'value', type: 'text', required: true, admin: { width: '60%' } }] }],
+    },
+    {
+      name: 'facts',
+      type: 'array',
+      admin: { initCollapsed: true, ...rowLabel, description: 'Optional fact ledger beside the paragraphs: key + value (Since · 1991, building …).' },
+      fields: [{ type: 'row', fields: [{ name: 'k', type: 'text', required: true, admin: { width: '30%' } }, { name: 'v', type: 'text', required: true, admin: { width: '70%' } }] }],
     },
     {
       name: 'figure',

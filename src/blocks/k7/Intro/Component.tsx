@@ -8,20 +8,67 @@ import { Sheet, SheetHead, type SheetMeta, bodyGap, withBold } from '@/component
 const cell: React.CSSProperties = { background: 'var(--bg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }
 const list: React.CSSProperties = { margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6, fontSize: 15 }
 
-export const Intro: React.FC<IntroBlock & { meta: SheetMeta }> = ({ meta, tabLabel, headline, dimClause, lede, paragraphs, figure, coverage, actions }) => {
+export const Intro: React.FC<IntroBlock & { meta: SheetMeta }> = ({ meta, tabLabel, headline, dimClause, lede, notice, specs, facts, paragraphs, figure, coverage, actions }) => {
   const cells = figure?.cells ?? []
   const tags = coverage?.tags ?? []
+  const specList = specs ?? []
+  const factList = facts ?? []
+  const single = (paragraphs?.length ?? 0) === 1 && !specList.length && !factList.length
   return (
     <Sheet meta={meta} tabLabel={tabLabel} id="overview">
       <SheetHead headline={headline} dimClause={dimClause} lede={lede} />
 
-      {(paragraphs?.length ?? 0) > 0 && (
+      {notice && (
+        <div className="notice" style={{ marginTop: 'clamp(32px, 4cqw, 56px)', maxWidth: '62ch' }}>
+          <i className="pixel" style={{ marginTop: 7 }} />
+          <p>{withBold(notice)}</p>
+        </div>
+      )}
+
+      {single && (
+        <p className="body-l" style={{ margin: 'clamp(32px, 4cqw, 56px) 0 0', maxWidth: '62ch' }}>
+          {withBold(paragraphs![0]!.text)}
+        </p>
+      )}
+
+      {!single && ((paragraphs?.length ?? 0) > 0 || specList.length > 0 || factList.length > 0) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px clamp(32px, 5cqw, 80px)', alignItems: 'flex-start', ...bodyGap }}>
-          {paragraphs!.map((p, i) => (
-            <p className="body-l" key={p.id ?? i} style={{ margin: 0, flex: '1 1 420px', maxWidth: '60ch' }}>
-              {withBold(p.text)}
-            </p>
-          ))}
+          {factList.length > 0 && (
+            <div className="facts" style={{ flex: '0 1 360px' }}>
+              {factList.map((f, i) => (
+                <div key={f.id ?? i}>
+                  <span className="k">{f.k}</span>
+                  <span className="v">{f.v}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {factList.length > 0 ? (
+            <div style={{ flex: '1 1 440px', maxWidth: '60ch', display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {(paragraphs ?? []).map((p, i) => (
+                <p className="body-l" key={p.id ?? i} style={{ margin: 0 }}>
+                  {withBold(p.text)}
+                </p>
+              ))}
+              <Actions items={actions} style={{ marginTop: 10 }} />
+            </div>
+          ) : (
+            (paragraphs ?? []).map((p, i) => (
+              <p className="body-l" key={p.id ?? i} style={{ margin: 0, flex: '1 1 420px', maxWidth: specList.length ? '58ch' : '60ch' }}>
+                {withBold(p.text)}
+              </p>
+            ))
+          )}
+          {specList.length > 0 && (
+            <div className="spec-strip" style={{ flex: '1 1 380px' }}>
+              {specList.map((sp, i) => (
+                <div key={sp.id ?? i}>
+                  <span className="label muted">{sp.label}</span>
+                  <span className="v">{sp.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -69,7 +116,7 @@ export const Intro: React.FC<IntroBlock & { meta: SheetMeta }> = ({ meta, tabLab
         </div>
       )}
 
-      <Actions items={actions} style={{ marginTop: 32 }} />
+      {!factList.length && <Actions items={actions} style={{ marginTop: 32 }} />}
     </Sheet>
   )
 }

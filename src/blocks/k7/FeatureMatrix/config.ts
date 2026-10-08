@@ -5,6 +5,7 @@ import { actions, rowLabel, sheetFields, sheetHeadFields } from '../shared'
 /* FeatureMatrix: the Modules & Addons tables of a product page. A pixel where a module is included, an em dash where not. */
 export const FeatureMatrix: Block = {
   slug: 'featureMatrix',
+  dbName: 'fmatrix', // Postgres identifiers are limited to 63 characters; keep block table names short.
   interfaceName: 'FeatureMatrixBlock',
   labels: { singular: 'Feature matrix (modules & addons)', plural: 'Feature matrices' },
   fields: [

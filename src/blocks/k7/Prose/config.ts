@@ -7,6 +7,7 @@ import { sheetFields } from '../shared'
 /* Prose: long-form copy at 18px/1.65 in a 40rem column. Compliance pages, About K7, legal pages. */
 export const Prose: Block = {
   slug: 'prose',
+  dbName: 'prose', // Postgres identifiers are limited to 63 characters; keep block table names short.
   interfaceName: 'ProseBlock',
   labels: { singular: 'Prose (rich text)', plural: 'Prose' },
   fields: [

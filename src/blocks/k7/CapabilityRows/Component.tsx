@@ -16,6 +16,15 @@ export const CapabilityRows: React.FC<CapabilityRowsBlock & { meta: SheetMeta }>
           <div>
             <h3>{r.title}</h3>
             <p>{withBold(r.text)}</p>
+            {(r.tags?.length ?? 0) > 0 && (
+              <div className="tags" style={{ marginTop: 14 }}>
+                {r.tags!.map((t, j) => (
+                  <span className="tag" key={t.id ?? j}>
+                    {t.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ))}

@@ -2,14 +2,22 @@ import React, { Fragment } from 'react'
 
 import type { Page } from '@/payload-types'
 
-import { FormBlock } from '@/blocks/Form/Component'
 import { CapabilityRows } from '@/blocks/k7/CapabilityRows/Component'
+import { ComparisonTable } from '@/blocks/k7/ComparisonTable/Component'
 import { CtaSheet } from '@/blocks/k7/CtaSheet/Component'
 import { FeatureMatrix } from '@/blocks/k7/FeatureMatrix/Component'
+import { FeaturePanels } from '@/blocks/k7/FeaturePanels/Component'
+import { FormSheet } from '@/blocks/k7/FormSheet/Component'
+import { HomeHero } from '@/blocks/k7/HomeHero/Component'
 import { IndexRows } from '@/blocks/k7/IndexRows/Component'
 import { Intro } from '@/blocks/k7/Intro/Component'
+import { Locations } from '@/blocks/k7/Locations/Component'
+import { ModuleGrid } from '@/blocks/k7/ModuleGrid/Component'
 import { PageBanner } from '@/blocks/k7/PageBanner/Component'
+import { PanelGrid } from '@/blocks/k7/PanelGrid/Component'
 import { Prose } from '@/blocks/k7/Prose/Component'
+import { PublicationRows } from '@/blocks/k7/PublicationRows/Component'
+import { Testimonials } from '@/blocks/k7/Testimonials/Component'
 import type { Ground, SheetMeta } from '@/components/k7/Sheet'
 
 type Block = Page['layout'][number]
@@ -21,14 +29,15 @@ type Placed = { block: Block; meta: SheetMeta | null }
 /* Pure pre-pass: give every sheet its number, its tab position and its ground before rendering. */
 const placeSheets = (blocks: Block[]): Placed[] => {
   const count = blocks.length
-  const tabbed = blocks.filter((b) => b.blockType !== 'pageBanner').length
+  const isBanner = (b: Block) => b.blockType === 'pageBanner' || b.blockType === 'homeHero'
+  const tabbed = blocks.filter((b) => !isBanner(b)).length
   const placed: Placed[] = []
   let prev: Ground = 'paper'
   let tabIndex = 0
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]!
-    if (block.blockType === 'pageBanner') {
+    if (isBanner(block)) {
       prev = 'paper'
       placed.push({ block, meta: null })
       continue
@@ -51,9 +60,9 @@ export const RenderBlocks: React.FC<{ blocks: Block[]; pageTitle: string }> = ({
     <Fragment>
       {placeSheets(blocks).map(({ block, meta }, i) => {
         const key = block.id ?? i
-        if (block.blockType === 'pageBanner' || !meta) {
-          return block.blockType === 'pageBanner' ? <PageBanner key={key} {...block} pageTitle={pageTitle} /> : null
-        }
+        if (block.blockType === 'pageBanner') return <PageBanner key={key} {...block} pageTitle={pageTitle} />
+        if (block.blockType === 'homeHero') return <HomeHero key={key} {...block} index={i + 1} count={blocks.length} />
+        if (!meta) return null
         switch (block.blockType) {
           case 'intro':
             return <Intro key={key} {...block} meta={meta} />
@@ -67,13 +76,22 @@ export const RenderBlocks: React.FC<{ blocks: Block[]; pageTitle: string }> = ({
             return <Prose key={key} {...block} meta={meta} />
           case 'ctaSheet':
             return <CtaSheet key={key} {...block} meta={meta} />
-          case 'formBlock':
-            // The Form template's K7 skin is still to come; the template's form renders inside a plain sheet for now.
-            return (
-              <section className={`sheet g-${meta.ground}`} key={key}>
-                <FormBlock {...(block as unknown as React.ComponentProps<typeof FormBlock>)} />
-              </section>
-            )
+          case 'moduleGrid':
+            return <ModuleGrid key={key} {...block} meta={meta} />
+          case 'featurePanels':
+            return <FeaturePanels key={key} {...block} meta={meta} />
+          case 'panelGrid':
+            return <PanelGrid key={key} {...block} meta={meta} />
+          case 'comparisonTable':
+            return <ComparisonTable key={key} {...block} meta={meta} />
+          case 'publicationRows':
+            return <PublicationRows key={key} {...block} meta={meta} />
+          case 'testimonials':
+            return <Testimonials key={key} {...block} meta={meta} />
+          case 'locations':
+            return <Locations key={key} {...block} meta={meta} />
+          case 'formSheet':
+            return <FormSheet key={key} {...block} meta={meta} />
           default:
             return null
         }
