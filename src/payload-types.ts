@@ -69,13 +69,19 @@ export interface Config {
   collections: {
     pages: Page;
     posts: Post;
-    media: Media;
     categories: Category;
+    authors: Author;
+    vulnerabilities: Vulnerability;
+    products: Product;
+    threats: Threat;
+    'threat-reports': ThreatReport;
+    'report-files': ReportFile;
+    'report-leads': ReportLead;
+    media: Media;
     users: User;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
-    search: Search;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-folders': FolderInterface;
@@ -91,13 +97,19 @@ export interface Config {
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    authors: AuthorsSelect<false> | AuthorsSelect<true>;
+    vulnerabilities: VulnerabilitiesSelect<false> | VulnerabilitiesSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
+    threats: ThreatsSelect<false> | ThreatsSelect<true>;
+    'threat-reports': ThreatReportsSelect<false> | ThreatReportsSelect<true>;
+    'report-files': ReportFilesSelect<false> | ReportFilesSelect<true>;
+    'report-leads': ReportLeadsSelect<false> | ReportLeadsSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
-    search: SearchSelect<false> | SearchSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
@@ -251,7 +263,14 @@ export interface PageBannerBlock {
 export interface Post {
   id: number;
   title: string;
-  heroImage?: (number | null) | Media;
+  /**
+   * Used on the listing, in Recent Posts and as the share image.
+   */
+  featuredImage?: (number | null) | Media;
+  /**
+   * Shown on the listing. Generated from the body when left empty.
+   */
+  excerpt?: string | null;
   content: {
     root: {
       type: string;
@@ -267,8 +286,10 @@ export interface Post {
     };
     [k: string]: unknown;
   };
-  relatedPosts?: (number | Post)[] | null;
-  categories?: (number | Category)[] | null;
+  /**
+   * K7 detections this post references; they link to Top Threats from the post.
+   */
+  detections?: (number | Threat)[] | null;
   meta?: {
     title?: string | null;
     /**
@@ -277,19 +298,20 @@ export interface Post {
     image?: (number | null) | Media;
     description?: string | null;
   };
-  publishedAt?: string | null;
-  authors?: (number | User)[] | null;
-  populatedAuthors?:
-    | {
-        id?: string | null;
-        name?: string | null;
-      }[]
-    | null;
+  publishedAt: string;
+  authors: (number | Author)[];
+  categories?: (number | Category)[] | null;
+  /**
+   * Shown in Featured Posts on the sidebar (three at most).
+   */
+  featured?: boolean | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
   generateSlug?: boolean | null;
   slug: string;
+  wpId?: number | null;
+  searchText?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -301,6 +323,10 @@ export interface Post {
 export interface Media {
   id: number;
   alt?: string | null;
+  /**
+   * Where a migrated file came from.
+   */
+  sourceUrl?: string | null;
   caption?: {
     root: {
       type: string;
@@ -415,6 +441,69 @@ export interface FolderInterface {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "threats".
+ */
+export interface Threat {
+  id: number;
+  /**
+   * e.g. Trojan ( 006d70f91 )
+   */
+  detectionName: string;
+  affectedOs: ('windows' | 'android' | 'linux' | 'macos')[];
+  prevalence: 'low' | 'high';
+  firstSeen?: string | null;
+  lastSeen: string;
+  avDefinitionVersion: string;
+  md5?: string | null;
+  sha256?: string | null;
+  fileSize?: number | null;
+  packer?: string | null;
+  aliases?: string | null;
+  /**
+   * Observed behaviour. Registry writes in the form "Adds data <value> under <key>" render as a log.
+   */
+  behaviourDetails?: string | null;
+  /**
+   * Numbered steps, one per line.
+   */
+  removalInstructions?: string | null;
+  /**
+   * Leaves the table; the detail page stays up (FR-TT-04).
+   */
+  retired?: boolean | null;
+  slug?: string | null;
+  wpId?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "authors".
+ */
+export interface Author {
+  id: number;
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  photo?: (number | null) | Media;
+  /**
+   * One line under the name in the author block.
+   */
+  role?: string | null;
+  bio?: string | null;
+  /**
+   * WordPress login, used by the migration.
+   */
+  wpLogin?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories".
  */
 export interface Category {
@@ -425,6 +514,11 @@ export interface Category {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * One or two sentences shown on the category page.
+   */
+  description?: string | null;
+  wpId?: number | null;
   parent?: (number | null) | Category;
   breadcrumbs?:
     | {
@@ -436,33 +530,6 @@ export interface Category {
     | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  name?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1647,6 +1714,164 @@ export interface CtaSheetBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vulnerabilities".
+ */
+export interface Vulnerability {
+  id: number;
+  /**
+   * CVE-YYYY-NNNN, or an older advisory number such as MS17-010.
+   */
+  cveId: string;
+  severity: 'critical' | 'high' | 'important' | 'medium' | 'low' | 'informative';
+  date: string;
+  title: string;
+  /**
+   * Pick from the list; add a product under Products if it is new.
+   */
+  products?: (number | Product)[] | null;
+  detail?: string | null;
+  advisoryUrl?: string | null;
+  patchDate?: string | null;
+  /**
+   * One product version per line.
+   */
+  affectedSoftware?: string | null;
+  /**
+   * The URL, kept stable across edits.
+   */
+  slug?: string | null;
+  wpId?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: number;
+  /**
+   * As shown in the table, e.g. Windows Server.
+   */
+  name: string;
+  key?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "threat-reports".
+ */
+export interface ThreatReport {
+  id: number;
+  /**
+   * e.g. Cyber Threat Monitor Report
+   */
+  title: string;
+  reportType?: string | null;
+  /**
+   * Q2 2026 or Annual 2025; drives the cover.
+   */
+  period: string;
+  /**
+   * April to June
+   */
+  periodRange?: string | null;
+  publishedAt: string;
+  /**
+   * Filter year; defaults to the publish year.
+   */
+  year?: number | null;
+  summary: string;
+  /**
+   * Optional. Without one, the series cover is drawn from the period.
+   */
+  cover?: (number | null) | Media;
+  pdf: number | ReportFile;
+  /**
+   * Ask for contact details before the download.
+   */
+  gated?: boolean | null;
+  downloads?: number | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * PDF only, up to 30 MB.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "report-files".
+ */
+export interface ReportFile {
+  id: number;
+  title?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "report-leads".
+ */
+export interface ReportLead {
+  id: number;
+  name: string;
+  email: string;
+  company: string;
+  country: string;
+  consent: boolean;
+  report: number | ThreatReport;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  name?: string | null;
+  /**
+   * Labs editors publish posts, CVEs and threats; marketing editors own threat reports.
+   */
+  roles: ('admin' | 'labsEditor' | 'marketingEditor')[];
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1682,37 +1907,6 @@ export interface FormSubmission {
     | {
         field: string;
         value: string;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This is a collection of automatically created search results. These results are used by the global site search and will be updated automatically as documents in the CMS are created or updated.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "search".
- */
-export interface Search {
-  id: number;
-  title?: string | null;
-  priority?: number | null;
-  doc: {
-    relationTo: 'posts';
-    value: number | Post;
-  };
-  slug?: string | null;
-  meta?: {
-    title?: string | null;
-    description?: string | null;
-    image?: (number | null) | Media;
-  };
-  categories?:
-    | {
-        relationTo?: string | null;
-        categoryID?: string | null;
-        title?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1844,12 +2038,40 @@ export interface PayloadLockedDocument {
         value: number | Post;
       } | null)
     | ({
-        relationTo: 'media';
-        value: number | Media;
-      } | null)
-    | ({
         relationTo: 'categories';
         value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'authors';
+        value: number | Author;
+      } | null)
+    | ({
+        relationTo: 'vulnerabilities';
+        value: number | Vulnerability;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'threats';
+        value: number | Threat;
+      } | null)
+    | ({
+        relationTo: 'threat-reports';
+        value: number | ThreatReport;
+      } | null)
+    | ({
+        relationTo: 'report-files';
+        value: number | ReportFile;
+      } | null)
+    | ({
+        relationTo: 'report-leads';
+        value: number | ReportLead;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: number | Media;
       } | null)
     | ({
         relationTo: 'users';
@@ -1866,10 +2088,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'form-submissions';
         value: number | FormSubmission;
-      } | null)
-    | ({
-        relationTo: 'search';
-        value: number | Search;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -2613,10 +2831,10 @@ export interface CtaSheetBlockSelect<T extends boolean = true> {
  */
 export interface PostsSelect<T extends boolean = true> {
   title?: T;
-  heroImage?: T;
+  featuredImage?: T;
+  excerpt?: T;
   content?: T;
-  relatedPosts?: T;
-  categories?: T;
+  detections?: T;
   meta?:
     | T
     | {
@@ -2626,12 +2844,124 @@ export interface PostsSelect<T extends boolean = true> {
       };
   publishedAt?: T;
   authors?: T;
-  populatedAuthors?:
+  categories?: T;
+  featured?: T;
+  generateSlug?: T;
+  slug?: T;
+  wpId?: T;
+  searchText?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  description?: T;
+  wpId?: T;
+  parent?: T;
+  breadcrumbs?:
     | T
     | {
+        doc?: T;
+        url?: T;
+        label?: T;
         id?: T;
-        name?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "authors_select".
+ */
+export interface AuthorsSelect<T extends boolean = true> {
+  name?: T;
+  generateSlug?: T;
+  slug?: T;
+  photo?: T;
+  role?: T;
+  bio?: T;
+  wpLogin?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vulnerabilities_select".
+ */
+export interface VulnerabilitiesSelect<T extends boolean = true> {
+  cveId?: T;
+  severity?: T;
+  date?: T;
+  title?: T;
+  products?: T;
+  detail?: T;
+  advisoryUrl?: T;
+  patchDate?: T;
+  affectedSoftware?: T;
+  slug?: T;
+  wpId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "threats_select".
+ */
+export interface ThreatsSelect<T extends boolean = true> {
+  detectionName?: T;
+  affectedOs?: T;
+  prevalence?: T;
+  firstSeen?: T;
+  lastSeen?: T;
+  avDefinitionVersion?: T;
+  md5?: T;
+  sha256?: T;
+  fileSize?: T;
+  packer?: T;
+  aliases?: T;
+  behaviourDetails?: T;
+  removalInstructions?: T;
+  retired?: T;
+  slug?: T;
+  wpId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "threat-reports_select".
+ */
+export interface ThreatReportsSelect<T extends boolean = true> {
+  title?: T;
+  reportType?: T;
+  period?: T;
+  periodRange?: T;
+  publishedAt?: T;
+  year?: T;
+  summary?: T;
+  cover?: T;
+  pdf?: T;
+  gated?: T;
+  downloads?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
@@ -2640,10 +2970,43 @@ export interface PostsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "report-files_select".
+ */
+export interface ReportFilesSelect<T extends boolean = true> {
+  title?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "report-leads_select".
+ */
+export interface ReportLeadsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  company?: T;
+  country?: T;
+  consent?: T;
+  report?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  sourceUrl?: T;
   caption?: T;
   folder?: T;
   updatedAt?: T;
@@ -2734,30 +3097,11 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories_select".
- */
-export interface CategoriesSelect<T extends boolean = true> {
-  title?: T;
-  generateSlug?: T;
-  slug?: T;
-  parent?: T;
-  breadcrumbs?:
-    | T
-    | {
-        doc?: T;
-        url?: T;
-        label?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  roles?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2936,33 +3280,6 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
     | {
         field?: T;
         value?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "search_select".
- */
-export interface SearchSelect<T extends boolean = true> {
-  title?: T;
-  priority?: T;
-  doc?: T;
-  slug?: T;
-  meta?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        image?: T;
-      };
-  categories?:
-    | T
-    | {
-        relationTo?: T;
-        categoryID?: T;
-        title?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -3264,6 +3581,32 @@ export interface TaskSchedulePublish {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CodeBlock".
+ */
+export interface CodeBlock {
+  language?:
+    | (
+        | 'text'
+        | 'python'
+        | 'powershell'
+        | 'bash'
+        | 'c'
+        | 'asm'
+        | 'javascript'
+        | 'typescript'
+        | 'json'
+        | 'markup'
+        | 'sql'
+        | 'css'
+      )
+    | null;
+  code: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'code';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "BannerBlock".
  */
 export interface BannerBlock {
@@ -3286,27 +3629,6 @@ export interface BannerBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'banner';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "CodeBlock".
- */
-export interface CodeBlock {
-  language?: ('typescript' | 'javascript' | 'css') | null;
-  code: string;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'code';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MediaBlock".
- */
-export interface MediaBlock {
-  media: number | Media;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'mediaBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

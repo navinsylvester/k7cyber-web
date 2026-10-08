@@ -14,6 +14,8 @@ export const Categories: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    defaultColumns: ['title', 'slug', 'parent', 'updatedAt'],
+    group: 'K7 Labs',
   },
   fields: [
     {
@@ -24,5 +26,7 @@ export const Categories: CollectionConfig = {
     slugField({
       position: undefined,
     }),
+    { name: 'description', type: 'textarea', admin: { description: 'One or two sentences shown on the category page.' } },
+    { name: 'wpId', type: 'number', index: true, admin: { position: 'sidebar', readOnly: true } },
   ],
 }

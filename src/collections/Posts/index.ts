@@ -2,161 +2,105 @@ import type { CollectionConfig } from 'payload'
 
 import {
   BlocksFeature,
+  EXPERIMENTAL_TableFeature,
   FixedToolbarFeature,
   HeadingFeature,
   HorizontalRuleFeature,
   InlineToolbarFeature,
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
-
-import { authenticated } from '../../access/authenticated'
-import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
-import { Banner } from '../../blocks/Banner/config'
-import { Code } from '../../blocks/Code/config'
-import { MediaBlock } from '../../blocks/MediaBlock/config'
-import { generatePreviewPath } from '../../utilities/generatePreviewPath'
-import { populateAuthors } from './hooks/populateAuthors'
-import { revalidateDelete, revalidatePost } from './hooks/revalidatePost'
-
-import {
-  MetaDescriptionField,
-  MetaImageField,
-  MetaTitleField,
-  OverviewField,
-  PreviewField,
-} from '@payloadcms/plugin-seo/fields'
 import { slugField } from 'payload'
 
+import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
+import { roleAccess } from '../../access/roles'
+import { Banner } from '../../blocks/Banner/config'
+import { Code } from '../../blocks/Code/config'
+import { generatePreviewPath } from '../../utilities/generatePreviewPath'
+import { revalidateDelete, revalidatePost } from './hooks/revalidatePost'
+
+import { MetaDescriptionField, MetaImageField, MetaTitleField, OverviewField, PreviewField } from '@payloadcms/plugin-seo/fields'
+
+/** Plain-text excerpt from a Lexical tree: the first ~200 characters of paragraph text. */
+export const excerptFromLexical = (content: unknown, max = 220): string => {
+  const out: string[] = []
+  const walk = (n: unknown): void => {
+    if (!n || typeof n !== 'object') return
+    const node = n as { type?: string; text?: string; children?: unknown[] }
+    if (node.type === 'text' && node.text) out.push(node.text)
+    if (node.type === 'paragraph' && out.join(' ').length > max) return
+    node.children?.forEach(walk)
+  }
+  walk((content as { root?: unknown })?.root)
+  const text = out.join(' ').replace(/\s+/g, ' ').trim()
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  return cut.slice(0, Math.max(cut.lastIndexOf('. '), cut.lastIndexOf(' '))).trim().replace(/[,;:]$/, '') + '…'
+}
+
+/* The Lab Blog (FR-LB-01 to 08). Slugs are preserved from WordPress; the excerpt is generated when left empty. */
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
-  access: {
-    create: authenticated,
-    delete: authenticated,
-    read: authenticatedOrPublished,
-    update: authenticated,
-  },
-  // This config controls what's populated by default when a post is referenced
-  // https://payloadcms.com/docs/queries/select#defaultpopulate-collection-config-property
-  // Type safe if the collection slug generic is passed to `CollectionConfig` - `CollectionConfig<'posts'>
-  defaultPopulate: {
-    title: true,
-    slug: true,
-    categories: true,
-    meta: {
-      image: true,
-      description: true,
-    },
-  },
+  access: { create: roleAccess('labsEditor'), delete: roleAccess('labsEditor'), read: authenticatedOrPublished, update: roleAccess('labsEditor') },
+  defaultPopulate: { title: true, slug: true, categories: true, publishedAt: true, excerpt: true, featuredImage: true, authors: true, meta: { image: true, description: true } },
   admin: {
-    defaultColumns: ['title', 'slug', 'updatedAt'],
-    livePreview: {
-      url: ({ data, req }) =>
-        generatePreviewPath({
-          slug: data?.slug,
-          collection: 'posts',
-          req,
-        }),
-    },
-    preview: (data, { req }) =>
-      generatePreviewPath({
-        slug: data?.slug as string,
-        collection: 'posts',
-        req,
-      }),
+    defaultColumns: ['title', 'authors', 'publishedAt', 'featured', '_status'],
+    group: 'K7 Labs',
+    listSearchableFields: ['title', 'excerpt'],
+    livePreview: { url: ({ data, req }) => generatePreviewPath({ slug: data?.slug, collection: 'posts', req }) },
+    preview: (data, { req }) => generatePreviewPath({ slug: data?.slug as string, collection: 'posts', req }),
     useAsTitle: 'title',
   },
+  defaultSort: '-publishedAt',
   fields: [
-    {
-      name: 'title',
-      type: 'text',
-      required: true,
-    },
+    { name: 'title', type: 'text', required: true },
     {
       type: 'tabs',
       tabs: [
         {
+          label: 'Content',
           fields: [
-            {
-              name: 'heroImage',
-              type: 'upload',
-              relationTo: 'media',
-            },
+            { name: 'featuredImage', type: 'upload', relationTo: 'media', admin: { description: 'Used on the listing, in Recent Posts and as the share image.' } },
+            { name: 'excerpt', type: 'textarea', admin: { description: 'Shown on the listing. Generated from the body when left empty.' } },
             {
               name: 'content',
               type: 'richText',
-              editor: lexicalEditor({
-                features: ({ rootFeatures }) => {
-                  return [
-                    ...rootFeatures,
-                    HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
-                    BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
-                    FixedToolbarFeature(),
-                    InlineToolbarFeature(),
-                    HorizontalRuleFeature(),
-                  ]
-                },
-              }),
-              label: false,
               required: true,
+              label: false,
+              editor: lexicalEditor({
+                features: ({ rootFeatures }) => [
+                  ...rootFeatures,
+                  HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4'] }),
+                  EXPERIMENTAL_TableFeature(),
+                  BlocksFeature({ blocks: [Code, Banner] }),
+                  FixedToolbarFeature(),
+                  InlineToolbarFeature(),
+                  HorizontalRuleFeature(),
+                ],
+              }),
             },
           ],
-          label: 'Content',
         },
         {
+          label: 'Detections',
           fields: [
             {
-              name: 'relatedPosts',
+              name: 'detections',
               type: 'relationship',
-              admin: {
-                position: 'sidebar',
-              },
-              filterOptions: ({ id }) => {
-                return {
-                  id: {
-                    not_in: [id],
-                  },
-                }
-              },
+              relationTo: 'threats',
               hasMany: true,
-              relationTo: 'posts',
-            },
-            {
-              name: 'categories',
-              type: 'relationship',
-              admin: {
-                position: 'sidebar',
-              },
-              hasMany: true,
-              relationTo: 'categories',
+              admin: { description: 'K7 detections this post references; they link to Top Threats from the post.' },
             },
           ],
-          label: 'Meta',
         },
         {
           name: 'meta',
           label: 'SEO',
           fields: [
-            OverviewField({
-              titlePath: 'meta.title',
-              descriptionPath: 'meta.description',
-              imagePath: 'meta.image',
-            }),
-            MetaTitleField({
-              hasGenerateFn: true,
-            }),
-            MetaImageField({
-              relationTo: 'media',
-            }),
-
+            OverviewField({ titlePath: 'meta.title', descriptionPath: 'meta.description', imagePath: 'meta.image' }),
+            MetaTitleField({ hasGenerateFn: true }),
+            MetaImageField({ relationTo: 'media' }),
             MetaDescriptionField({}),
-            PreviewField({
-              // if the `generateUrl` function is configured
-              hasGenerateFn: true,
-
-              // field paths to match the target field for data
-              titlePath: 'meta.title',
-              descriptionPath: 'meta.description',
-            }),
+            PreviewField({ hasGenerateFn: true, titlePath: 'meta.title', descriptionPath: 'meta.description' }),
           ],
         },
       ],
@@ -164,70 +108,28 @@ export const Posts: CollectionConfig<'posts'> = {
     {
       name: 'publishedAt',
       type: 'date',
-      admin: {
-        date: {
-          pickerAppearance: 'dayAndTime',
-        },
-        position: 'sidebar',
-      },
-      hooks: {
-        beforeChange: [
-          ({ siblingData, value }) => {
-            if (siblingData._status === 'published' && !value) {
-              return new Date()
-            }
-            return value
-          },
-        ],
-      },
+      required: true,
+      admin: { date: { pickerAppearance: 'dayAndTime' }, position: 'sidebar' },
+      hooks: { beforeChange: [({ siblingData, value }) => (siblingData._status === 'published' && !value ? new Date() : value)] },
     },
-    {
-      name: 'authors',
-      type: 'relationship',
-      admin: {
-        position: 'sidebar',
-      },
-      hasMany: true,
-      relationTo: 'users',
-    },
-    // This field is only used to populate the user data via the `populateAuthors` hook
-    // This is because the `user` collection has access control locked to protect user privacy
-    // GraphQL will also not return mutated user data that differs from the underlying schema
-    {
-      name: 'populatedAuthors',
-      type: 'array',
-      access: {
-        update: () => false,
-      },
-      admin: {
-        disabled: true,
-        readOnly: true,
-      },
-      fields: [
-        {
-          name: 'id',
-          type: 'text',
-        },
-        {
-          name: 'name',
-          type: 'text',
-        },
-      ],
-    },
+    { name: 'authors', type: 'relationship', relationTo: 'authors', hasMany: true, required: true, admin: { position: 'sidebar' } },
+    { name: 'categories', type: 'relationship', relationTo: 'categories', hasMany: true, admin: { position: 'sidebar' } },
+    { name: 'featured', type: 'checkbox', defaultValue: false, admin: { position: 'sidebar', description: 'Shown in Featured Posts on the sidebar (three at most).' } },
     slugField(),
+    { name: 'wpId', type: 'number', index: true, admin: { position: 'sidebar', readOnly: true } },
+    // Plain text of the body, kept for search across title, body and categories (FR-LB-06).
+    { name: 'searchText', type: 'textarea', admin: { hidden: true } }, // no btree index: bodies exceed the 2704-byte row limit; search uses ILIKE
   ],
   hooks: {
+    beforeChange: [
+      ({ data }) => {
+        if (data && !data.excerpt?.trim() && data.content) data.excerpt = excerptFromLexical(data.content)
+        if (data?.content) data.searchText = excerptFromLexical(data.content, 20000)
+        return data
+      },
+    ],
     afterChange: [revalidatePost],
-    afterRead: [populateAuthors],
     afterDelete: [revalidateDelete],
   },
-  versions: {
-    drafts: {
-      autosave: {
-        interval: 100, // We set this interval for optimal live preview
-      },
-      schedulePublish: true,
-    },
-    maxPerDoc: 50,
-  },
+  versions: { drafts: { autosave: { interval: 100 }, schedulePublish: true }, maxPerDoc: 50 },
 }

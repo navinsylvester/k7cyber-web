@@ -11,6 +11,13 @@ One Next.js 16 app with Payload 3 inside it: the public site and the CMS admin (
 - `docs/page-shapes.md` — which blocks each page template is made of, and the Payload collections/globals/blocks model.
 - `content/source/` — the content doc export the pages are written from.
 
+## K7 Labs (Resources → Research)
+- Routes under `src/app/(frontend)/research/`: landing (one-time designed page in code), `lab-blog` (listing, search `?q=`, `category/[...path]`, `author/[slug]`, `[slug]`, `feed.xml`), `vulnerability-information` (table with `?cve&product&severity&sort&dir&page`, `export.csv`, `import` for the CSV batch), `vulnerability/[slug]`, `top-threats` (+ `[slug]`), `threat-reports` (+ `lead` POST and `download/[id]`, token-gated when the report is gated).
+- Collections in `src/collections/research/` plus the rewritten `Posts`. Data access goes through `src/lib/research/data.ts`, cached under the `research` and `research_<collection>` tags that the collection hooks revalidate.
+- The research parts of the design system live in `src/app/(frontend)/research.css` (section 08 · Labs). Components in `src/components/research/`.
+- Migration from labs.k7computing.com: `pnpm migrate:labs --phase=data|posts|all` reads the MariaDB container that holds the WordPress dump (see scripts/migrate-labs.ts); it writes `migration/report*.json` and `migration/redirects.csv`. Pattern redirects for the old URLs are in `redirects.ts`.
+- Report PDFs live in `uploads/reports/` (ignored by git) and are only served through the download route.
+
 ## Decisions (do not reopen)
 - Postgres (`@payloadcms/db-postgres`), Lexical rich text, `@payloadcms/plugin-seo` and `plugin-form-builder`.
 - Dark is the default theme; the user's explicit choice is honoured, the OS preference is not.

@@ -30,6 +30,12 @@ export const Media: CollectionConfig = {
       //required: true,
     },
     {
+      name: 'sourceUrl',
+      type: 'text',
+      index: true,
+      admin: { position: 'sidebar', readOnly: true, description: 'Where a migrated file came from.' },
+    },
+    {
       name: 'caption',
       type: 'richText',
       editor: lexicalEditor({

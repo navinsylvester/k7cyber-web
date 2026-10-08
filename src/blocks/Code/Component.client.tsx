@@ -1,33 +1,33 @@
 'use client'
 import { Highlight, themes } from 'prism-react-renderer'
 import React from 'react'
-import { CopyButton } from './CopyButton'
 
-type Props = {
-  code: string
-  language?: string
-}
+import { CopyButton } from '@/components/research/Copy.client'
 
-export const Code: React.FC<Props> = ({ code, language = '' }) => {
+/* Code in the K7 prose: a mono block on the code ground with a head that names the language and copies it. */
+export const Code: React.FC<{ code: string; language?: string }> = ({ code, language = 'text' }) => {
   if (!code) return null
-
   return (
-    <Highlight code={code} language={language} theme={themes.vsDark}>
-      {({ getLineProps, getTokenProps, tokens }) => (
-        <pre className="bg-black p-4 border text-xs border-border rounded overflow-x-auto">
-          {tokens.map((line, i) => (
-            <div key={i} {...getLineProps({ className: 'table-row', line })}>
-              <span className="table-cell select-none text-right text-white/25">{i + 1}</span>
-              <span className="table-cell pl-4">
-                {line.map((token, key) => (
-                  <span key={key} {...getTokenProps({ token })} />
-                ))}
-              </span>
-            </div>
-          ))}
-          <CopyButton code={code} />
-        </pre>
-      )}
-    </Highlight>
+    <>
+      <div className="code-head label">
+        <span>{language === 'text' ? 'Code' : language}</span>
+        <CopyButton text={code} className="textbtn" />
+      </div>
+      <Highlight code={code} language={language === 'text' ? 'plain' : language} theme={themes.vsDark}>
+        {({ tokens, getLineProps, getTokenProps }) => (
+          <pre style={{ background: 'var(--code)' }}>
+            <code>
+              {tokens.map((line, i) => (
+                <div key={i} {...getLineProps({ line })}>
+                  {line.map((token, key) => (
+                    <span key={key} {...getTokenProps({ token })} style={{ color: 'inherit' }} />
+                  ))}
+                </div>
+              ))}
+            </code>
+          </pre>
+        )}
+      </Highlight>
+    </>
   )
 }

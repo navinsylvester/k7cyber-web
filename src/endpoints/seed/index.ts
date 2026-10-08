@@ -1,6 +1,7 @@
 import type { Payload, PayloadRequest } from 'payload'
 
 import { forms } from './forms'
+import { seedReports } from './reports'
 import { pages } from './pages'
 import { morePages } from './pages2'
 
@@ -67,7 +68,13 @@ const headerMenu = [
     url: '/insight',
     columns: [
       col('Insight', '/insight'),
-      col('Research', '/research'),
+      col('Research', '/research', [
+        ['K7 Labs', '/research'],
+        ['Lab Blog', '/research/lab-blog'],
+        ['Vulnerability Information', '/research/vulnerability-information'],
+        ['Top Threats', '/research/top-threats'],
+        ['Threat Reports', '/research/threat-reports'],
+      ]),
       col('Media Room', '/media-room', [['News', '/news'], ['Press Releases', '/press-releases'], ['Events', '/events'], ['Media Centre', '/media-centre']]),
     ],
   },
@@ -132,6 +139,8 @@ export const seed = async ({ payload, req }: { payload: Payload; req: PayloadReq
     await payload.create({ collection: 'pages', req, data: page })
     payload.logger.info(`Seeded page /${page.slug}`)
   }
+
+  await seedReports({ payload, req })
 
   payload.logger.info('Seeded K7 site content.')
 }

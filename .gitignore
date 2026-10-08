@@ -20,3 +20,7 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Labs migration working files and report PDFs (local only)
+migration/cache/
+uploads/

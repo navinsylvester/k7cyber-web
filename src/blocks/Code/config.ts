@@ -7,20 +7,20 @@ export const Code: Block = {
     {
       name: 'language',
       type: 'select',
-      defaultValue: 'typescript',
+      defaultValue: 'text',
       options: [
-        {
-          label: 'Typescript',
-          value: 'typescript',
-        },
-        {
-          label: 'Javascript',
-          value: 'javascript',
-        },
-        {
-          label: 'CSS',
-          value: 'css',
-        },
+        { label: 'Plain text', value: 'text' },
+        { label: 'Python', value: 'python' },
+        { label: 'PowerShell', value: 'powershell' },
+        { label: 'Shell', value: 'bash' },
+        { label: 'C / C++', value: 'c' },
+        { label: 'Assembly', value: 'asm' },
+        { label: 'JavaScript', value: 'javascript' },
+        { label: 'TypeScript', value: 'typescript' },
+        { label: 'JSON', value: 'json' },
+        { label: 'HTML / XML', value: 'markup' },
+        { label: 'SQL', value: 'sql' },
+        { label: 'CSS', value: 'css' },
       ],
     },
     {

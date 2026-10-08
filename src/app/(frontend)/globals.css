@@ -4,6 +4,8 @@
 @import '../../../design-system/tokens.css';
 /* The reference component CSS of the design system (sheets, tabs, buttons, tables, rows, header, footer). */
 @import '../../../design-system/components/bundle.css';
+/* Section 08 · Labs: research-page parts. */
+@import './research.css';
 
 /* next/font self-hosts Archivo and IBM Plex Mono (see layout.tsx); point the K7 font tokens at them. */
 :root {
@@ -32,7 +34,6 @@
   }
 }
 
-@plugin "@tailwindcss/typography";
 
 @source inline("lg:col-span-4");
 @source inline("lg:col-span-6");
