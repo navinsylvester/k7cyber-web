@@ -1,0 +1,241 @@
+{
+  "ranAt": "2026-10-08T13:30:47.729Z",
+  "phase": "data",
+  "authors": {
+    "created": 24,
+    "skipped": 0,
+    "total": 24
+  },
+  "categories": {
+    "created": 83,
+    "skipped": 0,
+    "total": 83,
+    "renamed": [
+      "Python → Python (Scripting Malware) (python-scripting-malware)",
+      "Artificial Intelliigence → Artificial Intelligence (artificial-intelliigence)",
+      "Multi-Stage → Multi-Stage (Intrusion Technques) (multi-stage)"
+    ]
+  },
+  "vulnerabilities": {
+    "source": 2359,
+    "unique": 2320,
+    "created": 2320,
+    "skipped": 0,
+    "failed": 0,
+    "duplicatesSkipped": 39,
+    "duplicates": [
+      {
+        "cveId": "CVE-2026-26144",
+        "skippedSlug": "cve-2026-26144",
+        "keptSlug": "cve-2026-26144-2"
+      },
+      {
+        "cveId": "CVE-2026-26113",
+        "skippedSlug": "cve-2026-26113",
+        "keptSlug": "cve-2026-26113-2"
+      },
+      {
+        "cveId": "CVE-2026-26110",
+        "skippedSlug": "cve-2026-26110",
+        "keptSlug": "cve-2026-26110-2"
+      },
+      {
+        "cveId": "CVE-2026-3381",
+        "skippedSlug": "cve-2026-3381",
+        "keptSlug": "cve-2026-3381-2"
+      },
+      {
+        "cveId": "CVE-2026-26122",
+        "skippedSlug": "cve-2026-26122",
+        "keptSlug": "cve-2026-26122-2"
+      },
+      {
+        "cveId": "CVE-2026-26124",
+        "skippedSlug": "cve-2026-26124",
+        "keptSlug": "cve-2026-26124-2"
+      },
+      {
+        "cveId": "CVE-2026-23651",
+        "skippedSlug": "cve-2026-23651",
+        "keptSlug": "cve-2026-23651-2"
+      },
+      {
+        "cveId": "CVE-2026-26127",
+        "skippedSlug": "cve-2026-26127",
+        "keptSlug": "cve-2026-26127-2"
+      },
+      {
+        "cveId": "CVE-2026-21262",
+        "skippedSlug": "cve-2026-21262",
+        "keptSlug": "cve-2026-21262-2"
+      },
+      {
+        "cveId": "CVE-2025-26686",
+        "skippedSlug": "cve-2025-26686",
+        "keptSlug": "cve-2025-26686-2"
+      },
+      {
+        "cveId": "CVE-2024-38200",
+        "skippedSlug": "cve-2024-38200-2",
+        "keptSlug": "cve-2024-38200-3"
+      },
+      {
+        "cveId": "CVE-2024-38107",
+        "skippedSlug": "cve-2024-38107-2",
+        "keptSlug": "cve-2024-38107-3"
+      },
+      {
+        "cveId": "CVE-2024-38106",
+        "skippedSlug": "cve-2024-38106",
+        "keptSlug": "cve-2024-38106-2"
+      },
+      {
+        "cveId": "CVE-2024-38200",
+        "skippedSlug": "cve-2024-38200",
+        "keptSlug": "cve-2024-38200-3"
+      },
+      {
+        "cveId": "CVE-2024-38199",
+        "skippedSlug": "cve-2024-38199",
+        "keptSlug": "cve-2024-38199-2"
+      },
+      {
+        "cveId": "CVE-2024-21302",
+        "skippedSlug": "cve-2024-21302",
+        "keptSlug": "cve-2024-21302-2"
+      },
+      {
+        "cveId": "CVE-2024-38213",
+        "skippedSlug": "cve-2024-38213",
+        "keptSlug": "cve-2024-38213-2"
+      },
+      {
+        "cveId": "CVE-2024-38193",
+        "skippedSlug": "cve-2024-38193",
+        "keptSlug": "cve-2024-38193-2"
+      },
+      {
+        "cveId": "CVE-2024-38189",
+        "skippedSlug": "cve-2024-38189",
+        "keptSlug": "cve-2024-38189-2"
+      },
+      {
+        "cveId": "CVE-2024-38178",
+        "skippedSlug": "cve-2024-38178",
+        "keptSlug": "cve-2024-38178-2"
+      },
+      {
+        "cveId": "CVE-2024-38107",
+        "skippedSlug": "cve-2024-38107",
+        "keptSlug": "cve-2024-38107-3"
+      },
+      {
+        "cveId": "CVE-2024-7532",
+        "skippedSlug": "cve-2024-7532",
+        "keptSlug": "cve-2024-7532-2"
+      },
+      {
+        "cveId": "CVE-2024-6990",
+        "skippedSlug": "cve-2024-6990",
+        "keptSlug": "cve-2024-6990-2"
+      },
+      {
+        "cveId": "CVE-2024-38166",
+        "skippedSlug": "cve-2024-38166",
+        "keptSlug": "cve-2024-38166-2"
+      },
+      {
+        "cveId": "CVE-2024-38206",
+        "skippedSlug": "cve-2024-38206",
+        "keptSlug": "cve-2024-38206-2"
+      },
+      {
+        "cveId": "CVE-2024-38109",
+        "skippedSlug": "cve-2024-38109",
+        "keptSlug": "cve-2024-38109-2"
+      },
+      {
+        "cveId": "CVE-2024-38140",
+        "skippedSlug": "cve-2024-38140",
+        "keptSlug": "cve-2024-38140-2"
+      },
+      {
+        "cveId": "CVE-2024-38063",
+        "skippedSlug": "cve-2024-38063",
+        "keptSlug": "cve-2024-38063-2"
+      },
+      {
+        "cveId": "CVE-2023-40547",
+        "skippedSlug": "cve-2023-40547",
+        "keptSlug": "cve-2023-40547-2"
+      },
+      {
+        "cveId": "CVE-2024-38159",
+        "skippedSlug": "cve-2024-38159",
+        "keptSlug": "cve-2024-38159-2"
+      },
+      {
+        "cveId": "CVE-2024-26257",
+        "skippedSlug": "cve-2024-26257",
+        "keptSlug": "cve-2024-26257-2"
+      },
+      {
+        "cveId": "CVE-2024-21379",
+        "skippedSlug": "cve-2024-21379",
+        "keptSlug": "cve-2024-21379-2"
+      },
+      {
+        "cveId": "ADV990001",
+        "skippedSlug": "adv990001-6",
+        "keptSlug": "adv990001-7"
+      },
+      {
+        "cveId": "ADV990001",
+        "skippedSlug": "adv990001-5",
+        "keptSlug": "adv990001-7"
+      },
+      {
+        "cveId": "ADV990001",
+        "skippedSlug": "adv990001-4",
+        "keptSlug": "adv990001-7"
+      },
+      {
+        "cveId": "ADV990001",
+        "skippedSlug": "adv990001",
+        "keptSlug": "adv990001-7"
+      },
+      {
+        "cveId": "ADV990001",
+        "skippedSlug": "adv990001-2",
+        "keptSlug": "adv990001-7"
+      },
+      {
+        "cveId": "ADV990001",
+        "skippedSlug": "adv990001-3",
+        "keptSlug": "adv990001-7"
+      },
+      {
+        "cveId": "MS15-059",
+        "skippedSlug": "ms15-059",
+        "keptSlug": "ms15-059-2"
+      }
+    ]
+  },
+  "products": {
+    "total": 212
+  },
+  "threats": {
+    "source": 139,
+    "unique": 138,
+    "created": 138,
+    "skipped": 0,
+    "failed": 0,
+    "duplicates": [
+      {
+        "name": "Trojan ( 005c21ca1 )",
+        "skippedSlug": "trojan-005c21ca1",
+        "keptSlug": "trojan-005c21ca1-2"
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "ranAt": "2026-10-08T13:56:59.768Z",
+  "phase": "posts",
+  "posts": {
+    "source": 565,
+    "created": 1,
+    "skipped": 564,
+    "failed": 0,
+    "embeds": 0,
+    "imageFailures": [],
+    "countMismatches": [
+      {
+        "slug": "beware-of-root-certs-in-vpn",
+        "source": {
+          "tables": 0,
+          "images": 7,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 6,
+          "code": 0
+        }
+      }
+    ]
+  }
+}
