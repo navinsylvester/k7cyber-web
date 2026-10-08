@@ -1,6 +1,6 @@
 import type { Theme } from './types'
 
-export const themeLocalStorageKey = 'payload-theme'
+export const themeLocalStorageKey = 'k7-theme'
 
 export const defaultTheme = 'dark'
 

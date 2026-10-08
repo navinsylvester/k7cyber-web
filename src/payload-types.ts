@@ -158,50 +158,16 @@ export interface UserAuthOperations {
 export interface Page {
   id: number;
   title: string;
-  hero: {
-    type: 'none' | 'highImpact' | 'mediumImpact' | 'lowImpact';
-    richText?: {
-      root: {
-        type: string;
-        children: {
-          type: any;
-          version: number;
-          [k: string]: unknown;
-        }[];
-        direction: ('ltr' | 'rtl') | null;
-        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-        indent: number;
-        version: number;
-      };
-      [k: string]: unknown;
-    } | null;
-    links?:
-      | {
-          link: {
-            type?: ('reference' | 'custom') | null;
-            newTab?: boolean | null;
-            reference?:
-              | ({
-                  relationTo: 'pages';
-                  value: number | Page;
-                } | null)
-              | ({
-                  relationTo: 'posts';
-                  value: number | Post;
-                } | null);
-            url?: string | null;
-            label: string;
-            /**
-             * Choose how the link should be rendered.
-             */
-            appearance?: ('default' | 'outline') | null;
-          };
-          id?: string | null;
-        }[]
-      | null;
-    media?: (number | null) | Media;
-  };
-  layout: (CallToActionBlock | ContentBlock | MediaBlock | ArchiveBlock | FormBlock)[];
+  layout: (
+    | PageBannerBlock
+    | IntroBlock
+    | CapabilityRowsBlock
+    | FeatureMatrixBlock
+    | IndexRowsBlock
+    | ProseBlock
+    | FormBlock
+    | CtaSheetBlock
+  )[];
   meta?: {
     title?: string | null;
     /**
@@ -219,6 +185,52 @@ export interface Page {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PageBannerBlock".
+ */
+export interface PageBannerBlock {
+  /**
+   * Section path, e.g. Platform · Core
+   */
+  metaLeft?: string | null;
+  /**
+   * One fact, e.g. Managed detection and response
+   */
+  metaRight?: string | null;
+  /**
+   * Defaults to the page title.
+   */
+  title?: string | null;
+  lede: string;
+  actions?:
+    | {
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+          /**
+           * Primary is the one signal button a view gets; line is the alternative beside it.
+           */
+          appearance?: ('primary' | 'line' | 'text') | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'pageBanner';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -442,25 +454,72 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "CallToActionBlock".
+ * via the `definition` "IntroBlock".
  */
-export interface CallToActionBlock {
-  richText?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  links?:
+export interface IntroBlock {
+  /**
+   * The section name in the tab, e.g. Overview.
+   */
+  tabLabel: string;
+  ground?: ('auto' | 'paper' | 'panel' | 'contrast') | null;
+  headline: string;
+  /**
+   * Optional second clause set at dim opacity.
+   */
+  dimClause?: string | null;
+  /**
+   * One or two sentences, under 46 characters per line.
+   */
+  lede?: string | null;
+  /**
+   * Up to two columns of body copy.
+   */
+  paragraphs?:
+    | {
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional: a hairline-gridded figure of labelled lists, e.g. the MDR architecture.
+   */
+  figure?: {
+    label?: string | null;
+    /**
+     * e.g. Fig. 01 · MDR architecture
+     */
+    caption?: string | null;
+    cells?:
+      | {
+          label: string;
+          highlight?: boolean | null;
+          /**
+           * Large text for an inverted cell.
+           */
+          title?: string | null;
+          items?:
+            | {
+                name: string;
+                id?: string | null;
+              }[]
+            | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  coverage?: {
+    /**
+     * e.g. Coverage
+     */
+    label?: string | null;
+    tags?:
+      | {
+          name: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  actions?:
     | {
         link: {
           type?: ('reference' | 'custom') | null;
@@ -477,42 +536,51 @@ export interface CallToActionBlock {
           url?: string | null;
           label: string;
           /**
-           * Choose how the link should be rendered.
+           * Primary is the one signal button a view gets; line is the alternative beside it.
            */
-          appearance?: ('default' | 'outline') | null;
+          appearance?: ('primary' | 'line' | 'text') | null;
         };
         id?: string | null;
       }[]
     | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'cta';
+  blockType: 'intro';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ContentBlock".
+ * via the `definition` "CapabilityRowsBlock".
  */
-export interface ContentBlock {
-  columns?:
+export interface CapabilityRowsBlock {
+  /**
+   * The section name in the tab, e.g. Overview.
+   */
+  tabLabel: string;
+  ground?: ('auto' | 'paper' | 'panel' | 'contrast') | null;
+  headline: string;
+  /**
+   * Optional second clause set at dim opacity.
+   */
+  dimClause?: string | null;
+  /**
+   * One or two sentences, under 46 characters per line.
+   */
+  lede?: string | null;
+  rows: {
+    icon?: ('surface' | 'shield' | 'grid' | 'beacon' | 'bars' | 'hex' | 'certificate' | 'pulse' | 'document') | null;
+    /**
+     * Four words at most.
+     */
+    title: string;
+    /**
+     * One sentence. Wrap one term in **double asterisks** to keep it bold.
+     */
+    text: string;
+    id?: string | null;
+  }[];
+  actions?:
     | {
-        size?: ('oneThird' | 'half' | 'twoThirds' | 'full') | null;
-        richText?: {
-          root: {
-            type: string;
-            children: {
-              type: any;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
-        enableLink?: boolean | null;
-        link?: {
+        link: {
           type?: ('reference' | 'custom') | null;
           newTab?: boolean | null;
           reference?:
@@ -527,33 +595,143 @@ export interface ContentBlock {
           url?: string | null;
           label: string;
           /**
-           * Choose how the link should be rendered.
+           * Primary is the one signal button a view gets; line is the alternative beside it.
            */
-          appearance?: ('default' | 'outline') | null;
+          appearance?: ('primary' | 'line' | 'text') | null;
         };
         id?: string | null;
       }[]
     | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'content';
+  blockType: 'capabilityRows';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MediaBlock".
+ * via the `definition` "FeatureMatrixBlock".
  */
-export interface MediaBlock {
-  media: number | Media;
+export interface FeatureMatrixBlock {
+  /**
+   * The section name in the tab, e.g. Overview.
+   */
+  tabLabel: string;
+  ground?: ('auto' | 'paper' | 'panel' | 'contrast') | null;
+  headline: string;
+  /**
+   * Optional second clause set at dim opacity.
+   */
+  dimClause?: string | null;
+  /**
+   * One or two sentences, under 46 characters per line.
+   */
+  lede?: string | null;
+  /**
+   * The product column head.
+   */
+  columnLabel?: string | null;
+  /**
+   * One table per group, side by side from 840px.
+   */
+  groups: {
+    title: string;
+    rows: {
+      name: string;
+      included?: boolean | null;
+      id?: string | null;
+    }[];
+    id?: string | null;
+  }[];
+  actions?:
+    | {
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+          /**
+           * Primary is the one signal button a view gets; line is the alternative beside it.
+           */
+          appearance?: ('primary' | 'line' | 'text') | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'mediaBlock';
+  blockType: 'featureMatrix';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ArchiveBlock".
+ * via the `definition` "IndexRowsBlock".
  */
-export interface ArchiveBlock {
-  introContent?: {
+export interface IndexRowsBlock {
+  /**
+   * The section name in the tab, e.g. Overview.
+   */
+  tabLabel: string;
+  ground?: ('auto' | 'paper' | 'panel' | 'contrast') | null;
+  headline: string;
+  /**
+   * Optional second clause set at dim opacity.
+   */
+  dimClause?: string | null;
+  /**
+   * One or two sentences, under 46 characters per line.
+   */
+  lede?: string | null;
+  /**
+   * Number rows only when the order means something.
+   */
+  numbered?: boolean | null;
+  rows: {
+    title: string;
+    description: string;
+    link?: {
+      type?: ('reference' | 'custom') | null;
+      newTab?: boolean | null;
+      reference?:
+        | ({
+            relationTo: 'pages';
+            value: number | Page;
+          } | null)
+        | ({
+            relationTo: 'posts';
+            value: number | Post;
+          } | null);
+      url?: string | null;
+    };
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'indexRows';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProseBlock".
+ */
+export interface ProseBlock {
+  /**
+   * The section name in the tab, e.g. Overview.
+   */
+  tabLabel: string;
+  ground?: ('auto' | 'paper' | 'panel' | 'contrast') | null;
+  /**
+   * Optional sheet head above the column.
+   */
+  headline?: string | null;
+  dimClause?: string | null;
+  lede?: string | null;
+  richText: {
     root: {
       type: string;
       children: {
@@ -567,20 +745,10 @@ export interface ArchiveBlock {
       version: number;
     };
     [k: string]: unknown;
-  } | null;
-  populateBy?: ('collection' | 'selection') | null;
-  relationTo?: 'posts' | null;
-  categories?: (number | Category)[] | null;
-  limit?: number | null;
-  selectedDocs?:
-    | {
-        relationTo: 'posts';
-        value: number | Post;
-      }[]
-    | null;
+  };
   id?: string | null;
   blockName?: string | null;
-  blockType: 'archive';
+  blockType: 'prose';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -772,6 +940,42 @@ export interface Form {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CtaSheetBlock".
+ */
+export interface CtaSheetBlock {
+  tabLabel: string;
+  headline: string;
+  paragraph: string;
+  actions?:
+    | {
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+          /**
+           * Primary is the one signal button a view gets; line is the alternative beside it.
+           */
+          appearance?: ('primary' | 'line' | 'text') | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'ctaSheet';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1051,36 +1255,17 @@ export interface PayloadMigration {
  */
 export interface PagesSelect<T extends boolean = true> {
   title?: T;
-  hero?:
-    | T
-    | {
-        type?: T;
-        richText?: T;
-        links?:
-          | T
-          | {
-              link?:
-                | T
-                | {
-                    type?: T;
-                    newTab?: T;
-                    reference?: T;
-                    url?: T;
-                    label?: T;
-                    appearance?: T;
-                  };
-              id?: T;
-            };
-        media?: T;
-      };
   layout?:
     | T
     | {
-        cta?: T | CallToActionBlockSelect<T>;
-        content?: T | ContentBlockSelect<T>;
-        mediaBlock?: T | MediaBlockSelect<T>;
-        archive?: T | ArchiveBlockSelect<T>;
+        pageBanner?: T | PageBannerBlockSelect<T>;
+        intro?: T | IntroBlockSelect<T>;
+        capabilityRows?: T | CapabilityRowsBlockSelect<T>;
+        featureMatrix?: T | FeatureMatrixBlockSelect<T>;
+        indexRows?: T | IndexRowsBlockSelect<T>;
+        prose?: T | ProseBlockSelect<T>;
         formBlock?: T | FormBlockSelect<T>;
+        ctaSheet?: T | CtaSheetBlockSelect<T>;
       };
   meta?:
     | T
@@ -1098,74 +1283,214 @@ export interface PagesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "CallToActionBlock_select".
+ * via the `definition` "PageBannerBlock_select".
  */
-export interface CallToActionBlockSelect<T extends boolean = true> {
+export interface PageBannerBlockSelect<T extends boolean = true> {
+  metaLeft?: T;
+  metaRight?: T;
+  title?: T;
+  lede?: T;
+  actions?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+              appearance?: T;
+            };
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "IntroBlock_select".
+ */
+export interface IntroBlockSelect<T extends boolean = true> {
+  tabLabel?: T;
+  ground?: T;
+  headline?: T;
+  dimClause?: T;
+  lede?: T;
+  paragraphs?:
+    | T
+    | {
+        text?: T;
+        id?: T;
+      };
+  figure?:
+    | T
+    | {
+        label?: T;
+        caption?: T;
+        cells?:
+          | T
+          | {
+              label?: T;
+              highlight?: T;
+              title?: T;
+              items?:
+                | T
+                | {
+                    name?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+      };
+  coverage?:
+    | T
+    | {
+        label?: T;
+        tags?:
+          | T
+          | {
+              name?: T;
+              id?: T;
+            };
+      };
+  actions?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+              appearance?: T;
+            };
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CapabilityRowsBlock_select".
+ */
+export interface CapabilityRowsBlockSelect<T extends boolean = true> {
+  tabLabel?: T;
+  ground?: T;
+  headline?: T;
+  dimClause?: T;
+  lede?: T;
+  rows?:
+    | T
+    | {
+        icon?: T;
+        title?: T;
+        text?: T;
+        id?: T;
+      };
+  actions?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+              appearance?: T;
+            };
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeatureMatrixBlock_select".
+ */
+export interface FeatureMatrixBlockSelect<T extends boolean = true> {
+  tabLabel?: T;
+  ground?: T;
+  headline?: T;
+  dimClause?: T;
+  lede?: T;
+  columnLabel?: T;
+  groups?:
+    | T
+    | {
+        title?: T;
+        rows?:
+          | T
+          | {
+              name?: T;
+              included?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  actions?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+              appearance?: T;
+            };
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "IndexRowsBlock_select".
+ */
+export interface IndexRowsBlockSelect<T extends boolean = true> {
+  tabLabel?: T;
+  ground?: T;
+  headline?: T;
+  dimClause?: T;
+  lede?: T;
+  numbered?: T;
+  rows?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+            };
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ProseBlock_select".
+ */
+export interface ProseBlockSelect<T extends boolean = true> {
+  tabLabel?: T;
+  ground?: T;
+  headline?: T;
+  dimClause?: T;
+  lede?: T;
   richText?: T;
-  links?:
-    | T
-    | {
-        link?:
-          | T
-          | {
-              type?: T;
-              newTab?: T;
-              reference?: T;
-              url?: T;
-              label?: T;
-              appearance?: T;
-            };
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ContentBlock_select".
- */
-export interface ContentBlockSelect<T extends boolean = true> {
-  columns?:
-    | T
-    | {
-        size?: T;
-        richText?: T;
-        enableLink?: T;
-        link?:
-          | T
-          | {
-              type?: T;
-              newTab?: T;
-              reference?: T;
-              url?: T;
-              label?: T;
-              appearance?: T;
-            };
-        id?: T;
-      };
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MediaBlock_select".
- */
-export interface MediaBlockSelect<T extends boolean = true> {
-  media?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ArchiveBlock_select".
- */
-export interface ArchiveBlockSelect<T extends boolean = true> {
-  introContent?: T;
-  populateBy?: T;
-  relationTo?: T;
-  categories?: T;
-  limit?: T;
-  selectedDocs?: T;
   id?: T;
   blockName?: T;
 }
@@ -1177,6 +1502,32 @@ export interface FormBlockSelect<T extends boolean = true> {
   form?: T;
   enableIntro?: T;
   introContent?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CtaSheetBlock_select".
+ */
+export interface CtaSheetBlockSelect<T extends boolean = true> {
+  tabLabel?: T;
+  headline?: T;
+  paragraph?: T;
+  actions?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+              appearance?: T;
+            };
+        id?: T;
+      };
   id?: T;
   blockName?: T;
 }
@@ -1632,24 +1983,55 @@ export interface Header {
   id: number;
   navItems?:
     | {
-        link: {
-          type?: ('reference' | 'custom') | null;
-          newTab?: boolean | null;
-          reference?:
-            | ({
-                relationTo: 'pages';
-                value: number | Page;
-              } | null)
-            | ({
-                relationTo: 'posts';
-                value: number | Post;
-              } | null);
-          url?: string | null;
-          label: string;
-        };
+        label: string;
+        page?: (number | null) | Page;
+        /**
+         * Used when no page is chosen.
+         */
+        url?: string | null;
+        /**
+         * Leave empty for a plain link such as Partners or Support.
+         */
+        columns?:
+          | {
+              label: string;
+              page?: (number | null) | Page;
+              /**
+               * Used when no page is chosen.
+               */
+              url?: string | null;
+              items?:
+                | {
+                    label: string;
+                    page?: (number | null) | Page;
+                    /**
+                     * Used when no page is chosen.
+                     */
+                    url?: string | null;
+                    id?: string | null;
+                  }[]
+                | null;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
+  cta: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+    label: string;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1659,26 +2041,37 @@ export interface Header {
  */
 export interface Footer {
   id: number;
-  navItems?:
+  tagline?: string | null;
+  columns?:
     | {
-        link: {
-          type?: ('reference' | 'custom') | null;
-          newTab?: boolean | null;
-          reference?:
-            | ({
-                relationTo: 'pages';
-                value: number | Page;
-              } | null)
-            | ({
-                relationTo: 'posts';
-                value: number | Post;
-              } | null);
-          url?: string | null;
-          label: string;
-        };
+        heading: string;
+        links?:
+          | {
+              label: string;
+              page?: (number | null) | Page;
+              /**
+               * Used when no page is chosen.
+               */
+              url?: string | null;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
+  /**
+   * Two-letter mono labels in 36px frames: in, X, YT, IG, FB.
+   */
+  socials?:
+    | {
+        code: string;
+        name: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  legal?: string | null;
+  offices?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1690,16 +2083,35 @@ export interface HeaderSelect<T extends boolean = true> {
   navItems?:
     | T
     | {
-        link?:
+        label?: T;
+        page?: T;
+        url?: T;
+        columns?:
           | T
           | {
-              type?: T;
-              newTab?: T;
-              reference?: T;
-              url?: T;
               label?: T;
+              page?: T;
+              url?: T;
+              items?:
+                | T
+                | {
+                    label?: T;
+                    page?: T;
+                    url?: T;
+                    id?: T;
+                  };
+              id?: T;
             };
         id?: T;
+      };
+  cta?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+        label?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -1710,20 +2122,31 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
-  navItems?:
+  tagline?: T;
+  columns?:
     | T
     | {
-        link?:
+        heading?: T;
+        links?:
           | T
           | {
-              type?: T;
-              newTab?: T;
-              reference?: T;
-              url?: T;
               label?: T;
+              page?: T;
+              url?: T;
+              id?: T;
             };
         id?: T;
       };
+  socials?:
+    | T
+    | {
+        code?: T;
+        name?: T;
+        url?: T;
+        id?: T;
+      };
+  legal?: T;
+  offices?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1798,6 +2221,16 @@ export interface CodeBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'code';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MediaBlock".
+ */
+export interface MediaBlock {
+  media: number | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'mediaBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

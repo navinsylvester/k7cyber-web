@@ -2,12 +2,14 @@ import type { CollectionConfig } from 'payload'
 
 import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
-import { Archive } from '../../blocks/ArchiveBlock/config'
-import { CallToAction } from '../../blocks/CallToAction/config'
-import { Content } from '../../blocks/Content/config'
 import { FormBlock } from '../../blocks/Form/config'
-import { MediaBlock } from '../../blocks/MediaBlock/config'
-import { hero } from '@/heros/config'
+import { CapabilityRows } from '../../blocks/k7/CapabilityRows/config'
+import { CtaSheet } from '../../blocks/k7/CtaSheet/config'
+import { FeatureMatrix } from '../../blocks/k7/FeatureMatrix/config'
+import { IndexRows } from '../../blocks/k7/IndexRows/config'
+import { Intro } from '../../blocks/k7/Intro/config'
+import { PageBanner } from '../../blocks/k7/PageBanner/config'
+import { Prose } from '../../blocks/k7/Prose/config'
 import { slugField } from 'payload'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
@@ -64,22 +66,19 @@ export const Pages: CollectionConfig<'pages'> = {
       type: 'tabs',
       tabs: [
         {
-          fields: [hero],
-          label: 'Hero',
-        },
-        {
           fields: [
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock],
+              // A page is a stack of sheets: the banner first, the closing call to action last (docs/page-shapes.md).
+              blocks: [PageBanner, Intro, CapabilityRows, FeatureMatrix, IndexRows, Prose, FormBlock, CtaSheet],
               required: true,
               admin: {
                 initCollapsed: true,
               },
             },
           ],
-          label: 'Content',
+          label: 'Sheets',
         },
         {
           name: 'meta',

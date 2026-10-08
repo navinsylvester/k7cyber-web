@@ -49,10 +49,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               preview: isEnabled,
             }}
           />
-
-          <Header />
-          {children}
-          <Footer />
+          {/* .page is the container every cqw unit in the design system measures against. */}
+          <div className="page">
+            <Header />
+            {children}
+            <Footer />
+          </div>
         </Providers>
       </body>
     </html>

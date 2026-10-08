@@ -2,6 +2,8 @@
 @import 'tw-animate-css';
 /* K7 Design Language 2.1 tokens: the single source for colours, type, spacing and cuts. */
 @import '../../../design-system/tokens.css';
+/* The reference component CSS of the design system (sheets, tabs, buttons, tables, rows, header, footer). */
+@import '../../../design-system/components/bundle.css';
 
 /* next/font self-hosts Archivo and IBM Plex Mono (see layout.tsx); point the K7 font tokens at them. */
 :root {
@@ -175,3 +177,11 @@ html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;
 }
+
+/* Logo: the white variant in dark, the full-colour variant in light (Logos). */
+.brand .logo-light { display: none; }
+[data-theme='light'] .brand .logo-light { display: block; }
+[data-theme='light'] .brand .logo-dark { display: none; }
+
+/* The sheet is the unit of layout; a page is sheets stacked with nothing between them. */
+article > .sheet + .sheet { margin-top: 0; }
