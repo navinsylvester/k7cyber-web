@@ -103,7 +103,7 @@ export default async function TopThreatsPage({ searchParams }: { searchParams: P
             <span>Select a column to sort</span>
           </div>
           <div className="table-wrap">
-            <table className="dtable">
+            <table className="dtable" style={{ minWidth: 760 }}>
               <caption className="sr-only">Top threats detected by K7 Labs</caption>
               <thead>
                 <tr>

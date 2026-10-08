@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import {
   BlocksFeature,
+  defaultEditorFeatures,
   EXPERIMENTAL_TableFeature,
   FixedToolbarFeature,
   HeadingFeature,
@@ -67,8 +68,9 @@ export const Posts: CollectionConfig<'posts'> = {
               required: true,
               label: false,
               editor: lexicalEditor({
-                features: ({ rootFeatures }) => [
-                  ...rootFeatures,
+                // The full editor: uploads, lists, quotes, inline code and links, plus tables and code blocks.
+                features: () => [
+                  ...defaultEditorFeatures,
                   HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4'] }),
                   EXPERIMENTAL_TableFeature(),
                   BlocksFeature({ blocks: [Code, Banner] }),

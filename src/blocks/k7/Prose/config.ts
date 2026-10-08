@@ -1,6 +1,6 @@
 import type { Block } from 'payload'
 
-import { FixedToolbarFeature, HeadingFeature, InlineToolbarFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
+import { defaultEditorFeatures, FixedToolbarFeature, HeadingFeature, InlineToolbarFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 
 import { sheetFields } from '../shared'
 
@@ -25,7 +25,7 @@ export const Prose: Block = {
       type: 'richText',
       required: true,
       editor: lexicalEditor({
-        features: ({ rootFeatures }) => [...rootFeatures, HeadingFeature({ enabledHeadingSizes: ['h2', 'h3'] }), FixedToolbarFeature(), InlineToolbarFeature()],
+        features: () => [...defaultEditorFeatures, HeadingFeature({ enabledHeadingSizes: ['h2', 'h3'] }), FixedToolbarFeature(), InlineToolbarFeature()],
       }),
     },
   ],
