@@ -149,4 +149,33 @@ const quotePage = (formId: number): PageData => ({
   ],
 })
 
-export const morePages = (formIds: Record<string, number>): PageData[] => [comparisonPage, contactPage(formIds['Contact enquiry']!), quotePage(formIds['Request quote · XDR']!)]
+/* ---------------- Legal placeholders: prose pages until the legal copy arrives ---------------- */
+const rich = (paras: string[]) => ({
+  root: {
+    type: 'root',
+    children: paras.map((text) => ({ type: 'paragraph', version: 1, children: [{ type: 'text', text, version: 1 }] })),
+    direction: 'ltr' as const,
+    format: '' as const,
+    indent: 0,
+    version: 1,
+  },
+})
+const legalPage = (title: string, slug: string, metaLeft: string, lede: string, paras: string[]): PageData => ({
+  title,
+  slug,
+  _status: 'published',
+  meta: { title: `${title} | K7 CyberSecurity`, description: lede },
+  layout: [
+    { blockType: 'pageBanner', metaLeft, metaRight: 'Last updated 08-10-2026', lede },
+    { blockType: 'prose', tabLabel: 'The text', ground: 'panel', richText: rich(paras) },
+  ],
+})
+const privacyPage = legalPage('Privacy Policy', 'privacy-policy', 'Legal · Privacy', 'How K7 collects, uses and protects the personal data you share with us.', [
+  'This is a placeholder for the K7 CyberSecurity privacy policy. The published policy at k7computing.com will be migrated here before launch.',
+  'Until then, enquiries about personal data should go to the Chennai office through the Contact Us page.',
+])
+const eulaPage = legalPage('End User Licence Agreement', 'eula', 'Legal · EULA', 'The terms under which K7 software and services are licensed to your organisation.', [
+  'This is a placeholder for the K7 end user licence agreement. The current agreement at k7computing.com will be migrated here before launch.',
+])
+
+export const morePages = (formIds: Record<string, number>): PageData[] => [comparisonPage, contactPage(formIds['Contact enquiry']!), quotePage(formIds['Request quote · XDR']!), privacyPage, eulaPage]

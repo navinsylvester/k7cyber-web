@@ -193,3 +193,5 @@ article > .sheet + .sheet { margin-top: 0; }
 /* A compact banner (meta line only) sits above the form sheet with room for its tab. */
 .hero-u + .sheet { margin-top: 0; }
 .hero-u[style*="padding-bottom: 0"] + .sheet { margin-top: 56px; }
+/* Module tiles are H3 under the sheet's H2 (bundle.css styles them as h4). */
+.module h3 { margin: 0; font-size: 17px; line-height: 1.2; letter-spacing: -.02em; font-weight: 600; }

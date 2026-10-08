@@ -117,10 +117,13 @@ export const seed = async ({ payload, req }: { payload: Payload; req: PayloadReq
   await payload.updateGlobal({ slug: 'footer', req, data: footer })
 
   const formIds: Record<string, number> = {}
+  // Forms are updated in place so existing submissions keep their reference.
   for (const form of forms) {
-    await payload.delete({ collection: 'forms', req, where: { title: { equals: form.title } } })
-    const created = await payload.create({ collection: 'forms', req, data: form })
-    formIds[form.title] = created.id
+    const existing = await payload.find({ collection: 'forms', req, where: { title: { equals: form.title } }, limit: 1, pagination: false })
+    const doc = existing.docs[0]
+      ? await payload.update({ collection: 'forms', req, id: existing.docs[0].id, data: form })
+      : await payload.create({ collection: 'forms', req, data: form })
+    formIds[form.title] = doc.id
     payload.logger.info(`Seeded form "${form.title}"`)
   }
 

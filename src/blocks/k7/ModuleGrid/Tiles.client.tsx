@@ -17,7 +17,7 @@ export const ModuleTiles: React.FC<{ items: Item[]; compact: boolean; legend?: R
               {it.icon}
               <span className="state">{on ? '✓' : '+'}</span>
             </span>
-            <h4>{it.name}</h4>
+            <h3>{it.name}</h3>
             <p>{it.line}</p>
           </>
         )

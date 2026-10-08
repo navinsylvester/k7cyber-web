@@ -55,6 +55,8 @@ const placeSheets = (blocks: Block[]): Placed[] => {
 
 export const RenderBlocks: React.FC<{ blocks: Block[]; pageTitle: string }> = ({ blocks, pageTitle }) => {
   if (!blocks?.length) return null
+  // A compact banner has no title, so the first sheet headline becomes the page's H1.
+  const hasH1 = blocks.some((b) => b.blockType === 'homeHero' || (b.blockType === 'pageBanner' && !b.compact))
 
   return (
     <Fragment>
@@ -91,7 +93,7 @@ export const RenderBlocks: React.FC<{ blocks: Block[]; pageTitle: string }> = ({
           case 'locations':
             return <Locations key={key} {...block} meta={meta} />
           case 'formSheet':
-            return <FormSheet key={key} {...block} meta={meta} />
+            return <FormSheet key={key} {...block} meta={meta} as={hasH1 ? 'h2' : 'h1'} />
           default:
             return null
         }

@@ -318,7 +318,7 @@ const platformPage: PageData = {
       metaLeft: 'Platform · K7 Seventh Sense',
       metaRight: 'Agentic unified cybersecurity platform',
       lede: 'Beyond the obvious. An agentic unified cybersecurity platform that separates the signal from the noise to surface every threat and close every compliance gap.',
-      actions: [custom('Request demo →', '/contact-us', 'primary'), custom('View brochure', '#platform')],
+      actions: [custom('Request demo →', '/contact-us', 'primary'), custom('View brochure', '#the-platform')],
     },
     {
       blockType: 'featurePanels',
@@ -336,7 +336,7 @@ const platformPage: PageData = {
           title: 'Isolated events, connected.',
           text: 'K7 Seventh Sense goes beyond the obvious to understand security. By connecting intelligence across endpoints, identities, data, vulnerabilities and behaviour, it goes beyond isolated security events to reveal the bigger picture, helping enterprises understand risk earlier, respond faster and stay ahead as threats evolve.',
           bullets: texts(['Endpoints, identities, data, vulnerabilities and behaviour, connected', 'One proprietary agent, one console', 'Switch on capabilities as you need them']),
-          links: [custom('View brochure →', '#platform', 'text')],
+          links: [custom('View brochure →', '#the-platform', 'text')],
           onPanel: false,
         },
       ],
@@ -414,7 +414,7 @@ const platformPage: PageData = {
         { icon: 'surface', title: 'How K7 Stops Remote Ransomware with Deception Technology', source: 'blog.k7computing.com', kind: 'Blog · K7 Labs', url: 'https://blog.k7computing.com/how-k7-stops-remote-ransomware-with-deception-technology/' },
       ],
     },
-    cta('Request a demo and a K7 engineer will walk you through K7 Seventh Sense on your own endpoints, identities and data.', [custom('Request demo →', '/contact-us', 'primary'), custom('View brochure', '#platform'), custom('K7 vs CrowdStrike →', '/k7-vs-crowdstrike', 'text')], 'See it on your estate.'),
+    cta('Request a demo and a K7 engineer will walk you through K7 Seventh Sense on your own endpoints, identities and data.', [custom('Request demo →', '/contact-us', 'primary'), custom('View brochure', '#the-platform'), custom('K7 vs CrowdStrike →', '/k7-vs-crowdstrike', 'text')], 'See it on your estate.'),
   ],
 }
 

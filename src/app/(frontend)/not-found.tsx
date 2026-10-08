@@ -1,18 +1,29 @@
 import Link from 'next/link'
 import React from 'react'
 
-import { Button } from '@/components/ui/button'
-
 export default function NotFound() {
   return (
-    <div className="container py-28">
-      <div className="prose max-w-none">
-        <h1 style={{ marginBottom: 0 }}>404</h1>
-        <p className="mb-4">This page could not be found.</p>
-      </div>
-      <Button asChild variant="default">
-        <Link href="/">Go home</Link>
-      </Button>
-    </div>
+    <article>
+      <section className="sheet g-paper hero-u" id="top">
+        <div className="hero-meta">
+          <span className="label">404 · Not found</span>
+          <span className="label">No record at this address</span>
+        </div>
+        <div className="hero-grid">
+          <h1 className="h-page">Nothing here.</h1>
+          <div className="hero-side">
+            <p className="lede">The page may have moved or never existed. The platform, solutions and services are in the menu above.</p>
+            <div className="actions">
+              <Link className="btn btn-primary" href="/">
+                Home →
+              </Link>
+              <Link className="btn btn-line" href="/contact-us">
+                Contact us
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </article>
   )
 }
