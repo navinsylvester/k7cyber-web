@@ -1,0 +1,21 @@
+# Local services only. Throwaway development credentials; never used in a deployed environment.
+# Port 5434 avoids the machine's own Postgres (5432) and the old k7cybersecurity-website container (5433).
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: k7
+      POSTGRES_PASSWORD: k7
+      POSTGRES_DB: k7
+    ports:
+      - '${POSTGRES_PORT:-5434}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U k7 -d k7']
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  postgres-data:

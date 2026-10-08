@@ -1,0 +1,27 @@
+<!-- @dsCard height=320 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<!--
+  blocks: signal 216×120 (tab-w × 3·tab-h) cut cut-feature; ink 216×120 cut cut-tab; panel 216×120 cut cut-tab, the relief tint
+  arrangement: a staggered stack stepping right to left down the cover, the S1 tab walk: together the three blocks draw the 7's diagonal; the top block bleeds off the top edge, the bottom one off the bottom
+  pattern: "a literal motif → that silhouette": PT2 seven hatch, 20px pitch, one stroke at the angle of the 7, cut from the ink block in paper (the ground), 17 strokes; chosen because the diagonal of the 7 is the one shape the whole language is built from
+  scales: steps 216 (tab-w), 120 (3·tab-h), 40 (tab-h), 12 and 28 (cut-tab, cut-feature); radius-0 everywhere
+-->
+<div style="position:relative;width:960px;height:320px;background:var(--paper);color:var(--ink);font-family:var(--font-sans);overflow:hidden">
+  <svg width="960" height="320" viewBox="0 0 960 320" aria-hidden="true" style="position:absolute;inset:0">
+    <style>
+      .sig{fill:var(--signal)} .inkb{fill:var(--ink)} .pan{fill:var(--panel)} .hatch{stroke:var(--paper);stroke-width:1;fill:none}
+    </style>
+    <defs>
+      <pattern id="seven" width="20" height="20" patternUnits="userSpaceOnUse"><path class="hatch" d="M0 20L12 0"/></pattern>
+      <clipPath id="inkclip"><path d="M612 100h204l12 12v108H612z"/></clipPath>
+    </defs>
+    <path class="sig" d="M744 -40h188l28 28v132H744z"/>
+    <path class="inkb" d="M612 100h204l12 12v108H612z"/>
+    <rect x="612" y="100" width="216" height="120" fill="url(#seven)" clip-path="url(#inkclip)"/>
+    <path class="pan" d="M480 200h204l12 12v148H480z"/>
+  </svg>
+  <div style="position:absolute;left:40px;bottom:40px;max-width:440px">
+    <div style="font-size:80px;line-height:.95;font-weight:600;letter-spacing:-.05em">K7 Design<br>Language</div>
+    <div style="margin-top:12px;font-size:14px;line-height:1.3;color:var(--muted)">Quiet by design. Version 2.1, extended for the enterprise website.</div>
+  </div>
+</div>

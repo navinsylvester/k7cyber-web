@@ -1,0 +1,66 @@
+/* K7 Design Language 2.1 — CSS variables generated from tokens.json. Dark is the default theme; [data-theme="light"] swaps paper and ink. signal never moves. */
+:root, [data-theme="dark"] {
+  --paper: #0a0a09;
+  --panel: #1c1c19;
+  --ink: #efeee8;
+  --contrast: #2e2d29;
+  --contrast-ink: #efeee8;
+  --signal: #ff4521;
+  --on-signal: #0a0a09;
+  --acc-ink: #ff6647;
+  --contrast-acc: #ff6647;
+  --code: #1c1c19;
+  --line: rgba(239, 238, 232, 0.16);
+  --muted: rgba(239, 238, 232, 0.66);
+  --tint: rgba(239, 238, 232, 0.06);
+  --contrast-line: rgba(239, 238, 232, 0.16);
+  --contrast-muted: rgba(239, 238, 232, 0.66);
+  --contrast-tint: rgba(239, 238, 232, 0.06);
+  --signal-line: rgba(10, 10, 9, 0.16);
+  --signal-muted: rgba(10, 10, 9, 0.66);
+  --signal-tint: rgba(10, 10, 9, 0.06);
+  --logo-orange: #ec6a23;
+
+  --font-sans: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+
+  --pad: 40px;
+  --sheet-top: 112px;
+  --sheet-bottom: 128px;
+  --tab-w: 216px;
+  --tab-h: 40px;
+  --header-h: 60px;
+  --btn-h: 52px;
+  --row-y: 22px;
+  --gap-s: 12px;
+  --gap-m: 24px;
+  --gap-l: 40px;
+  --pixel: 6px;
+  --icon: 32px;
+  --measure-lede: 46ch;
+  --measure-prose: 40rem;
+
+  --radius-0: 0;
+  --cut-tab: 12px;
+  --cut-btn: 14px;
+  --cut-feature: 28px;
+
+  --dim: 0.42;
+  --quiet: 0.7;
+  --pattern-min: 0.16;
+  --pattern-mid: 0.22;
+  --pattern-max: 0.40;
+  --disabled: 0.4;
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  --paper: #efeee8;
+  --panel: #e0dfd6;
+  --ink: #0a0a09;
+  --contrast: #0a0a09;
+  --acc-ink: #c42a0b;
+  --line: rgba(10, 10, 9, 0.16);
+  --muted: rgba(10, 10, 9, 0.66);
+  --tint: rgba(10, 10, 9, 0.06);
+  color-scheme: light;
+}

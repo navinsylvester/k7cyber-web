@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>K7 GRC — Service</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/k7/tokens.css">
+<link rel="stylesheet" href="ds/k7/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a09}
+a{color:inherit}a:hover{color:#ff6647}
+</style>
+</helmet>
+<div class="page" data-theme="{{theme}}" style="min-height: 100%; background: var(--paper); color: var(--ink); font-family: var(--font-sans);">
+
+<header class="site-header g-paper">
+  <div class="bar">
+    <a class="brand" href="Main.dc.html" aria-label="K7 CyberSecurity">
+      <sc-if value="{{isDark}}" hint-placeholder-val="{{true}}"><img src="/_blob/9d01d02852773043853d31caa5213fa6" alt="K7 CyberSecurity" style="height: 26px; width: auto;"></sc-if>
+      <sc-if value="{{isLight}}" hint-placeholder-val="{{false}}"><img src="/_blob/9ebd49ce79d48dde4518b17d830cd766" alt="K7 CyberSecurity" style="height: 26px; width: auto;"></sc-if>
+    </a>
+    <nav class="main-nav" aria-label="Main">
+      <button aria-expanded="false">Platform <i class="chev"></i></button>
+      <button aria-expanded="false">Solutions <i class="chev"></i></button>
+      <button aria-expanded="false" aria-current="page">Services <i class="chev"></i></button>
+      <a href="#partners">Partners</a>
+      <button aria-expanded="false">Resources <i class="chev"></i></button>
+      <button aria-expanded="false">About Us <i class="chev"></i></button>
+      <button aria-expanded="false">Why K7 <i class="chev"></i></button>
+      <a href="#support">Support</a>
+    </nav>
+    <div class="hdr-tools">
+      <div class="seg" role="group" aria-label="Theme"><button aria-pressed="true">Dark</button><button aria-pressed="false">Light</button></div>
+      <a class="btn btn-primary btn-sm" href="#next-step">Request demo →</a>
+      <button class="btn btn-line btn-sm menu-btn" aria-label="Open menu">Menu</button>
+    </div>
+  </div>
+</header>
+<!-- 01 · Banner -->
+<section class="sheet g-paper hero-u" id="top">
+  <div class="hero-meta"><span class="label">Services · Consulting</span><span class="label">Governance, risk and compliance</span></div>
+  <div class="hero-grid">
+    <h1 class="h-page">K7 GRC</h1>
+    <div class="hero-side">
+      <p class="lede">Optimise digital transformation of infrastructure and processes to enhance enterprise governance, risk management and compliance.</p>
+      <div class="actions"><a class="btn btn-primary" href="#next-step">Enquire →</a><a class="btn btn-line" href="https://www.k7computing.com/in/pdf/k7-grc.pdf">View brochure</a></div>
+    </div>
+  </div>
+</section>
+
+<section class="sheet g-panel" id="overview">
+  <div class="sheet-tab" style="--k: 1;"><span><i class="pixel"></i><span class="label">02/05</span></span><span class="label">Overview</span></div>
+  <div class="sheet-head"><h2 class="h-sheet">Strategy, not paperwork.</h2><p class="lede">The K7 Governance, Risk and Compliance Consulting team leverages K7's multi-decade expertise as a cybersecurity provider to analyse an organisation's digital infrastructure, policies and processes, to achieve enterprise-wide strategic objectives and avoid operational inefficiency, cost escalation, cybersecurity gaps and non-compliance penalties.</p></div>
+  <div class="notice" style="margin-top: clamp(32px, 4cqw, 56px); max-width: 62ch;"><i class="pixel" style="margin-top: 7px;"></i><p><strong style="font-weight: 600;">K7 is empanelled by CERT-In</strong> for providing Information Security Auditing Services.</p></div>
+</section>
+<section class="sheet g-paper" id="benefits">
+  <div class="sheet-tab" style="--k: 0.667;"><span><i class="pixel"></i><span class="label">03/05</span></span><span class="label">Benefits</span></div>
+  <div class="sheet-head"><h2 class="h-sheet">Benefits.</h2><p class="lede">Two kinds of risk, managed.</p></div>
+  <div class="cap-list" style="margin-top: clamp(40px, 5cqw, 72px);">
+    <div><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 16h8l3-8 5 16 3-8h5"/><rect x="14.5" y="14.5" width="3" height="3"/></svg><div><h3>Financial Risk Management</h3><p>Identify security gaps in financial processes that could result in financial malfeasance and leakage of funds.</p></div></div>
+    <div><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 4h18v24H7z M11 11h10 M11 16h10 M11 21h6"/><rect x="20" y="19.5" width="3" height="3"/></svg><div><h3>Operational Risk Management</h3><p>Policies, standard operating procedures, operation manuals and cybersecurity training to ensure security policies and standards are maintained.</p></div></div>
+  </div>
+</section>
+<section class="sheet g-contrast" id="focus">
+  <div class="sheet-tab" style="--k: 0.333;"><span><i class="pixel"></i><span class="label">04/05</span></span><span class="label">Focus areas</span></div>
+  <div class="sheet-head"><h2 class="h-sheet">Focus areas.</h2><p class="lede">Infrastructure, process and compliance, in that order.</p></div>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1px; background: var(--ln); box-shadow: inset 0 0 0 1px var(--ln); margin-top: clamp(40px, 5cqw, 72px);">
+    <div style="background: var(--bg); padding: 24px 22px; display: flex; flex-direction: column; gap: 14px;"><span class="label label-acc">01 · Infrastructure</span><p style="margin: 0; font-size: 17px; line-height: 1.5;">K7 GRC evaluates enterprise digital infrastructure by:</p><ol class="steps" style="font-size: 15px;"><li>Conducting information security audits</li><li>Performing Vulnerability Assessment and Penetration Testing</li><li>Verifying digital communication integrity</li><li>Assessing cybersecurity risk from Bring Your Own Device (BYOD) and Shadow IT</li></ol></div>
+    <div style="background: var(--bg); padding: 24px 22px; display: flex; flex-direction: column; gap: 14px;"><span class="label label-acc">02 · Process</span><p style="margin: 0; font-size: 17px; line-height: 1.5;">K7 GRC assesses digital business processes for:</p><ol class="steps" style="font-size: 15px;"><li>Adherence to industry best practices</li><li>Adherence to internal standards and policies</li><li>Use of appropriate technologies and protocols</li><li>Hardware and software lifecycle management</li><li>Business continuity management</li></ol></div>
+    <div style="background: var(--bg); padding: 24px 22px; display: flex; flex-direction: column; gap: 14px;"><span class="label label-acc">03 · Compliance</span><p style="margin: 0; font-size: 17px; line-height: 1.5;">K7 GRC analyses organisational compliance with regulations spanning multiple industries and jurisdictions.</p><div style="display: flex; flex-direction: column; gap: 12px;"><div><span class="label muted">Finance</span><div class="tags" style="margin-top: 6px;"><span class="tag">PCI DSS</span><span class="tag">SAMA</span><span class="tag">Central Bank Compliance</span></div></div><div><span class="label muted">Healthcare</span><div class="tags" style="margin-top: 6px;"><span class="tag">ADHICS</span><span class="tag">NABIDH</span></div></div><div><span class="label muted">ISO</span><div class="tags" style="margin-top: 6px;"><span class="tag">ISO 9001</span><span class="tag">ISO 22301</span><span class="tag">ISO 27001</span></div></div><div><span class="label muted">Data protection</span><div class="tags" style="margin-top: 6px;"><span class="tag">GDPR</span><span class="tag">UAE Information Assurance Regulation</span><span class="tag">DPDP Act</span></div></div></div></div>
+  </div>
+</section>
+
+<section class="sheet g-signal cta-sheet" id="next-step">
+  <div class="sheet-tab" style="--k: 0;"><span><i class="pixel"></i><span class="label">05/05</span></span><span class="label">Next step</span></div>
+  <div class="sheet-head"><h2 class="h-sheet">Security that answers to you.</h2><p>Tell us about your organisation and the regulations it answers to, and a K7 GRC consultant will get in touch.</p></div>
+  <div class="cta-actions"><a class="btn btn-primary" href="#next-step">Enquire →</a><a class="btn btn-line" href="https://www.k7computing.com/in/pdf/k7-grc.pdf">View brochure</a></div>
+</section>
+
+<footer class="site-footer g-contrast">
+  <div class="footer-grid">
+    <div class="footer-brand"><img src="/_blob/9d01d02852773043853d31caa5213fa6" alt="K7 CyberSecurity" style="height: 30px; width: auto; align-self: flex-start;"><p class="body-s">Security that answers to you. Superior cybersecurity since 1991, built and supported in-house.</p><div class="social"><a href="#top" aria-label="LinkedIn">in</a><a href="#top" aria-label="X">X</a><a href="#top" aria-label="YouTube">YT</a><a href="#top" aria-label="Instagram">IG</a><a href="#top" aria-label="Facebook">FB</a></div></div>
+    <div class="footer-col"><h2 class="label">Company</h2><a href="Main.dc.html">Home</a><a href="#top">About Us</a><a href="#top">Careers</a><a href="#next-step">Contact Us</a></div>
+    <div class="footer-col"><h2 class="label">Offer</h2><a href="Platform.dc.html">Platform</a><a href="#top">Solutions</a><a href="#top">Services</a><a href="#top">Partners</a></div>
+    <div class="footer-col"><h2 class="label">Resources</h2><a href="#top">Insight</a><a href="#top">Research</a><a href="#top">Media Room</a><a href="#top">Support</a></div>
+    <div class="footer-col"><h2 class="label">Legal</h2><a href="#top">Privacy Policy</a><a href="#top">EULA</a></div>
+  </div>
+  <div class="footer-base body-s"><span>© 2026 K7 Enterprise Security Private Limited. All Rights Reserved.</span><span class="label">Chennai · Singapore · Dubai</span></div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"$preview":{"width":1440,"height":3300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    return { theme: theme, isDark: theme !== 'light', isLight: theme === 'light' };
+  }
+}
+</script>
+</body>
+</html>

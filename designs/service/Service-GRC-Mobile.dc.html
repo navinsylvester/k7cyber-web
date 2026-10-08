@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>K7 GRC — Service, phone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/k7/tokens.css">
+<link rel="stylesheet" href="ds/k7/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a09}
+a{color:inherit}a:hover{color:#ff6647}
+</style>
+</helmet>
+<div style="width: 100%; max-width: 100%; min-height: 100%; background: #0a0a09; color: #efeee8; font-family: 'Archivo', system-ui, sans-serif;">
+  <dc-import name="Service-GRC" theme="{{theme}}" hint-size="100%,5100px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"$preview":{"width":390,"height":5100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'dark' };
+  }
+}
+</script>
+</body>
+</html>

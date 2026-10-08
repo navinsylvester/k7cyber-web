@@ -1,0 +1,28 @@
+<!-- @dsCard group="Forms" height=560 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<div class="page">
+<section class="sheet g-panel" style="padding-top:48px;padding-bottom:48px">
+  <div class="sheet-tab" style="--k:0"><span><i class="pixel"></i><span class="label">Enquire</span></span><span class="label">MDR</span></div>
+  <div class="sheet-head" style="margin-bottom:36px">
+    <h2 class="h-title">K7 Seventh Sense MDR</h2>
+    <p class="muted body-s">Fields marked * are mandatory. We reply within one working day.</p>
+  </div>
+  <form class="form-grid" onsubmit="event.preventDefault()">
+    <div class="field"><label class="label" for="e-company">Company name *</label><div class="control"><input id="e-company" type="text"></div></div>
+    <div class="field"><label class="label" for="e-person">Contact person *</label><div class="control"><input id="e-person" type="text"></div></div>
+    <div class="field"><label class="label" for="e-email">Contact email *</label><div class="control"><input id="e-email" type="email"></div></div>
+    <div class="field"><label class="label" for="e-phone">Contact phone *</label><div class="control"><input id="e-phone" type="tel"></div></div>
+    <div class="field"><label class="label" for="e-country">Country *</label><div class="control is-select"><select id="e-country"><option>India</option></select></div></div>
+    <div class="field"><label class="label" for="e-state">State *</label><div class="control is-select"><select id="e-state"><option>Select a State</option></select></div></div>
+    <div class="field"><label class="label" for="e-city">City *</label><div class="control"><input id="e-city" type="text"></div></div>
+    <div class="field"><label class="label" for="e-emp">No. of employees *</label><div class="control is-select"><select id="e-emp"><option>1–250</option><option>251–1,000</option><option>1,001–5,000</option><option>5,000+</option></select></div></div>
+    <div class="field span-2"><label class="label" for="e-comment">Comment</label><div class="control"><textarea id="e-comment"></textarea></div></div>
+    <div class="consent span-2">
+      <label class="check"><input id="e-all" type="checkbox"> Select all</label>
+      <label class="check"><input id="e-consent" type="checkbox"> I agree to the collection and processing of my personal data for the stated purpose *</label>
+      <label class="check"><input id="e-updates" type="checkbox"> I would like to receive updates from K7 CyberSecurity</label>
+    </div>
+    <div class="form-foot span-2"><a class="link-u" href="https://www.k7computing.com/in/privacy-policy">Privacy Policy</a><button class="btn btn-primary" type="submit">Submit</button></div>
+  </form>
+</section>
+</div>

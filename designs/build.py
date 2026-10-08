@@ -1,0 +1,16 @@
+import re,sys
+SCR=__import__('os').environ.get('K7_SCRATCH','.')
+name=sys.argv[1]; menu=sys.argv[2] if len(sys.argv)>2 else 'true'
+s=open(SCR+'/k7-pages/project/%s.dc.html'%name).read()
+s=re.sub(r'<script src="./support.js"></script>','',s)
+s=re.sub(r'<script type="text/x-dc".*?</script>','',s,flags=re.S)
+for t in ('<x-dc>','</x-dc>','<helmet>','</helmet>'): s=s.replace(t,'')
+s=re.sub(r'<sc-if value="\{\{isLight\}\}"[^>]*>.*?</sc-if>','',s,flags=re.S)
+s=re.sub(r'<sc-if value="\{\{isDark\}\}"[^>]*>(.*?)</sc-if>',r'\1',s,flags=re.S)
+if menu=='true': s=re.sub(r'<sc-if value="\{\{menuOpen\}\}"[^>]*>(.*?)</sc-if>',r'\1',s,flags=re.S)
+else: s=re.sub(r'<sc-if value="\{\{menuOpen\}\}"[^>]*>.*?</sc-if>','',s,flags=re.S)
+s=s.replace('{{theme}}','dark').replace('{{menuOpen}}',menu)
+s=s.replace('href="ds/k7/tokens.css"','href="/home/navin/code/k7cyber-web/design-system/tokens.css"')
+s=s.replace('href="ds/k7/components/bundle.css"','href="/home/navin/code/k7cyber-web/design-system/components/bundle.css"')
+s=s.replace('/_blob/9d01d02852773043853d31caa5213fa6','/home/navin/code/k7cyber-web/design-system/assets/Logos/k7-cybersecurity-logo-white.svg')
+open(SCR+'/preview/%s-%s.html'%(name,menu),'w').write(s)

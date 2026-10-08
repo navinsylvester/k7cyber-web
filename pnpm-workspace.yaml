@@ -1,0 +1,5 @@
+# pnpm 11 reads build-script approvals from here, not from package.json.
+onlyBuiltDependencies:
+  - sharp
+  - esbuild
+  - unrs-resolver

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>K7 Seventh Sense — Platform</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/k7/tokens.css">
+<link rel="stylesheet" href="ds/k7/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a09}
+a{color:inherit}a:hover{color:#ff6647}
+</style>
+</helmet>
+<div class="page" data-theme="{{theme}}" style="min-height: 100%; background: var(--paper); color: var(--ink); font-family: var(--font-sans);">
+
+<header class="site-header g-paper">
+  <div class="bar">
+    <a class="brand" href="Main.dc.html" aria-label="K7 CyberSecurity">
+      <sc-if value="{{isDark}}" hint-placeholder-val="{{true}}"><img src="/_blob/9d01d02852773043853d31caa5213fa6" alt="K7 CyberSecurity" style="height: 26px; width: auto;"></sc-if>
+      <sc-if value="{{isLight}}" hint-placeholder-val="{{false}}"><img src="/_blob/9ebd49ce79d48dde4518b17d830cd766" alt="K7 CyberSecurity" style="height: 26px; width: auto;"></sc-if>
+    </a>
+    <nav class="main-nav" aria-label="Main">
+      <button aria-expanded="{{menuOpen}}">Platform <i class="chev"></i></button>
+      <button aria-expanded="false">Solutions <i class="chev"></i></button>
+      <button aria-expanded="false">Services <i class="chev"></i></button>
+      <a href="#partners">Partners</a>
+      <button aria-expanded="false">Resources <i class="chev"></i></button>
+      <button aria-expanded="false">About Us <i class="chev"></i></button>
+      <button aria-expanded="false">Why K7 <i class="chev"></i></button>
+      <a href="#support">Support</a>
+    </nav>
+    <div class="hdr-tools">
+      <div class="seg" role="group" aria-label="Theme"><button aria-pressed="true">Dark</button><button aria-pressed="false">Light</button></div>
+      <a class="btn btn-primary btn-sm" href="#next-step">Request demo →</a>
+      <button class="btn btn-line btn-sm menu-btn" aria-label="Open menu">Menu</button>
+    </div>
+  </div>
+  <sc-if value="{{menuOpen}}" hint-placeholder-val="{{true}}">
+  <div class="mega g-panel" role="region" aria-label="Platform">
+    <div class="mega-col"><span class="label">K7 Seventh Sense <span>01</span></span><a href="#top" aria-current="page">Platform overview <span class="arrow">→</span></a><p class="body-s muted" style="margin: 12px 0 0; max-width: 30ch;">Agentic unified cybersecurity platform. Endpoint to SOC, one agent, one console.</p></div>
+    <div class="mega-col"><span class="label">Core <span>04</span></span><a href="#modular">K7 Seventh Sense MDR <span class="arrow">→</span></a><a href="#modular">K7 Seventh Sense XDR <span class="arrow">→</span></a><a href="#modular">K7 Seventh Sense EDR <span class="arrow">→</span></a><a href="#modular">K7 Seventh Sense EPS <span class="arrow">→</span></a></div>
+    <div class="mega-col"><span class="label">Addons <span>07</span></span><a href="#modular">K7 Data Loss Protection <span class="arrow">→</span></a><a href="#modular">K7 Identity and Access Management <span class="arrow">→</span></a><a href="#modular">K7 Patch Management <span class="arrow">→</span></a><a href="#modular">K7 Advanced Endpoint Management <span class="arrow">→</span></a><a href="#modular">K7 Agentic SOC <span class="arrow">→</span></a><a href="#modular">K7 Log Retention <span class="arrow">→</span></a><a href="#modular">K7 File Security Monitoring <span class="arrow">→</span></a></div>
+  </div>
+  </sc-if>
+</header>
+
+<!-- 01 · Banner -->
+<section class="sheet g-paper hero-u" id="top">
+  <div class="hero-meta"><span class="label">Platform · K7 Seventh Sense</span><span class="label">Agentic unified cybersecurity platform</span></div>
+  <div class="hero-grid">
+    <h1 class="h-page">K7 Seventh Sense</h1>
+    <div class="hero-side">
+      <p class="lede"><strong style="font-weight: 600;">Beyond the obvious.</strong> An agentic unified cybersecurity platform that separates the signal from the noise to surface every threat and close every compliance gap.</p>
+      <div class="actions"><a class="btn btn-primary" href="#next-step">Request demo →</a><a class="btn btn-line" href="#platform">View brochure</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 · The platform -->
+<section class="sheet g-panel" id="platform">
+  <div class="sheet-tab" style="--k: 1;"><span><i class="pixel"></i><span class="label">02/06</span></span><span class="label">The platform</span></div>
+  <div class="sheet-head"><h2 class="h-sheet">One platform. <span class="dim">Endpoint to SOC.</span></h2><p class="lede">Most cybersecurity tools are designed to detect one part of the problem: an endpoint event, an identity anomaly, a data movement or a threat. Real risk often lies in the connections between them.</p></div>
+  <article class="feature two" style="margin-top: clamp(40px, 5cqw, 72px); --t-bg: var(--paper); --t-fg: var(--ink);">
+    <figure class="ph" style="--ar: 4/3;"><figcaption>Animation · Unified endpoint-to-SOC</figcaption></figure>
+    <div class="feature-body">
+      <span class="label label-acc">Unified Endpoint-To-SOC Security Platform</span>
+      <h3 class="h-title">Isolated events, connected.</h3>
+      <p>K7 Seventh Sense goes beyond the obvious to understand security. By connecting intelligence across endpoints, identities, data, vulnerabilities and behaviour, it goes beyond isolated security events to reveal the bigger picture, helping enterprises understand risk earlier, respond faster and stay ahead as threats evolve.</p>
+      <ul><li>Endpoints, identities, data, vulnerabilities and behaviour, connected</li><li>One proprietary agent, one console</li><li>Switch on capabilities as you need them</li></ul>
+      <div class="actions"><a class="link-u" href="#platform">View brochure →</a></div>
+    </div>
+  </article>
+</section>
+
+<!-- 03 · Modular by design: solutions and add-ons -->
+<section class="sheet g-paper" id="modular">
+  <div class="sheet-tab" style="--k: 0.8;"><span><i class="pixel"></i><span class="label">03/06</span></span><span class="label">Modules</span></div>
+  <div class="sheet-head"><h2 class="h-sheet">Modular by design.</h2><p class="lede">Start with the core security solutions and switch on capabilities as you need them. Every module runs on the same proprietary agent and appears in the same console.</p></div>
+  <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: clamp(40px, 5cqw, 72px); padding-bottom: 12px; border-bottom: 1px solid var(--fg);"><span class="label">Solutions</span><span class="label muted">04 · Core</span></div>
+  <div class="modules" role="group" aria-label="Solutions" style="margin-top: 1px;">
+    <a class="module is-on" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 15v13 M11 28h10 M11 11l5-4 5 4 M6 13l10-9 10 9"/><rect x="14.5" y="12" width="3" height="3"/></svg><span class="state">✓</span></span><h4>MDR</h4><p>Real-time cybersecurity posture improvement for digitally-enabled organisations.</p></a>
+    <a class="module is-on" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 4h24v24H4z M12 4v24 M20 4v24 M4 12h24 M4 20h24"/><rect x="14.5" y="14.5" width="3" height="3"/></svg><span class="state">✓</span></span><h4>XDR</h4><p>Centralised control over applications, devices, networks and cloud accounts.</p></a>
+    <a class="module is-on" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 5h15v15H5z M20 20l7 7"/><rect x="11" y="11" width="3" height="3"/></svg><span class="state">✓</span></span><h4>EDR</h4><p>Endpoint protection with visibility and control over enterprise digital infrastructure.</p></a>
+    <a class="module is-on" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 4h18l6 6v18H4z M9 16l5 5 9-9"/><rect x="7" y="7" width="3" height="3"/></svg><span class="state">✓</span></span><h4>EPS</h4><p>Endpoint security that is light on hardware and network resources.</p></a>
+  </div>
+  <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 40px; padding-bottom: 12px; border-bottom: 1px solid var(--fg);"><span class="label">Addons</span><span class="label muted">07 · Switch on when needed</span></div>
+  <div class="modules" role="group" aria-label="Addons" style="margin-top: 1px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 176px), 1fr));">
+    <a class="module" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 4h13l5 5v19H7z M20 4v5h5 M11 15h10 M11 20h10"/><rect x="11" y="8.5" width="3" height="3"/></svg><span class="state">+</span></span><h4>DLP</h4><p>Content-aware real-time data use monitoring.</p></a>
+    <a class="module" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M18 4h10v10H18z M18 14L4 28 M8 24l4 4 M12 20l3 3"/><rect x="21.5" y="7.5" width="3" height="3"/></svg><span class="state">+</span></span><h4>IAM</h4><p>Centralised identity management and session monitoring.</p></a>
+    <a class="module" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M10 4h12l6 6v12l-6 6H10l-6-6V10z M16 10v12 M10 16h12"/><rect x="14.5" y="14.5" width="3" height="3"/></svg><span class="state">+</span></span><h4>Patch Management</h4><p>Vulnerability patching, for every OS.</p></a>
+    <a class="module" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 8h18v12H4z M10 24h6 M13 20v4 M24 12h4v12h-4z"/><rect x="7" y="11" width="3" height="3"/></svg><span class="state">+</span></span><h4>Advanced Endpoint Management</h4><p>Personal and corporate device management.</p></a>
+    <a class="module" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 27h24 M7 27V9 M13 27V14 M19 27V19 M25 27V23"/><rect x="5.5" y="4" width="3" height="3"/></svg><span class="state">+</span></span><h4>Agentic SOC</h4><p>Autonomous 24/7 operations.</p></a>
+    <a class="module" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M10 4h13l5 5v18H10z M23 4v5h5 M6 8v23h17"/><rect x="14" y="13" width="3" height="3"/></svg><span class="state">+</span></span><h4>Log Retention</h4><p>Searchable log history.</p></a>
+    <a class="module" href="#modular"><span class="top"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 5h20v12l-10 10-10-10z M17 9l-3 6h5l-3 6"/><rect x="8.5" y="8" width="3" height="3"/></svg><span class="state">+</span></span><h4>File Security Monitoring</h4><p>Scanning and content disarmament of uploaded files.</p></a>
+  </div>
+  <div class="actions" style="margin-top: 28px;"><a class="btn btn-line" href="#next-step">Request demo</a><a class="link-u" href="#top">Compare the modules →</a></div>
+</section>
+
+<!-- 04 · Industry focus: one industry expanded, the rest indexed -->
+<section class="sheet g-contrast" id="industries">
+  <div class="sheet-tab" style="--k: 0.6;"><span><i class="pixel"></i><span class="label">04/06</span></span><span class="label">Industry focus</span></div>
+  <div class="sheet-head"><h2 class="h-sheet">Industry focus.</h2><p class="lede">Built to match your sector's risk profile and compliance requirements, backed by experts who understand the nuances of each industry's regulatory and threat landscapes.</p></div>
+  <article class="feature two on-panel" style="margin-top: clamp(40px, 5cqw, 72px);">
+    <div class="feature-body">
+      <span class="label label-acc">01 · Expanded</span>
+      <h3 class="h-title">BFSI</h3>
+      <p>Protection for PII and sensitive enterprise data, banking applications and APIs.</p>
+      <div class="actions"><a class="link-u" href="#industries">Learn more →</a></div>
+    </div>
+    <div class="feature-body" style="gap: 24px;">
+      <div style="display: flex; flex-direction: column; gap: 10px;"><span class="label muted">Key capabilities</span><ul style="margin: 0;"><li>Unified cybersecurity platform</li><li>Network security for distributed operations</li><li>VAPT and GRC services</li></ul></div>
+      <div style="display: flex; flex-direction: column; gap: 10px;"><span class="label muted">Compliance</span><div class="tags"><span class="tag">CBUAE</span><span class="tag">RBI</span><span class="tag">SAMA</span><span class="tag">SEBI</span><span class="tag">DPDP</span><span class="tag">PCI DSS</span></div></div>
+    </div>
+  </article>
+  <div class="ilist" style="margin-top: 24px;">
+    <a class="irow irow-grid" href="#industries"><span class="n">02</span><span class="irow-title">Education</span><span class="desc">Protection for PII and institutional applications. DPDP · PCI DSS</span><span class="arrow">+</span></a>
+    <a class="irow irow-grid" href="#industries"><span class="n">03</span><span class="irow-title">Government</span><span class="desc">Protection for PII and government applications. DPDP · PCI DSS</span><span class="arrow">+</span></a>
+    <a class="irow irow-grid" href="#industries"><span class="n">04</span><span class="irow-title">Healthcare</span><span class="desc">Protection for PPI and PII, and healthcare applications. DPDP · ADHICS · NABIDH · PCI DSS</span><span class="arrow">+</span></a>
+    <a class="irow irow-grid" href="#industries"><span class="n">05</span><span class="irow-title">Manufacturing</span><span class="desc">Protection for PII, intellectual property and production applications. DPDP · PCI DSS</span><span class="arrow">+</span></a>
+    <a class="irow irow-grid" href="#industries"><span class="n">06</span><span class="irow-title">IT/ITES</span><span class="desc">Data breach protection with security for PII, applications and APIs. DPDP · GDPR · UAE IA · CBUAE · RBI · PCI DSS · SAMA · SEBI · ADHICS · NABIDH · ISO 9001 · ISO 22301 · ISO 27001</span><span class="arrow">+</span></a>
+    <a class="irow irow-grid" href="#industries"><span class="n">07</span><span class="irow-title">Retail</span><span class="desc">Protection for PII and business records, retail applications and APIs. DPDP · PCI DSS</span><span class="arrow">+</span></a>
+  </div>
+</section>
+
+<!-- 05 · Insight -->
+<section class="sheet g-panel" id="insight">
+  <div class="sheet-tab" style="--k: 0.4;"><span><i class="pixel"></i><span class="label">05/06</span></span><span class="label">Insight</span></div>
+  <div class="sheet-head"><h2 class="h-sheet">Insight.</h2><p class="lede">A whitepaper, a case study and a note from K7 Labs on what the platform does in practice.</p></div>
+  <div class="ilist pub-list" style="margin-top: clamp(40px, 5cqw, 72px);">
+    <a class="irow" href="https://www.k7computing.com/in/pdf/K7-Whitepaper-The-Unified-Security-Platform-Imperative.pdf"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M10 4h13l5 5v18H10z M23 4v5h5 M6 8v23h17"/><rect x="14" y="13" width="3" height="3"/></svg><span class="irow-title">The Unified Security Platform Imperative</span><span class="desc">k7computing.com</span><span class="when label">Whitepaper · PDF</span><span class="arrow">→</span></a>
+    <a class="irow" href="https://www.k7computing.com/in/pdf/K7-Case-Study-Multinational-Bank.pdf"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 4h13l5 5v19H7z M20 4v5h5 M11 15h10 M11 20h10"/><rect x="11" y="8.5" width="3" height="3"/></svg><span class="irow-title">Multinational Bank</span><span class="desc">k7computing.com</span><span class="when label">Case study · PDF</span><span class="arrow">→</span></a>
+    <a class="irow" href="https://blog.k7computing.com/how-k7-stops-remote-ransomware-with-deception-technology/"><svg class="licon" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 5h15v15H5z M20 20l7 7"/><rect x="11" y="11" width="3" height="3"/></svg><span class="irow-title">How K7 Stops Remote Ransomware with Deception Technology</span><span class="desc">blog.k7computing.com</span><span class="when label">Blog · K7 Labs</span><span class="arrow">→</span></a>
+  </div>
+</section>
+
+<!-- 06 · Next step -->
+<section class="sheet g-signal cta-sheet" id="next-step">
+  <div class="sheet-tab" style="--k: 0;"><span><i class="pixel"></i><span class="label">06/06</span></span><span class="label">Next step</span></div>
+  <div class="sheet-head"><h2 class="h-sheet">See it on your estate.</h2><p>Request a demo and a K7 engineer will walk you through K7 Seventh Sense on your own endpoints, identities and data.</p></div>
+  <div class="cta-actions"><a class="btn btn-primary" href="#next-step">Request demo →</a><a class="btn btn-line" href="#platform">View brochure</a><a class="link-u" href="#top">K7 vs CrowdStrike →</a></div>
+</section>
+
+<footer class="site-footer g-contrast">
+  <div class="footer-grid">
+    <div class="footer-brand"><img src="/_blob/9d01d02852773043853d31caa5213fa6" alt="K7 CyberSecurity" style="height: 30px; width: auto; align-self: flex-start;"><p class="body-s">Security that answers to you. Superior cybersecurity since 1991, built and supported in-house.</p><div class="social"><a href="#top" aria-label="LinkedIn">in</a><a href="#top" aria-label="X">X</a><a href="#top" aria-label="YouTube">YT</a><a href="#top" aria-label="Instagram">IG</a><a href="#top" aria-label="Facebook">FB</a></div></div>
+    <div class="footer-col"><h2 class="label">Company</h2><a href="Main.dc.html">Home</a><a href="#top">About Us</a><a href="#top">Careers</a><a href="#next-step">Contact Us</a></div>
+    <div class="footer-col"><h2 class="label">Offer</h2><a href="#top">Platform</a><a href="#industries">Solutions</a><a href="#top">Services</a><a href="#top">Partners</a></div>
+    <div class="footer-col"><h2 class="label">Resources</h2><a href="#insight">Insight</a><a href="#top">Research</a><a href="#top">Media Room</a><a href="#top">Support</a></div>
+    <div class="footer-col"><h2 class="label">Legal</h2><a href="#top">Privacy Policy</a><a href="#top">EULA</a></div>
+  </div>
+  <div class="footer-base body-s"><span>© 2026 K7 Enterprise Security Private Limited. All Rights Reserved.</span><span class="label">Chennai · Singapore · Dubai</span></div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"menuOpen":{"editor":"boolean","default":true,"section":"Header"},"$preview":{"width":1440,"height":5500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const menuOpen = this.props.menuOpen ?? true;
+    return { theme: theme, isDark: theme !== 'light', isLight: theme === 'light', menuOpen: menuOpen };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+{
+  "v": 3,
+  "layout": "files",
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-08T10:39:49Z"
+  },
+  "title": "K7 Design Language",
+  "namespace": "K7",
+  "libraries": [],
+  "sections": {},
+  "groups": [
+    "Logos"
+  ],
+  "assetGroups": {
+    "Logos": {
+      "name": "Logos",
+      "tile": "l",
+      "order": [
+        "k7-cybersecurity-logo.svg",
+        "k7-cybersecurity-logo-white.svg",
+        "k7-cybersecurity-logo-square.svg",
+        "k7-cybersecurity-logo-square-white.svg",
+        "k7-icon.svg",
+        "k7-icon-white.svg"
+      ],
+      "files": {
+        "k7-cybersecurity-logo.svg": {
+          "name": "k7-cybersecurity-logo.svg",
+          "blob": "e771495da89aadf29f73eff0f69bab1b",
+          "size": 3714,
+          "type": "image/svg+xml"
+        },
+        "k7-cybersecurity-logo-white.svg": {
+          "name": "k7-cybersecurity-logo-white.svg",
+          "blob": "ca95ecfe46617c12b502df6422564567",
+          "size": 3910,
+          "type": "image/svg+xml"
+        },
+        "k7-cybersecurity-logo-square.svg": {
+          "name": "k7-cybersecurity-logo-square.svg",
+          "blob": "02ec689db6e2a857b7c10d95e2875c7e",
+          "size": 3684,
+          "type": "image/svg+xml"
+        },
+        "k7-cybersecurity-logo-square-white.svg": {
+          "name": "k7-cybersecurity-logo-square-white.svg",
+          "blob": "d94b23550406f18113af6170cd5ab7f5",
+          "size": 3880,
+          "type": "image/svg+xml"
+        },
+        "k7-icon.svg": {
+          "name": "k7-icon.svg",
+          "blob": "7de965646800dce6773806ffcc7c551b",
+          "size": 484,
+          "type": "image/svg+xml"
+        },
+        "k7-icon-white.svg": {
+          "name": "k7-icon-white.svg",
+          "blob": "d4311ccfc16ff5844ecb91c4333b9c03",
+          "size": 498,
+          "type": "image/svg+xml"
+        }
+      }
+    }
+  },
+  "blobs": {},
+  "docs": {
+    "readme": "project/README.md",
+    "sections": []
+  },
+  "lastChange": {
+    "by": "Navin Sylvester",
+    "at": "2026-10-08T12:10:00Z",
+    "via": "Claude Code",
+    "note": "ModuleChips: tiles may be links (no underline). IndexRow and Hero fixes from the Home page review."
+  }
+}
