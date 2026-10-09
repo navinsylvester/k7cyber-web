@@ -1,13 +1,183 @@
 {
-  "ranAt": "2026-10-08T13:56:59.768Z",
+  "ranAt": "2026-10-08T13:57:26.817Z",
   "phase": "posts",
   "posts": {
     "source": 565,
-    "created": 1,
-    "skipped": 564,
+    "created": 565,
+    "skipped": 0,
     "failed": 0,
-    "embeds": 0,
-    "imageFailures": [],
+    "embeds": 15,
+    "imageFailures": [
+      "https://lh4.googleusercontent.com/zxrhf3J0Jv3lwzHPvzdk2CHLgY63IuUhqnefgkBJniXh7mZR4-ngR9thEKY3Rk_TBwK4-sM2k959HZVC-Rqg4Psp92JDqrn4cx4Op6pSq_H7dmO7gqgY8x5ZEP3jG7jfXxO0JlZ2",
+      "https://lh4.googleusercontent.com/LOVjKLopRI510PSjOTuoVwa5yd9IJmUQpnP4no3bygXsoXeB6Ifp6_1C4zaQa4K5WFK1maqkMOmv1Q3zij8jr9MKX_Iq77r_aS-BB3YcHn0TmwAGjVzcihDayH4Voyz6pV9iIdum",
+      "https://lh6.googleusercontent.com/u7oBsVGEV1D7pNaQuFSblYm6CKVdTZUCrwakw_EjvcNfDO9UcRqZUBdltAF_HWDr7iNgMZCCBrZMO_qsLOouJXYchnsdwdaDAxY5qNQ_YNSABOmuFXEqSioNoCnIlW9ZI-jwrI7RYAPItODa_g",
+      "https://lh6.googleusercontent.com/i8HX_pBm7ovob6L29CY5UbBbCKLJ42nBAKs1PyVhaRMdZIx50orEHSb40To3y5t-CeATlUl53TcvZ1ZWwVd6STjeIdmXbGZKZfyXAkueHewB1UkC83g1WrGkyiyaBdqmRxnxShzV",
+      "https://lh4.googleusercontent.com/0rRKV15nQIktjlyKawpQuM9UPM0qoT-mgCt1DMlxOSYvrEO4z6Z05EL72eOZG6VP22g-BHb4bL341j_GKIkGwTZQWwOunlrs_JqYW9ZZ8cEA--UXQpRdteYaAmXQJZ9e9HVYAtpz",
+      "https://lh6.googleusercontent.com/Dkr7fVmsV0a98tQbZ47joxD6xfBQ36lYpCVNgr95l8BjlNBWW-Vz6qpqcslvBKT4md_ZB0xdKP9YbFl--Aczu5RneQz5_QEv-8NYvgKNU2gJy2YfO4TRwELfzSLE3gGUPWDL-5UY",
+      "https://labs.k7computing.comwp-content/uploads/2016/03/5.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/mod_security.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/mobileinquirer.com_.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/appmobile.co_.za_1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/techmoneyblog.com_.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/cyber-security_s1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/gfi.com_1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/marketingland.com_-300x150.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/makingdifferent.com_.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/bug-300x211.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/mobile-shopping_smudged.png",
+      "https://labs.k7computing.com/wp-content/uploads/images-300x158.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/marshmallow.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/apple.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/birds1.png",
+      "https://labs.k7computing.com/wp-content/uploads/info.png",
+      "https://labs.k7computing.com/wp-content/uploads/data1-300x208.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/2018/04/60sec4-300x215.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/device-2015-07-28-1733271.png",
+      "https://labs.k7computing.com/wp-content/uploads/FP.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/emailbouncer1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/newindia1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/PII.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/password.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/free_yadadrop.com_.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/splash-screen.png",
+      "https://labs.k7computing.com/wp-content/uploads/combined.bmp",
+      "https://labs.k7computing.com/wp-content/uploads/device-2015-05-30-162318.png",
+      "https://labs.k7computing.com/wp-content/uploads/z.bmp",
+      "https://labs.k7computing.com/wp-content/uploads/dexloading.bmp",
+      "https://labs.k7computing.com/wp-content/uploads/actualdex_combined.bmp",
+      "https://labs.k7computing.com/wp-content/uploads/splashmessage.bmp",
+      "https://labs.k7computing.com/wp-content/uploads/loadingsplashscreen.bmp",
+      "https://labs.k7computing.com/wp-content/uploads/lock-screen.bmp",
+      "https://labs.k7computing.com/wp-content/uploads/loading_html.bmp",
+      "https://labs.k7computing.com/wp-content/uploads/html-load.bmp",
+      "https://labs.k7computing.com/wp-content/uploads/Indiamap.png",
+      "https://labs.k7computing.com/wp-content/uploads/laws1.png",
+      "https://labs.k7computing.com/wp-content/uploads/globe.png",
+      "https://labs.k7computing.com/wp-content/uploads/rooting.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/2016/05/warranty.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/exploits.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/online_shop_happy.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/e-wallet1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/think.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/intro1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/MainScreen.png",
+      "https://labs.k7computing.com/wp-content/uploads/HELP_RESTORE_FILES.png",
+      "https://labs.k7computing.com/wp-content/uploads/encyprted_files.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/file_properties.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/lock.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/activities.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/action.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/privilege2.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/law1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/e-gov.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/SEO1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/seo-ball1-255x300.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/CraftedApp2.png",
+      "https://labs.k7computing.com/wp-content/uploads/Chameleon_ZIP_Example.png",
+      "https://labs.k7computing.com/wp-content/uploads/shell_team_202.png",
+      "https://labs.k7computing.com/wp-content/uploads/shell_team_21.png",
+      "https://labs.k7computing.com/wp-content/uploads/shell_team_22-149x300.png",
+      "https://labs.k7computing.com/wp-content/uploads/shell_team_23.png",
+      "https://labs.k7computing.com/wp-content/uploads/shell_team_241.png",
+      "https://labs.k7computing.com/wp-content/uploads/shell_team_25.png",
+      "https://labs.k7computing.com/wp-content/uploads/shell_team_26.png",
+      "https://labs.k7computing.com/wp-content/uploads/shell_team_27-300x300.png",
+      "https://labs.k7computing.com/wp-content/uploads/shell_team_281.png",
+      "https://labs.k7computing.com/wp-content/uploads/shell_team_29-300x260.png",
+      "https://labs.k7computing.com/wp-content/uploads/cyberbullying2-300x254.png",
+      "https://labs.k7computing.com/wp-content/uploads/cyber-bullying-finalcolor3-300x275.png",
+      "https://labs.k7computing.com/wp-content/uploads/social-network-1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/loser-1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/CTB_Locker_Main_Screen.png",
+      "https://labs.k7computing.com/wp-content/uploads/CTB_Locker_Georgian_Email.png",
+      "https://labs.k7computing.com/wp-content/uploads/CTB_Locker_Main_Screen_DE.png",
+      "https://labs.k7computing.com/wp-content/uploads/CTB_Locker_Main_Screen_NE.png",
+      "https://labs.k7computing.com/wp-content/uploads/CTB_Locker_Main_Screen_IT.png",
+      "https://labs.k7computing.com/wp-content/uploads/CTB_Locker_Encryted_Files.png",
+      "https://labs.k7computing.com/wp-content/uploads/CTB_Locker_TS_Detection1.png",
+      "https://labs.k7computing.com/wp-content/uploads/CTB_Locker_Test_Decryption.png",
+      "https://labs.k7computing.com/wp-content/uploads/CTB_Locker_Test_Decrypt_Files.png",
+      "https://labs.k7computing.com/wp-content/uploads/CTB_Locker_Req_Priv_Key.png",
+      "https://labs.k7computing.com/wp-content/uploads/mitigation.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/spy2.png",
+      "https://labs.k7computing.com/wp-content/uploads/vulnerable2.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/vulnerable_plugins.png",
+      "https://labs.k7computing.com/wp-content/uploads/final_map.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/permscreen1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/perm2.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/perm3..jpg",
+      "https://labs.k7computing.com/wp-content/uploads/Perm_withcomments.jp2_g1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/eventlistener.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/shutdown.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/WAP2.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/WAP3.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/mstr1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/obad1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/update.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/risk.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/invite_pic1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/invite_pic2.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/survive.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/new_route.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/vuln_count.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/exploitation_results.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/ransomware_splash_screen_together.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/lollipop_org1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/mail_content1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/Gov_Pic.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/2016/03/2urlfp.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/url.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/infector4.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/botnet1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/Android_root1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/PEBCAK.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/social-media.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/strict.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/Android_Police.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/prevention1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/Security_Model1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/customize.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/increase.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/fingerprint.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/Android_security_Structure.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/nicki13-300x145.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/updated_nicki3.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/stdy_vectorcast.com_.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/Presentation12-150x150.png",
+      "https://labs.k7computing.com/wp-content/uploads/nicki5.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/authorname_puvidya.wordpress.com_.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/inter_oecd.org_.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/root4-150x150.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/ctriteria_careerrocketeer.com_1.bmp",
+      "https://labs.k7computing.com/wp-content/uploads/dec_bambicorso.co_1-150x150.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/ddos_ihackers.info_1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/mon_businessreviewindia.in_-150x150.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/rule_agilehelpline.com_.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/ques_yourhealthyourhome.com_1.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/java_exploit1-300x183.png",
+      "https://labs.k7computing.com/wp-content/uploads/Fake_www.thegeeksclub.com_1-300x150.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/confused-face-www.lovingspirituality.com_1-300x202.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/stats5.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/btnet1.gif",
+      "https://labs.k7computing.com/wp-content/uploads/AndPO_21-150x150.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/poly4-300x166.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/bank_kleinconsult.net_1-300x213.jpg",
+      "https://labs.k7computing.com/wp-content/uploads/Automate-300x185.jpg",
+      "http://www.k7computing.com/~k7tcl/Surprise.png",
+      "http://www.k7computing.com/~k7tcl/system_scan.png",
+      "http://www.k7computing.com/~k7tcl/prompt_to_buy.png",
+      "http://www.k7computing.com/~k7tcl/purchase_page.png",
+      "http://www.k7computing.com/~k7tcl/autorun_inf.jpg",
+      "http://www.k7computing.com/~k7tcl/autorun_chart.jpg",
+      "http://www.k7computing.com/~k7tcl/icc_wc_2011.jpg",
+      "http://www.k7computing.com/~k7tcl/nobug.jpg",
+      "http://www.k7computing.com/~k7tcl/fb_pic_exe.jpg",
+      "http://www.k7computing.com/~k7tcl/teeth_cut_rope.jpg",
+      "http://www.k7computing.com/~k7tcl/sos.jpg",
+      "http://www.k7computing.com/~k7tcl/Love-hate.jpg",
+      "http://www.k7computing.com/~k7tcl/ransom_message_1.jpg",
+      "http://www.k7computing.com/~k7tcl/lock_chopsticks.jpg"
+    ],
     "countMismatches": [
       {
         "slug": "beware-of-root-certs-in-vpn",
@@ -19,6 +189,825 @@
         "lexical": {
           "tables": 0,
           "images": 6,
+          "code": 0
+        }
+      },
+      {
+        "slug": "weaponized-iqy-a-quest-to-deliver-the-flawedammyy-rat",
+        "source": {
+          "tables": 0,
+          "images": 23,
+          "code": 6
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 22,
+          "code": 6
+        }
+      },
+      {
+        "slug": "new-trick-up-the-sleeve-trickbot-delivered-via-fake-banking-forms",
+        "source": {
+          "tables": 0,
+          "images": 21,
+          "code": 6
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 20,
+          "code": 6
+        }
+      },
+      {
+        "slug": "those-who-can-teach",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "the-unknowns-32-lakh-3-2-million-card-details-stolen-apparently",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "quadrooter-android-chipped-but-not-cracked",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "k7-ransomware-protection-is-fighting-fit-and-ready",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "there-is-an-iot-in-monetize",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "problems-insecuring-iot-ecosystem",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "five-dimensional-protection-in-cyber-space-and-time",
+        "source": {
+          "tables": 0,
+          "images": 5,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 4,
+          "code": 0
+        }
+      },
+      {
+        "slug": "iot-what-the-bad-guys-could-do-with-your-hacked-devices",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "mobile-security",
+        "source": {
+          "tables": 0,
+          "images": 4,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "cyber-security-a-core-facet-of-national-defence-policy",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "dealing-with-spam",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "preinstalled-clean-or-malware-system-app",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "k7-threat-control-lab-has-a-dedicated-vulnerability-research-team",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "safe-shopping-on-the-go",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "pick-the-permissions-android-marshmallow",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "social-networking-abuse-potent-threat",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "gone-in-60-seconds-is-the-internet-becoming-volatile",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "real-or-fake-app",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "domain-hungry-spam",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "citizen-to-netizen-in-digital-india-the-need-to-secure-cyber-space",
+        "source": {
+          "tables": 0,
+          "images": 3,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "buy-none-maybeget-onemalware-free",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "my-app-or-no-app",
+        "source": {
+          "tables": 0,
+          "images": 11,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "acting-for-national-security-provisions-in-it-amendment-act-2008",
+        "source": {
+          "tables": 0,
+          "images": 3,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "rooting-for-trouble",
+        "source": {
+          "tables": 0,
+          "images": 3,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "online-shopping-tips-for-fashionistas",
+        "source": {
+          "tables": 0,
+          "images": 3,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "teslacrypt-can-affect-you-gamer-or-not",
+        "source": {
+          "tables": 0,
+          "images": 5,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "cyber-crime-and-punishment-provisions-in-it-amendment-act-2008",
+        "source": {
+          "tables": 0,
+          "images": 3,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "surge-in-unauthorized-access-grabbing",
+        "source": {
+          "tables": 1,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 1,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "section-66a-ripped-by-honourable-supreme-court-of-india",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "your-computer-too-can-catch-world-cup-fever",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "editor-of-virus-bulletin-magazine-publishes-k7s-live-conference-presentation-online",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "shell-team-sixzero-day-after-party-part-iv",
+        "source": {
+          "tables": 0,
+          "images": 10,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "women-can-say-no-to-cyberbullying",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "ladies-savor-social-networking-safely",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "exorcising-ctb-locker-from-your-computer-what-you-need-to-know",
+        "source": {
+          "tables": 0,
+          "images": 10,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "hacked-websites-consequences-and-mitigation",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "are-offline-devices-vulnerable-to-spying",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "hacked-websites-vulnerabilities-and-exploits",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "cyber-crime-in-india-rises-by-40",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "deathring-the-android-you-bought-can-spy-on-you",
+        "source": {
+          "tables": 0,
+          "images": 8,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "how-vulnerable-is-android-to-attack-part-2",
+        "source": {
+          "tables": 0,
+          "images": 4,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "invite-trouble",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "how-vulnerable-is-android-to-attack",
+        "source": {
+          "tables": 2,
+          "images": 4,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 2,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "editor-of-world-renowned-security-magazine-appreciates-k7-speakers",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "android-to-cross-lollies-with-malware-authors-this-diwali",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "tax-deducted-spam",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "url-falls-positive",
+        "source": {
+          "tables": 0,
+          "images": 3,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "paranoid-android-part-2",
+        "source": {
+          "tables": 1,
+          "images": 7,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 1,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "paranoid-android",
+        "source": {
+          "tables": 0,
+          "images": 7,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "good-app-bad-app-unearthing-the-android-puzzle-via-automation-part-2",
+        "source": {
+          "tables": 0,
+          "images": 12,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "java-c00l-blend",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "good-app-bad-app-unearthing-the-android-puzzle-via-automation-part-1",
+        "source": {
+          "tables": 0,
+          "images": 8,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "an-expected-surprise",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "con-currency-error",
+        "source": {
+          "tables": 0,
+          "images": 3,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "auto-start-your-security",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "let-cricket-fever-be-the-only-infection-you-contract",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "south-indian-ladies-from-kerala-face-reserve-cyber-insecurity",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "sms-or-sos-you-be-the-judge",
+        "source": {
+          "tables": 0,
+          "images": 2,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "a-love-hate-relationship",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "perestroika-in-the-malware-world-2",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
+          "code": 0
+        }
+      },
+      {
+        "slug": "a-tasty-morsel-to-whet-your-appetite",
+        "source": {
+          "tables": 0,
+          "images": 1,
+          "code": 0
+        },
+        "lexical": {
+          "tables": 0,
+          "images": 0,
           "code": 0
         }
       }
