@@ -166,12 +166,12 @@ export const BlogAside: React.FC<{ currentCategory?: number }> = async ({ curren
 }
 
 export const BlogSearch: React.FC<{ q?: string }> = ({ q }) => (
-  <form className="field search-field" role="search" action="/research/lab-blog" method="get" style={{ flex: 'none' }}>
+  <form className="field search-field" key={q ?? ''} role="search" action="/research/lab-blog" method="get" style={{ flex: 'none' }}>
     <label className="label" htmlFor="q">
       Search the blog
     </label>
     <span className="control">
-      <input id="q" name="q" type="search" placeholder="Title, malware family, technique" defaultValue={q} />
+      <input id="q" name="q" type="search" placeholder="Title, category, malware family, technique" defaultValue={q} />
       <button className="go" type="submit" aria-label="Search">
         →
       </button>

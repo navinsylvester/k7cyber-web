@@ -55,7 +55,7 @@ export default async function TopThreatsPage({ searchParams }: { searchParams: P
               <Fresh label="List updated" date={updated.updatedAt} />
             </StateTab>
           )}
-          <form className="filters" action={PATH} method="get" aria-label="Filter threats">
+          <form className="filters" key={qs(base)} action={PATH} method="get" aria-label="Filter threats">
             {args.sort !== 'seen' && <input type="hidden" name="sort" value={args.sort} />}
             {args.dir && <input type="hidden" name="dir" value={args.dir} />}
             <div className="field" style={{ flex: '0 1 260px' }}>

@@ -30,7 +30,7 @@ export default async function LabBlogPage({ searchParams }: { searchParams: Prom
           results={
             q ? (
               <>
-                <span>Results for “{q}” · newest first</span>
+                <span>Results for “{q}” · best match first</span>
                 <Link className="link-u" href="/research/lab-blog" style={{ fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0, fontSize: 14 }}>
                   Clear search
                 </Link>

@@ -1,6 +1,8 @@
 import configPromise from '@payload-config'
 import { unstable_cache } from 'next/cache'
-import { getPayload, type Where } from 'payload'
+import type { PostgresAdapter } from '@payloadcms/db-postgres'
+import { sql } from '@payloadcms/db-postgres/drizzle'
+import { getPayload, type PaginatedDocs, type Where } from 'payload'
 
 import type { Category, Post, Threat, ThreatReport, Vulnerability } from '@/payload-types'
 
@@ -81,15 +83,67 @@ export const categoryPath = (cat: Category): string => {
 
 export type PostListArgs = { page?: number; q?: string; categoryIds?: number[]; authorId?: number; limit?: number }
 
-export const listPosts = cached('posts', ['research_posts'], async ({ page = 1, q, categoryIds, authorId, limit = BLOG_PAGE }: PostListArgs) => {
+/* Search terms become a prefix tsquery ("trick" finds Trickbot); every term must match. "CVE-2017-0199" is three terms. */
+const searchTerms = (q: string): string[] =>
+  q
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((t) => t.length > 1)
+    .slice(0, 8)
+
+const emptyPage = (page: number, limit: number): PaginatedDocs<Post> => ({ docs: [], totalDocs: 0, limit, totalPages: 1, page, pagingCounter: 0, hasPrevPage: page > 1, hasNextPage: false, prevPage: page > 1 ? page - 1 : null, nextPage: null })
+
+/* Postgres full-text search over title and tags (weight A), excerpt (B) and body (C), ranked by relevance, then date.
+   Falls back to a title or tag match when the query has no searchable term (stop words only). */
+const searchPosts = async ({ page, q, categoryIds, authorId, limit }: Required<Pick<PostListArgs, 'page' | 'q' | 'limit'>> & PostListArgs): Promise<PaginatedDocs<Post>> => {
+  const p = await db()
+  const terms = searchTerms(q)
+  const phrase = `%${q.trim()}%`
+  let ranked: number[] = []
+  // The tag chips on a post are its categories, so their titles are indexed with the title.
+  const tags = sql`(select string_agg(c.title, ' ') from posts_rels r join categories c on c.id = r.categories_id where r.parent_id = posts.id and r.path = 'categories')`
+  if (terms.length) {
+    const tsq = terms.map((t) => `${t}:*`).join(' & ')
+    // Hyphens become spaces first: Postgres reads "CVE-2024-49112" as cve, -2024, -49112 and the digit terms would never match.
+    const doc = sql`setweight(to_tsvector('english', translate(coalesce(title, '') || ' ' || coalesce(${tags}, ''), '-_/', '   ')), 'A') || setweight(to_tsvector('english', translate(coalesce(excerpt, ''), '-_/', '   ')), 'B') || setweight(to_tsvector('english', translate(coalesce(search_text, ''), '-_/', '   ')), 'C')`
+    const { rows } = await (p.db as unknown as PostgresAdapter).drizzle.execute<{ id: number }>(
+      sql`select id from posts, to_tsquery('english', ${tsq}) q
+          where _status = 'published' and (${doc}) @@ q
+          order by (title ilike ${phrase}) desc, ts_rank_cd(${doc}, q, 1) desc, published_at desc`,
+    )
+    ranked = rows.map((r) => Number(r.id))
+  }
+  if (!ranked.length && terms.length) {
+    // Stop words only ("the"): match them as whole words in the title or tags instead.
+    const words = terms.map((t) => sql`(coalesce(title, '') || ' ' || coalesce(${tags}, '')) ~* ${`\\m${t.replace(/[\\^$.|?*+()[\]{}]/g, '\\$&')}\\M`}`)
+    const { rows } = await (p.db as unknown as PostgresAdapter).drizzle.execute<{ id: number }>(
+      sql`select id from posts where _status = 'published' and ${sql.join(words, sql` and `)} order by published_at desc`,
+    )
+    ranked = rows.map((r) => Number(r.id))
+  }
+  if (!ranked.length) return emptyPage(page, limit)
+  // Narrow by category or author without losing the rank order.
+  if (categoryIds?.length || authorId) {
+    const and: Where[] = [{ id: { in: ranked } }]
+    if (categoryIds?.length) and.push({ categories: { in: categoryIds } })
+    if (authorId) and.push({ authors: { in: [authorId] } })
+    const keep = new Set((await p.find({ collection: 'posts', where: { and }, limit: ranked.length, depth: 0, select: {}, pagination: false })).docs.map((d) => d.id))
+    ranked = ranked.filter((id) => keep.has(id))
+  }
+  const totalDocs = ranked.length
+  const totalPages = Math.max(1, Math.ceil(totalDocs / limit))
+  const ids = ranked.slice((page - 1) * limit, page * limit)
+  const byId = new Map((await p.find({ collection: 'posts', where: { id: { in: ids } }, limit: ids.length || 1, depth: 1, pagination: false })).docs.map((d) => [d.id, d]))
+  const docs = ids.map((id) => byId.get(id)).filter((d): d is Post => Boolean(d))
+  return { docs, totalDocs, limit, totalPages, page, pagingCounter: (page - 1) * limit + 1, hasPrevPage: page > 1, hasNextPage: page < totalPages, prevPage: page > 1 ? page - 1 : null, nextPage: page < totalPages ? page + 1 : null }
+}
+
+export const listPosts = cached('posts', ['research_posts'], async ({ page = 1, q, categoryIds, authorId, limit = BLOG_PAGE }: PostListArgs): Promise<PaginatedDocs<Post>> => {
+  if (q?.trim()) return searchPosts({ page, q, categoryIds, authorId, limit })
   const p = await db()
   const and: Where[] = [{ _status: { equals: 'published' } }]
   if (categoryIds?.length) and.push({ categories: { in: categoryIds } })
   if (authorId) and.push({ authors: { in: [authorId] } })
-  if (q?.trim()) {
-    const term = q.trim()
-    and.push({ or: [{ title: { like: term } }, { excerpt: { like: term } }, { searchText: { like: term } }, { 'categories.title': { like: term } }] })
-  }
   return p.find({ collection: 'posts', where: { and }, sort: '-publishedAt', limit, page, depth: 1 })
 })
 

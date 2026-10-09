@@ -11,6 +11,8 @@
    ===================================================================== */
 .filters { display: flex; flex-wrap: wrap; gap: 24px 28px; align-items: flex-end; padding-bottom: 32px; }
 .control .go { border: 0; background: none; font-size: 22px; cursor: pointer; padding: 0 0 6px 8px; }
+.filters .control:has(select:disabled) { opacity: var(--disabled); }
+.filters select:disabled { cursor: not-allowed; }
 .filters-actions { display: flex; gap: 18px; align-items: center; flex: none; padding-bottom: 4px; }
 .results {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
@@ -19,6 +21,8 @@
 .dtable tbody tr.row:hover td.id a, .dtable tbody tr.row:focus-within td.id a { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
 .dtable td.id { white-space: nowrap; }
 .dtable td.id a { text-decoration: none; }
+/* The row is the containing block for the stretched link; without it the link covers the whole sheet, filters included. */
+.dtable tbody tr.row { position: relative; }
 .dtable td.id a::after { content: ""; position: absolute; inset: 0; }
 .dtable td.id a:hover { color: inherit; }
 .dtable td.date, .dtable td.ver { font: 400 13px/1.5 var(--font-mono); white-space: nowrap; }
