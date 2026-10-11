@@ -36,3 +36,16 @@ One Next.js 16 app with Payload 3 inside it: the public site and the CMS admin (
 | Production build | `pnpm build` |
 
 Local dev uses Payload's push mode (schema synced on start). Credentials in `.env` are local throwaways.
+
+## Support portal (Dynamics 365 / Dataverse) — planning handed over 2026-10-10
+- Start at `docs/support-portal/README.md`; it orders the reading. Field/API facts are in
+  `docs/support-portal/03-metadata-summary.md`; `05-metadata-full.md` is grep-only.
+- Production Dataverse (`k7crm.crm8.dynamics.com`) is live for 65 agents. Interim mode
+  (2026-10-11): development is **read-only against production**; the Dataverse client must
+  hard-refuse any non-GET call to the production host. Writes wait for a sandbox/UAT
+  (`scripts/dataverse-seed.py` seeds it). Rules in `07-production-safety.md` §1b.
+- Agent workspace first (delegated Entra sign-in, Auth.js), customer self-service second
+  (Entra External ID + application user). Routes under `src/app/(portal)/support/...`,
+  client in `src/lib/dataverse/`, domain in `src/lib/support/` (`08-implementation-plan.md`).
+- `scripts/dataverse-probe.py` queries Dataverse from the shell (`DV_*` in `.env`); its
+  token cache `scripts/.token_cache.json` and any `spec/` output are git-ignored.
