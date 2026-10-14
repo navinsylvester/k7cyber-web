@@ -3,11 +3,14 @@ import Link from 'next/link'
 import React from 'react'
 
 import { Cols, Bars } from '@/components/support/Charts'
+import { CareTag } from '@/components/support/Csat'
 import { Empty, StatusTag, Tid, When } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { fv } from '@/lib/dataverse/types'
 import { myCounts } from '@/lib/support/cases'
+import { careForCustomers } from '@/lib/support/csat'
 import { activeByStatus, creationTrend } from '@/lib/support/dashboards'
+import { getSettings } from '@/lib/support/kpi-config'
 import { myQueueItems } from '@/lib/support/queues'
 import { requireAgent } from '@/lib/support/session'
 import { getView, runCaseView } from '@/lib/support/views'
@@ -30,6 +33,8 @@ export default async function WorkspaceHome() {
     activeByStatus(me.auth),
   ])
   const mine = myActiveView ? await runCaseView(me.auth, myActiveView, { page: 1, pageSize: 8, sort: 'modifiedon', dir: 'desc' }).catch(() => null) : null
+  const settings = await getSettings()
+  const care = settings.csat.enabled && mine ? await careForCustomers(mine.rows.map((r) => String(r._customerid_value ?? '')), settings).catch(() => new Map()) : new Map()
   const caseHref = (id: string) => `${WS}/cases/${id}`
   return (
     <>
@@ -92,7 +97,8 @@ export default async function WorkspaceHome() {
                       {String(r.title ?? '')}
                     </span>
                     <span className="s">
-                      <Tid ticket={String(r.ticketnumber ?? '')} /> · {fv(r, '_customerid_value') || 'No customer'} · <When date={String(r.modifiedon ?? '')} />
+                      <Tid ticket={String(r.ticketnumber ?? '')} /> · <CareTag care={care.get(String(r._customerid_value ?? ''))} mark />
+                      {fv(r, '_customerid_value') || 'No customer'} · <When date={String(r.modifiedon ?? '')} />
                     </span>
                     <span className="r">
                       <StatusTag row={r} />

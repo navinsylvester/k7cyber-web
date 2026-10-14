@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation'
 import React from 'react'
 
 import { Bars } from '@/components/support/Charts'
+import { CauseTag, ScoreTag } from '@/components/support/Csat'
+import { causeOf, isUnhappy } from '@/lib/support/csat-model'
 import { MANAGE, ManageNav, PeriodSeg, SlaMeter, SlaTag } from '@/components/support/Manage'
 import { Avatar, PageHead, StatusTag, Tid, When } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
@@ -13,6 +15,7 @@ import { asPeriod, PERIODS } from '@/lib/support/kpi-model'
 import { breakdown, engineerById, engineerStats, loadDesk, type EngineerStats } from '@/lib/support/metrics'
 import { label as optLabel, PRIORITY, VERTICAL } from '@/lib/support/options'
 import { requireManager } from '@/lib/support/session'
+import { dmyHm } from '@/lib/support/format'
 import { fmtMinutes } from '@/lib/support/sla'
 
 export const metadata: Metadata = { title: 'Engineer' }
@@ -42,6 +45,7 @@ export default async function EngineerPage({ params, searchParams }: { params: P
   const mine = desk.activeCases.filter((c) => c.owner.id === id).sort((a, b) => a.resolve.left - b.resolve.left)
   const resolved = desk.resolvedCases.filter((c) => c.owner.id === id)
   const late = resolved.filter((c) => c.resolve.state === 'breached').sort((a, b) => b.resolve.ratio - a.resolve.ratio)
+  const ratings = desk.csat.filter((r) => r.ownerId === id && r.status === 'responded' && r.score !== null).sort((a, b) => (a.score ?? 0) - (b.score ?? 0) || (b.respondedAt ?? '').localeCompare(a.respondedAt ?? ''))
   const periodLabel = PERIODS.find((p) => p.key === period)?.label ?? period
   const rows: { k: string; mine: string; team: string }[] = [
     { k: 'Active cases', mine: String(e.active), team: n(teamAverage(team, (x) => x.active)) },
@@ -55,6 +59,10 @@ export default async function EngineerPage({ params, searchParams }: { params: P
     { k: 'Median first response', mine: n(e.medianResponseMin, ' min'), team: n(teamAverage(team, (x) => x.medianResponseMin), ' min') },
     { k: 'First-contact resolution', mine: n(e.fcrPct, '%'), team: n(teamAverage(team, (x) => x.fcrPct), '%') },
     { k: 'Reopened', mine: String(e.reopened), team: n(teamAverage(team, (x) => x.reopened)) },
+    { k: 'Customer satisfaction', mine: n(e.csatPct, '%'), team: n(teamAverage(team, (x) => x.csatPct), '%') },
+    { k: 'Average rating · responses', mine: `${n(e.csatAverage)} · ${e.csatResponses}`, team: `${n(teamAverage(team, (x) => x.csatAverage))} · ${n(teamAverage(team, (x) => x.csatResponses))}` },
+    { k: 'Low ratings', mine: String(e.csatUnhappy), team: n(teamAverage(team, (x) => x.csatUnhappy)) },
+    { k: 'Low ratings laid at support (not the product)', mine: String(e.csatUnhappySupport), team: n(teamAverage(team, (x) => x.csatUnhappySupport)) },
     { k: 'Emails sent · notes', mine: `${e.emails} · ${e.notes}`, team: `${n(teamAverage(team, (x) => x.emails))} · ${n(teamAverage(team, (x) => x.notes))}` },
     { k: 'Touches per resolved case', mine: n(e.touchesPerResolved), team: n(teamAverage(team, (x) => x.touchesPerResolved)) },
   ]
@@ -171,6 +179,41 @@ export default async function EngineerPage({ params, searchParams }: { params: P
             </tbody>
           </table>
         </div>
+
+        {settings.csat.enabled && (
+          <>
+            <h2 className="sub-head" style={{ marginTop: 'clamp(32px, 4cqw, 48px)' }}>
+              Ratings in the period, lowest first
+              <span className="label">{ratings.length}</span>
+            </h2>
+            {ratings.length === 0 ? (
+              <p className="hint">No customer rated this engineer&apos;s cases in the period.</p>
+            ) : (
+              <div className="mini-rows ratings">
+                {ratings.slice(0, 25).map((r) => (
+                  <Link className="mini-row" href={`${WS}/cases/${r.caseId}`} key={r.id}>
+                    <span className="t">
+                      <ScoreTag score={r.score} settings={settings.csat} />
+                      <Tid ticket={r.ticket} />
+                      <span style={{ fontWeight: 400 }}>{r.title}</span>
+                    </span>
+                    <span className="s">
+                      {r.customerName || 'Customer'}
+                      {r.comment ? ` · “${r.comment}”` : ''}
+                      {r.score !== null && isUnhappy(r.score, settings.csat) ? (
+                        <>
+                          {' · '}
+                          <CauseTag cause={causeOf(r)} />
+                        </>
+                      ) : null}
+                    </span>
+                    <span className="r">{dmyHm(r.respondedAt)}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
         <h2 className="sub-head" style={{ marginTop: 'clamp(32px, 4cqw, 48px)' }}>
           Resolved late in the period

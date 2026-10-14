@@ -77,7 +77,7 @@ export async function sweepAction(form: FormData): Promise<void> {
   let q: string
   try {
     const r = await runSweep(me.auth, { actor: me.email || me.name || 'manager', live })
-    q = `ok=sweep&run=${encodeURIComponent(r.runId)}&fired=${r.fired}&done=${r.done}&skipped=${r.skipped}&failed=${r.failed}&mode=${r.mode}`
+    q = `ok=sweep&run=${encodeURIComponent(r.runId)}&fired=${r.fired}&done=${r.done}&skipped=${r.skipped}&failed=${r.failed}&mode=${r.mode}${r.csat ? `&csatInvited=${r.csat.invited}&csatReminded=${r.csat.reminded}&csatOverdue=${r.csat.overdue}` : ''}`
   } catch (e) {
     q = `error=${encodeURIComponent(userMessage(e, 'agent'))}`
   }

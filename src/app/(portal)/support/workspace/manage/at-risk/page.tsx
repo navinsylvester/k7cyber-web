@@ -19,7 +19,7 @@ import { nudgeAction, queueAction, reassignAction, sweepAction } from './actions
 
 export const metadata: Metadata = { title: 'At risk' }
 
-type SP = { state?: string; owner?: string; page?: string; ok?: string; error?: string; run?: string; fired?: string; done?: string; skipped?: string; failed?: string; mode?: string }
+type SP = { state?: string; owner?: string; page?: string; ok?: string; error?: string; run?: string; fired?: string; done?: string; skipped?: string; failed?: string; mode?: string; csatInvited?: string; csatReminded?: string; csatOverdue?: string }
 
 const PATH = `${MANAGE}/at-risk`
 const PAGE = 40
@@ -82,6 +82,7 @@ export default async function AtRiskPage({ searchParams }: { searchParams: Promi
         {sp.ok === 'sweep' && (
           <Flash>
             Sweep {sp.run} ran in {sp.mode === 'live' ? 'live' : 'dry-run'} mode: {sp.fired} verdicts, {sp.done} recorded{sp.mode === 'live' ? ' and applied' : ''}, {sp.skipped} within cooldown, {sp.failed} failed.
+            {sp.csatInvited !== undefined ? ` CSAT: ${sp.csatInvited} surveys ${sp.mode === 'live' ? 'sent' : 'to send'}, ${sp.csatReminded} reminders, ${sp.csatOverdue} follow-ups overdue.` : ''}
           </Flash>
         )}
         {sp.ok && sp.ok !== 'sweep' && <Flash>{sp.ok === 'reassigned' ? 'Case reassigned.' : sp.ok === 'nudged' ? 'Reminder posted on the case.' : 'Case added to the queue.'}</Flash>}

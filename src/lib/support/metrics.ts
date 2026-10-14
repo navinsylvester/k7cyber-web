@@ -2,6 +2,8 @@ import 'server-only'
 
 import { and, buildQuery, fetchXml, list, nextPage, type DataverseAuth, type Page, type Row, fv } from '@/lib/dataverse'
 
+import { csatInPeriod, openFollowUps } from './csat'
+import { causeOf, facetLines, isUnhappy, summarise, type CsatRow, type CsatSummary } from './csat-model'
 import type { ChartSeries } from './dashboards'
 import { KPI_DEFS, kpiDef, periodBounds, resolveTarget, type KpiKey, type KpiSetting, type Period, type Settings, type TargetRule } from './kpi-model'
 import { memo } from './memo'
@@ -33,6 +35,13 @@ export type CaseLite = {
   product: string
   issue: string
   customer: string
+  /** The account or contact the case names as its customer, for CSAT and the care band. */
+  customerId: string
+  customerKind: 'account' | 'contact' | ''
+  customerEmail: string
+  contactId: string
+  /** Raised through the portal (origin Web or the portal's attribution field). */
+  portal: boolean
   /** From incidentresolution when one exists in the window, else modifiedon of a resolved case. */
   resolvedAt: Date | null
   resolutions: number
@@ -70,11 +79,16 @@ export type Desk = RawDesk & {
   resolvedCases: CaseLite[]
   createdCases: CaseLite[]
   workingDays: number
+  /** Survey rows answered (or sent and unanswered) in the period, from Payload; never memoised. */
+  csat: CsatRow[]
+  /** Low scores whose follow-up is still open, whatever the period. */
+  followUps: CsatRow[]
+  csatSummary: CsatSummary
 }
 
 const SELECT = [
   'incidentid', 'ticketnumber', 'title', 'createdon', 'modifiedon', 'statecode', 'statuscode', 'prioritycode', 'caseorigincode', 'new_verticaltype', 'k7_caseconsideredas',
-  'onholdtime', 'isescalated', '_ownerid_value', '_productid_value', '_new_issue_value', '_customerid_value',
+  'onholdtime', 'isescalated', '_ownerid_value', '_productid_value', '_new_issue_value', '_customerid_value', '_primarycontactid_value', 'k7_customeremail', 'adx_createdbyusername',
 ] as const
 
 const PAGE = 500
@@ -272,6 +286,11 @@ const toLite = (r: Row, raw: RawDesk, s: Settings, now: Date): CaseLite => {
     product: fv(r, '_productid_value'),
     issue: fv(r, '_new_issue_value'),
     customer: fv(r, '_customerid_value'),
+    customerId: String(r._customerid_value ?? ''),
+    customerKind: String(r['_customerid_value@Microsoft.Dynamics.CRM.lookuplogicalname'] ?? '') === 'account' ? 'account' : String(r['_customerid_value@Microsoft.Dynamics.CRM.lookuplogicalname'] ?? '') === 'contact' ? 'contact' : '',
+    customerEmail: String(r.k7_customeremail ?? '').trim().toLowerCase(),
+    contactId: String(r._primarycontactid_value ?? '') || (String(r['_customerid_value@Microsoft.Dynamics.CRM.lookuplogicalname'] ?? '') === 'contact' ? String(r._customerid_value ?? '') : ''),
+    portal: origin === 3 || Boolean(r.adx_createdbyusername),
     resolvedAt,
     resolutions: resolution?.count ?? (statecode === STATE.RESOLVED ? 1 : 0),
     reopened: raw.reopenedActive.has(id) || (resolution?.count ?? 0) > 1,
@@ -289,12 +308,12 @@ export const loadDesk = async (auth: DataverseAuth, settings: Settings, period: 
   const b = periodBounds(period, now, settings.hours.timeZone)
   const from = o.previous ? new Date(b.from.getTime() - (b.to.getTime() - b.from.getTime())) : b.from
   const to = o.previous ? b.from : b.to
-  const raw = await rawDesk(auth, period, from, to, Boolean(o.previous))
+  const [raw, csat, followUps] = await Promise.all([rawDesk(auth, period, from, to, Boolean(o.previous)), settings.csat.enabled ? csatInPeriod(from, to) : Promise.resolve([] as CsatRow[]), settings.csat.enabled && !o.previous ? openFollowUps() : Promise.resolve([] as CsatRow[])])
   const activeCases = o.previous ? [] : raw.active.map((r) => toLite(r, raw, settings, now))
   const resolvedCases = raw.resolved.map((r) => toLite(r, raw, settings, now))
   const cases = [...activeCases, ...resolvedCases]
   const createdCases = cases.filter((c) => c.createdon >= from && c.createdon < to)
-  return { ...raw, from, to, period, now, settings, cases, activeCases, resolvedCases, createdCases, workingDays: workingDaysBetween(from, to, settings.hours) }
+  return { ...raw, from, to, period, now, settings, cases, activeCases, resolvedCases, createdCases, workingDays: workingDaysBetween(from, to, settings.hours), csat, followUps, csatSummary: summarise(csat, settings.csat, settings.hours, now) }
 }
 
 /* ---------- Summaries ---------- */
@@ -359,15 +378,28 @@ const kpiRaw = (d: Desk, key: KpiKey): { value: number | null; n: number } => {
       const oldest = unpausedActive.reduce<CaseLite | null>((a, c) => (!a || c.createdon < a.createdon ? c : a), null)
       return { value: oldest ? Math.round((workingMinutesBetween(oldest.createdon, d.now, d.settings.hours) / 60) * 10) / 10 : null, n: unpausedActive.length }
     }
+    case 'csat':
+      return { value: d.csatSummary.csat, n: d.csatSummary.responses }
+    case 'csat-average':
+      return { value: d.csatSummary.average, n: d.csatSummary.responses }
+    case 'csat-response-rate':
+      return { value: d.csatSummary.responseRate, n: d.csatSummary.invited }
+    case 'csat-unhappy':
+      return { value: d.followUps.length, n: d.followUps.filter((r) => d.csat.some((x) => x.id === r.id)).length }
+    case 'csat-followup':
+      return { value: d.csatSummary.followUpPct, n: d.csatSummary.followUpsClosed }
   }
 }
 
 /** Only period-based KPIs have a previous value; the point-in-time ones (backlog, at risk, oldest) do not. */
-const PERIOD_KPIS = new Set<KpiKey>(['resolution-sla', 'response-sla', 'median-resolution', 'median-response', 'fcr', 'throughput', 'reopen-rate'])
+const PERIOD_KPIS = new Set<KpiKey>(['resolution-sla', 'response-sla', 'median-resolution', 'median-response', 'fcr', 'throughput', 'reopen-rate', 'csat', 'csat-average', 'csat-response-rate', 'csat-followup'])
+
+/** Cards that need the CSAT feature on; hidden when it is off. */
+const CSAT_KPIS = new Set<KpiKey>(['csat', 'csat-average', 'csat-response-rate', 'csat-unhappy', 'csat-followup'])
 
 export const kpiValues = (d: Desk, prev?: Desk | null): KpiValue[] =>
   d.settings.kpis
-    .filter((k) => k.enabled && KPI_DEFS.some((x) => x.key === k.key))
+    .filter((k) => k.enabled && KPI_DEFS.some((x) => x.key === k.key) && (d.settings.csat.enabled || !CSAT_KPIS.has(k.key)))
     .map((setting) => {
       const def = kpiDef(setting.key)
       const { value, n } = kpiRaw(d, setting.key)
@@ -389,6 +421,8 @@ export const fmtKpi = (v: KpiValue['def'], value: number | null): string => {
       return `${Math.round(value).toLocaleString('en-IN')} min`
     case 'per-day':
       return value.toLocaleString('en-IN', { maximumFractionDigits: 1 })
+    case 'score':
+      return `${value.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} / 5`
     default:
       return Math.round(value).toLocaleString('en-IN')
   }
@@ -420,7 +454,15 @@ export type EngineerStats = {
   notes: number
   touchesPerResolved: number | null
   perDay: number | null
-  /** 0..100: a composite of SLA, FCR, load and freshness for sorting cards, never shown as a grade. */
+  /** Survey responses on the engineer's cases in the period, the mean score, the satisfied share and the low scores. */
+  csatResponses: number
+  csatAverage: number | null
+  csatPct: number | null
+  csatUnhappy: number
+  /** Low scores the customer or a manager laid at support's door (as against the product or licensing), so an engineer is not
+     marked down for a defect. */
+  csatUnhappySupport: number
+  /** 0..100: a composite of SLA, FCR, CSAT (when the engineer has responses), load and freshness for sorting cards, never shown as a grade. */
   score: number
 }
 
@@ -430,7 +472,7 @@ export const engineerStats = (d: Desk, o: { includeShared?: boolean } = {}): Eng
     const key = owner.kind === 'user' ? owner.id : `${owner.kind}:${owner.id}`
     let e = by.get(key)
     if (!e) {
-      e = { owner, active: 0, atRisk: 0, breached: 0, waiting: 0, critical: 0, oldestHours: null, resolved: 0, resolvedWithin: 0, resolvePct: null, medianResolveHours: null, responded: 0, respondedWithin: 0, responsePct: null, medianResponseMin: null, fcr: 0, fcrKnown: 0, fcrPct: null, reopened: 0, emails: 0, notes: 0, touchesPerResolved: null, perDay: null, score: 0 }
+      e = { owner, active: 0, atRisk: 0, breached: 0, waiting: 0, critical: 0, oldestHours: null, resolved: 0, resolvedWithin: 0, resolvePct: null, medianResolveHours: null, responded: 0, respondedWithin: 0, responsePct: null, medianResponseMin: null, fcr: 0, fcrKnown: 0, fcrPct: null, reopened: 0, emails: 0, notes: 0, touchesPerResolved: null, perDay: null, csatResponses: 0, csatAverage: null, csatPct: null, csatUnhappy: 0, csatUnhappySupport: 0, score: 0 }
       by.set(key, e)
     }
     return e
@@ -471,7 +513,30 @@ export const engineerStats = (d: Desk, o: { includeShared?: boolean } = {}): Eng
       responseTimes.set(k, [...(responseTimes.get(k) ?? []), c.response.elapsed])
     }
   }
+  // Survey responses credit the engineer who held the case when it was rated (the row's owner), including engineers with no case in the period.
+  const csatBy = new Map<string, { sum: number; n: number; satisfied: number; unhappy: number; support: number }>()
+  for (const r of d.csat) {
+    if (r.status !== 'responded' || r.score === null || !r.ownerId) continue
+    const cur = csatBy.get(r.ownerId) ?? { sum: 0, n: 0, satisfied: 0, unhappy: 0, support: 0 }
+    cur.sum += r.score
+    cur.n++
+    if (r.score >= d.settings.csat.satisfiedFrom) cur.satisfied++
+    if (isUnhappy(r.score, d.settings.csat)) {
+      cur.unhappy++
+      if (causeOf(r).area === 'support') cur.support++
+    }
+    csatBy.set(r.ownerId, cur)
+    if (!by.has(r.ownerId)) get({ id: r.ownerId, name: r.ownerName || 'Unknown', kind: SHARED_OWNER.test(r.ownerName) ? 'shared' : 'user' })
+  }
   for (const [k, e] of by) {
+    const cs = csatBy.get(e.owner.id)
+    if (cs) {
+      e.csatResponses = cs.n
+      e.csatAverage = Math.round((cs.sum / cs.n) * 10) / 10
+      e.csatPct = pct(cs.satisfied, cs.n)
+      e.csatUnhappy = cs.unhappy
+      e.csatUnhappySupport = cs.support
+    }
     const t = d.touchesByOwner.get(e.owner.id)
     e.emails = t?.emails ?? 0
     e.notes = t?.notes ?? 0
@@ -484,7 +549,11 @@ export const engineerStats = (d: Desk, o: { includeShared?: boolean } = {}): Eng
     e.medianResponseMin = mp === null ? null : Math.round(mp)
     e.touchesPerResolved = e.resolved ? Math.round(((e.emails + e.notes) / e.resolved) * 10) / 10 : null
     e.perDay = e.resolved ? Math.round((e.resolved / d.workingDays) * 10) / 10 : null
-    e.score = Math.round(0.4 * (e.resolvePct ?? 50) + 0.2 * (e.responsePct ?? 50) + 0.2 * (e.fcrPct ?? 50) + 0.2 * Math.max(0, 100 - (e.breached * 25 + e.atRisk * 10)))
+    const load = Math.max(0, 100 - (e.breached * 25 + e.atRisk * 10))
+    e.score =
+      e.csatPct !== null
+        ? Math.round(0.3 * (e.resolvePct ?? 50) + 0.15 * (e.responsePct ?? 50) + 0.15 * (e.fcrPct ?? 50) + 0.2 * e.csatPct + 0.2 * load)
+        : Math.round(0.4 * (e.resolvePct ?? 50) + 0.2 * (e.responsePct ?? 50) + 0.2 * (e.fcrPct ?? 50) + 0.2 * load)
   }
   return [...by.values()].filter((e) => e.owner.kind === 'user' || (o.includeShared && e.owner.kind !== 'none') || e.active > 0 || e.resolved > 0).sort((a, b) => b.active - a.active || b.resolved - a.resolved || a.owner.name.localeCompare(b.owner.name))
 }
@@ -553,6 +622,51 @@ export const trend = (d: Desk): DayPoint[] => {
   }
   return days
 }
+
+export type CsatDayPoint = { day: string; responses: number; unhappy: number }
+
+/** Per-day survey responses and low scores over the period (up to 90 points). */
+export const csatTrend = (d: Desk): CsatDayPoint[] => {
+  const tz = d.settings.hours.timeZone
+  const days: CsatDayPoint[] = []
+  const index = new Map<string, CsatDayPoint>()
+  const total = Math.min(90, Math.max(1, Math.ceil((d.to.getTime() - d.from.getTime()) / 864e5)))
+  for (let i = total - 1; i >= 0; i--) {
+    const day = dayKey(new Date(d.to.getTime() - i * 864e5), tz)
+    const p = { day, responses: 0, unhappy: 0 }
+    days.push(p)
+    index.set(day, p)
+  }
+  for (const r of d.csat) {
+    if (r.status !== 'responded' || !r.respondedAt || r.score === null) continue
+    const p = index.get(dayKey(new Date(r.respondedAt), tz))
+    if (!p) continue
+    p.responses++
+    if (isUnhappy(r.score, d.settings.csat)) p.unhappy++
+  }
+  return days
+}
+
+export type CsatBreakBy = 'owner' | 'product' | 'issue' | 'vertical' | 'priority' | 'origin'
+
+/** CSAT per facet: responses, mean, satisfied share and low scores. */
+export const csatBreakdown = (d: Desk, by: CsatBreakBy) =>
+  facetLines(d.csat, d.settings.csat, (r) => {
+    switch (by) {
+      case 'owner':
+        return { key: r.ownerId || 'none', label: r.ownerName || 'Unassigned' }
+      case 'product':
+        return { key: r.product || '(none)', label: r.product || '(none)' }
+      case 'issue':
+        return { key: r.issue || '(none)', label: r.issue || '(none)' }
+      case 'vertical':
+        return { key: String(r.vertical ?? ''), label: optLabel(VERTICAL, r.vertical) || '(none)' }
+      case 'priority':
+        return { key: String(r.priority ?? ''), label: optLabel(PRIORITY, r.priority) || '(none)' }
+      case 'origin':
+        return { key: String(r.origin ?? ''), label: optLabel(ORIGIN, r.origin) || '(none)' }
+    }
+  })
 
 export type ViolationKind = 'resolution' | 'response'
 export type Violation = { c: CaseLite; kind: ViolationKind; reading: SlaReading; open: boolean }

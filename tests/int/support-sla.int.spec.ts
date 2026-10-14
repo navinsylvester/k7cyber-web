@@ -97,7 +97,8 @@ describe('settings', () => {
     expect(s.hours.mode).toBe('always')
     expect(s.hours.days).toEqual([1, 2])
     expect(s.hours.start).toBe('09:00')
-    expect(s.kpis).toEqual([{ key: 'fcr', enabled: true, target: 80 }])
+    expect(s.kpis[0]).toEqual({ key: 'fcr', enabled: true, target: 80 })
+    expect(s.kpis.filter((k) => k.key !== 'fcr').every((k) => k.enabled)).toBe(true) // cards added later appear with their defaults
     expect(s.rules).toEqual([{ key: 'stale', enabled: false, thresholdMinutes: null, cooldownHours: 2, actions: ['note'], queueId: null }])
     expect(s.sweep.managerEmails).toEqual(['a@k7.com', 'b@k7.com'])
     expect(s.managers).toEqual(['boss@k7.com'])

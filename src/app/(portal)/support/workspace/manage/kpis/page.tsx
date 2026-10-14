@@ -6,6 +6,7 @@ import { MANAGE, ManageNav } from '@/components/support/Manage'
 import { Flash, Options, PageHead } from '@/components/support/Parts'
 import { WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { getSettings } from '@/lib/support/kpi-config'
+import { INVITE_MODE_LABEL } from '@/lib/support/csat-model'
 import { ACTION_LABEL, KPI_DEFS, PERIODS, RULE_DEFS, type RuleAction } from '@/lib/support/kpi-model'
 import { ORIGIN, PRIORITY, VERTICAL } from '@/lib/support/options'
 import { getPublicQueues } from '@/lib/support/reference'
@@ -28,7 +29,7 @@ const DAYS = [
   { d: 0, l: 'Sun' },
 ]
 const ACTIONS = Object.keys(ACTION_LABEL) as RuleAction[]
-const UNIT: Record<string, string> = { '%': '%', h: 'hours', min: 'minutes', n: 'cases', 'per-day': 'per day' }
+const UNIT: Record<string, string> = { '%': '%', h: 'hours', min: 'minutes', n: 'cases', 'per-day': 'per day', score: 'of 5' }
 
 /* Configuring support KPIs (09-portal-guide.md §4c): one form, five sections, one save. Targets are the heart of it:
    the most specific row wins, so a desk can say "Consumer resolves in two working hours, Critical in two, everything else in four". */
@@ -295,6 +296,96 @@ export default async function KpiSettingsPage({ searchParams }: { searchParams: 
             <p className="hint" style={{ marginTop: 12 }}>
               Schedule: <code>POST /api/support/sla/sweep</code> with <code>Authorization: Bearer $CRON_SECRET</code> every 15 minutes; send <code>{'{"live":true}'}</code> for a live run. Mail goes through SMTP_URL when set, otherwise to the server log.
             </p>
+          </section>
+
+          <section className="settings-section" id="csat">
+            <h2>Customer satisfaction</h2>
+            <p>
+              One question on a resolved case, answered 1 to 5. A low score opens a follow-up on the <Link href={`${MANAGE}/csat`}>CSAT page</Link> and marks the customer for extra care; the sweep emails surveys and reminders. Survey mail reaches customers only through SMTP_URL; keep invitations to portal cases while this runs against UAT, whose seeded cases carry real addresses.
+            </p>
+            <label className="check" style={{ marginBottom: 16 }}>
+              <input type="checkbox" name="csat_enabled" value="1" defaultChecked={s.csat.enabled} /> CSAT on (survey, care bands, report)
+            </label>
+            <div className="settings-grid">
+              <div className="field">
+                <label className="label" htmlFor="cs-sat">
+                  Satisfied from (score)
+                </label>
+                <span className="control">
+                  <input id="cs-sat" name="csat_satisfiedFrom" type="number" min={2} max={5} defaultValue={s.csat.satisfiedFrom} />
+                </span>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="cs-low">
+                  Unhappy at or below (score)
+                </label>
+                <span className="control">
+                  <input id="cs-low" name="csat_unhappyAtOrBelow" type="number" min={1} max={4} defaultValue={s.csat.unhappyAtOrBelow} />
+                </span>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="cs-fu">
+                  Follow-up target (working minutes)
+                </label>
+                <span className="control">
+                  <input id="cs-fu" name="csat_followUpMinutes" type="number" min={15} defaultValue={s.csat.followUpMinutes} />
+                </span>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="cs-mode">
+                  Email surveys for
+                </label>
+                <span className="control is-select">
+                  <select id="cs-mode" name="csat_inviteMode" defaultValue={s.csat.inviteMode}>
+                    {(['off', 'portal', 'all'] as const).map((m) => (
+                      <option value={m} key={m}>
+                        {INVITE_MODE_LABEL[m]}
+                      </option>
+                    ))}
+                  </select>
+                </span>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="cs-rem">
+                  Remind after (hours, blank for none)
+                </label>
+                <span className="control">
+                  <input id="cs-rem" name="csat_reminderAfterHours" type="number" min={0} defaultValue={s.csat.reminderAfterHours ?? ''} />
+                </span>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="cs-days">
+                  Survey link valid for (days)
+                </label>
+                <span className="control">
+                  <input id="cs-days" name="csat_surveyDays" type="number" min={1} max={90} defaultValue={s.csat.surveyDays} />
+                </span>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="cs-win">
+                  Care band looks back (days)
+                </label>
+                <span className="control">
+                  <input id="cs-win" name="csat_careWindowDays" type="number" min={7} max={730} defaultValue={s.csat.careWindowDays} />
+                </span>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="cs-rec">
+                  Latest ratings that make the band
+                </label>
+                <span className="control">
+                  <input id="cs-rec" name="csat_careRecent" type="number" min={1} max={10} defaultValue={s.csat.careRecent} />
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 28px', marginTop: 20 }}>
+              <label className="check">
+                <input type="checkbox" name="csat_inviteOnResolve" value="1" defaultChecked={s.csat.inviteOnResolve} /> Email the survey when an agent resolves a case
+              </label>
+              <label className="check">
+                <input type="checkbox" name="csat_notifyManagersOnLow" value="1" defaultChecked={s.csat.notifyManagersOnLow} /> Email the managers on every low score
+              </label>
+            </div>
           </section>
 
           <section className="settings-section" id="access">

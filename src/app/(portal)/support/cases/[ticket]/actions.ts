@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation'
 
 import { userMessage } from '@/lib/dataverse/errors'
 import { getCustomerCase, reopenCustomerCase, setStatusReason } from '@/lib/support/cases'
+import { asScore, recordResponse, snapshotOf } from '@/lib/support/csat'
+import { getSettings } from '@/lib/support/kpi-config'
 import { STATE, STATUS } from '@/lib/support/options'
 import { requireCustomer } from '@/lib/support/session'
 import { canReopen } from '@/lib/support/status'
@@ -64,4 +66,24 @@ export async function reopenCase(form: FormData): Promise<void> {
     redirect(casePath(ticket, { error: 'failed', message: userMessage(e, 'customer') }))
   }
   redirect(casePath(ticket, { reopened: '1' }))
+}
+
+/** The customer rates a closed case from its page (09-portal-guide.md §4d). The row is keyed by case; rating again changes it. */
+export async function rateCase(form: FormData): Promise<void> {
+  const ticket = String(form.get('ticket') ?? '').trim().toUpperCase()
+  const score = asScore(form.get('score'))
+  const comment = String(form.get('comment') ?? '').trim().slice(0, 2000)
+  const reason = String(form.get('reason') ?? '')
+  const ctx = await requireCustomer(casePath(ticket))
+  const c = await getCustomerCase(ctx.auth, ctx.scope, ticket)
+  if (!c) redirect('/support/cases')
+  if (c.statecode !== STATE.RESOLVED) redirect(casePath(ticket, { error: 'not-closed' }) + '#rate')
+  if (!score) redirect(casePath(ticket, { error: 'score' }) + '#rate')
+  const settings = await getSettings()
+  try {
+    await recordResponse(snapshotOf(c), { score, comment, source: 'portal', contactId: ctx.scope.contactId, email: ctx.scope.email, reason }, { settings, auth: ctx.auth })
+  } catch (e) {
+    redirect(casePath(ticket, { error: 'failed', message: userMessage(e, 'customer') }) + '#rate')
+  }
+  redirect(casePath(ticket, { rated: '1' }) + '#rate')
 }

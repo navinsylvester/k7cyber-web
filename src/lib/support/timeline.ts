@@ -12,7 +12,7 @@ export type Attachment = { id: string; name: string; size: number; mime: string;
 
 export type TimelineEntry = {
   id: string
-  kind: 'email' | 'note' | 'phonecall' | 'task' | 'appointment' | 'other'
+  kind: 'email' | 'note' | 'phonecall' | 'task' | 'appointment' | 'other' | 'csat'
   when: string
   subject: string
   html: string

@@ -2,16 +2,18 @@ import Link from 'next/link'
 import React from 'react'
 
 import { fv, type Row } from '@/lib/dataverse/types'
+import type { Care } from '@/lib/support/csat-model'
 import { dmy, dmyHm } from '@/lib/support/format'
 import type { ViewResult } from '@/lib/support/views'
 import { cellValue } from '@/lib/support/views'
 
+import { CareTag } from './Csat'
 import { Pager, qs, SortHead, StatusTag, Tid } from './Parts'
 
 /* The workspace ledger (DataTable): a saved view's columns as mono heads, the case number as the row link,
    dates DD-MM-YYYY in mono, status as a tag, Critical as the one signal mark. */
 
-export const ViewTable: React.FC<{ result: ViewResult; path: string; base: Record<string, string | number | undefined>; caseHref: (id: string) => string; minWidth?: number }> = ({ result, path, base, caseHref, minWidth = 960 }) => {
+export const ViewTable: React.FC<{ result: ViewResult; path: string; base: Record<string, string | number | undefined>; caseHref: (id: string) => string; minWidth?: number; care?: Map<string, Care> }> = ({ result, path, base, caseHref, minWidth = 960, care }) => {
   const cols = result.columns
   const sortCol = result.sort ?? ''
   return (
@@ -37,7 +39,7 @@ export const ViewTable: React.FC<{ result: ViewResult; path: string; base: Recor
               return (
                 <tr className="row" key={id}>
                   {cols.map((c, i) => (
-                    <Cell key={c.name} row={row} name={c.name} kind={c.kind} href={i === 0 || c.name === 'ticketnumber' ? caseHref(id) : undefined} />
+                    <Cell key={c.name} row={row} name={c.name} kind={c.kind} href={i === 0 || c.name === 'ticketnumber' ? caseHref(id) : undefined} care={c.name === 'customerid' ? care?.get(String(row._customerid_value ?? '')) : undefined} />
                   ))}
                 </tr>
               )
@@ -56,7 +58,7 @@ export const ViewTable: React.FC<{ result: ViewResult; path: string; base: Recor
   )
 }
 
-const Cell: React.FC<{ row: Row; name: string; kind: ViewResult['columns'][number]['kind']; href?: string }> = ({ row, name, kind, href }) => {
+const Cell: React.FC<{ row: Row; name: string; kind: ViewResult['columns'][number]['kind']; href?: string; care?: Care }> = ({ row, name, kind, href, care }) => {
   if (name === 'ticketnumber') {
     return (
       <td className="id">
@@ -88,7 +90,12 @@ const Cell: React.FC<{ row: Row; name: string; kind: ViewResult['columns'][numbe
     )
   }
   const v = cellValue(row, name)
-  return <td className="text">{href && v ? <Link href={href} style={{ textDecoration: 'none' }}>{v}</Link> : v}</td>
+  return (
+    <td className="text">
+      {care && <CareTag care={care} mark />}
+      {href && v ? <Link href={href} style={{ textDecoration: 'none' }}>{v}</Link> : v}
+    </td>
+  )
 }
 
 /** Generic ledger for the other lists (contacts, accounts, RFEs...). */

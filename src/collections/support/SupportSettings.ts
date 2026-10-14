@@ -39,6 +39,11 @@ export const KPI_OPTIONS = [
   { label: 'Active cases at risk', value: 'at-risk' },
   { label: 'Reopened cases (%)', value: 'reopen-rate' },
   { label: 'Oldest active case (working hours)', value: 'oldest-open' },
+  { label: 'Customer satisfaction (%)', value: 'csat' },
+  { label: 'Average rating (of 5)', value: 'csat-average' },
+  { label: 'Survey response rate (%)', value: 'csat-response-rate' },
+  { label: 'Unhappy customers awaiting follow-up', value: 'csat-unhappy' },
+  { label: 'Unhappy customers contacted within target (%)', value: 'csat-followup' },
 ]
 export const RULE_OPTIONS = [
   { label: 'At risk and not owned by an engineer', value: 'unowned-at-risk' },
@@ -180,6 +185,49 @@ export const SupportSettings: GlobalConfig = {
                 { name: 'enabled', type: 'checkbox', defaultValue: true, admin: { description: 'The scheduled sweep (POST /api/support/sla/sweep with the cron secret) evaluates the rules.' } },
                 { name: 'live', type: 'checkbox', defaultValue: false, admin: { description: 'Off: the sweep only records what it would do. On: it writes notes, queues items and sends mail (UAT only; production is read-only in code).' } },
                 { name: 'managerEmails', type: 'text', admin: { description: 'Comma-separated recipients for "Email the managers".' } },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'CSAT',
+          fields: [
+            {
+              name: 'csat',
+              type: 'group',
+              admin: { description: 'The satisfaction survey on resolved cases, the follow-up of low scores and the care band agents see beside a customer (09-portal-guide.md §4d).' },
+              fields: [
+                { name: 'enabled', type: 'checkbox', defaultValue: true, admin: { description: 'Show the survey to customers and the CSAT pages to managers.' } },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'satisfiedFrom', type: 'number', min: 2, max: 5, defaultValue: 4, admin: { width: '33%', description: 'Scores from here up count as satisfied.' } },
+                    { name: 'unhappyAtOrBelow', type: 'number', min: 1, max: 4, defaultValue: 2, admin: { width: '33%', description: 'Scores up to here open a follow-up.' } },
+                    { name: 'followUpMinutes', type: 'number', min: 15, defaultValue: 240, admin: { width: '34%', description: 'Working minutes to contact an unhappy customer.' } },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'inviteMode', type: 'select', options: [{ label: 'Never (portal ratings only)', value: 'off' }, { label: 'Cases raised through the portal', value: 'portal' }, { label: 'Every resolved case with an email', value: 'all' }], defaultValue: 'portal', admin: { width: '50%', description: 'Which resolved cases the sweep emails a survey to.' } },
+                    { name: 'inviteOnResolve', type: 'checkbox', defaultValue: true, admin: { width: '50%', description: 'Email the survey when an agent resolves a case in the workspace.' } },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'reminderAfterHours', type: 'number', min: 0, defaultValue: 72, admin: { width: '33%', description: 'Hours before one reminder; blank or 0 for none.' } },
+                    { name: 'surveyDays', type: 'number', min: 1, max: 90, defaultValue: 14, admin: { width: '33%', description: 'Days a survey link stays valid.' } },
+                    { name: 'notifyManagersOnLow', type: 'checkbox', defaultValue: true, admin: { width: '34%', description: 'Email the managers when a low score arrives.' } },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'careWindowDays', type: 'number', min: 7, max: 730, defaultValue: 180, admin: { width: '50%', description: 'Days of ratings that decide the care band.' } },
+                    { name: 'careRecent', type: 'number', min: 1, max: 10, defaultValue: 3, admin: { width: '50%', description: 'How many of the latest ratings make the band.' } },
+                  ],
+                },
               ],
             },
           ],

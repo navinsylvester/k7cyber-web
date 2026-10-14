@@ -7,7 +7,7 @@ import { Avatar } from './Parts'
 
 /* Conversation (customer) and timeline (agent): rows, not cards. The newest entry is first. */
 
-const KIND_LABEL: Record<TimelineEntry['kind'], string> = { email: 'Email', note: 'Note', phonecall: 'Call', task: 'Task', appointment: 'Meeting', other: 'Activity' }
+const KIND_LABEL: Record<TimelineEntry['kind'], string> = { email: 'Email', note: 'Note', phonecall: 'Call', task: 'Task', appointment: 'Meeting', other: 'Activity', csat: 'Rating' }
 
 export const Conversation: React.FC<{ entries: TimelineEntry[]; attachmentHref: (a: { id: string; kind: 'note' | 'email' }) => string }> = ({ entries, attachmentHref }) => {
   if (!entries.length) return null
@@ -58,10 +58,10 @@ export const AgentTimeline: React.FC<{ entries: TimelineEntry[]; attachmentHref:
             </time>
             <div>
               <div className="tl-meta">
-                <span className="tag">{internal ? 'Internal note' : e.kind === 'note' ? 'Portal note' : KIND_LABEL[e.kind]}</span>
+                <span className={`tag${e.kind === 'csat' && e.statusLabel === 'low' ? ' tag-signal' : ''}`}>{internal ? 'Internal note' : e.kind === 'note' ? 'Portal note' : KIND_LABEL[e.kind]}</span>
                 {dirLabel && <span className="label muted">{dirLabel}</span>}
                 <span className="tl-by">{e.fromCustomer ? (e.from || 'Customer') : e.by.name}</span>
-                {e.statusLabel && e.kind !== 'note' && <span className="label muted">{e.statusLabel}</span>}
+                {e.statusLabel && e.kind !== 'note' && e.kind !== 'csat' && <span className="label muted">{e.statusLabel}</span>}
               </div>
               {e.subject && <div className="tl-sub" style={{ marginTop: 6 }}>{e.subject}</div>}
               {(e.html || e.text) && (

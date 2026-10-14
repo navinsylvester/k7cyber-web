@@ -33,8 +33,24 @@ The support-portal parts from section 09 (reference CSS: `src/app/(portal)/porta
 
 **S16 Board row (`board-row`)** the prevention board: the case title with the signal pixel when past target, its facts in `muted`, the rules' verdicts as dashed tags, the two meters, and inline forms for reassign, remind and queue. The two-series trend (`trend2`) draws the second series dashed with a legend, never a second hue.
 
+**S17 Score tag (`score`)** a customer's 1–5 rating as a Tag: "2/5 · Unhappy". A low score is the one state that goes `tag-signal`; a satisfied score is `tag-solid`; the middle is outlined; no rating is dashed. The words come from the five-point scale (Very unhappy … Very happy).
+
+**S18 Care tag (`care`) and mark (`care-mark`)** the band a customer sits in, read before the first line of a reply: *Handle with care* on `signal`, *Watch* in solid ink, *Happy customer* outlined at 78%. The tag sits beside the customer's name on a case head and a contact or account page; the 8px mark stands before the name in ledgers and lists. The title carries the reason. No second hue: the three bands read by word and weight.
+
+**S19 Care band (`care-band`)** one line under a case head when the band is high or watch: the tag, the reason in a sentence ("Rated their last case CS-… 2/5 three days ago."), the count and a History link. A 2px `signal` top rule for high.
+
+**S20 Rating scale (`rate`)** five choice tiles in a row, the number large in mono with its word beneath; the chosen tile inverts and goes `signal` on hover, like S11. Large on the customer's closed case and the emailed survey, compact (numbers only) in the agent's action panel.
+
+**S21 Distribution (`dist`)** the five scores as horizontal bars, 5 on top, count and share in mono; the low rows are `signal`, the satisfied rows ink, the neutral row hatched. The follow-up queue (`fu-row`) is a board row with the customer first, the score and the comment, and inline forms to take and close the follow-up.
+
+**S22 Reason picker (`ReasonSelect`)** one native select, the sixteen reasons grouped under their four areas (the product, product support, licensing & sales, other). The customer sees it in their own words on the survey ("It slows my computer down"), optional; the desk sees the short labels ("Slows the computer"), and the manager closing a follow-up must pick one. Underlined like every portal select, never a widget.
+
+**S23 Cause tag (`cause`)** what a low score was about as an outlined Tag with an 8px square before the words: "Support · Took too long to resolve". The square carries the area by weight: ink for the product, `signal` for support (the desk's own failing is the one that goes signal), hatched for licensing, outlined for other. A small "customer" suffix when it is the customer's own pick, not the desk's call; dashed "Not classified" until somebody says.
+
+**S24 Area stack (`stack`, `stack-rows`)** one 14px bar split by area on a shared scale, the total in mono at the right: a row per product family, per week or per repeat customer. Segments use the same weights as the cause square, plus a dotted muted segment for the unclassified; each segment can link into the filtered ledger. A `legend.areas` key sits under the first stack on a page.
+
 **Use** on `/support` (customers) and `/support/workspace` (agents). Customer pages open with a `help-hero` or a compact `ws` sheet; workspace pages are always `ws` sheets so the data sits near the fold.
 
 **Provide** the case row (number, title, status reason, priority, dates), the timeline entries with their audience flag, the view's columns, and the chart series.
 
-**Don't** show Dynamics status reasons, owners or SLA flags to customers; grade engineers by colour (the composite orders cards, it is never shown as a traffic light); put more than one primary button in a view; colour states by hue (they read by word and weight); let a customer see a note that was not written through the portal.
+**Don't** show Dynamics status reasons, owners or SLA flags to customers; grade engineers by colour (the composite orders cards, it is never shown as a traffic light); put more than one primary button in a view; colour states by hue (they read by word and weight; the care band is signal, solid or outlined, never red, amber and green; the four areas of a low score are ink, signal, hatched and outlined, never four colours); let a customer see a note that was not written through the portal; show a customer their own care band.

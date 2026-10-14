@@ -2,9 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
 
+import { ScoreTag } from '@/components/support/Csat'
 import { Empty, Pager, StateTag, Tid, When, qs } from '@/components/support/Parts'
 import { CUSTOMER_PAGE, listCustomerCases } from '@/lib/support/cases'
+import { ratedCases } from '@/lib/support/csat'
 import { htmlToText, truncate } from '@/lib/support/format'
+import { getSettings } from '@/lib/support/kpi-config'
 import { requireCustomer } from '@/lib/support/session'
 
 export const metadata: Metadata = { title: 'My cases' }
@@ -18,6 +21,8 @@ export default async function MyCasesPage({ searchParams }: { searchParams: Prom
   const page = Math.max(1, Number(sp.page) || 1)
   const ctx = await requireCustomer(PATH)
   const r = await listCustomerCases(ctx.auth, ctx.scope, { state, page })
+  const settings = await getSettings()
+  const ratings = state === 'closed' && settings.csat.enabled ? await ratedCases(r.value.map((c) => c.incidentid)) : new Map()
   const totalPages = r.total !== undefined ? Math.max(1, Math.ceil(r.total / CUSTOMER_PAGE)) : r.page + (r.nextLink ? 1 : 0)
   const base = { state: state === 'closed' ? 'closed' : undefined }
 
@@ -83,6 +88,7 @@ export default async function MyCasesPage({ searchParams }: { searchParams: Prom
                 {preview && <span className="desc">{preview}</span>}
                 <span className="state">
                   <StateTag statuscode={c.statuscode} statecode={c.statecode} />
+                  {state === 'closed' && settings.csat.enabled && (ratings.get(c.incidentid)?.score ? <ScoreTag score={ratings.get(c.incidentid)!.score} settings={settings.csat} word={false} prefix="Rated" /> : <Link className="tag tag-dashed" href={`${PATH}/${encodeURIComponent(c.ticketnumber)}#rate`}>Rate us</Link>)}
                   <span className="arrow" aria-hidden="true">
                     →
                   </span>

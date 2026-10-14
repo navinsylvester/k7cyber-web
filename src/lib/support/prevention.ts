@@ -5,6 +5,7 @@ import { getPayload, type Where } from 'payload'
 import type { DataverseAuth } from '@/lib/dataverse'
 
 import { addCaseToQueue } from './cases'
+import { csatSweep, type CsatSweepResult } from './csat'
 import { getSettings } from './kpi-config'
 import { ACTION_LABEL, ruleDef, type RuleAction, type RuleKey, type RuleSetting, type Settings } from './kpi-model'
 import { sendMail } from './mail'
@@ -106,7 +107,7 @@ const record = async (e: Omit<SlaEvent, 'id' | 'createdAt'>): Promise<void> => {
 
 /* ---------- The sweep ---------- */
 
-export type SweepResult = { runId: string; mode: 'dry-run' | 'live'; evaluated: number; fired: number; skipped: number; done: number; failed: number; at: Date; warnings: string[] }
+export type SweepResult = { runId: string; mode: 'dry-run' | 'live'; evaluated: number; fired: number; skipped: number; done: number; failed: number; at: Date; warnings: string[]; csat: CsatSweepResult | null }
 
 const caseUrl = (id: string) => `${(process.env.NEXT_PUBLIC_SERVER_URL ?? '').replace(/\/$/, '')}/support/workspace/cases/${id}`
 
@@ -121,7 +122,7 @@ export const runSweep = async (auth: DataverseAuth, o: { actor: string; live?: b
   const maxCooldown = Math.max(1, ...settings.rules.map((r) => r.cooldownHours))
   const acted = await lastActed(maxCooldown)
   const agents = live ? await getAgents(auth).catch(() => []) : []
-  const result: SweepResult = { runId, mode, evaluated: desk.activeCases.length, fired: verdicts.length, skipped: 0, done: 0, failed: 0, at: desk.now, warnings: [...desk.warnings] }
+  const result: SweepResult = { runId, mode, evaluated: desk.activeCases.length, fired: verdicts.length, skipped: 0, done: 0, failed: 0, at: desk.now, warnings: [...desk.warnings], csat: null }
   for (const v of verdicts) {
     const last = acted.get(`${v.c.id}:${v.rule}`)
     if (last && desk.now.getTime() - last.getTime() < v.cooldownHours * 3600_000) {
@@ -163,6 +164,15 @@ export const runSweep = async (auth: DataverseAuth, o: { actor: string; live?: b
     await record({ caseId: v.c.id, ticket: v.c.ticket, rule: v.rule, mode, actions, outcome: failed ? 'failed' : 'done', detail: `${v.reason}. ${notes.join('; ')}`, runId, actor: o.actor })
     if (failed) result.failed++
     else result.done++
+  }
+  // The satisfaction pass (09-portal-guide.md §4d): surveys for the period's resolved cases, one reminder, overdue follow-ups.
+  if (settings.csat.enabled) {
+    try {
+      result.csat = await csatSweep(desk, { live, settings })
+      result.warnings.push(...result.csat.notes)
+    } catch (e) {
+      result.warnings.push(`CSAT pass failed: ${(e as Error).message}`)
+    }
   }
   return result
 }

@@ -3,13 +3,17 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
+import { CareTag } from '@/components/support/Csat'
+import { CareFlagPanel, CsatHistory } from '@/components/support/CustomerCsat'
 import { Crumbs, Empty, Flash, MetaRows, StatusTag, Tid, When } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { fv, lookup } from '@/lib/dataverse/types'
 import { casesForCustomer } from '@/lib/support/cases'
 import { contactsOfAccount, contractsOfAccount, getAccount } from '@/lib/support/customers'
 import { dmy, dmyHm } from '@/lib/support/format'
-import { requireAgent } from '@/lib/support/session'
+import { careForCustomer, csatForCustomer, flagHistory, followUpState } from '@/lib/support/csat'
+import { getSettings } from '@/lib/support/kpi-config'
+import { isManager, requireAgent } from '@/lib/support/session'
 
 import { AccountFields, loadGeo } from '../../forms'
 
@@ -42,7 +46,10 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
   const a = await getAccount(me.auth, id)
   if (!a) notFound()
   const stateId = a._k7_state_value ? String(a._k7_state_value) : null
-  const [contacts, cases, contracts, geo] = await Promise.all([contactsOfAccount(me.auth, a.accountid, 50).catch(() => []), casesForCustomer(me.auth, a.accountid, 25).catch(() => []), contractsOfAccount(me.auth, a.accountid), loadGeo(me.auth, stateId)])
+  const settings = await getSettings()
+  const [contacts, cases, contracts, geo, care, ratings, flags, manager] = await Promise.all([contactsOfAccount(me.auth, a.accountid, 50).catch(() => []), casesForCustomer(me.auth, a.accountid, 25).catch(() => []), contractsOfAccount(me.auth, a.accountid), loadGeo(me.auth, stateId), careForCustomer(a.accountid, settings), csatForCustomer(a.accountid), flagHistory(a.accountid), isManager(me)])
+  const readings = new Map(ratings.map((r) => [r.id, { status: r.followUp, reading: followUpState(r, settings) }]))
+  const here = `${WS}/customers/accounts/${a.accountid}`
   const parent = lookup(a, 'parentaccountid')
   const partner = lookup(a, 'alletec_partneraccount')
   const primary = lookup(a, 'primarycontactid')
@@ -60,6 +67,7 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
               {String(a.alletec_accountid ?? '') && <span className="tag lid">{String(a.alletec_accountid)}</span>}
               {fv(a, 'alletec_accounttype') && <span className="tag tag-solid">{fv(a, 'alletec_accounttype')}</span>}
               {a.statecode === 1 && <span className="tag tag-quiet">Inactive</span>}
+              {settings.csat.enabled && <CareTag care={care} href="#csat" />}
             </div>
           </div>
           <div className="ws-actions">
@@ -153,6 +161,8 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
               )}
             </div>
 
+            {settings.csat.enabled && <CsatHistory care={care} ratings={ratings} settings={settings.csat} readings={readings} />}
+
             {contracts.length > 0 && (
               <div style={{ marginTop: 40 }}>
                 <h2 className="sub-head">
@@ -176,6 +186,7 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
 
           <aside className="ws-side">
             <div className="acts">
+              {settings.csat.enabled && <CareFlagPanel manager={manager} customerId={a.accountid} customerName={name} customerKind="account" care={care} history={flags} returnTo={here} />}
               <details open={sp.edit === '1'}>
                 <summary>Edit account</summary>
                 <div className="act-body">

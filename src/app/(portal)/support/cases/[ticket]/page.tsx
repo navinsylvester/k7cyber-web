@@ -3,17 +3,20 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
+import { RateScale, ReasonSelect, ScoreTag } from '@/components/support/Csat'
 import { Field, Flash, MetaRows, StateTag, Tid, Track } from '@/components/support/Parts'
 import { Conversation } from '@/components/support/Timeline'
 import { fv } from '@/lib/dataverse/types'
 import { getCustomerCase } from '@/lib/support/cases'
+import { csatForCase } from '@/lib/support/csat'
 import { dmy, dmyHm, htmlToText } from '@/lib/support/format'
+import { getSettings } from '@/lib/support/kpi-config'
 import { STATE } from '@/lib/support/options'
 import { requireCustomer } from '@/lib/support/session'
 import { canReopen, customerState } from '@/lib/support/status'
 import { getTimeline, type TimelineEntry } from '@/lib/support/timeline'
 
-import { replyToCase, reopenCase } from './actions'
+import { rateCase, replyToCase, reopenCase } from './actions'
 
 export async function generateMetadata({ params }: { params: Promise<{ ticket: string }> }): Promise<Metadata> {
   const { ticket } = await params
@@ -27,9 +30,11 @@ const ERRORS: Record<string, string> = {
   'file-type': 'We accept images, PDF, text and log files, and zip archives.',
   'reopen-window': 'This case closed more than 14 days ago. Open a new case and mention its number.',
   failed: 'We could not save that.',
+  score: 'Pick a number from 1 to 5 first.',
+  'not-closed': 'You can rate a case once it is closed.',
 }
 
-type SP = { created?: string; attach?: string; replied?: string; reopened?: string; error?: string; message?: string }
+type SP = { created?: string; attach?: string; replied?: string; reopened?: string; rated?: string; error?: string; message?: string }
 
 /* One case, as the customer sees it: where it stands, the conversation in order, and one place to reply. */
 export default async function CustomerCasePage({ params, searchParams }: { params: Promise<{ ticket: string }>; searchParams: Promise<SP> }) {
@@ -38,7 +43,9 @@ export default async function CustomerCasePage({ params, searchParams }: { param
   const ctx = await requireCustomer(`/support/cases/${encodeURIComponent(ticket)}`)
   const c = await getCustomerCase(ctx.auth, ctx.scope, ticket)
   if (!c) notFound()
-  const timeline = await getTimeline(ctx.auth, c.incidentid, 'customer')
+  const [timeline, settings, rating] = await Promise.all([getTimeline(ctx.auth, c.incidentid, 'customer'), getSettings(), csatForCase(c.incidentid)])
+  const canRate = settings.csat.enabled && c.statecode === STATE.RESOLVED
+  const ratedLow = sp.rated === '1' && rating?.score !== null && rating?.score !== undefined && rating.score <= settings.csat.unhappyAtOrBelow
 
   const opening: TimelineEntry = {
     id: 'opening',
@@ -96,6 +103,7 @@ export default async function CustomerCasePage({ params, searchParams }: { param
         )}
         {sp.replied === '1' && <Flash>Your reply is with the engineer.</Flash>}
         {sp.reopened === '1' && <Flash>The case is open again. An engineer will pick it up.</Flash>}
+        {sp.rated === '1' && <Flash>{ratedLow ? 'Thank you for telling us. We are sorry we let you down; a support manager will be in touch.' : 'Thank you for your rating.'}</Flash>}
         {error && <Flash kind="error">{error}</Flash>}
         <Track statuscode={c.statuscode} statecode={c.statecode} />
       </section>
@@ -107,7 +115,39 @@ export default async function CustomerCasePage({ params, searchParams }: { param
         </h2>
         <Conversation entries={entries} attachmentHref={attachmentHref} />
 
-        <div id="reply" style={{ marginTop: 'clamp(32px, 4cqw, 48px)' }}>
+        {canRate && (
+          <div id="rate" className="rate-block" style={{ marginTop: 'clamp(32px, 4cqw, 48px)' }}>
+            <h2 className="sub-head">How did we do?</h2>
+            {rating?.score ? (
+              <p className="rated">
+                You rated this case <ScoreTag score={rating.score} settings={settings.csat} /> <span className="label muted">on {dmy(rating.respondedAt)}</span>. Changed your mind? Pick again below.
+              </p>
+            ) : (
+              <p className="form-intro">One tap tells the engineer and their manager whether the fix worked for you. A low rating brings a manager back to you.</p>
+            )}
+            <form action={rateCase} className="form-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
+              <input type="hidden" name="ticket" value={c.ticketnumber} />
+              <RateScale selected={rating?.score ?? null} />
+              <div className="rate-comment">
+                <Field id="rate-reason" label="If something went wrong, what was it mainly about?" hint="Optional. It tells us whether to fix the product or the way we helped you." select>
+                  <ReasonSelect id="rate-reason" audience="customer" value={rating?.customerReason ?? ''} />
+                </Field>
+              </div>
+              <div className="rate-comment">
+                <Field id="rate-comment" label="Anything you want to tell us?" hint="Optional. Read by the engineer's manager.">
+                  <textarea id="rate-comment" name="comment" rows={2} maxLength={2000} defaultValue={rating?.source === 'agent' ? '' : (rating?.comment ?? '')} />
+                </Field>
+              </div>
+              <div className="form-actions">
+                <button className="btn btn-line" type="submit">
+                  {rating?.score ? 'Update my rating' : 'Send my rating →'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        <div id="reply" style={{ marginTop: canRate ? 0 : 'clamp(32px, 4cqw, 48px)' }}>
           {cancelled ? (
             <div className="notice">
               <p>This case was cancelled, so it no longer takes replies. If the problem is back, open a new case and mention {c.ticketnumber}.</p>

@@ -60,5 +60,9 @@ Local dev uses Payload's push mode (schema synced on start). Credentials in `.en
   report, the at-risk board and the prevention sweep (`POST /api/support/sla/sweep` with `CRON_SECRET`). Targets, business hours,
   KPI cards and rules are configured on `/manage/kpis` and stored in the Payload global `support-settings`; the sweep log is the
   collection `support-sla-events`. The SLA engine (`src/lib/support/sla.ts`) is pure and tested without a tenant.
+- CSAT (09 §4d, built 2026-10-14): the survey on resolved cases (portal, emailed token link `/support/csat/[token]`, or recorded by an agent), stored in
+  the Payload collections `support-csat` and `support-care-flags`, never in the CRM. Low scores open a follow-up on `/manage/csat` and mark the customer
+  "handle with care" (`careFrom` in `src/lib/support/csat-model.ts`), shown beside the customer on case heads, lists and customer pages. The sweep's
+  CSAT pass emails surveys only for the cases `csat.inviteMode` allows (default: portal cases) and only through `SMTP_URL`.
 - `scripts/dataverse-probe.py` queries Dataverse from the shell (`DV_*` in `.env`); its
   token cache `scripts/.token_cache.json` and any `spec/` output are git-ignored.
