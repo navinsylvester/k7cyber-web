@@ -5,7 +5,7 @@ as a headless helpdesk through the **Dataverse Web API (OData v4)**. All logical
 names below were confirmed by live discovery on 2026-10-10 (see
 `03-metadata-summary.md`; `tools/dataverse_probe.py discover` regenerates it).
 Org: `https://k7crm.crm8.dynamics.com` (production, **do not develop against it**) and
-the Portal Dev sandbox `https://<name>.crm8.dynamics.com` (development/test target); tenant
+UAT `https://k7crmuat.crm8.dynamics.com` (development/test target since 2026-10-12); tenant
 `005ef94f-7dbd-4d0e-a29a-494e2a63d911`. See `07-production-safety.md`.
 
 ## 1. Architecture (two credential modes, one backend)
@@ -51,7 +51,7 @@ and no on-behalf-of exchange are needed.
 2. API permissions (delegated): `openid`, `profile`, `email`, `offline_access`, and
    **Dynamics CRM → user_impersonation**. Grant admin consent.
 3. Sign-in request scope: `openid profile email offline_access
-   https://k7crm.crm8.dynamics.com/user_impersonation` (sandbox: `https://<sandbox>.crm8.dynamics.com/…`).
+   https://k7crm.crm8.dynamics.com/user_impersonation` (UAT: `https://k7crmuat.crm8.dynamics.com/user_impersonation`).
    The token response carries an ID token, a Dataverse access token (~60–90 min) and a
    refresh token; store them server-side in the session and refresh silently.
 4. The user must already be an enabled, licensed Dataverse user (65 today); no
@@ -257,9 +257,9 @@ reference the new case inside the changeset as `$1`.
 **Agent-only actions** (run with the agent's delegated token):
 ```
 PATCH incidents(<id>)  { "ownerid@odata.bind": "/systemusers(<userid>)" }        ← assign (or /teams(<id>))
-POST  AddToQueue       { "Target": {"incidentid": "<id>", "@odata.type": "Microsoft.Dynamics.CRM.incident"}, "DestinationQueueId": "<queueid>" }
-POST  PickFromQueue    { "QueueItemId": "<queueitemid>", "WorkerId": "<userid>" }
-POST  ReleaseToQueue   { "QueueItemId": "<queueitemid>" }
+POST  queues(<queueid>)/Microsoft.Dynamics.CRM.AddToQueue  { "Target": {"incidentid": "<id>", "@odata.type": "Microsoft.Dynamics.CRM.incident"} }   ← bound to the queue (verified 2026-10-13)
+POST  queueitems(<queueitemid>)/Microsoft.Dynamics.CRM.PickFromQueue   { "SystemUser": {"systemuserid": "<userid>", "@odata.type": "Microsoft.Dynamics.CRM.systemuser"}, "RemoveQueueItem": false }   ← bound to the queue item; parameter names from $metadata (verified)
+POST  queueitems(<queueitemid>)/Microsoft.Dynamics.CRM.ReleaseToQueue  {}   ← bound (verified)
 POST  phonecalls       { "subject": "...", "description": "...", "directioncode": true, "regardingobjectid_incident@odata.bind": "/incidents(<id>)" }
 POST  tasks            { "subject": "...", "regardingobjectid_incident@odata.bind": "/incidents(<id>)", "scheduledend": "2026-10-12T10:00:00Z" }
 POST  k7_rfes          { "k7_rfetitle": "...", "k7_Case@odata.bind": "/incidents(<id>)", "k7_rfestatus": 696720001 }

@@ -15,6 +15,12 @@ Config: env vars or a `.env` file in the working directory (KEY=VALUE lines):
 Only GET requests are issued by `discover`/`count`; `post`/`patch` helpers exist for your app code.
 """
 import os, sys, json, time, urllib.request, urllib.parse, urllib.error
+import socket as _socket
+_gai = _socket.getaddrinfo
+def _gai_v4_first(*a, **k):   # the IPv6 path to Microsoft is unreliable from the dev network: try IPv4 first, IPv6 as fallback
+    res = _gai(*a, **k); return sorted(res, key=lambda r: r[0] != _socket.AF_INET)
+_socket.getaddrinfo = _gai_v4_first
+
 
 def _load_dotenv(path=".env"):
     if os.path.exists(path):

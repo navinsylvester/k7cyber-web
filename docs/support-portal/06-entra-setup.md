@@ -1,13 +1,13 @@
 # Entra ID setup, step by step
 
-You (Navin) can approve these yourself. Do everything first for the **Portal Dev sandbox**; repeat for
+You (Navin) can approve these yourself. Do everything first for **UAT** (`k7crmuat`); repeat for
 production only at go-live. Every value you collect goes into `.env` (dev) or the
 hosting secret store (never into git). Names below are suggestions; keep them if you
 can so the docs stay accurate.
 
 Tenant (workforce): `005ef94f-7dbd-4d0e-a29a-494e2a63d911` ("K7 Computing Private Limited").
-Dataverse: Portal Dev sandbox `https://<name>.crm8.dynamics.com` (created in §C), production
-`https://k7crm.crm8.dynamics.com`. The old UAT (`k7crmuat`) is not used.
+Dataverse: UAT `https://k7crmuat.crm8.dynamics.com` (the development environment since
+2026-10-12, see §C), production `https://k7crm.crm8.dynamics.com`.
 
 ## A. Agent sign-in app (phase 1) — "K7 Support Portal – Agents (Dev)"
 1. Open https://entra.microsoft.com → Identity → Applications → **App registrations** → New registration.
@@ -32,7 +32,7 @@ Dataverse: Portal Dev sandbox `https://<name>.crm8.dynamics.com` (created in §C
    AUTH_MICROSOFT_ENTRA_ID_ID=<client id>
    AUTH_MICROSOFT_ENTRA_ID_SECRET=<secret value>
    AUTH_MICROSOFT_ENTRA_ID_ISSUER=https://login.microsoftonline.com/005ef94f-7dbd-4d0e-a29a-494e2a63d911/v2.0
-   DATAVERSE_URL=https://<sandbox>.crm8.dynamics.com
+   DATAVERSE_URL=https://k7crmuat.crm8.dynamics.com
    ```
 For production create a second registration `… (Prod)` with the production redirect URI;
 only `DATAVERSE_URL` and the two AUTH values change.
@@ -43,7 +43,7 @@ only `DATAVERSE_URL` and the two AUTH values change.
 2. Certificates & secrets → upload a certificate (preferred) or create a secret →
    `DATAVERSE_CLIENT_SECRET`. No API permissions are needed for client-credentials
    access to Dataverse; the application user below carries the rights.
-3. Open https://admin.powerplatform.microsoft.com → Environments → **the Portal Dev sandbox** → Settings → Users + permissions → **Application users** → New app user
+3. Open https://admin.powerplatform.microsoft.com → Environments → **K7 Computing Private Limited UAT** → Settings → Users + permissions → **Application users** → New app user
    → Add an app → pick the registration → Business unit: root → Security roles: for the
    first smoke test **System Customizer** is enough; before customer traffic replace it
    with the custom role from `07-production-safety.md` §4.
@@ -54,25 +54,24 @@ only `DATAVERSE_URL` and the two AUTH values change.
    DATAVERSE_CLIENT_SECRET=<secret>
    ```
 
-## C. The Portal Dev sandbox (needed now, before any coding)
-Needs a **Power Platform administrator** (or Dynamics 365 administrator). If the New
-button below is missing for you, ask the tenant admin to do this part.
-1. https://admin.powerplatform.microsoft.com → **Manage → Environments** → **New**.
-   Name `K7 CRM – Portal Dev`, region **India**, type **Sandbox**, "Add a Dataverse data
-   store" **Yes**, security group: the support team group (optional), sample apps/data
-   **No**. Create; wait until it shows Ready. Note its URL (`https://<name>.crm8.dynamics.com`).
-2. Open the **production** environment (K7 Computing Private Limited) → **Copy** → Target
-   environment: `K7 CRM – Portal Dev` → **Minimal copy (customizations and schema only)**
-   → Copy. Confirm the overwrite warning (the target is the new, empty sandbox).
-3. When the copy finishes the sandbox is in **Administration mode** with background
-   operations off. Keep it that way until: Settings → Email → Mailboxes: no mailbox is
-   approved/tested for server-side sync; Settings → Customizations → Plug-in trace / steps
-   that send SMS or email are reviewed; Flows (make.powerautomate.com, this environment)
-   that notify customers are turned off. Then Settings → Administration mode → off.
-4. Settings → Users + permissions → Users → confirm your user is **System Administrator**
-   here; add the support leads who will test as System Customizer or their normal roles.
-5. Seed it (`07-production-safety.md` §1), then set `DATAVERSE_URL` and `DV_ORG_URL` in
-   `.env` to the sandbox URL.
+## C. The development environment: UAT (decided 2026-10-12)
+The planned Minimal-copy sandbox cannot be created while the tenant is over its Dataverse database
+entitlement (47.5 GB entitled, 49.2 GB used on 2026-10-12), so the existing Sandbox-type org
+**K7 Computing Private Limited UAT** (`https://k7crmuat.crm8.dynamics.com`, environment id
+`eef7bfef-083f-4817-854a-e4a34abe0a74`) is the development environment. It is shared with the CRM
+admin; the rules are in `07-production-safety.md` §1c. What was done on 2026-10-12, and how to
+repeat it after the CRM admin changes production:
+1. `python3 -I scripts/dataverse-schema-sync.py --target https://k7crmuat.crm8.dynamics.com --dry-run`,
+   then without `--dry-run`: copies the support schema from production into UAT and publishes it.
+2. `python3 -I scripts/dataverse-uat-automation.py --target … --pause`: turns the case/email/note/account
+   workflows, the customer email flow, the autonumber plugin steps and the mail profiles off.
+3. `python3 -I scripts/dataverse-seed.py --target … --since 2026-09-28` (dry run first).
+4. `python3 -I scripts/dataverse-uat-automation.py --target … --resume`: everything back on except the
+   customer-facing items, which stay off.
+5. Your user is System Administrator in UAT already; the 65 agents are enabled there with the same
+   UPNs as in production. Add testers as needed under Settings → Users + permissions.
+If capacity is bought later: create the sandbox as originally planned (New → Sandbox, India, no
+sample data → Copy from production → Minimal copy), then run the same three scripts against it.
 
 ## D. Customer identity (phase 2) — Entra External ID tenant
 1. https://entra.microsoft.com → Identity → Overview → **Manage tenants** → Create →
