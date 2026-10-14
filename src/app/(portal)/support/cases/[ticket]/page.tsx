@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
-import { RateScale, ScoreTag } from '@/components/support/Csat'
+import { RateScale, ReasonSelect, ScoreTag } from '@/components/support/Csat'
 import { Field, Flash, MetaRows, StateTag, Tid, Track } from '@/components/support/Parts'
 import { Conversation } from '@/components/support/Timeline'
 import { fv } from '@/lib/dataverse/types'
@@ -128,6 +128,11 @@ export default async function CustomerCasePage({ params, searchParams }: { param
             <form action={rateCase} className="form-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
               <input type="hidden" name="ticket" value={c.ticketnumber} />
               <RateScale selected={rating?.score ?? null} />
+              <div className="rate-comment">
+                <Field id="rate-reason" label="If something went wrong, what was it mainly about?" hint="Optional. It tells us whether to fix the product or the way we helped you." select>
+                  <ReasonSelect id="rate-reason" audience="customer" value={rating?.customerReason ?? ''} />
+                </Field>
+              </div>
               <div className="rate-comment">
                 <Field id="rate-comment" label="Anything you want to tell us?" hint="Optional. Read by the engineer's manager.">
                   <textarea id="rate-comment" name="comment" rows={2} maxLength={2000} defaultValue={rating?.source === 'agent' ? '' : (rating?.comment ?? '')} />

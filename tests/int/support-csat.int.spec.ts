@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { careFrom, DEFAULT_CSAT, emptyDistribution, facetLines, flagActive, normaliseCsat, readFollowUp, summarise, type CareFlag, type CsatRow, type CsatScore } from '@/lib/support/csat-model'
+import { areaCounts, asReason, careFrom, causeBuckets, causeLines, causeOf, DEFAULT_CSAT, emptyDistribution, facetLines, flagActive, normaliseCsat, productLines, readFollowUp, REASONS, repeatCustomers, summarise, unhappyRows, type CareFlag, type CsatRow, type CsatScore } from '@/lib/support/csat-model'
+import { productFamily } from '@/lib/support/reference'
 import { DEFAULT_SETTINGS, KPI_DEFS, normaliseSettings } from '@/lib/support/kpi-model'
 import { DEFAULT_HOURS } from '@/lib/support/sla'
 
@@ -42,6 +43,10 @@ const row = (p: Partial<CsatRow> & { score?: CsatScore | null }): CsatRow => ({
   followUpOwnerName: '',
   followUpAt: null,
   followUpNote: '',
+  customerReason: '',
+  reason: '',
+  reasonBy: '',
+  reasonAt: null,
   createdAt: daysAgo(2),
   ...p,
 })
@@ -72,6 +77,89 @@ describe('summary', () => {
     const lines = facetLines(rows, DEFAULT_CSAT, (r) => ({ key: r.ownerId, label: r.ownerName }))
     expect(lines.map((l) => l.label)).toEqual(['Priya', 'Arun'])
     expect(lines[0]).toMatchObject({ responses: 2, average: 3, csat: 50, unhappy: 1 })
+  })
+})
+
+describe('why they are unhappy', () => {
+  it('has every reason under one of the four areas and rejects anything else', () => {
+    expect(new Set(REASONS.map((r) => r.area))).toEqual(new Set(['product', 'support', 'commercial', 'other']))
+    expect(new Set(REASONS.map((r) => r.key)).size).toBe(REASONS.length)
+    expect(asReason('support-slow')).toBe('support-slow')
+    expect(asReason('made-up')).toBe('')
+    expect(asReason(null)).toBe('')
+  })
+  it("the desk's call wins over the customer's pick, which wins over nothing", () => {
+    expect(causeOf({ reason: '', customerReason: '', reasonBy: '' })).toMatchObject({ key: '', area: '', by: '' })
+    expect(causeOf({ reason: '', customerReason: 'product-defect', reasonBy: '' })).toMatchObject({ key: 'product-defect', area: 'product', by: 'customer' })
+    expect(causeOf({ reason: 'support-long', customerReason: 'product-defect', reasonBy: 'Meera' })).toMatchObject({ key: 'support-long', area: 'support', by: 'desk', who: 'Meera' })
+    expect(causeOf({ reason: 'bogus', customerReason: 'bogus', reasonBy: '' }).key).toBe('')
+  })
+  it('counts low scores per area and ranks the reasons, with the previous period beside', () => {
+    const rows = [
+      row({ score: 1, reason: 'support-slow' }),
+      row({ score: 2, reason: 'support-slow' }),
+      row({ score: 2, customerReason: 'product-install' }),
+      row({ score: 1, reason: 'licence-billing', customerReason: 'other' }),
+      row({ score: 2 }),
+      row({ score: 5, reason: 'support-slow' }), // not low: never counted
+      row({ status: 'invited', score: null, respondedAt: null }),
+    ]
+    expect(unhappyRows(rows, DEFAULT_CSAT)).toHaveLength(5)
+    expect(areaCounts(rows, DEFAULT_CSAT)).toEqual({ product: 1, support: 2, commercial: 1, other: 0, none: 1 })
+    const prev = [row({ score: 1, reason: 'product-defect' }), row({ score: 2, reason: 'support-slow' })]
+    const lines = causeLines(rows, DEFAULT_CSAT, prev)
+    expect(lines[0]).toMatchObject({ key: 'support-slow', area: 'support', n: 2, share: 40, prev: 1 })
+    expect(lines.find((l) => l.key === '')).toMatchObject({ label: 'Not classified yet', n: 1 })
+    expect(lines.find((l) => l.key === 'product-defect')).toMatchObject({ n: 0, prev: 1 }) // gone this period, still listed
+    expect(causeLines(rows, DEFAULT_CSAT).every((l) => l.prev === null)).toBe(true)
+  })
+  it('ranks products by low scores, folding SKUs to their family', () => {
+    const rows = [
+      row({ score: 1, product: 'K7 Total Security - 5U3Y', reason: 'product-defect' }),
+      row({ score: 2, product: 'K7 Total Security - 1U1Y', reason: 'support-slow' }),
+      row({ score: 5, product: 'K7 Total Security - 1U1Y' }),
+      row({ score: 2, product: '', customerReason: 'licence-billing' }),
+      row({ score: 4, product: 'K7 Antivirus Premium - 3U1Y' }),
+    ]
+    const lines = productLines(rows, DEFAULT_CSAT, productFamily)
+    expect(lines.map((l) => l.label)).toEqual(['K7 Total Security', 'No product on the case', 'K7 Antivirus Premium'])
+    expect(lines[0]).toMatchObject({ responses: 3, low: 2, lowShare: 66.7, csat: 33.3 })
+    expect(lines[0]!.areas).toEqual({ product: 1, support: 1, commercial: 0, other: 0, none: 0 })
+    expect(lines[2]).toMatchObject({ responses: 1, low: 0, csat: 100 })
+  })
+  it('finds the customers who rated low more than once, newest last rating first', () => {
+    const rows = [
+      row({ score: 1, customerId: 'acme', customerName: 'Acme', respondedAt: daysAgo(30), reason: 'support-unresolved', product: 'K7 Endpoint Security' }),
+      row({ score: 2, customerId: 'acme', customerName: 'Acme', respondedAt: daysAgo(3), followUp: 'pending', product: 'K7 Endpoint Security' }),
+      row({ score: 5, customerId: 'acme', customerName: 'Acme', respondedAt: daysAgo(10) }),
+      row({ score: 1, customerId: 'beta', customerName: 'Beta', respondedAt: daysAgo(5) }),
+      row({ score: 2, customerId: '', contactId: 'c-1', customerName: 'Solo', respondedAt: daysAgo(6) }),
+      row({ score: 1, customerId: '', contactId: 'c-1', customerName: 'Solo', respondedAt: daysAgo(1) }),
+    ]
+    const reps = repeatCustomers(rows, DEFAULT_CSAT)
+    expect(reps.map((c) => c.customerName)).toEqual(['Solo', 'Acme'])
+    const acme = reps.find((c) => c.customerName === 'Acme')!
+    expect(acme).toMatchObject({ low: 2, total: 3, openFollowUp: true, products: ['K7 Endpoint Security'] })
+    expect(acme.last.respondedAt).toBe(daysAgo(3))
+    expect(acme.areas).toEqual({ product: 0, support: 1, commercial: 0, other: 0, none: 1 })
+  })
+  it('buckets low scores by week, oldest first, each with its area split', () => {
+    const to = now
+    const from = new Date(now.getTime() - 21 * 864e5)
+    const rows = [
+      row({ score: 1, respondedAt: daysAgo(1), reason: 'product-defect' }),
+      row({ score: 2, respondedAt: daysAgo(6), customerReason: 'support-slow' }),
+      row({ score: 2, respondedAt: daysAgo(8) }),
+      row({ score: 4, respondedAt: daysAgo(8) }),
+      row({ score: 1, respondedAt: daysAgo(40), reason: 'other' }), // outside
+    ]
+    const b = causeBuckets(rows, DEFAULT_CSAT, from, to, 7)
+    expect(b).toHaveLength(3)
+    expect(b[0]!.from.getTime()).toBe(from.getTime())
+    expect(b.map((x) => x.low)).toEqual([0, 1, 2])
+    expect(b.map((x) => x.responses)).toEqual([0, 2, 2])
+    expect(b[2]!.areas).toEqual({ product: 1, support: 1, commercial: 0, other: 0, none: 0 })
+    expect(b[1]!.areas.none).toBe(1)
   })
 })
 

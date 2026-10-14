@@ -61,6 +61,7 @@ generic OIDC provider in `src/auth.ts` and reuse `registerContact`/`findContactB
   …/engineers (+ /[id])       engineer efficiency as cards or a sortable ledger (?view=cards|table&sort=&dir=&all=1); one engineer against the team
   …/sla (+ /export.csv)       SLA violation report: compliance, breakdowns (?by=), trend, the ledger of breaches (?kind&state&owner&priority&vertical&page) and its CSV
   …/csat (+ /export.csv)      customer satisfaction (§4d): CSAT, average, response rate, distribution, trend, the follow-up queue of unhappy customers, breakdowns (?by=), the ledger (?score&owner&fu&source&q&page) and its CSV
+  …/unhappy (+ /export.csv)   unhappy customers for management (§4e): low scores and their share, why (product · support · licensing), by product family, week by week, repeat customers, the ledger of low scores with the manager's classification (?area&reason&product&owner&fu&q&page) and its CSV
   …/at-risk                   the prevention board: cases past target, at risk or unanswered, the rules' verdicts, quick actions, sweep log (?state=&owner=&page=)
   …/kpis                      configuring support KPIs: targets, business hours, KPI cards and their targets, prevention rules, CSAT, who is a manager
   …/no-access                 where a non-manager agent lands
@@ -158,6 +159,27 @@ rating; the composite gives CSAT 20% when the engineer has responses. `/manage/c
 Verified on UAT the same day with the development sign-in: a phone rating of 2 recorded on CS-01192-C6G7 (internal note written to the
 case, "Handle with care" beside the customer, the rating in the timeline), the follow-up taken and closed from the queue, the CSAT
 page's cards, distribution, breakdown and ledger. Survey mail was logged, not sent (no `SMTP_URL`).
+
+## 4e. Why customers are unhappy (built 2026-10-14)
+Management asked for a way to see the recent unhappy customers and whether it is the product, product support or something else they
+are unhappy about. A low score now carries a **reason** from a fixed list of sixteen in four areas (`REASONS` in
+`src/lib/support/csat-model.ts`): the product (defect, slows the computer, missed threat or false positive, install or update, missing
+feature, compatibility), product support (slow to respond, took too long, not resolved, had to repeat, communication or attitude,
+engineer lacked the answer), licensing and sales (activation, renewal or billing or refund, pricing) and other. Three places set it:
+the customer's optional pick on the survey (the emailed page and the closed case on the portal, stored as `customerReason`), the agent
+recording a phone rating, and the manager who closes the follow-up (required, on `/manage/csat` and on the case), stored as `reason`
+with who and when. The desk's call wins over the customer's pick (`causeOf`); a manager can also classify or clear any low score from
+the ledger on `/manage/unhappy`. The low-score mail to managers and the internal note on the case carry the customer's pick.
+
+`/support/workspace/manage/unhappy` is the report, on the same period switch as the rest of the manager view: low scores and their share
+of responses against the previous period; the split by area; the reasons ranked with the previous period beside; products folded to
+their family (`productFamily`, "Total Security - 5U3Y" → Total Security) with responses, low count and share, CSAT and an area stack;
+day by day (7-day periods) or week by week; the customers who rated low more than once inside the care window, whatever the period;
+and the ledger of every low score (customer with care mark, case, product, score, comment, the cause tag with an inline classify form,
+engineer, when, the call back and its outcome) with a CSV. Every area, reason, product and stack segment links into the filtered ledger.
+The engineer page adds "low ratings laid at support", so an engineer is not marked down for a defect; the overview's CSAT block carries
+the area split with a link. Pure functions (`areaCounts`, `causeLines`, `productLines`, `repeatCustomers`, `causeBuckets`) are tested
+in `tests/int/support-csat.int.spec.ts`. Parts S22–S24 in `design-system/components/SupportParts/README.md`.
 
 ## 4b. Verified on 2026-10-13 (UAT, development sign-ins)
 - Agent: workspace home, My Active Cases view (columns from the view's layoutxml, sort, search), a case sheet

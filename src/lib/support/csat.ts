@@ -7,7 +7,7 @@ import { getPayload, type Where } from 'payload'
 import type { DataverseAuth, Row } from '@/lib/dataverse'
 import { fv, lookup } from '@/lib/dataverse/types'
 
-import { careFrom, flagActive, isUnhappy, NO_CARE, readFollowUp, type Care, type CareFlag, type CsatRow, type CsatScore, type CsatSettings, type CsatSource, type FollowUpStatus } from './csat-model'
+import { asReason, careFrom, causeOf, flagActive, isUnhappy, NO_CARE, readFollowUp, type Care, type CareFlag, type CsatRow, type CsatScore, type CsatSettings, type CsatSource, type FollowUpStatus } from './csat-model'
 import { getSettings } from './kpi-config'
 import type { Settings } from './kpi-model'
 import { csatInviteMail, csatLowScoreMail, csatOverdueMail, sendMail } from './mail'
@@ -60,6 +60,10 @@ const toRow = (x: Doc): CsatRow => ({
   followUpOwnerName: s(x.followUpOwnerName),
   followUpAt: d(x.followUpAt),
   followUpNote: s(x.followUpNote),
+  customerReason: asReason(x.customerReason),
+  reason: asReason(x.reason),
+  reasonBy: s(x.reasonBy),
+  reasonAt: d(x.reasonAt),
   createdAt: s(x.createdAt),
 })
 
@@ -98,6 +102,9 @@ export const csatForCustomer = (customerId: string, limit = 20): Promise<CsatRow
 /** Responses and invitations that fall in the period (answered in it, or invited in it and still unanswered). */
 export const csatInPeriod = (from: Date, to: Date): Promise<CsatRow[]> =>
   find({ or: [{ respondedAt: { greater_than_equal: from.toISOString(), less_than: to.toISOString() } }, { and: [{ status: { equals: 'invited' } }, { invitedAt: { greater_than_equal: from.toISOString(), less_than: to.toISOString() } }] }] }, { limit: 5000 })
+
+/** Every rating answered since `since`, newest first: the repeat-customer view looks further back than the period. */
+export const respondedSince = (since: Date): Promise<CsatRow[]> => find({ status: { equals: 'responded' }, respondedAt: { greater_than_equal: since.toISOString() } }, { limit: 5000 })
 
 /** Every low score whose follow-up is not closed, oldest first. */
 export const openFollowUps = (): Promise<CsatRow[]> => find({ followUp: { in: ['pending', 'in-progress'] } }, { sort: 'respondedAt', limit: 500 })
@@ -304,11 +311,11 @@ export const inviteSurvey = async (c: CaseSnapshot, o: { settings?: Settings; re
 
 /* ---------- Responses ---------- */
 
-export type ResponseInput = { score: CsatScore; comment: string; source: CsatSource; contactId?: string; email?: string }
+export type ResponseInput = { score: CsatScore; comment: string; source: CsatSource; contactId?: string; email?: string; /** A reason key: the customer's own pick on the survey, or the agent's classification when the source is `agent`. */ reason?: string }
 
 /** Records the customer's answer (first or changed). A low score opens the follow-up, tells the managers and leaves an internal
    note on the case; a later higher score does not close an open follow-up (a manager does). */
-export const recordResponse = async (c: CaseSnapshot, input: ResponseInput, o: { settings?: Settings; auth?: DataverseAuth | null } = {}): Promise<CsatRow> => {
+export const recordResponse = async (c: CaseSnapshot, input: ResponseInput, o: { settings?: Settings; auth?: DataverseAuth | null; /** The agent recording a phone rating, credited with its classification. */ by?: { id: string; name: string } } = {}): Promise<CsatRow> => {
   const settings = o.settings ?? (await getSettings())
   const payload = await db()
   const now = new Date().toISOString()
@@ -326,6 +333,10 @@ export const recordResponse = async (c: CaseSnapshot, input: ResponseInput, o: {
     respondedAt: now,
     followUp,
   }
+  const reason = asReason(input.reason)
+  if (input.source === 'agent') {
+    if (reason) Object.assign(data, { reason, reasonBy: o.by?.name ?? 'an agent', reasonAt: now })
+  } else data.customerReason = reason
   // A low score after a closed follow-up reopens it; the first time, the follow-up owner is nobody yet.
   if (low && existing?.followUp === 'done') Object.assign(data, { followUp: 'pending', followUpOwnerId: '', followUpOwnerName: '', followUpAt: null, followUpNote: '' })
   const saved = existing ? await payload.update({ collection: 'support-csat', id: existing.id, data: data as never, overrideAccess: true }) : await payload.create({ collection: 'support-csat', data: { ...data, invitedAt: null } as never, overrideAccess: true })
@@ -334,10 +345,12 @@ export const recordResponse = async (c: CaseSnapshot, input: ResponseInput, o: {
   if (c.contactId) forget(`care:${c.contactId}`)
   if (low && (!existing || existing.score === null || !isUnhappy(existing.score, settings.csat) || existing.followUp === 'done')) {
     if (settings.csat.notifyManagersOnLow && settings.sweep.managerEmails.length) {
-      await sendMail({ to: settings.sweep.managerEmails.join(', '), ...csatLowScoreMail({ ticket: c.ticket, title: c.title, score: input.score, comment: row.comment, customer: c.customerName, owner: c.ownerName, url: manageUrl() }) }).catch((e) => console.error(`[csat] manager mail failed: ${(e as Error).message}`))
+      const cause = causeOf(row)
+      await sendMail({ to: settings.sweep.managerEmails.join(', '), ...csatLowScoreMail({ ticket: c.ticket, title: c.title, score: input.score, comment: row.comment, customer: c.customerName, owner: c.ownerName, product: c.product, reason: cause.key ? cause.label : '', url: manageUrl() }) }).catch((e) => console.error(`[csat] manager mail failed: ${(e as Error).message}`))
     }
     if (o.auth) {
-      await addNote(o.auth, c.caseId, { subject: `CSAT ${input.score}/5: follow-up needed`, text: `The customer rated this case ${input.score} of 5${row.comment ? `: "${row.comment}"` : ''}. A manager follows up from the portal (${manageUrl()}).` }).catch((e) => console.error(`[csat] note on case failed: ${(e as Error).message}`))
+      const cause = causeOf(row)
+      await addNote(o.auth, c.caseId, { subject: `CSAT ${input.score}/5: follow-up needed`, text: `The customer rated this case ${input.score} of 5${row.comment ? `: "${row.comment}"` : ''}.${cause.key ? ` They say it was about: ${cause.label.toLowerCase()}.` : ''} A manager follows up from the portal (${manageUrl()}).` }).catch((e) => console.error(`[csat] note on case failed: ${(e as Error).message}`))
     }
   }
   return row
@@ -355,13 +368,28 @@ export const takeFollowUp = async (id: string, me: { id: string; name: string })
   return toRow(u as unknown as Doc)
 }
 
-export const closeFollowUp = async (id: string, me: { id: string; name: string }, note: string): Promise<CsatRow | null> => {
+/** Closes the follow-up with what was agreed; `reason` is what the call found it was about (a reason key), which the report groups by. */
+export const closeFollowUp = async (id: string, me: { id: string; name: string }, note: string, reason = ''): Promise<CsatRow | null> => {
   const row = await csatById(id)
   if (!row || row.followUp === 'none') return null
   const payload = await db()
-  const u = await payload.update({ collection: 'support-csat', id: row.id, data: { followUp: 'done', followUpOwnerId: row.followUpOwnerId || me.id, followUpOwnerName: row.followUpOwnerName || me.name, followUpAt: new Date().toISOString(), followUpNote: note.trim().slice(0, 2000) }, overrideAccess: true })
+  const now = new Date().toISOString()
+  const data: Doc = { followUp: 'done', followUpOwnerId: row.followUpOwnerId || me.id, followUpOwnerName: row.followUpOwnerName || me.name, followUpAt: now, followUpNote: note.trim().slice(0, 2000) }
+  const r = asReason(reason)
+  if (r) Object.assign(data, { reason: r, reasonBy: me.name, reasonAt: now })
+  const u = await payload.update({ collection: 'support-csat', id: row.id, data, overrideAccess: true })
   forget(`care:${row.customerId}`)
   if (row.contactId) forget(`care:${row.contactId}`)
+  return toRow(u as unknown as Doc)
+}
+
+/** A manager (or agent) says what a rating was about without touching the follow-up; an empty reason clears the desk's call. */
+export const classifyResponse = async (id: string, reason: string, me: { id: string; name: string }): Promise<CsatRow | null> => {
+  const row = await csatById(id)
+  if (!row || row.score === null) return null
+  const payload = await db()
+  const r = asReason(reason)
+  const u = await payload.update({ collection: 'support-csat', id: row.id, data: r ? { reason: r, reasonBy: me.name, reasonAt: new Date().toISOString() } : { reason: '', reasonBy: '', reasonAt: null }, overrideAccess: true })
   return toRow(u as unknown as Doc)
 }
 

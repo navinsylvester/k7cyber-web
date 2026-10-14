@@ -73,6 +73,7 @@ export async function rateCase(form: FormData): Promise<void> {
   const ticket = String(form.get('ticket') ?? '').trim().toUpperCase()
   const score = asScore(form.get('score'))
   const comment = String(form.get('comment') ?? '').trim().slice(0, 2000)
+  const reason = String(form.get('reason') ?? '')
   const ctx = await requireCustomer(casePath(ticket))
   const c = await getCustomerCase(ctx.auth, ctx.scope, ticket)
   if (!c) redirect('/support/cases')
@@ -80,7 +81,7 @@ export async function rateCase(form: FormData): Promise<void> {
   if (!score) redirect(casePath(ticket, { error: 'score' }) + '#rate')
   const settings = await getSettings()
   try {
-    await recordResponse(snapshotOf(c), { score, comment, source: 'portal', contactId: ctx.scope.contactId, email: ctx.scope.email }, { settings, auth: ctx.auth })
+    await recordResponse(snapshotOf(c), { score, comment, source: 'portal', contactId: ctx.scope.contactId, email: ctx.scope.email, reason }, { settings, auth: ctx.auth })
   } catch (e) {
     redirect(casePath(ticket, { error: 'failed', message: userMessage(e, 'customer') }) + '#rate')
   }

@@ -8,6 +8,7 @@ import { EngineerCard, KpiCard, MANAGE, ManageNav, PeriodSeg, SlaStrip, Trend2 }
 import { PageHead, Tid } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { careForCustomers, followUpState } from '@/lib/support/csat'
+import { areaCounts } from '@/lib/support/csat-model'
 import { getSettings } from '@/lib/support/kpi-config'
 import { asPeriod, PERIODS } from '@/lib/support/kpi-model'
 import { breakdown, engineerStats, kpiValues, loadDesk, slaNow, trend, violations } from '@/lib/support/metrics'
@@ -87,6 +88,15 @@ export default async function ManageOverview({ searchParams }: { searchParams: P
                   </span>
                 </div>
                 {csat.responses ? <ScoreDistribution dist={csat.distribution} settings={settings.csat} /> : <p className="hint">Ratings arrive when customers answer the survey on a resolved case or rate it on the portal.</p>}
+                {csat.unhappy > 0 && (
+                  <p className="label muted" style={{ marginTop: 14 }}>
+                    {(() => {
+                      const a = areaCounts(desk.csat, settings.csat)
+                      return `${csat.unhappy} low: ${a.product} product · ${a.support} support · ${a.commercial} licensing${a.other ? ` · ${a.other} other` : ''}${a.none ? ` · ${a.none} unclassified` : ''}`
+                    })()}{' '}
+                    <Link href={`${MANAGE}/unhappy?period=${period}`}>Why they are unhappy →</Link>
+                  </p>
+                )}
               </div>
               <div className="chart">
                 <div className="chart-head">

@@ -3,7 +3,7 @@ import 'server-only'
 import { and, buildQuery, fetchXml, list, nextPage, type DataverseAuth, type Page, type Row, fv } from '@/lib/dataverse'
 
 import { csatInPeriod, openFollowUps } from './csat'
-import { facetLines, isUnhappy, summarise, type CsatRow, type CsatSummary } from './csat-model'
+import { causeOf, facetLines, isUnhappy, summarise, type CsatRow, type CsatSummary } from './csat-model'
 import type { ChartSeries } from './dashboards'
 import { KPI_DEFS, kpiDef, periodBounds, resolveTarget, type KpiKey, type KpiSetting, type Period, type Settings, type TargetRule } from './kpi-model'
 import { memo } from './memo'
@@ -459,6 +459,9 @@ export type EngineerStats = {
   csatAverage: number | null
   csatPct: number | null
   csatUnhappy: number
+  /** Low scores the customer or a manager laid at support's door (as against the product or licensing), so an engineer is not
+     marked down for a defect. */
+  csatUnhappySupport: number
   /** 0..100: a composite of SLA, FCR, CSAT (when the engineer has responses), load and freshness for sorting cards, never shown as a grade. */
   score: number
 }
@@ -469,7 +472,7 @@ export const engineerStats = (d: Desk, o: { includeShared?: boolean } = {}): Eng
     const key = owner.kind === 'user' ? owner.id : `${owner.kind}:${owner.id}`
     let e = by.get(key)
     if (!e) {
-      e = { owner, active: 0, atRisk: 0, breached: 0, waiting: 0, critical: 0, oldestHours: null, resolved: 0, resolvedWithin: 0, resolvePct: null, medianResolveHours: null, responded: 0, respondedWithin: 0, responsePct: null, medianResponseMin: null, fcr: 0, fcrKnown: 0, fcrPct: null, reopened: 0, emails: 0, notes: 0, touchesPerResolved: null, perDay: null, csatResponses: 0, csatAverage: null, csatPct: null, csatUnhappy: 0, score: 0 }
+      e = { owner, active: 0, atRisk: 0, breached: 0, waiting: 0, critical: 0, oldestHours: null, resolved: 0, resolvedWithin: 0, resolvePct: null, medianResolveHours: null, responded: 0, respondedWithin: 0, responsePct: null, medianResponseMin: null, fcr: 0, fcrKnown: 0, fcrPct: null, reopened: 0, emails: 0, notes: 0, touchesPerResolved: null, perDay: null, csatResponses: 0, csatAverage: null, csatPct: null, csatUnhappy: 0, csatUnhappySupport: 0, score: 0 }
       by.set(key, e)
     }
     return e
@@ -511,14 +514,17 @@ export const engineerStats = (d: Desk, o: { includeShared?: boolean } = {}): Eng
     }
   }
   // Survey responses credit the engineer who held the case when it was rated (the row's owner), including engineers with no case in the period.
-  const csatBy = new Map<string, { sum: number; n: number; satisfied: number; unhappy: number }>()
+  const csatBy = new Map<string, { sum: number; n: number; satisfied: number; unhappy: number; support: number }>()
   for (const r of d.csat) {
     if (r.status !== 'responded' || r.score === null || !r.ownerId) continue
-    const cur = csatBy.get(r.ownerId) ?? { sum: 0, n: 0, satisfied: 0, unhappy: 0 }
+    const cur = csatBy.get(r.ownerId) ?? { sum: 0, n: 0, satisfied: 0, unhappy: 0, support: 0 }
     cur.sum += r.score
     cur.n++
     if (r.score >= d.settings.csat.satisfiedFrom) cur.satisfied++
-    if (isUnhappy(r.score, d.settings.csat)) cur.unhappy++
+    if (isUnhappy(r.score, d.settings.csat)) {
+      cur.unhappy++
+      if (causeOf(r).area === 'support') cur.support++
+    }
     csatBy.set(r.ownerId, cur)
     if (!by.has(r.ownerId)) get({ id: r.ownerId, name: r.ownerName || 'Unknown', kind: SHARED_OWNER.test(r.ownerName) ? 'shared' : 'user' })
   }
@@ -529,6 +535,7 @@ export const engineerStats = (d: Desk, o: { includeShared?: boolean } = {}): Eng
       e.csatAverage = Math.round((cs.sum / cs.n) * 10) / 10
       e.csatPct = pct(cs.satisfied, cs.n)
       e.csatUnhappy = cs.unhappy
+      e.csatUnhappySupport = cs.support
     }
     const t = d.touchesByOwner.get(e.owner.id)
     e.emails = t?.emails ?? 0

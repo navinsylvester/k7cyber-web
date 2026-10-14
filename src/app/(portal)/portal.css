@@ -427,7 +427,7 @@ a.kpic:hover .kpic-meter i.is-missed { background: var(--signal); }
 .note-list { margin: 0; padding-left: 18px; font-size: 14px; color: var(--mu); }
 .caveats { font-size: 13px; color: var(--mu); margin-top: 24px; }
 
-/* ---------- Customer satisfaction (S17–S21) ---------- */
+/* ---------- Customer satisfaction (S17–S24) ---------- */
 /* The care band is the one place a customer's name carries a mark: signal for "handle with care", solid ink for "watch",
    an outlined square for a happy customer. Word and weight carry it; no second hue. */
 .care { display: inline-flex; align-items: center; gap: 7px; padding: 4px 8px; font: 400 11px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; border: 1px solid currentColor; text-decoration: none; white-space: nowrap; color: var(--t-fg, var(--fg)); vertical-align: middle; }
@@ -508,3 +508,36 @@ a.care:hover { text-decoration: underline; text-underline-offset: 3px; }
 .fu-row .t a { text-decoration: none; }
 .fu-row .t a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .ratings .mini-row .t { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-weight: 500; }
+
+/* Why they are unhappy (S22–S24): the reason picker, the cause tag and the area stack. The four areas read by weight, never by hue:
+   the product in ink, support (the desk's own failing) in signal, licensing hatched, other outlined, not classified dotted. */
+.cause { gap: 7px; }
+.cause i { width: 8px; height: 8px; display: inline-block; box-shadow: inset 0 0 0 1px currentColor; flex: none; }
+.cause.is-product i { background: currentColor; box-shadow: none; }
+.cause.is-support i { background: var(--signal); box-shadow: none; }
+.cause.is-commercial i { background: repeating-linear-gradient(135deg, currentColor 0 2px, transparent 2px 4px); box-shadow: none; }
+.cause .by { opacity: .55; margin-left: 2px; }
+.stack-rows { display: grid; grid-template-columns: minmax(100px, 220px) minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; }
+.stack-rows .l { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 0; }
+.stack-rows .l a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; }
+.stack-rows .l a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.stack-rows .v { font: 400 12px/1 var(--font-mono); text-align: right; white-space: nowrap; }
+.stack-rows.is-cell { display: grid; grid-template-columns: minmax(80px, 1fr) auto; gap: 10px; align-items: center; }
+.stack { display: flex; height: 14px; min-width: 0; }
+.seg-a { display: block; height: 100%; min-width: 2px; box-sizing: border-box; flex: none; }
+.seg-a.is-product { background: var(--fg); }
+.seg-a.is-support { background: var(--signal); }
+.seg-a.is-commercial { background: repeating-linear-gradient(135deg, var(--fg) 0 3px, transparent 3px 6px); }
+.seg-a.is-other { box-shadow: inset 0 0 0 1px var(--fg); }
+.seg-a.is-none { box-shadow: inset 0 0 0 1px var(--mu); background: repeating-linear-gradient(90deg, var(--mu) 0 1px, transparent 1px 4px); opacity: .8; }
+a.seg-a:hover { outline: 2px solid var(--fg); outline-offset: 1px; position: relative; z-index: 1; }
+.legend.areas { flex-wrap: wrap; gap: 6px 18px; }
+.legend.areas .seg-a { display: inline-block; width: 14px; height: 10px; vertical-align: -1px; margin-right: 6px; }
+.dtable td.stackcell { min-width: 180px; }
+.classify { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.classify form { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.classify select, .fu-row .acts-inline select { font: 400 13px/1.3 var(--font-sans); background: transparent; color: inherit; border: 0; border-bottom: 1px solid var(--fg); padding: 4px 0; max-width: 220px; }
+details.classify summary { cursor: pointer; list-style: none; display: inline-flex; }
+details.classify summary::-webkit-details-marker { display: none; }
+details.classify summary::after { content: "change"; font: 400 11px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mu); margin-left: 8px; align-self: center; }
+details.classify[open] summary::after { content: "close"; }

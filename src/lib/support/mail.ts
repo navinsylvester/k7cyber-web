@@ -46,9 +46,9 @@ export const csatInviteMail = (ticket: string, title: string, url: string, o: { 
 }
 
 /** To the managers when a low score arrives. */
-export const csatLowScoreMail = (p: { ticket: string; title: string; score: number; comment: string; customer: string; owner: string; url: string }): Omit<Mail, 'to'> => ({
+export const csatLowScoreMail = (p: { ticket: string; title: string; score: number; comment: string; customer: string; owner: string; product?: string; reason?: string; url: string }): Omit<Mail, 'to'> => ({
   subject: `[CSAT ${p.score}/5] ${p.ticket}: ${p.customer || 'a customer'} needs a call back`,
-  text: `${p.customer || 'A customer'} rated case ${p.ticket} "${p.title}" ${p.score}/5.${p.comment ? `\n\n"${p.comment}"` : ''}\n\nHandled by ${p.owner || 'unassigned'}. Follow up from the manager view:\n${p.url}\n\nK7 Support portal`,
+  text: `${p.customer || 'A customer'} rated case ${p.ticket} "${p.title}" ${p.score}/5.${p.comment ? `\n\n"${p.comment}"` : ''}${p.reason ? `\n\nThey say it was about: ${p.reason.toLowerCase()}.` : ''}\n\nHandled by ${p.owner || 'unassigned'}${p.product ? ` · ${p.product}` : ''}. Follow up from the manager view:\n${p.url}\n\nK7 Support portal`,
 })
 
 /** To the managers when an unhappy customer has waited past the follow-up target. */

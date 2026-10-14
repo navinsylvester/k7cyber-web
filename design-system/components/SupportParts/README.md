@@ -43,8 +43,14 @@ The support-portal parts from section 09 (reference CSS: `src/app/(portal)/porta
 
 **S21 Distribution (`dist`)** the five scores as horizontal bars, 5 on top, count and share in mono; the low rows are `signal`, the satisfied rows ink, the neutral row hatched. The follow-up queue (`fu-row`) is a board row with the customer first, the score and the comment, and inline forms to take and close the follow-up.
 
+**S22 Reason picker (`ReasonSelect`)** one native select, the sixteen reasons grouped under their four areas (the product, product support, licensing & sales, other). The customer sees it in their own words on the survey ("It slows my computer down"), optional; the desk sees the short labels ("Slows the computer"), and the manager closing a follow-up must pick one. Underlined like every portal select, never a widget.
+
+**S23 Cause tag (`cause`)** what a low score was about as an outlined Tag with an 8px square before the words: "Support · Took too long to resolve". The square carries the area by weight: ink for the product, `signal` for support (the desk's own failing is the one that goes signal), hatched for licensing, outlined for other. A small "customer" suffix when it is the customer's own pick, not the desk's call; dashed "Not classified" until somebody says.
+
+**S24 Area stack (`stack`, `stack-rows`)** one 14px bar split by area on a shared scale, the total in mono at the right: a row per product family, per week or per repeat customer. Segments use the same weights as the cause square, plus a dotted muted segment for the unclassified; each segment can link into the filtered ledger. A `legend.areas` key sits under the first stack on a page.
+
 **Use** on `/support` (customers) and `/support/workspace` (agents). Customer pages open with a `help-hero` or a compact `ws` sheet; workspace pages are always `ws` sheets so the data sits near the fold.
 
 **Provide** the case row (number, title, status reason, priority, dates), the timeline entries with their audience flag, the view's columns, and the chart series.
 
-**Don't** show Dynamics status reasons, owners or SLA flags to customers; grade engineers by colour (the composite orders cards, it is never shown as a traffic light); put more than one primary button in a view; colour states by hue (they read by word and weight; the care band is signal, solid or outlined, never red, amber and green); let a customer see a note that was not written through the portal; show a customer their own care band.
+**Don't** show Dynamics status reasons, owners or SLA flags to customers; grade engineers by colour (the composite orders cards, it is never shown as a traffic light); put more than one primary button in a view; colour states by hue (they read by word and weight; the care band is signal, solid or outlined, never red, amber and green; the four areas of a low score are ink, signal, hatched and outlined, never four colours); let a customer see a note that was not written through the portal; show a customer their own care band.

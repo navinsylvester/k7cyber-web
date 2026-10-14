@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 
 import { userMessage } from '@/lib/dataverse/errors'
-import { closeFollowUp, csatById, reopenFollowUp, takeFollowUp } from '@/lib/support/csat'
+import { asReason, closeFollowUp, csatById, reopenFollowUp, takeFollowUp } from '@/lib/support/csat'
 import { requireManager } from '@/lib/support/session'
 import { addNote } from '@/lib/support/timeline'
 
@@ -36,14 +36,16 @@ export async function closeFollowUpAction(form: FormData): Promise<void> {
   const me = await requireManager()
   const id = str(form, 'id')
   const note = str(form, 'note')
+  const reason = str(form, 'reason')
   const caseNote = form.get('caseNote') === '1'
   if (note.length < 3) back(form, 'error=Say%20in%20a%20line%20what%20you%20agreed%20with%20the%20customer.')
+  if (!asReason(reason)) back(form, 'error=Pick%20what%20the%20low%20score%20was%20about.')
   let msg: string | null = null
   try {
     const row = await csatById(id)
     if (!row) msg = 'That follow-up no longer exists.'
     else {
-      await closeFollowUp(id, { id: me.userId, name: me.name || me.email }, note)
+      await closeFollowUp(id, { id: me.userId, name: me.name || me.email }, note, reason)
       if (caseNote) await addNote(me.auth, row.caseId, { subject: `CSAT follow-up closed by ${me.name || 'a manager'}`, text: note }).catch(() => undefined)
     }
   } catch (e) {

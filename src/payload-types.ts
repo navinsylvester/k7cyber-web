@@ -1908,6 +1908,16 @@ export interface SupportCsat {
   followUpOwnerName?: string | null;
   followUpAt?: string | null;
   followUpNote?: string | null;
+  /**
+   * What the customer said it was about, picked on the survey (a reason key from csat-model.ts).
+   */
+  customerReason?: string | null;
+  /**
+   * The desk's classification: a manager closing the follow-up, or an agent. Wins over the customer's pick.
+   */
+  reason?: string | null;
+  reasonBy?: string | null;
+  reasonAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -3154,6 +3164,10 @@ export interface SupportCsatSelect<T extends boolean = true> {
   followUpOwnerName?: T;
   followUpAt?: T;
   followUpNote?: T;
+  customerReason?: T;
+  reason?: T;
+  reasonBy?: T;
+  reasonAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

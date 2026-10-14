@@ -2,11 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
 
-import { CareTag, FollowUpTag, ScoreDistribution, ScoreTag } from '@/components/support/Csat'
+import { CareTag, CauseTag, FollowUpTag, ReasonSelect, ScoreDistribution, ScoreTag } from '@/components/support/Csat'
 import { MANAGE, ManageNav, PeriodSeg, Trend2 } from '@/components/support/Manage'
 import { Flash, Options, PageHead, Pager, qs, Tid, When } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
-import { careForCustomers, followUpState } from '@/lib/support/csat'
+import { careForCustomers, causeOf, followUpState } from '@/lib/support/csat'
 import { SCORE_WORD } from '@/lib/support/csat-model'
 import { dmyHm } from '@/lib/support/format'
 import { getSettings } from '@/lib/support/kpi-config'
@@ -139,7 +139,12 @@ export default async function CsatPage({ searchParams }: { searchParams: Promise
         </div>
 
         <h2 className="sub-head" id="follow-ups">
-          Unhappy customers to call back
+          <span>
+            Unhappy customers to call back{' '}
+            <Link className="label" href={`${MANAGE}/unhappy?period=${period}`} style={{ marginLeft: 12 }}>
+              Why they are unhappy →
+            </Link>
+          </span>
           <span className="label">
             {queue.length} open{sum.followUpsOverdue ? ` · ${sum.followUpsOverdue} past ${fmtMinutes(cs.followUpMinutes)}` : ''}
           </span>
@@ -172,6 +177,12 @@ export default async function CsatPage({ searchParams }: { searchParams: Promise
                   <FollowUpTag status={r.followUp} reading={f} />
                   {r.followUpOwnerName ? ` with ${r.followUpOwnerName}` : ''}
                 </span>
+                {r.product && <span>{r.product}</span>}
+                {causeOf(r).key && (
+                  <span>
+                    about <CauseTag cause={causeOf(r)} />
+                  </span>
+                )}
               </div>
               <div className="acts-inline">
                 {r.followUp === 'pending' && (
@@ -186,6 +197,7 @@ export default async function CsatPage({ searchParams }: { searchParams: Promise
                 <form action={closeFollowUpAction}>
                   <input type="hidden" name="id" value={r.id} />
                   <input type="hidden" name="return" value={ret} />
+                  <ReasonSelect id={`why-${r.id}`} value={r.reason || r.customerReason} required />
                   <input type="text" name="note" placeholder="What you agreed with the customer" aria-label="What you agreed" required minLength={3} />
                   <label className="check" style={{ fontSize: 12 }}>
                     <input type="checkbox" name="caseNote" value="1" defaultChecked /> note on case
@@ -339,7 +351,7 @@ export default async function CsatPage({ searchParams }: { searchParams: Promise
         </form>
 
         <div className="table-wrap">
-          <table className="dtable" style={{ minWidth: 1240 }}>
+          <table className="dtable" style={{ minWidth: 1400 }}>
             <caption className="sr-only">Survey responses</caption>
             <thead>
               <tr>
@@ -347,6 +359,7 @@ export default async function CsatPage({ searchParams }: { searchParams: Promise
                 <th scope="col">Customer</th>
                 <th scope="col">Score</th>
                 <th scope="col">Comment</th>
+                <th scope="col">About</th>
                 <th scope="col">Engineer</th>
                 <th scope="col">Rated</th>
                 <th scope="col">Resolved → rated</th>
@@ -357,7 +370,7 @@ export default async function CsatPage({ searchParams }: { searchParams: Promise
             <tbody>
               {slice.length === 0 && (
                 <tr className="empty">
-                  <td colSpan={9}>No responses match these filters.</td>
+                  <td colSpan={10}>No responses match these filters.</td>
                 </tr>
               )}
               {slice.map((r) => {
@@ -378,6 +391,7 @@ export default async function CsatPage({ searchParams }: { searchParams: Promise
                     <td className="title" title={r.comment}>
                       {r.comment ? (r.comment.length > 90 ? `${r.comment.slice(0, 89)}…` : r.comment) : <span className="muted">—</span>}
                     </td>
+                    <td className="status">{r.score !== null && r.score <= cs.unhappyAtOrBelow ? <CauseTag cause={causeOf(r)} /> : causeOf(r).key ? <CauseTag cause={causeOf(r)} /> : <span className="muted">—</span>}</td>
                     <td className="text">{r.ownerId ? <Link href={`${MANAGE}/engineers/${r.ownerId}?period=${period}`}>{r.ownerName}</Link> : r.ownerName || '—'}</td>
                     <td className="num">
                       <When date={r.respondedAt} exact />

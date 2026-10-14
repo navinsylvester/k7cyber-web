@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import React from 'react'
 
-import { CARE_LABEL, FOLLOW_UP_LABEL, SCORE_WORD, SCORES, type Care, type CsatScore, type CsatSettings, type Distribution, type FollowUpReading, type FollowUpStatus } from '@/lib/support/csat-model'
+import { AREA_LABEL, AREA_SHORT, AREAS, CARE_LABEL, FOLLOW_UP_LABEL, reasonsIn, SCORE_WORD, SCORES, type AreaCounts, type Care, type Cause, type CsatScore, type CsatSettings, type Distribution, type FollowUpReading, type FollowUpStatus, type ReasonArea } from '@/lib/support/csat-model'
 import { fmtMinutes } from '@/lib/support/sla'
 
-/* Section 09 · CSAT parts (S17–S21). The score is a tag that reads by word and weight: a low score is the one that goes signal,
+/* Section 09 · CSAT parts (S17–S24). The score is a tag that reads by word and weight: a low score is the one that goes signal,
    a satisfied one is solid, the middle is outlined. The care band beside a customer uses the same three weights, so an agent
-   reads "handle with care" before the first line of the reply. */
+   reads "handle with care" before the first line of the reply. S22–S24 say *why* a customer was unhappy: the reason picker,
+   the cause tag and the area stack that splits low scores between the product, support, licensing and the rest. */
 
 /** S17 Score tag: "2/5 · Unhappy". Signal for a low score, solid for a satisfied one. */
 export const ScoreTag: React.FC<{ score: CsatScore | null; settings: CsatSettings; word?: boolean; prefix?: string }> = ({ score, settings, word = true, prefix }) => {
@@ -113,3 +114,69 @@ export const FollowUpTag: React.FC<{ status: FollowUpStatus; reading: FollowUpRe
     </span>
   )
 }
+
+/** S22 Reason picker: one select, the reasons grouped under their four areas. Customer wording on the survey, the desk's short
+   labels in the workspace. Optional for the customer, required of the manager who closes a follow-up. */
+export const ReasonSelect: React.FC<{ id: string; name?: string; value?: string; audience?: 'customer' | 'desk'; required?: boolean; empty?: string; className?: string }> = ({ id, name = 'reason', value = '', audience = 'desk', required, empty, className }) => (
+  <select id={id} name={name} defaultValue={value} required={required} className={className} aria-label={audience === 'customer' ? 'What was the main problem?' : 'What was it about?'}>
+    <option value="">{empty ?? (audience === 'customer' ? 'Pick one, if you like' : required ? 'Pick what it was about' : 'Not classified')}</option>
+    {AREAS.map((a) => (
+      <optgroup label={AREA_LABEL[a]} key={a}>
+        {reasonsIn(a).map((r) => (
+          <option value={r.key} key={r.key}>
+            {audience === 'customer' ? r.customer : r.label}
+          </option>
+        ))}
+      </optgroup>
+    ))}
+  </select>
+)
+
+/** S23 Cause tag: "Support · Took too long to resolve", outlined; dashed while nobody has said what it was about. The title says
+   who classified it. */
+export const CauseTag: React.FC<{ cause: Cause; short?: boolean }> = ({ cause, short }) => {
+  if (!cause.key) return <span className="tag tag-dashed">Not classified</span>
+  const area = cause.area as ReasonArea
+  return (
+    <span className={`tag cause is-${area}`} title={cause.by === 'desk' ? `Classified by ${cause.who || 'the desk'}` : 'What the customer picked on the survey'}>
+      <i aria-hidden="true" />
+      {short ? AREA_SHORT[area] : `${AREA_SHORT[area]} · ${cause.label}`}
+      {cause.by === 'customer' && <span className="by">customer</span>}
+    </span>
+  )
+}
+
+/** S24 Area stack: one bar split by area, ink for the product, signal for support, hatched for licensing, outlined for the rest and
+   dotted for the unclassified; the total in mono. One row per product, per week or per customer, all on the same scale (`max`). */
+export const AreaStack: React.FC<{ areas: AreaCounts; max: number; total?: number; label?: React.ReactNode; href?: (area: ReasonArea | 'none') => string }> = ({ areas, max, total, label, href }) => {
+  const sum = AREAS.reduce((t, a) => t + areas[a], 0) + areas.none
+  const n = total ?? sum
+  return (
+    <>
+      {label !== undefined && <span className="l">{label}</span>}
+      <span className="stack" role="img" aria-label={`${n} low ${n === 1 ? 'score' : 'scores'}: ${[...AREAS, 'none' as const].map((a) => `${areas[a]} ${a === 'none' ? 'not classified' : AREA_SHORT[a].toLowerCase()}`).join(', ')}`}>
+        {([...AREAS, 'none'] as const).map((a) =>
+          areas[a] ? (
+            href ? (
+              <Link className={`seg-a is-${a}`} href={href(a)} key={a} style={{ width: `${(areas[a] / Math.max(1, max)) * 100}%` }} title={`${areas[a]} · ${a === 'none' ? 'not classified' : AREA_LABEL[a]}`} />
+            ) : (
+              <i className={`seg-a is-${a}`} key={a} style={{ width: `${(areas[a] / Math.max(1, max)) * 100}%` }} title={`${areas[a]} · ${a === 'none' ? 'not classified' : AREA_LABEL[a]}`} />
+            )
+          ) : null,
+        )}
+      </span>
+      <span className="v">{n.toLocaleString('en-IN')}</span>
+    </>
+  )
+}
+
+/** The key under an area stack. */
+export const AreaLegend: React.FC = () => (
+  <div className="legend areas label">
+    {([...AREAS, 'none'] as const).map((a) => (
+      <span key={a}>
+        <i className={`seg-a is-${a}`} /> {a === 'none' ? 'Not classified' : AREA_LABEL[a]}
+      </span>
+    ))}
+  </div>
+)

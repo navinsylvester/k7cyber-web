@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { userMessage } from '@/lib/dataverse/errors'
 import { isGuid } from '@/lib/dataverse/odata'
 import { addCaseToQueue, assignCase, cancelCase, getCase, reopenCase, resolveCase, setStatusReason, updateCase, type NewCase } from '@/lib/support/cases'
-import { asScore, closeFollowUp, csatForCase, inviteSurvey, recordResponse, snapshotOf } from '@/lib/support/csat'
+import { asReason, asScore, closeFollowUp, csatForCase, inviteSurvey, recordResponse, snapshotOf } from '@/lib/support/csat'
 import { getSettings } from '@/lib/support/kpi-config'
 import { ACTIVE_STATUS_REASONS, STATE, STATUS } from '@/lib/support/options'
 import { createRfe } from '@/lib/support/rfe'
@@ -194,6 +194,7 @@ export async function csatRecordAction(form: FormData): Promise<void> {
   const id = caseId(form)
   const score = asScore(form.get('score'))
   const comment = str(form, 'comment')
+  const reason = str(form, 'reason')
   let msg: string | null = null
   if (!score) msg = 'Pick the score the customer gave, 1 to 5.'
   if (msg) fail(id, msg)
@@ -202,7 +203,7 @@ export async function csatRecordAction(form: FormData): Promise<void> {
     const settings = await getSettings()
     if (!c) msg = 'That case no longer exists.'
     else if (!settings.csat.enabled) msg = 'CSAT is switched off in KPI settings.'
-    else await recordResponse(snapshotOf(c), { score: score!, comment: comment ? `${comment} (recorded by ${me.name || 'an agent'})` : `Recorded by ${me.name || 'an agent'}.`, source: 'agent' }, { settings, auth: me.auth })
+    else await recordResponse(snapshotOf(c), { score: score!, comment: comment ? `${comment} (recorded by ${me.name || 'an agent'})` : `Recorded by ${me.name || 'an agent'}.`, source: 'agent', reason }, { settings, auth: me.auth, by: { id: me.userId, name: me.name || me.email } })
   } catch (e) {
     msg = userMessage(e, 'agent')
   }
@@ -215,15 +216,17 @@ export async function csatFollowUpAction(form: FormData): Promise<void> {
   const me = await requireAgent()
   const id = caseId(form)
   const note = str(form, 'note')
+  const reason = str(form, 'reason')
   const caseNote = form.get('caseNote') === '1'
   let msg: string | null = null
   if (note.length < 3) msg = 'Say in a line what you agreed with the customer.'
+  else if (!asReason(reason)) msg = 'Pick what the low score was about.'
   if (msg) fail(id, msg)
   try {
     const row = await csatForCase(id)
     if (!row || row.followUp === 'none') msg = 'There is no open follow-up on this case.'
     else {
-      await closeFollowUp(row.id, { id: me.userId, name: me.name || me.email }, note)
+      await closeFollowUp(row.id, { id: me.userId, name: me.name || me.email }, note, reason)
       if (caseNote) await addNote(me.auth, id, { subject: `CSAT follow-up closed by ${me.name || 'an agent'}`, text: note }).catch(() => undefined)
     }
   } catch (e) {

@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation'
 import React from 'react'
 
 import { Bars } from '@/components/support/Charts'
-import { ScoreTag } from '@/components/support/Csat'
+import { CauseTag, ScoreTag } from '@/components/support/Csat'
+import { causeOf, isUnhappy } from '@/lib/support/csat-model'
 import { MANAGE, ManageNav, PeriodSeg, SlaMeter, SlaTag } from '@/components/support/Manage'
 import { Avatar, PageHead, StatusTag, Tid, When } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
@@ -61,6 +62,7 @@ export default async function EngineerPage({ params, searchParams }: { params: P
     { k: 'Customer satisfaction', mine: n(e.csatPct, '%'), team: n(teamAverage(team, (x) => x.csatPct), '%') },
     { k: 'Average rating · responses', mine: `${n(e.csatAverage)} · ${e.csatResponses}`, team: `${n(teamAverage(team, (x) => x.csatAverage))} · ${n(teamAverage(team, (x) => x.csatResponses))}` },
     { k: 'Low ratings', mine: String(e.csatUnhappy), team: n(teamAverage(team, (x) => x.csatUnhappy)) },
+    { k: 'Low ratings laid at support (not the product)', mine: String(e.csatUnhappySupport), team: n(teamAverage(team, (x) => x.csatUnhappySupport)) },
     { k: 'Emails sent · notes', mine: `${e.emails} · ${e.notes}`, team: `${n(teamAverage(team, (x) => x.emails))} · ${n(teamAverage(team, (x) => x.notes))}` },
     { k: 'Touches per resolved case', mine: n(e.touchesPerResolved), team: n(teamAverage(team, (x) => x.touchesPerResolved)) },
   ]
@@ -198,6 +200,12 @@ export default async function EngineerPage({ params, searchParams }: { params: P
                     <span className="s">
                       {r.customerName || 'Customer'}
                       {r.comment ? ` · “${r.comment}”` : ''}
+                      {r.score !== null && isUnhappy(r.score, settings.csat) ? (
+                        <>
+                          {' · '}
+                          <CauseTag cause={causeOf(r)} />
+                        </>
+                      ) : null}
                     </span>
                     <span className="r">{dmyHm(r.respondedAt)}</span>
                   </Link>

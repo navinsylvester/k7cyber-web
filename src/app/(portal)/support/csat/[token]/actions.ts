@@ -17,6 +17,7 @@ export async function submitSurvey(form: FormData): Promise<void> {
   if (!t) redirect('/support/csat/expired')
   const score = asScore(form.get('score'))
   const comment = String(form.get('comment') ?? '').trim().slice(0, 2000)
+  const reason = String(form.get('reason') ?? '')
   if (!score) redirect(here(token, 'error=score'))
   const settings = await getSettings()
   if (!settings.csat.enabled) redirect(here(token, 'error=off'))
@@ -33,7 +34,7 @@ export async function submitSurvey(form: FormData): Promise<void> {
   }
   if (!snapshot) redirect(here(token, 'error=case'))
   try {
-    await recordResponse(snapshot, { score, comment, source: 'email', email: t.email }, { settings, auth: { kind: 'service' } })
+    await recordResponse(snapshot, { score, comment, source: 'email', email: t.email, reason }, { settings, auth: { kind: 'service' } })
   } catch {
     redirect(here(token, 'error=failed'))
   }

@@ -45,6 +45,15 @@ export const SupportCsat: CollectionConfig = {
       ],
     },
     { name: 'followUpNote', type: 'textarea' },
+    {
+      type: 'row',
+      fields: [
+        { name: 'customerReason', type: 'text', admin: { description: 'What the customer said it was about, picked on the survey (a reason key from csat-model.ts).' } },
+        { name: 'reason', type: 'text', index: true, admin: { description: 'The desk\'s classification: a manager closing the follow-up, or an agent. Wins over the customer\'s pick.' } },
+        { name: 'reasonBy', type: 'text' },
+        { name: 'reasonAt', type: 'date' },
+      ],
+    },
   ],
   timestamps: true,
 }

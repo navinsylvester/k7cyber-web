@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
 
-import { RateScale, ScoreTag } from '@/components/support/Csat'
+import { RateScale, ReasonSelect, ScoreTag } from '@/components/support/Csat'
 import { Field, Flash, Tid } from '@/components/support/Parts'
 import { asScore, csatForCase, readSurveyToken } from '@/lib/support/csat'
 import { getSettings } from '@/lib/support/kpi-config'
@@ -87,6 +87,9 @@ export default async function SurveyPage({ params, searchParams }: { params: Pro
             <form action={submitSurvey} className="form-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
               <input type="hidden" name="token" value={token} />
               <RateScale selected={preselected} />
+              <Field id="reason" label="If something went wrong, what was it mainly about?" hint="Optional. It tells us whether to fix the product or the way we helped you." select>
+                <ReasonSelect id="reason" audience="customer" value={row?.customerReason ?? ''} />
+              </Field>
               <Field id="comment" label="Anything you want to tell us?" hint="Optional. Read by the engineer's manager.">
                 <textarea id="comment" name="comment" rows={3} maxLength={2000} defaultValue={row?.comment ?? ''} placeholder="What went well, or what we should have done differently" />
               </Field>

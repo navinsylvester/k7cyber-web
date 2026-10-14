@@ -116,6 +116,12 @@ export type CsatRow = {
   followUpOwnerName: string
   followUpAt: string | null
   followUpNote: string
+  /** What the customer said it was about, picked on the survey (a reason key, or empty). */
+  customerReason: string
+  /** The desk's classification of a low score (a manager closing the follow-up, or an agent); it wins over the customer's pick. */
+  reason: string
+  reasonBy: string
+  reasonAt: string | null
   createdAt: string
 }
 
@@ -228,6 +234,165 @@ export const facetLines = (rows: CsatRow[], s: CsatSettings, facet: (r: CsatRow)
   return [...m.values()]
     .map(({ sum, satisfied, ...l }) => ({ ...l, average: l.responses ? round1(sum / l.responses) : null, csat: share(satisfied, l.responses) }))
     .sort((a, b) => b.responses - a.responses || a.label.localeCompare(b.label))
+}
+
+
+/* ---------- Why they are unhappy ---------- */
+
+/** The four areas a low score is laid at the door of: the product, product support, licensing and sales, or something else. */
+export type ReasonArea = 'product' | 'support' | 'commercial' | 'other'
+export const AREAS: ReasonArea[] = ['product', 'support', 'commercial', 'other']
+export const AREA_LABEL: Record<ReasonArea, string> = { product: 'The product', support: 'Product support', commercial: 'Licensing & sales', other: 'Other' }
+export const AREA_SHORT: Record<ReasonArea, string> = { product: 'Product', support: 'Support', commercial: 'Licensing', other: 'Other' }
+
+/** One reason: the key stored on the row, its area, the desk's short label and the words the customer sees on the survey. */
+export type Reason = { key: string; area: ReasonArea; label: string; customer: string }
+export const REASONS: Reason[] = [
+  { key: 'product-defect', area: 'product', label: 'Defect or crash', customer: 'The product has a bug or crashes' },
+  { key: 'product-performance', area: 'product', label: 'Slows the computer', customer: 'It slows my computer down' },
+  { key: 'product-detection', area: 'product', label: 'Missed threat or false positive', customer: 'It missed a threat, or blocked something safe' },
+  { key: 'product-install', area: 'product', label: 'Install or update failed', customer: 'Install or update problems' },
+  { key: 'product-feature', area: 'product', label: 'Missing feature', customer: 'It lacks a feature I need' },
+  { key: 'product-compat', area: 'product', label: 'Compatibility', customer: 'It does not work with my system or other software' },
+  { key: 'support-slow', area: 'support', label: 'Slow to respond', customer: 'Support took too long to reply' },
+  { key: 'support-long', area: 'support', label: 'Took too long to resolve', customer: 'It took too long to fix' },
+  { key: 'support-unresolved', area: 'support', label: 'Not resolved', customer: 'My problem is still not fixed' },
+  { key: 'support-repeat', area: 'support', label: 'Had to repeat or was passed around', customer: 'I had to explain it again and again' },
+  { key: 'support-conduct', area: 'support', label: 'Communication or attitude', customer: 'How I was spoken to' },
+  { key: 'support-knowledge', area: 'support', label: 'Engineer lacked the answer', customer: 'The engineer did not know the answer' },
+  { key: 'licence-activation', area: 'commercial', label: 'Activation or licence key', customer: 'Activation or licence key trouble' },
+  { key: 'licence-billing', area: 'commercial', label: 'Renewal, billing or refund', customer: 'Renewal, billing or a refund' },
+  { key: 'licence-price', area: 'commercial', label: 'Pricing or value', customer: 'Price or value for money' },
+  { key: 'other', area: 'other', label: 'Something else', customer: 'Something else' },
+]
+const REASON_BY_KEY = new Map(REASONS.map((r) => [r.key, r]))
+export const reasonOf = (key: string | null | undefined): Reason | null => (key ? (REASON_BY_KEY.get(key) ?? null) : null)
+/** A reason key from a form, or empty when it is not one of ours. */
+export const asReason = (v: unknown): string => (typeof v === 'string' && REASON_BY_KEY.has(v) ? v : '')
+export const reasonsIn = (area: ReasonArea): Reason[] => REASONS.filter((r) => r.area === area)
+
+/** What a row is about: the desk's classification when there is one, else the customer's own pick, else unclassified. */
+export type Cause = { key: string; area: ReasonArea | ''; label: string; by: 'desk' | 'customer' | ''; who: string }
+export const UNCLASSIFIED: Cause = { key: '', area: '', label: 'Not classified yet', by: '', who: '' }
+export const causeOf = (r: Pick<CsatRow, 'reason' | 'customerReason' | 'reasonBy'>): Cause => {
+  const desk = reasonOf(r.reason)
+  if (desk) return { key: desk.key, area: desk.area, label: desk.label, by: 'desk', who: r.reasonBy }
+  const own = reasonOf(r.customerReason)
+  if (own) return { key: own.key, area: own.area, label: own.label, by: 'customer', who: '' }
+  return UNCLASSIFIED
+}
+
+/** Low scores among the responses. */
+export const unhappyRows = (rows: CsatRow[], s: CsatSettings): CsatRow[] => rows.filter((r) => r.status === 'responded' && r.score !== null && isUnhappy(r.score, s))
+
+export type AreaCounts = Record<ReasonArea | 'none', number>
+export const emptyAreas = (): AreaCounts => ({ product: 0, support: 0, commercial: 0, other: 0, none: 0 })
+const addArea = (a: AreaCounts, r: CsatRow) => {
+  const c = causeOf(r)
+  a[c.area || 'none']++
+}
+/** Low scores per area over a set of rows. */
+export const areaCounts = (rows: CsatRow[], s: CsatSettings): AreaCounts => {
+  const a = emptyAreas()
+  for (const r of unhappyRows(rows, s)) addArea(a, r)
+  return a
+}
+
+/** Reasons ranked by how many low scores carry them, with the share of all low scores and the count in the previous period. */
+export type CauseLine = { key: string; area: ReasonArea | ''; label: string; n: number; share: number | null; prev: number | null }
+export const causeLines = (rows: CsatRow[], s: CsatSettings, prev?: CsatRow[]): CauseLine[] => {
+  const low = unhappyRows(rows, s)
+  const count = (set: CsatRow[]) => {
+    const m = new Map<string, number>()
+    for (const r of set) {
+      const k = causeOf(r).key
+      m.set(k, (m.get(k) ?? 0) + 1)
+    }
+    return m
+  }
+  const now = count(low)
+  const before = prev ? count(unhappyRows(prev, s)) : null
+  const keys = new Set([...now.keys(), ...(before?.keys() ?? [])])
+  return [...keys]
+    .map((k): CauseLine => {
+      const c = k ? reasonOf(k) : null
+      return { key: k, area: c?.area ?? '', label: c?.label ?? UNCLASSIFIED.label, n: now.get(k) ?? 0, share: share(now.get(k) ?? 0, low.length), prev: before ? (before.get(k) ?? 0) : null }
+    })
+    .filter((l) => l.n > 0 || (l.prev ?? 0) > 0)
+    .sort((a, b) => b.n - a.n || (b.prev ?? 0) - (a.prev ?? 0) || a.label.localeCompare(b.label))
+}
+
+/** Products ranked by low scores: responses, low count and share, CSAT, and where the low scores fall by area. `family` folds SKUs
+   ("Total Security - 5U3Y") to what a customer recognises. */
+export type ProductLine = { key: string; label: string; responses: number; low: number; lowShare: number | null; csat: number | null; areas: AreaCounts }
+export const productLines = (rows: CsatRow[], s: CsatSettings, family: (name: string) => string = (n) => n): ProductLine[] => {
+  const m = new Map<string, ProductLine & { satisfied: number }>()
+  for (const r of rows) {
+    if (r.status !== 'responded' || r.score === null) continue
+    const label = r.product ? family(r.product) || r.product : 'No product on the case'
+    const key = label.toLowerCase()
+    let l = m.get(key)
+    if (!l) {
+      l = { key, label, responses: 0, low: 0, lowShare: null, csat: null, areas: emptyAreas(), satisfied: 0 }
+      m.set(key, l)
+    }
+    l.responses++
+    if (isSatisfied(r.score, s)) l.satisfied++
+    if (isUnhappy(r.score, s)) {
+      l.low++
+      addArea(l.areas, r)
+    }
+  }
+  return [...m.values()]
+    .map(({ satisfied, ...l }) => ({ ...l, lowShare: share(l.low, l.responses), csat: share(satisfied, l.responses) }))
+    .sort((a, b) => b.low - a.low || b.responses - a.responses || a.label.localeCompare(b.label))
+}
+
+/** Customers who rated low more than once in the rows given (a window wider than the period, usually), most recent first. */
+export type RepeatCustomer = { customerId: string; customerName: string; customerKind: CsatRow['customerKind']; low: number; total: number; last: CsatRow; products: string[]; areas: AreaCounts; openFollowUp: boolean }
+export const repeatCustomers = (rows: CsatRow[], s: CsatSettings, minLow = 2): RepeatCustomer[] => {
+  const m = new Map<string, RepeatCustomer>()
+  const answered = rows.filter((r) => r.status === 'responded' && r.score !== null && r.respondedAt).sort((a, b) => (a.respondedAt! < b.respondedAt! ? 1 : -1))
+  for (const r of answered) {
+    const id = r.customerId || r.contactId
+    if (!id) continue
+    let c = m.get(id)
+    if (!c) {
+      c = { customerId: id, customerName: r.customerName, customerKind: r.customerKind, low: 0, total: 0, last: r, products: [], areas: emptyAreas(), openFollowUp: false }
+      m.set(id, c)
+    }
+    c.total++
+    if (!isUnhappy(r.score!, s)) continue
+    c.low++
+    addArea(c.areas, r)
+    if (r.product && !c.products.includes(r.product)) c.products.push(r.product)
+    if (r.followUp === 'pending' || r.followUp === 'in-progress') c.openFollowUp = true
+  }
+  return [...m.values()].filter((c) => c.low >= minLow).sort((a, b) => b.low - a.low || (a.last.respondedAt! < b.last.respondedAt! ? 1 : -1))
+}
+
+/** Low scores over time in buckets of `days` ending at `to`, oldest first, each with its area split. */
+export type CauseBucket = { from: Date; to: Date; responses: number; low: number; areas: AreaCounts }
+export const causeBuckets = (rows: CsatRow[], s: CsatSettings, from: Date, to: Date, days: number): CauseBucket[] => {
+  const span = days * 864e5
+  const n = Math.max(1, Math.ceil((to.getTime() - from.getTime()) / span))
+  const out: CauseBucket[] = []
+  for (let i = n - 1; i >= 0; i--) {
+    const end = new Date(to.getTime() - i * span)
+    out.push({ from: new Date(Math.max(from.getTime(), end.getTime() - span)), to: end, responses: 0, low: 0, areas: emptyAreas() })
+  }
+  for (const r of rows) {
+    if (r.status !== 'responded' || r.score === null || !r.respondedAt) continue
+    const t = new Date(r.respondedAt).getTime()
+    if (t < from.getTime() || t >= to.getTime()) continue
+    const b = out[n - 1 - Math.min(n - 1, Math.floor((to.getTime() - t - 1) / span))]!
+    b.responses++
+    if (isUnhappy(r.score, s)) {
+      b.low++
+      addArea(b.areas, r)
+    }
+  }
+  return out
 }
 
 /* ---------- The care band ---------- */

@@ -4,14 +4,14 @@ import { notFound } from 'next/navigation'
 import React from 'react'
 
 import { CategoryPicker } from '@/components/support/CasePickers.client'
-import { CareBand, CareTag, FollowUpTag, RateScale, ScoreTag } from '@/components/support/Csat'
+import { CareBand, CareTag, CauseTag, FollowUpTag, RateScale, ReasonSelect, ScoreTag } from '@/components/support/Csat'
 import { Empty, Field, Flash, MetaRows, Options, Sla, StatusTag, Tid } from '@/components/support/Parts'
 import { AgentTimeline } from '@/components/support/Timeline'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { isGuid } from '@/lib/dataverse/odata'
 import { fv, lookup } from '@/lib/dataverse/types'
 import { getCase } from '@/lib/support/cases'
-import { careForCustomer, csatForCase, followUpState, isUnhappy } from '@/lib/support/csat'
+import { careForCustomer, causeOf, csatForCase, followUpState, isUnhappy } from '@/lib/support/csat'
 import { dmy, dmyHm } from '@/lib/support/format'
 import { getSettings } from '@/lib/support/kpi-config'
 import { ACTIVE_STATUS_REASONS, CASE_TYPE, CATEGORY, CONSIDERED_AS, CUSTOMER_TYPE, ORIGIN, PRIORITY, RFE_TYPE, STATE, STATUS, VERTICAL, label } from '@/lib/support/options'
@@ -572,6 +572,11 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                             <ScoreTag score={rating.score} settings={settings.csat} /> on {dmyHm(rating.respondedAt)} · {rating.source === 'agent' ? 'recorded by an agent' : rating.source === 'email' ? 'from the emailed survey' : 'on the portal'}
                           </p>
                           {rating.comment && <p style={{ color: 'var(--fg)', fontSize: 15 }}>&ldquo;{rating.comment}&rdquo;</p>}
+                          {isUnhappy(rating.score, settings.csat) && (
+                            <p>
+                              About <CauseTag cause={causeOf(rating)} />
+                            </p>
+                          )}
                           {rating.followUp !== 'none' && fu && (
                             <p>
                               Follow-up <FollowUpTag status={rating.followUp} reading={fu} />
@@ -582,6 +587,9 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                           {(rating.followUp === 'pending' || rating.followUp === 'in-progress') && (
                             <form action={csatFollowUpAction} className="act-body" style={{ padding: 0 }}>
                               <input type="hidden" name="id" value={id} />
+                              <Field id="fu-reason" label="What it was about" required select hint="The reason the call found; the report groups low scores by it.">
+                                <ReasonSelect id="fu-reason" value={rating.reason || rating.customerReason} required />
+                              </Field>
                               <Field id="fu-note" label="What you agreed with the customer" required>
                                 <textarea id="fu-note" name="note" rows={3} required />
                               </Field>
@@ -622,6 +630,9 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                             <form action={csatRecordAction} className="act-body" style={{ paddingTop: 12 }}>
                               <input type="hidden" name="id" value={id} />
                               <RateScale compact selected={null} />
+                              <Field id="cs-reason" label="If unhappy, what about" select>
+                                <ReasonSelect id="cs-reason" />
+                              </Field>
                               <Field id="cs-comment" label="What the customer said">
                                 <textarea id="cs-comment" name="comment" rows={2} />
                               </Field>
