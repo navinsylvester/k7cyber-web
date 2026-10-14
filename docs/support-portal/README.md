@@ -1,9 +1,12 @@
 # Support portal (Dynamics 365 / Dataverse) — planning handoff
 
-Status 2026-10-11: planning complete, no code yet. **Interim mode: read-only development
-against production** (`07-production-safety.md` §1b) because the tenant is over Dataverse
-database capacity and no sandbox can be created or copied; writes wait for a writable
-sandbox/UAT (`scripts/dataverse-seed.py` is ready for it). The support portal (agent workspace
+Status 2026-10-13: **first build in the repo** (see `09-portal-guide.md`): agent workspace and customer self-service on UAT, with registration by one-time code. Planning status 2026-10-12: planning complete. **Development environment: UAT**
+(`https://k7crmuat.crm8.dynamics.com`, `07-production-safety.md` §1 and §1c): the tenant is over
+its Dataverse database entitlement, so no sandbox can be created or copied, and the existing UAT
+sandbox was prepared instead — support schema synced from production, customer-facing automation
+paused, production cases created on/after 2026-09-28 seeded (1,210 cases, zero errors, verified
+against production the same day), automation resumed with the customer-facing items off. Production
+stays read-only for the client (§1b). The support portal (agent workspace
 first, customer self-service second) is built in this repo on top of K7's existing
 Dynamics 365 Customer Service data, accessed through the Dataverse Web API. Production
 Dataverse must not be touched during development (`07-production-safety.md`).
@@ -14,7 +17,8 @@ Dataverse must not be touched during development (`07-production-safety.md`).
 | `01-requirements.md` | audiences, phases, agent workspace (parity with the "Dynamics 365 Mobile – custom" app), customer self-service, decisions | always |
 | `03-metadata-summary.md` | confirmed table/column logical names, option values, lookups, counts, app inventory | any field or API question |
 | `07-production-safety.md` | UAT vs production rules, no-schema-change rule, rollout gates | before any Dataverse call |
-| `08-implementation-plan.md` | routes, libraries, auth, UI, milestones, env vars, first-session checklist | starting work |
+| `09-portal-guide.md` | **what is built**: routes, the three sign-in doors, enforced rules, how to run, what is not done | starting work, always |
+| `08-implementation-plan.md` | routes, libraries, auth, UI, milestones, env vars, first-session checklist (the intent) | planning questions |
 | `02-dataverse-integration.md` | auth flows, read/write request examples, limits, licensing | coding the client |
 | `06-entra-setup.md` | click-by-click app registrations, UAT access, External ID tenant | setting up sign-in |
 | `04-data-profile.md` | statistical profile of the data (volumes, fill rates, value sets) | data-quality questions |
@@ -22,9 +26,12 @@ Dataverse must not be touched during development (`07-production-safety.md`).
 
 ## Key facts
 - Tenant `005ef94f-7dbd-4d0e-a29a-494e2a63d911`; production `https://k7crm.crm8.dynamics.com`
-  (47.6 GB database, 118 GB files). Development target: a new **Portal Dev sandbox** made by
-  a Minimal copy of production and seeded with the last 3–6 months (`scripts/dataverse-seed.py`).
-  The existing UAT (`k7crmuat`) is not used.
+  (47 GB database, 116 GB files). Tenant database entitlement 47.5 GB, used 49.2 GB (2026-10-12).
+  Development target: the existing **UAT** sandbox `https://k7crmuat.crm8.dynamics.com`
+  (environment `eef7bfef-083f-4817-854a-e4a34abe0a74`, 1.9 GB database, shared with the CRM admin
+  Kathiresan M for solution staging and reporting), support schema synced from production and
+  seeded with cases created on/after 2026-09-28. A fresh Minimal-copy sandbox remains the better
+  option once capacity allows; the same scripts prepare it.
 - 65 licensed agents work in the model-driven app "Dynamics 365 Mobile – custom" today;
   there is no customer-facing support portal (the only Power Pages site is a 2019
   marketing Event Portal).
@@ -43,14 +50,30 @@ python3 -I scripts/dataverse-probe.py get 'incidents?$select=ticketnumber&$top=3
 python3 -I scripts/dataverse-probe.py count incident contact
 python3 -I scripts/dataverse-probe.py discover      # rewrites spec/METADATA.md + spec/metadata/ (move into docs/support-portal/05-metadata-full.md)
 ```
-`scripts/dataverse-seed.py` seeds the sandbox from production (see `07-production-safety.md` §1).
-Both share the git-ignored, personal token cache `scripts/.token_cache.json`.
+`scripts/dataverse-schema-sync.py` copies the support schema from production into the target
+(dry run first; backs up what it overwrites; publishes only what it touched).
+`scripts/dataverse-uat-automation.py --pause|--resume` turns the target's case automation off
+around a seed and keeps the customer-facing items off.
+`scripts/dataverse-seed.py --since YYYY-MM-DD` seeds the target from production (see
+`07-production-safety.md` §1). All of them refuse the production host as a target and share the
+git-ignored, personal token cache `scripts/.token_cache.json`. The dev network drops IPv6 to
+Microsoft and has DNS blips: the scripts prefer IPv4 and retry network errors for minutes.
 
 ## Open items
-- Capacity: tenant over Dataverse database entitlement (46.7 GB used); sandbox creation/copy
-  blocked. Options: buy capacity add-on, reclaim space (system jobs, workflow/plugin logs),
-  or use existing UAT as-is with a solution import. Decide with the licence owner.
-- Until then: read-only against production; M2 writes blocked.
+- Capacity: tenant over its Dataverse database entitlement (47.5 GB entitled, 49.2 GB used);
+  create/copy/restore blocked. Microsoft's storage validation (rolling out 2026-11-09 to
+  2026-12-04) puts sandboxes without pay-as-you-go into administration mode 30 days after the
+  overage starts and disables them later — UAT included. Buy capacity, link UAT to pay-as-you-go,
+  or request the free 45-day extension before then. Decide with the licence owner.
+- UAT keeps its own 2,091 cities and 18 countries next to production's 2,202 and 20 (same names,
+  different ids; the production set was created by the seed on 2026-10-12). Decide which set to
+  keep: deleting UAT's own set clears the city of its old accounts; deleting production's set
+  needs the seeded accounts re-pointed by name.
+- UAT differences left on purpose: `07-production-safety.md` §1c. Seven agents have no security role in
+  UAT; the seed gave their 63 cases, 208 emails, 76 notes, 21 contacts and 19 accounts to Navin as owner.
+  Assign the roles (Settings → Users + permissions) and re-assign those rows if the demo needs them.
+- Products: UAT mirrors production's 1,982 products (ids, parents, numbers); 7 rows UAT already had keep
+  their own active/retired state.
 - Approved page designs for the portal templates in `designs/` (none yet).
 - Customer-facing sub-category list, reopen window, status wording; licence data on profile.
 - Microsoft's written confirmation on external-user licensing before phase 2.

@@ -37,15 +37,28 @@ One Next.js 16 app with Payload 3 inside it: the public site and the CMS admin (
 
 Local dev uses Payload's push mode (schema synced on start). Credentials in `.env` are local throwaways.
 
-## Support portal (Dynamics 365 / Dataverse) — planning handed over 2026-10-10
-- Start at `docs/support-portal/README.md`; it orders the reading. Field/API facts are in
+## Support portal (Dynamics 365 / Dataverse) — built on UAT from 2026-10-13
+- Start at `docs/support-portal/README.md`; it orders the reading. `09-portal-guide.md` is the state of the build:
+  routes, the three sign-in doors (Entra for agents, one-time code for customers, probe token in development),
+  the rules the code enforces, and what is not done. Field/API facts are in
   `docs/support-portal/03-metadata-summary.md`; `05-metadata-full.md` is grep-only.
-- Production Dataverse (`k7crm.crm8.dynamics.com`) is live for 65 agents. Interim mode
-  (2026-10-11): development is **read-only against production**; the Dataverse client must
-  hard-refuse any non-GET call to the production host. Writes wait for a sandbox/UAT
-  (`scripts/dataverse-seed.py` seeds it). Rules in `07-production-safety.md` §1b.
-- Agent workspace first (delegated Entra sign-in, Auth.js), customer self-service second
-  (Entra External ID + application user). Routes under `src/app/(portal)/support/...`,
-  client in `src/lib/dataverse/`, domain in `src/lib/support/` (`08-implementation-plan.md`).
+- Production Dataverse (`k7crm.crm8.dynamics.com`) is live for 65 agents and stays **read-only**:
+  the Dataverse client must hard-refuse any non-GET call to the production host. Development
+  runs against **UAT** (`k7crmuat.crm8.dynamics.com`, since 2026-10-12): a shared sandbox whose
+  support schema is synced from production (`scripts/dataverse-schema-sync.py`) and seeded with
+  recent cases (`scripts/dataverse-seed.py --since`); `scripts/dataverse-uat-automation.py`
+  pauses its case automation around a seed and keeps customer-facing items off. Rules in
+  `07-production-safety.md` §1–1c.
+- Routes under `src/app/(portal)/support/...` (own root layout, `portal.css` = design-system section 09),
+  client in `src/lib/dataverse/` (write guard first), domain in `src/lib/support/` (`session.ts` gives
+  `requireAgent()` / `requireCustomer()`; every customer query carries `customerScopeFilter`). Parts in
+  `src/components/support/`. Tests: `tests/int/support-*.int.spec.ts` (no tenant needed).
+- Development sign-in: `SUPPORT_DEV_AGENT=probe` in `.env` lets the workspace use the probe's token
+  cache until the agent app registration has admin consent; `SUPPORT_DEV_SHOW_CODE=1` shows customers'
+  one-time codes on the verify page while no `SMTP_URL` is set.
+- Manager view at `/support/workspace/manage` (agents with a manager role, 09 §4c): KPI cards, engineer efficiency, SLA violation
+  report, the at-risk board and the prevention sweep (`POST /api/support/sla/sweep` with `CRON_SECRET`). Targets, business hours,
+  KPI cards and rules are configured on `/manage/kpis` and stored in the Payload global `support-settings`; the sweep log is the
+  collection `support-sla-events`. The SLA engine (`src/lib/support/sla.ts`) is pure and tested without a tenant.
 - `scripts/dataverse-probe.py` queries Dataverse from the shell (`DV_*` in `.env`); its
   token cache `scripts/.token_cache.json` and any `spec/` output are git-ignored.

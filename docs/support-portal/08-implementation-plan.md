@@ -34,7 +34,9 @@ src/app/(frontend)/portal.css           section 09 · Support of the design syst
                                         research.css is section 08)
 design-system/components/<New parts>/   README + bundle.css reference for any new part
 scripts/dataverse-probe.py              metadata/discovery tool (python, no deps)
-scripts/dataverse-seed.py               sandbox seeder: reference tables + last N months
+scripts/dataverse-schema-sync.py        copies the support schema production → UAT (dry run first)
+scripts/dataverse-uat-automation.py     pauses/resumes UAT's case automation around a seed
+scripts/dataverse-seed.py               seeds UAT from production: reference tables + cases since a date
 docs/support-portal/                    this folder
 ```
 `/support` currently resolves to the Payload "Support" page (link-out). The static
@@ -95,20 +97,22 @@ landing copy and announcements.
   enters a sitemap.
 
 ## 5. Milestones
+State 2026-10-13: M0, M1, M2 (every action wired, verified only on test cases), M3 (both dashboards) and most of M4 are built against UAT; see `09-portal-guide.md` §5 for the gaps. M6 is partly built ahead of schedule with the portal's own one-time-code sign-in (decision open, §2 of the guide).
+
 | # | Scope | Done when |
 |---|---|---|
 | M0 Foundation | app registration A (`06-entra-setup.md` §A); read-only guard in the client (`07-production-safety.md` §1b) with its unit test; Auth.js with the agent provider; `src/lib/dataverse` with `WhoAmI` and one paged list; mock mode; `(portal)` layout | signed-in agent sees their name and `My Active Cases` rows from production, read-only |
 | M1 Agent read | five must-have views via `savedQuery`; case page with details and timeline (activities + notes, attachment download); search by case number/title/customer | support lead confirms parity for reading |
-| M2 Agent write (**blocked until a writable sandbox/UAT exists**; build against mock mode meanwhile) | add note (+ attachment); assign; resolve (Closed-Call / Closed-Remote); cancel; reopen; create case with all pickers; convert to RFE | each action verified in the sandbox's Customer Service Hub; audit shows the agent |
-| M3 Dashboards | Rafi + Customer Service Manager dashboards from the chart definitions' FetchXML | numbers match the model-driven app on the same sandbox data |
+| M2 Agent write (UAT is writable since 2026-10-12; verify every action in UAT's Customer Service Hub) | add note (+ attachment); assign; resolve (Closed-Call / Closed-Remote); cancel; reopen; create case with all pickers; convert to RFE | each action verified in the sandbox's Customer Service Hub; audit shows the agent |
+| M3 Dashboards | Rafi + Customer Service Manager dashboards from the chart definitions' FetchXML | numbers match the model-driven app on the same UAT data |
 | M4 Rest of the sitemap | queues (mine, public), accounts, contacts (create/edit, geography pickers), KB read/draft, products, RFE/defect lists, remaining 16 views | sitemap parity |
 | M5 Production phase 1 | prod registrations, read-only week, flags on | model-driven app no longer needed for daily work |
 | M6 Customers | External ID tenant and user flow; `identity.ts`; my cases, create, reply, KB, profile; status mapping; notifications | licensing confirmed in writing; first real customer case created via Web origin |
 
 ## 6. Environment variables (add to `.env.example`)
 ```
-DATAVERSE_URL=https://k7crm.crm8.dynamics.com   # production, read-only until DATAVERSE_WRITES_ENABLED=1 AND host is not production
-DATAVERSE_WRITES_ENABLED=                        # never set while DATAVERSE_URL is production; the code refuses anyway
+DATAVERSE_URL=https://k7crmuat.crm8.dynamics.com   # UAT (development); the code refuses writes to the production host regardless
+DATAVERSE_WRITES_ENABLED=                           # set to 1 for UAT when M2 starts; never matters for production
 DATAVERSE_TENANT_ID=005ef94f-7dbd-4d0e-a29a-494e2a63d911
 DATAVERSE_CLIENT_ID=            # phase 2 service app
 DATAVERSE_CLIENT_SECRET=
@@ -127,7 +131,7 @@ The python probe keeps its own `DV_*` names (`DV_ORG_URL`, `DV_TENANT_ID`, `DV_A
 ## 7. Tests
 - `tests/int`: odata builder, status mapping, identity matching, savedQuery paging —
   vitest with fixtures.
-- `tests/e2e`: Playwright against the sandbox with a test agent (`E2E_AGENT_*` secrets) covering
+- `tests/e2e`: Playwright against UAT with a test agent (`E2E_AGENT_*` secrets) covering
   sign-in, view list, case open, add note; skipped when secrets are absent.
 - Never against production (see `07-production-safety.md`).
 
@@ -135,8 +139,8 @@ The python probe keeps its own `DV_*` names (`DV_ORG_URL`, `DV_TENANT_ID`, `DV_A
 1. Read `docs/support-portal/README.md`, `01-requirements.md`, `03-metadata-summary.md`,
    `07-production-safety.md`; keep `02-dataverse-integration.md` open while coding the client.
 2. Confirm production read access works: `python3 -I scripts/dataverse-probe.py get WhoAmI`
-   (`.env` `DV_ORG_URL` = production; the probe's `get`/`count`/`discover` are GET-only)
+   (`.env` `DV_ORG_URL` = UAT since 2026-10-12; the probe's `get`/`count`/`discover` are GET-only)
    (uses `.env` `DV_*`; device sign-in once if the cache is missing).
 3. Install `next-auth@5`; create the `(portal)` route group and `src/lib/dataverse`.
-4. Build M0 read-only against production with the agent provider; commit when the signed-in agent sees
+4. Build M0 against UAT with the agent provider; commit when the signed-in agent sees
    their My Active Cases.
