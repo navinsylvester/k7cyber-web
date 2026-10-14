@@ -1,0 +1,232 @@
+{
+ "target": "https://k7crmuat.crm8.dynamics.com",
+ "paused_at": "2026-10-12T13:32:25.227564+00:00",
+ "dry_run": false,
+ "workflows": [
+  {
+   "id": "4782e3c9-0a8e-f011-b4cb-000d3af267ba",
+   "name": "Send Email to Customer When Case is Created",
+   "category": 5,
+   "entity": "none",
+   "mode": 0,
+   "keep_off": true
+  },
+  {
+   "id": "6b689b82-53b3-4993-bec3-040a100bc14a",
+   "name": "Capture email Address in Case",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": false
+  },
+  {
+   "id": "64e7a975-2cfb-4424-9de2-073a93f2c9d7",
+   "name": "Capture Case belongs to FCR or Non FCR",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": false
+  },
+  {
+   "id": "1842b2ba-3be0-4df8-8bbc-11354e373620",
+   "name": "Capture L2 Assign Time",
+   "category": 0,
+   "entity": "incident",
+   "mode": 1,
+   "keep_off": false
+  },
+  {
+   "id": "b78dd5c3-82a6-4852-8bd6-123b4f09f4ac",
+   "name": "Trigger Email SLA",
+   "category": 0,
+   "entity": "incident",
+   "mode": 1,
+   "keep_off": false
+  },
+  {
+   "id": "c9efdfca-c9e9-4584-879a-27c7d90a5ede",
+   "name": "SMS on Case Closure",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": true
+  },
+  {
+   "id": "055f8d8f-e528-471b-95b7-4e7abd51785e",
+   "name": "Trigger Voice SLA L1",
+   "category": 0,
+   "entity": "incident",
+   "mode": 1,
+   "keep_off": false
+  },
+  {
+   "id": "60f274ba-0e8c-45c6-b615-50914beaca2e",
+   "name": "SMS on Case Creation",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": true
+  },
+  {
+   "id": "5e424baa-0f6f-46f8-9ce5-50c760017505",
+   "name": "Resolve Case",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": false
+  },
+  {
+   "id": "c86a2be2-8cd2-4e6c-ac3f-5770751c7332",
+   "name": "Level 2",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": false
+  },
+  {
+   "id": "79bd9f5b-923c-4a6d-bee9-6289a1867001",
+   "name": "Voice SLA L2",
+   "category": 0,
+   "entity": "incident",
+   "mode": 1,
+   "keep_off": false
+  },
+  {
+   "id": "0fce13b1-805a-453d-a2c0-6e036b41b2ae",
+   "name": "case creation",
+   "category": 0,
+   "entity": "email",
+   "mode": 0,
+   "keep_off": true
+  },
+  {
+   "id": "2aa65606-120e-4eb8-a137-87fb874d046b",
+   "name": "EMAIL SLA",
+   "category": 0,
+   "entity": "incident",
+   "mode": 1,
+   "keep_off": false
+  },
+  {
+   "id": "6bb82feb-fa08-4ee5-9aae-95faa78a73c6",
+   "name": "Disable edit after case resolved-Note",
+   "category": 0,
+   "entity": "annotation",
+   "mode": 1,
+   "keep_off": false
+  },
+  {
+   "id": "546cf24e-4176-4c6c-adfe-9fda2f1b08aa",
+   "name": "Feedback Mail to Customer when case is Resolved",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": true
+  },
+  {
+   "id": "48412982-322f-43da-b439-a6935bf41875",
+   "name": "Level 1",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": false
+  },
+  {
+   "id": "d1e2113a-1c23-44ea-95f0-a70956353b8c",
+   "name": "Assignment Email to Owner",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": true
+  },
+  {
+   "id": "248e0ad7-2251-4b9f-af2e-aa27a53e1357",
+   "name": "Send Mail to ME after waiting 24 hours from customer",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": true
+  },
+  {
+   "id": "4618b15f-6e0a-43b3-836b-bf51b87acfff",
+   "name": "Pro32Support Queue",
+   "category": 0,
+   "entity": "email",
+   "mode": 0,
+   "keep_off": false
+  },
+  {
+   "id": "6a6a33ad-e5ff-4068-99b2-c1192763656c",
+   "name": "VOICE SLA L1",
+   "category": 0,
+   "entity": "incident",
+   "mode": 1,
+   "keep_off": false
+  },
+  {
+   "id": "5060e6b2-4129-4694-be64-cc9be53f1b5e",
+   "name": "Trigger Voice SLA L2",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": false
+  },
+  {
+   "id": "feb93b3c-c900-4e64-8ec7-d92126c2fdd6",
+   "name": "Send Email to ME of L2 after 4 hours waiting for Customer - case resolution",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": true
+  },
+  {
+   "id": "ad85f9fc-df0f-4a80-b8ad-e853ce79b04c",
+   "name": "Send email on Account create",
+   "category": 0,
+   "entity": "account",
+   "mode": 0,
+   "keep_off": true
+  },
+  {
+   "id": "5036ef69-0f3f-4b90-888f-f0e27858e664",
+   "name": "Capture FCR status on case resolve",
+   "category": 0,
+   "entity": "incident",
+   "mode": 0,
+   "keep_off": false
+  },
+  {
+   "id": "7d9a6a18-a5c7-4392-87aa-f19ff07b9c5e",
+   "name": "Capture Resolution Time",
+   "category": 0,
+   "entity": "incident",
+   "mode": 1,
+   "keep_off": false
+  }
+ ],
+ "plugin_steps": [
+  {
+   "id": "38a99645-a943-e811-8144-5065f38c8461",
+   "name": "CeledonPartners.AutoNumber.incident Update"
+  },
+  {
+   "id": "557e580e-f742-e811-8147-c4346bdc6e11",
+   "name": "CeledonPartners.AutoNumber.incident"
+  }
+ ],
+ "email_server_profiles": [
+  {
+   "id": "7eedeb22-6a30-4a66-808b-00c25a95b03f",
+   "name": "Microsoft Exchange Online",
+   "keep_off": true
+  },
+  {
+   "id": "ccdf0199-e92c-e811-813c-5065f38c2851",
+   "name": "GmailEmailServer",
+   "keep_off": true
+  }
+ ],
+ "errors": [],
+ "resumed_at": "2026-10-12T17:44:05.081555+00:00",
+ "resume_errors": []
+}

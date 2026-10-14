@@ -1,0 +1,83 @@
+{
+ "dry_run": false,
+ "source": "https://k7crm.crm8.dynamics.com",
+ "target": "https://k7crmuat.crm8.dynamics.com",
+ "steps": {
+  "views": {
+   "same": 33,
+   "deactivate": 25
+  },
+  "views_detail": [
+   "DEACTIVATE incident 'SR - POC/DEMO Monthly report' (inactive in source)",
+   "DEACTIVATE incident 'SR - Technical discussion Weekly' (inactive in source)",
+   "DEACTIVATE incident 'SR - POC/DEMO Weekly report' (inactive in source)",
+   "DEACTIVATE incident 'Active Cases from IoT Alert' (inactive in source)",
+   "DEACTIVATE incident 'All Cases from IoT Alerts' (inactive in source)",
+   "DEACTIVATE incident 'My Active Cases from IoT Alert' (inactive in source)",
+   "DEACTIVATE incident 'Cases Web View' (inactive in source)",
+   "DEACTIVATE incident 'Web - Open Cases' (inactive in source)",
+   "DEACTIVATE incident 'Web - Closed Cases' (inactive in source)",
+   "DEACTIVATE incident 'Web - All Cases' (inactive in source)",
+   "DEACTIVATE incident 'Portal Search' (inactive in source)",
+   "DEACTIVATE incident 'My Team Members' Resolved Cases' (inactive in source)",
+   "DEACTIVATE incident 'Active Cases Opened in the Last 7 days' (inactive in source)",
+   "DEACTIVATE incident 'My Active Cases Opened in the Last 7 days' (inactive in source)",
+   "DEACTIVATE incident 'Cases Resolved By Me in the last 7 days' (inactive in source)",
+   "DEACTIVATE incident 'Cases Resolved in the last 7 days' (inactive in source)",
+   "DEACTIVATE incident 'Cases Opened in the Last 7 days' (inactive in source)",
+   "DEACTIVATE incident 'Cases I Follow' (inactive in source)",
+   "DEACTIVATE incident 'Cases Being Followed' (inactive in source)",
+   "DEACTIVATE incident 'Case introduction message view' (inactive in source)",
+   "DEACTIVATE incident 'Cases By Issue' (inactive in source)",
+   "DEACTIVATE incident 'FCR Cases' (inactive in source)",
+   "DEACTIVATE incident 'My Connections' (inactive in source)",
+   "DEACTIVATE incident 'My Active Cases with Parent Child Status' (inactive in source)",
+   "DEACTIVATE incident 'Active Cases with Parent Child Status' (inactive in source)"
+  ],
+  "app_validation": {
+   "success": null,
+   "issues": []
+  },
+  "app": {
+   "sitemap_same": 1,
+   "component_add": 5,
+   "component_skipped_missing": 4
+  },
+  "app_detail": [
+   "ADD entity transactioncurrency 5f2e7ae7-d327-49b5-a343-61d48f1bcd28",
+   "SKIP entity cea9b4b8-e654-4e8f-a5bb-4009d487e4ce: not in target",
+   "ADD entity uom 02d5dd55-4cbb-4147-9534-1de9bac6d760",
+   "ADD entity uomschedule a317d38b-b2d5-4663-9a06-44611f27ed50",
+   "SKIP entity 16058060-be9d-4908-bf8a-db4597c9b07c: not in target",
+   "ADD entity k7_state af863336-c559-e811-814e-5065f38c8461",
+   "ADD entity k7_region 852cd48c-c159-e811-814e-5065f38c8461",
+   "SKIP entity e0dfd4bb-040c-40c9-8942-eae7e16efd07: not in target",
+   "SKIP form: not in target"
+  ],
+  "published": {
+   "entities": "network POST PublishXml: <urlopen error [Errno -3] Temporary failure in name resolution>",
+   "appmodules": "network POST PublishXml: <urlopen error [Errno -3] Temporary failure in name resolution>"
+  }
+ },
+ "errors": {
+  "solution": [
+   "AddSolutionComponent 80 4c2623b7-0a9b-e811-a967-000d3af257b1: network POST AddSolutionComponent: <urlopen error [Errno -3] Temporary failure in name resolution>"
+  ],
+  "publish": [
+   "entities: network POST PublishXml: <urlopen error [Errno -3] Temporary failure in name resolution>",
+   "appmodules: network POST PublishXml: <urlopen error [Errno -3] Temporary failure in name resolution>"
+  ]
+ },
+ "publish": {
+  "entities": [
+   "incident"
+  ],
+  "optionsets": [],
+  "dashboards": [],
+  "sitemaps": [],
+  "appmodules": [
+   "4c2623b7-0a9b-e811-a967-000d3af257b1"
+  ]
+ },
+ "backup": "migration/uat-schema-backup-20261012T134650Z.json"
+}

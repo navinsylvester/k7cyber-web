@@ -1,0 +1,176 @@
+{
+ "since": "2026-09-28",
+ "target": "https://k7crmuat.crm8.dynamics.com",
+ "entities": {
+  "alletec_country": {
+   "existing": 20
+  },
+  "k7_region": {
+   "existing": 9
+  },
+  "k7_state": {
+   "existing": 40
+  },
+  "alletec_city": {
+   "existing": 2202
+  },
+  "subject": {
+   "existing": 64
+  },
+  "new_issuecategory": {
+   "existing": 24
+  },
+  "new_subcategory": {
+   "existing": 536
+  },
+  "product": {
+   "existing": 1039,
+   "created": 943
+  },
+  "knowledgearticle": {
+   "remapped": 32,
+   "created": 27,
+   "existing": 34
+  },
+  "account": {
+   "existing": 118,
+   "created": 20
+  },
+  "contact": {
+   "existing": 913,
+   "created": 26
+  },
+  "incident": {
+   "existing": 1123,
+   "created": 87
+  },
+  "annotation": {
+   "existing": 1806,
+   "created": 79
+  },
+  "email": {
+   "existing": 5341,
+   "created": 217
+  },
+  "phonecall": {},
+  "task": {},
+  "k7_rfe": {
+   "existing": 139
+  },
+  "k7_defect": {
+   "existing": 76
+  }
+ },
+ "skipped_lookups": {
+  "alletec_country.organizationid": 20,
+  "alletec_country.modifiedby": 2,
+  "alletec_country.createdby": 2,
+  "k7_region.organizationid": 9,
+  "k7_region.createdby": 1,
+  "k7_region.modifiedby": 1,
+  "k7_state.organizationid": 40,
+  "k7_state.modifiedby": 8,
+  "k7_state.createdby": 3,
+  "alletec_city.organizationid": 2202,
+  "alletec_city.createdby": 15,
+  "alletec_city.modifiedby": 18,
+  "subject.organizationid": 64,
+  "subject.modifiedby": 2,
+  "subject.createdby": 2,
+  "new_issuecategory.modifiedby": 8,
+  "new_issuecategory.organizationid": 24,
+  "new_issuecategory.createdby": 6,
+  "new_subcategory.organizationid": 536,
+  "new_subcategory.createdby": 153,
+  "new_subcategory.modifiedby": 162,
+  "new_subcategory.modifiedonbehalfby": 9,
+  "product.modifiedby": 27,
+  "product.organizationid": 1982,
+  "product.pricelevelid": 1929,
+  "product.createdby": 115,
+  "product.createdonbehalfby": 4,
+  "knowledgearticle.owningbusinessunit": 93,
+  "knowledgearticle.owninguser": 89,
+  "knowledgearticle.createdby": 89,
+  "knowledgearticle.modifiedby": 90,
+  "knowledgearticle.primaryauthorid": 1,
+  "account.createdby": 76,
+  "account.owningbusinessunit": 138,
+  "account.owninguser": 67,
+  "account.modifiedby": 19,
+  "contact.owningbusinessunit": 939,
+  "contact.modifiedby": 177,
+  "contact.createdby": 335,
+  "contact.owninguser": 180,
+  "contact.createdonbehalfby": 3,
+  "contact.parentcustomerid": 1,
+  "contact.msa_managingpartnerid": 1,
+  "incident.slainvokedid": 1155,
+  "incident.resolvebykpiid": 1155,
+  "incident.owningbusinessunit": 1210,
+  "incident.slaid": 1155,
+  "incident.owninguser": 76,
+  "incident.createdby": 67,
+  "incident.modifiedby": 16,
+  "annotation.owningbusinessunit": 1885,
+  "annotation.modifiedby": 101,
+  "annotation.createdby": 101,
+  "annotation.owninguser": 101,
+  "email.owningbusinessunit": 5558,
+  "email.sendermailboxid": 4196,
+  "email.modifiedby": 3473,
+  "email.createdby": 1115,
+  "email.receivingmailboxid": 1046,
+  "email.acceptingentityid": 355,
+  "email.emailsender": 89,
+  "email.k7_ticketidautocaptureid": 411,
+  "email.owninguser": 99,
+  "email.modifiedonbehalfby": 45,
+  "email.templateid": 192,
+  "email.sendersaccount": 2,
+  "k7_rfe.owningbusinessunit": 139,
+  "k7_rfe.owninguser": 79,
+  "k7_rfe.k7_customer": 111,
+  "k7_rfe.k7_associatedcaseno": 102,
+  "k7_rfe.createdby": 79,
+  "k7_rfe.modifiedby": 107,
+  "k7_rfe.alletec_associatedopportunityno": 59,
+  "k7_rfe.k7_case": 46,
+  "k7_rfe.modifiedonbehalfby": 9,
+  "k7_defect.k7_associatedcaseno": 75,
+  "k7_defect.modifiedby": 76,
+  "k7_defect.createdby": 76,
+  "k7_defect.k7_customer": 74,
+  "k7_defect.owninguser": 76,
+  "k7_defect.owningbusinessunit": 76,
+  "deferred.masterid": 2,
+  "deferred.parentactivityid": 2,
+  "deferred.CorrelatedActivityId_Email": 1
+ },
+ "skipped_options": {
+  "account.alletec_verticalbusiness": 1
+ },
+ "owner_fallbacks": {
+  "account": 19,
+  "contact": 21,
+  "incident": 63,
+  "annotation": 76,
+  "email": 208
+ },
+ "repaired": {
+  "incident.productid": 1099,
+  "annotation.objectid": 52,
+  "email.regardingobjectid": 230
+ },
+ "emails_pending_cancelled": 1104,
+ "deferred_patches": 651,
+ "closed": {
+  "closed": 57,
+  "open": 30
+ },
+ "published_products": 0,
+ "errors": {},
+ "remapped": {
+  "knowledgearticle": 32
+ }
+}
