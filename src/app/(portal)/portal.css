@@ -150,8 +150,8 @@
 .acts details { border-bottom: 1px solid var(--ln); }
 .acts summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
 .acts summary::-webkit-details-marker { display: none; }
-.acts summary::after { content: "+"; font-weight: 400; }
-.acts details[open] summary::after { content: "−"; }
+.acts details > summary::after { content: "+"; font-weight: 400; }
+.acts details[open] > summary::after { content: "−"; }
 .acts .act-body { padding: 0 0 20px; display: flex; flex-direction: column; gap: 16px; }
 .acts .act-body p { margin: 0; font-size: 14px; color: var(--mu); }
 .acts .field > .label { font-size: 10px; }
@@ -426,3 +426,85 @@ a.kpic:hover .kpic-meter i.is-missed { background: var(--signal); }
 .sweep-box form { display: flex; gap: 10px; flex-wrap: wrap; }
 .note-list { margin: 0; padding-left: 18px; font-size: 14px; color: var(--mu); }
 .caveats { font-size: 13px; color: var(--mu); margin-top: 24px; }
+
+/* ---------- Customer satisfaction (S17–S21) ---------- */
+/* The care band is the one place a customer's name carries a mark: signal for "handle with care", solid ink for "watch",
+   an outlined square for a happy customer. Word and weight carry it; no second hue. */
+.care { display: inline-flex; align-items: center; gap: 7px; padding: 4px 8px; font: 400 11px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; border: 1px solid currentColor; text-decoration: none; white-space: nowrap; color: var(--t-fg, var(--fg)); vertical-align: middle; }
+.care i { width: 8px; height: 8px; display: inline-block; box-shadow: inset 0 0 0 1px currentColor; }
+.care.is-high { background: var(--signal); color: var(--on-signal); border-color: var(--signal); }
+.care.is-high i { background: var(--on-signal); box-shadow: none; }
+.care.is-watch { background: var(--t-fg, var(--fg)); color: var(--t-bg, var(--bg)); border-color: var(--t-fg, var(--fg)); }
+.care.is-watch i { background: var(--t-bg, var(--bg)); box-shadow: none; }
+.care.is-good { opacity: .78; }
+a.care:hover { text-decoration: underline; text-underline-offset: 3px; }
+.care-mark { display: inline-block; width: 8px; height: 8px; margin-right: 8px; vertical-align: 1px; box-shadow: inset 0 0 0 1px currentColor; }
+.care-mark.is-high { background: var(--signal); box-shadow: none; }
+.care-mark.is-watch { background: currentColor; box-shadow: none; }
+.care-mark.is-good { opacity: .6; }
+.care-band { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 12px 0; margin: -8px 0 clamp(20px, 2.4cqw, 32px); border-top: 1px solid var(--fg); border-bottom: 1px solid var(--ln); font-size: 15px; }
+.care-band.is-high { border-top-color: var(--signal); border-top-width: 2px; }
+.care-band .care-why { flex: 1 1 320px; }
+.care-band a.label { text-decoration: none; }
+.care-band a.label:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* The score reads as a tag; low goes signal, satisfied solid (ScoreTag). */
+.score { font-variant-numeric: tabular-nums; }
+
+/* Rating scale: five tiles in a row (choice tiles with the number large). The chosen one inverts; hover on it goes signal. */
+.rate { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; padding: 1px; max-width: 640px; }
+.rate label { position: relative; background: var(--bg); box-shadow: 0 0 0 1px var(--ln); padding: 16px 8px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; text-align: center; transition: background .24s var(--ease), color .24s; }
+.rate label:hover { background: var(--fg); color: var(--bg); }
+.rate label:has(input:checked) { background: var(--fg); color: var(--bg); }
+.rate label:has(input:checked):hover { background: var(--signal); color: var(--on-signal); }
+.rate label:has(input:focus-visible) { outline: 2px solid var(--signal); outline-offset: -2px; }
+.rate input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.rate .n { font: 600 clamp(26px, 3cqw, 40px)/1 var(--font-mono); letter-spacing: -.03em; }
+.rate .w { font: 400 10px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; opacity: .72; }
+.rate.is-compact { max-width: none; }
+.rate.is-compact label { padding: 10px 4px 8px; gap: 3px; }
+.rate.is-compact .n { font-size: 20px; }
+.rate.is-compact .w { display: none; }
+@container (max-width: 520px) { .rate .w { display: none; } }
+
+/* Distribution: five bars, 5 first. */
+.dist { display: grid; grid-template-columns: minmax(90px, 170px) minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; }
+.dist .l { display: flex; gap: 8px; align-items: baseline; font-size: 13px; }
+.dist .l .n { font: 500 14px/1 var(--font-mono); }
+.dist .l .w { color: var(--mu); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dist .b { display: block; height: 14px; background: var(--fg); min-width: 0; }
+.dist .b.is-low { background: var(--signal); }
+.dist .b.is-high { background: var(--fg); }
+.dist .b:not(.is-low):not(.is-high) { background: repeating-linear-gradient(135deg, var(--fg) 0 3px, transparent 3px 6px); }
+.dist .v { font: 400 12px/1 var(--font-mono); text-align: right; white-space: nowrap; }
+
+/* The customer's "How did we do?" block on a closed case, and the agent's panel. */
+.rate-block { padding: clamp(20px, 2.4cqw, 32px) 0; border-top: 1px solid var(--fg); border-bottom: 1px solid var(--ln); margin-bottom: clamp(32px, 4cqw, 48px); }
+.rate-block .form-intro { margin-bottom: 20px; }
+.rate-block .rated { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; font-size: 16px; margin: 0 0 16px; }
+.rate-comment { margin-top: 16px; max-width: 640px; }
+.acts .rate.is-compact { margin: 4px 0; }
+
+/* The customer's closed rows: the rating or the invitation to rate beside the state. */
+.case-row .state .tag, .case-row .state .care { position: relative; z-index: 2; }
+
+/* Public survey page. */
+.survey { max-width: 720px; display: flex; flex-direction: column; gap: 24px; }
+.survey h1 { margin: 0; }
+.survey .case-line { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; font-size: 16px; color: var(--mu); }
+
+/* The follow-up queue on the CSAT page (board rows with the score first). */
+.fu-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px 20px; padding: 16px 0; border-bottom: 1px solid var(--ln); }
+.fu-row .q { font-size: 15px; line-height: 1.5; max-width: 60ch; }
+.fu-row .q::before { content: "\201C"; opacity: .5; }
+.fu-row .q::after { content: "\201D"; opacity: .5; }
+.fu-row .s { font-size: 13px; color: var(--mu); display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.fu-row .acts-inline { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.fu-row .acts-inline form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.fu-row .acts-inline input[type="text"] { font: 400 13px/1.3 var(--font-sans); background: transparent; color: inherit; border: 0; border-bottom: 1px solid var(--fg); padding: 4px 0; min-width: 200px; }
+.fu-row.is-overdue .t::before { content: ""; display: inline-block; width: 6px; height: 6px; background: var(--signal); margin-right: 8px; vertical-align: 2px; }
+@container (min-width: 1000px) { .fu-row { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, .9fr); align-items: start; } }
+.fu-row .t { font-size: 16px; font-weight: 600; letter-spacing: -.015em; }
+.fu-row .t a { text-decoration: none; }
+.fu-row .t a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.ratings .mini-row .t { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-weight: 500; }

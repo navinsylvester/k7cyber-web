@@ -108,7 +108,7 @@ export const runCaseView = async (auth: DataverseAuth, view: View, o: RunViewOpt
     returnTotal: true,
     order: sortable ? { attribute: sortable, descending: dir === 'desc' } : undefined,
     conditions,
-    ensureAttributes: ['incidentid', 'statuscode', 'statecode', 'prioritycode', 'ticketnumber', 'title', ...view.columns.map((c) => c.name).filter((n) => !n.includes('.'))],
+    ensureAttributes: ['incidentid', 'statuscode', 'statecode', 'prioritycode', 'ticketnumber', 'title', 'customerid', ...view.columns.map((c) => c.name).filter((n) => !n.includes('.'))],
   })
   const r = await fetchXml<Row>(auth, 'incidents', xml)
   return {

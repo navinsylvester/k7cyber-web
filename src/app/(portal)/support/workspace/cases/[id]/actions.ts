@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { userMessage } from '@/lib/dataverse/errors'
 import { isGuid } from '@/lib/dataverse/odata'
 import { addCaseToQueue, assignCase, cancelCase, getCase, reopenCase, resolveCase, setStatusReason, updateCase, type NewCase } from '@/lib/support/cases'
+import { asScore, closeFollowUp, csatForCase, inviteSurvey, recordResponse, snapshotOf } from '@/lib/support/csat'
+import { getSettings } from '@/lib/support/kpi-config'
 import { ACTIVE_STATUS_REASONS, STATE, STATUS } from '@/lib/support/options'
 import { createRfe } from '@/lib/support/rfe'
 import { requireAgent } from '@/lib/support/session'
@@ -134,16 +136,101 @@ export async function resolveAction(form: FormData): Promise<void> {
   if (status !== STATUS.CLOSED_CALL && status !== STATUS.CLOSED_REMOTE) msg = 'Choose how the case was closed.'
   else if (subject.length < 3) msg = 'Say in a line what resolved it.'
   if (msg) fail(id, msg)
+  let outcome = 'resolve'
   try {
     const c = await getCase(me.auth, id)
     if (!c) msg = 'That case no longer exists.'
     else if (c.statecode !== STATE.ACTIVE) msg = 'Only an active case can be resolved.'
-    else await resolveCase(me.auth, id, { status: status as typeof STATUS.CLOSED_CALL | typeof STATUS.CLOSED_REMOTE, subject, remarks: remarks || undefined, minutes: minutes && minutes > 0 ? Math.round(minutes) : undefined })
+    else {
+      await resolveCase(me.auth, id, { status: status as typeof STATUS.CLOSED_CALL | typeof STATUS.CLOSED_REMOTE, subject, remarks: remarks || undefined, minutes: minutes && minutes > 0 ? Math.round(minutes) : undefined })
+      // The satisfaction survey follows the resolution (09-portal-guide.md §4d); a failure here never undoes the resolve.
+      const settings = await getSettings()
+      if (settings.csat.enabled && settings.csat.inviteOnResolve && String(c.k7_customeremail ?? '').trim()) {
+        try {
+          const r = await inviteSurvey(snapshotOf(c, new Date()), { settings })
+          if (!r.skipped) outcome = r.sent ? 'resolve-survey' : 'resolve-survey-logged'
+        } catch (e) {
+          console.error(`[csat] invite after resolve failed: ${(e as Error).message}`)
+        }
+      }
+    }
   } catch (e) {
     msg = userMessage(e, 'agent')
   }
   if (msg) fail(id, msg)
-  done(id, 'resolve')
+  done(id, outcome)
+}
+
+/* ---------- Customer satisfaction (09-portal-guide.md §4d) ---------- */
+
+export async function csatInviteAction(form: FormData): Promise<void> {
+  const me = await requireAgent()
+  const id = caseId(form)
+  let msg: string | null = null
+  let sent = false
+  try {
+    const c = await getCase(me.auth, id)
+    const settings = await getSettings()
+    if (!c) msg = 'That case no longer exists.'
+    else if (!settings.csat.enabled) msg = 'The survey is switched off in KPI settings.'
+    else if (c.statecode === STATE.ACTIVE) msg = 'Resolve the case first; the survey asks about the resolution.'
+    else if (!String(c.k7_customeremail ?? '').trim()) msg = 'The case has no customer email to send the survey to.'
+    else {
+      const existing = await csatForCase(id)
+      const r = await inviteSurvey(snapshotOf(c), { settings, reminder: Boolean(existing?.invitedAt) })
+      if (r.skipped === 'answered') msg = 'The customer has already rated this case.'
+      sent = r.sent
+    }
+  } catch (e) {
+    msg = userMessage(e, 'agent')
+  }
+  if (msg) fail(id, msg)
+  done(id, sent ? 'csat-sent' : 'csat-logged')
+}
+
+/** A rating the customer gave on the phone, recorded by the agent. */
+export async function csatRecordAction(form: FormData): Promise<void> {
+  const me = await requireAgent()
+  const id = caseId(form)
+  const score = asScore(form.get('score'))
+  const comment = str(form, 'comment')
+  let msg: string | null = null
+  if (!score) msg = 'Pick the score the customer gave, 1 to 5.'
+  if (msg) fail(id, msg)
+  try {
+    const c = await getCase(me.auth, id)
+    const settings = await getSettings()
+    if (!c) msg = 'That case no longer exists.'
+    else if (!settings.csat.enabled) msg = 'CSAT is switched off in KPI settings.'
+    else await recordResponse(snapshotOf(c), { score: score!, comment: comment ? `${comment} (recorded by ${me.name || 'an agent'})` : `Recorded by ${me.name || 'an agent'}.`, source: 'agent' }, { settings, auth: me.auth })
+  } catch (e) {
+    msg = userMessage(e, 'agent')
+  }
+  if (msg) fail(id, msg)
+  done(id, 'csat-recorded')
+}
+
+/** The agent (or manager) who called the unhappy customer back closes the follow-up from the case. */
+export async function csatFollowUpAction(form: FormData): Promise<void> {
+  const me = await requireAgent()
+  const id = caseId(form)
+  const note = str(form, 'note')
+  const caseNote = form.get('caseNote') === '1'
+  let msg: string | null = null
+  if (note.length < 3) msg = 'Say in a line what you agreed with the customer.'
+  if (msg) fail(id, msg)
+  try {
+    const row = await csatForCase(id)
+    if (!row || row.followUp === 'none') msg = 'There is no open follow-up on this case.'
+    else {
+      await closeFollowUp(row.id, { id: me.userId, name: me.name || me.email }, note)
+      if (caseNote) await addNote(me.auth, id, { subject: `CSAT follow-up closed by ${me.name || 'an agent'}`, text: note }).catch(() => undefined)
+    }
+  } catch (e) {
+    msg = userMessage(e, 'agent')
+  }
+  if (msg) fail(id, msg)
+  done(id, 'csat-followup')
 }
 
 export async function cancelAction(form: FormData): Promise<void> {

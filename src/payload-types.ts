@@ -78,6 +78,8 @@ export interface Config {
     'report-files': ReportFile;
     'report-leads': ReportLead;
     'support-sla-events': SupportSlaEvent;
+    'support-csat': SupportCsat;
+    'support-care-flags': SupportCareFlag;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -107,6 +109,8 @@ export interface Config {
     'report-files': ReportFilesSelect<false> | ReportFilesSelect<true>;
     'report-leads': ReportLeadsSelect<false> | ReportLeadsSelect<true>;
     'support-sla-events': SupportSlaEventsSelect<false> | SupportSlaEventsSelect<true>;
+    'support-csat': SupportCsatSelect<false> | SupportCsatSelect<true>;
+    'support-care-flags': SupportCareFlagsSelect<false> | SupportCareFlagsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -1869,6 +1873,66 @@ export interface SupportSlaEvent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-csat".
+ */
+export interface SupportCsat {
+  id: number;
+  caseId: string;
+  ticket: string;
+  title?: string | null;
+  /**
+   * The account or contact the case names as its customer.
+   */
+  customerId?: string | null;
+  customerName?: string | null;
+  customerKind?: ('account' | 'contact') | null;
+  contactId?: string | null;
+  email?: string | null;
+  ownerId?: string | null;
+  ownerName?: string | null;
+  product?: string | null;
+  issue?: string | null;
+  vertical?: number | null;
+  priority?: number | null;
+  origin?: number | null;
+  status: 'invited' | 'responded';
+  source?: ('portal' | 'email' | 'agent') | null;
+  score?: number | null;
+  comment?: string | null;
+  resolvedAt?: string | null;
+  invitedAt?: string | null;
+  remindedAt?: string | null;
+  respondedAt?: string | null;
+  followUp: 'none' | 'pending' | 'in-progress' | 'done';
+  followUpOwnerId?: string | null;
+  followUpOwnerName?: string | null;
+  followUpAt?: string | null;
+  followUpNote?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-care-flags".
+ */
+export interface SupportCareFlag {
+  id: number;
+  customerId: string;
+  customerName?: string | null;
+  customerKind?: ('account' | 'contact') | null;
+  level: 'high' | 'watch';
+  active?: boolean | null;
+  until?: string | null;
+  reason?: string | null;
+  setBy?: string | null;
+  setById?: string | null;
+  clearedBy?: string | null;
+  clearedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -2100,6 +2164,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'support-sla-events';
         value: number | SupportSlaEvent;
+      } | null)
+    | ({
+        relationTo: 'support-csat';
+        value: number | SupportCsat;
+      } | null)
+    | ({
+        relationTo: 'support-care-flags';
+        value: number | SupportCareFlag;
       } | null)
     | ({
         relationTo: 'media';
@@ -3051,6 +3123,61 @@ export interface SupportSlaEventsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-csat_select".
+ */
+export interface SupportCsatSelect<T extends boolean = true> {
+  caseId?: T;
+  ticket?: T;
+  title?: T;
+  customerId?: T;
+  customerName?: T;
+  customerKind?: T;
+  contactId?: T;
+  email?: T;
+  ownerId?: T;
+  ownerName?: T;
+  product?: T;
+  issue?: T;
+  vertical?: T;
+  priority?: T;
+  origin?: T;
+  status?: T;
+  source?: T;
+  score?: T;
+  comment?: T;
+  resolvedAt?: T;
+  invitedAt?: T;
+  remindedAt?: T;
+  respondedAt?: T;
+  followUp?: T;
+  followUpOwnerId?: T;
+  followUpOwnerName?: T;
+  followUpAt?: T;
+  followUpNote?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-care-flags_select".
+ */
+export interface SupportCareFlagsSelect<T extends boolean = true> {
+  customerId?: T;
+  customerName?: T;
+  customerKind?: T;
+  level?: T;
+  active?: T;
+  until?: T;
+  reason?: T;
+  setBy?: T;
+  setById?: T;
+  clearedBy?: T;
+  clearedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -3580,7 +3707,12 @@ export interface SupportSetting {
           | 'breached-open'
           | 'at-risk'
           | 'reopen-rate'
-          | 'oldest-open';
+          | 'oldest-open'
+          | 'csat'
+          | 'csat-average'
+          | 'csat-response-rate'
+          | 'csat-unhappy'
+          | 'csat-followup';
         enabled?: boolean | null;
         /**
          * Blank = no target, the card only reports.
@@ -3623,6 +3755,55 @@ export interface SupportSetting {
      * Comma-separated recipients for "Email the managers".
      */
     managerEmails?: string | null;
+  };
+  /**
+   * The satisfaction survey on resolved cases, the follow-up of low scores and the care band agents see beside a customer (09-portal-guide.md §4d).
+   */
+  csat?: {
+    /**
+     * Show the survey to customers and the CSAT pages to managers.
+     */
+    enabled?: boolean | null;
+    /**
+     * Scores from here up count as satisfied.
+     */
+    satisfiedFrom?: number | null;
+    /**
+     * Scores up to here open a follow-up.
+     */
+    unhappyAtOrBelow?: number | null;
+    /**
+     * Working minutes to contact an unhappy customer.
+     */
+    followUpMinutes?: number | null;
+    /**
+     * Which resolved cases the sweep emails a survey to.
+     */
+    inviteMode?: ('off' | 'portal' | 'all') | null;
+    /**
+     * Email the survey when an agent resolves a case in the workspace.
+     */
+    inviteOnResolve?: boolean | null;
+    /**
+     * Hours before one reminder; blank or 0 for none.
+     */
+    reminderAfterHours?: number | null;
+    /**
+     * Days a survey link stays valid.
+     */
+    surveyDays?: number | null;
+    /**
+     * Email the managers when a low score arrives.
+     */
+    notifyManagersOnLow?: boolean | null;
+    /**
+     * Days of ratings that decide the care band.
+     */
+    careWindowDays?: number | null;
+    /**
+     * How many of the latest ratings make the band.
+     */
+    careRecent?: number | null;
   };
   /**
    * Dataverse security roles that open the manager view.
@@ -3775,6 +3956,21 @@ export interface SupportSettingsSelect<T extends boolean = true> {
         enabled?: T;
         live?: T;
         managerEmails?: T;
+      };
+  csat?:
+    | T
+    | {
+        enabled?: T;
+        satisfiedFrom?: T;
+        unhappyAtOrBelow?: T;
+        followUpMinutes?: T;
+        inviteMode?: T;
+        inviteOnResolve?: T;
+        reminderAfterHours?: T;
+        surveyDays?: T;
+        notifyManagersOnLow?: T;
+        careWindowDays?: T;
+        careRecent?: T;
       };
   managerRoles?:
     | T

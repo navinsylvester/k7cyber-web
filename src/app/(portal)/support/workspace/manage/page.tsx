@@ -3,9 +3,11 @@ import Link from 'next/link'
 import React from 'react'
 
 import { Bars } from '@/components/support/Charts'
+import { CareTag, FollowUpTag, ScoreDistribution, ScoreTag } from '@/components/support/Csat'
 import { EngineerCard, KpiCard, MANAGE, ManageNav, PeriodSeg, SlaStrip, Trend2 } from '@/components/support/Manage'
-import { PageHead } from '@/components/support/Parts'
-import { WorkspaceBar } from '@/components/support/WorkspaceBar'
+import { PageHead, Tid } from '@/components/support/Parts'
+import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
+import { careForCustomers, followUpState } from '@/lib/support/csat'
 import { getSettings } from '@/lib/support/kpi-config'
 import { asPeriod, PERIODS } from '@/lib/support/kpi-model'
 import { breakdown, engineerStats, kpiValues, loadDesk, slaNow, trend, violations } from '@/lib/support/metrics'
@@ -30,7 +32,10 @@ export default async function ManageOverview({ searchParams }: { searchParams: P
   const vio = violations(desk)
   const days = trend(desk).map((d) => ({ day: d.day, a: d.created, b: d.resolved }))
   const periodLabel = PERIODS.find((p) => p.key === period)?.label ?? period
-  const kpiHref = (key: string) => (key === 'at-risk' || key === 'breached-open' || key === 'backlog' || key === 'oldest-open' ? `${MANAGE}/at-risk` : key === 'throughput' || key === 'fcr' ? `${MANAGE}/engineers?period=${period}` : `${MANAGE}/sla?period=${period}`)
+  const kpiHref = (key: string) => (key.startsWith('csat') ? `${MANAGE}/csat?period=${period}${key === 'csat-unhappy' ? '#follow-ups' : ''}` : key === 'at-risk' || key === 'breached-open' || key === 'backlog' || key === 'oldest-open' ? `${MANAGE}/at-risk` : key === 'throughput' || key === 'fcr' ? `${MANAGE}/engineers?period=${period}` : `${MANAGE}/sla?period=${period}`)
+  const csat = desk.csatSummary
+  const queue = [...desk.followUps].map((r) => ({ r, f: followUpState(r, settings, desk.now) })).sort((a, b) => Number(b.f.state === 'overdue') - Number(a.f.state === 'overdue') || (a.r.respondedAt ?? '').localeCompare(b.r.respondedAt ?? '')).slice(0, 6)
+  const care = settings.csat.enabled ? await careForCustomers(queue.map((q) => q.r.customerId), settings).catch(() => new Map()) : new Map()
   return (
     <>
       <WorkspaceBar active="manage" />
@@ -64,6 +69,57 @@ export default async function ManageOverview({ searchParams }: { searchParams: P
           </Link>
         </h2>
         <SlaStrip n={now} href={`${MANAGE}/at-risk`} />
+
+        {settings.csat.enabled && (
+          <>
+            <h2 className="sub-head">
+              Customer satisfaction
+              <Link className="label" href={`${MANAGE}/csat?period=${period}`}>
+                CSAT report →
+              </Link>
+            </h2>
+            <div className="two-col" style={{ marginBottom: 'clamp(32px, 4cqw, 48px)' }}>
+              <div className="chart">
+                <div className="chart-head">
+                  <h3>{csat.responses ? `${csat.csat}% satisfied · ${csat.average} / 5` : 'No ratings yet'}</h3>
+                  <span className="label muted">
+                    {csat.responses} {csat.responses === 1 ? 'response' : 'responses'} · {periodLabel}
+                  </span>
+                </div>
+                {csat.responses ? <ScoreDistribution dist={csat.distribution} settings={settings.csat} /> : <p className="hint">Ratings arrive when customers answer the survey on a resolved case or rate it on the portal.</p>}
+              </div>
+              <div className="chart">
+                <div className="chart-head">
+                  <h3>Unhappy customers to call back</h3>
+                  <Link className={`label${desk.followUps.some((r) => followUpState(r, settings, desk.now).state === 'overdue') ? ' is-missed' : ''}`} href={`${MANAGE}/csat#follow-ups`}>
+                    {desk.followUps.length} open →
+                  </Link>
+                </div>
+                {queue.length === 0 ? (
+                  <p className="hint">Nobody is waiting. Every low score has been followed up.</p>
+                ) : (
+                  <div className="mini-rows">
+                    {queue.map(({ r, f }) => (
+                      <Link className="mini-row" href={`${WS}/cases/${r.caseId}`} key={r.id}>
+                        <span className="t">
+                          <CareTag care={care.get(r.customerId)} mark />
+                          {r.customerName || 'Customer'} · <Tid ticket={r.ticket} />
+                        </span>
+                        <span className="s">
+                          {r.comment ? `“${r.comment.slice(0, 90)}${r.comment.length > 90 ? '…' : ''}” · ` : ''}
+                          {r.ownerName || 'unassigned'} · rated {dmyHm(r.respondedAt)}
+                        </span>
+                        <span className="r">
+                          <ScoreTag score={r.score} settings={settings.csat} word={false} /> <FollowUpTag status={r.followUp} reading={f} />
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="two-col" style={{ marginBottom: 'clamp(32px, 4cqw, 48px)' }}>
           <div className="chart">

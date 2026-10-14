@@ -44,25 +44,27 @@ generic OIDC provider in `src/auth.ts` and reuse `registerContact`/`findContactB
 /support/sign-in              customers (email → code) and the agent door (Microsoft, dev probe)
 /support/register             four details → code → contact created on verify
 /support/verify               the code; shows it inline in development when no SMTP_URL
-/support/cases                my cases (open | closed), /new (guided form), /[ticket] (track, conversation, reply, reopen), attachment downloads
+/support/cases                my cases (open | closed, with "Rate us" on unrated closed cases), /new (guided form), /[ticket] (track, conversation, reply, reopen, "How did we do?" on a closed case), attachment downloads
+/support/csat/[token]         the emailed survey (public; the signed token is the authorisation; ?score= pre-selects the tile clicked in the email)
 /support/kb, /kb/[KA-number]  published, non-internal articles
 /support/profile              contact details, organisation, licences/contracts
 /support/workspace            agent home: my counters, my active cases, queue items, 14-day trend, status spread
-/support/workspace/cases      the 21 saved views by name (?view=&q=&sort=&dir=&page=), /new, /[id] (timeline, details, related, action panels), attachments
+/support/workspace/cases      the 21 saved views by name (?view=&q=&sort=&dir=&page=; a care mark before the customer), /new, /[id] (timeline, details, related, action panels incl. Customer satisfaction; care band under the head), attachments
 /support/workspace/search     cases, contacts, accounts, articles
 /support/workspace/dashboards/active-cases | service-manager
 /support/workspace/queues     items I am working on, public queues, pick / release
-/support/workspace/customers  contacts and accounts: search, pages, create, edit (state → city picker through /workspace/geo/cities)
+/support/workspace/customers  contacts and accounts: search, pages (care band, satisfaction history, the manager's care-flag panel), create, edit (state → city picker through /workspace/geo/cities)
 /support/workspace/kb         read, draft, edit (publishing stays in Dynamics)
 /support/workspace/products   the active catalogue by family
 /support/workspace/rfe        RFEs (create, edit) and defects (read)
 /support/workspace/manage     manager view (§4c): overview (KPI cards, SLA strip, trend, top engineers; ?period=7d|30d|90d|mtd)
   …/engineers (+ /[id])       engineer efficiency as cards or a sortable ledger (?view=cards|table&sort=&dir=&all=1); one engineer against the team
   …/sla (+ /export.csv)       SLA violation report: compliance, breakdowns (?by=), trend, the ledger of breaches (?kind&state&owner&priority&vertical&page) and its CSV
+  …/csat (+ /export.csv)      customer satisfaction (§4d): CSAT, average, response rate, distribution, trend, the follow-up queue of unhappy customers, breakdowns (?by=), the ledger (?score&owner&fu&source&q&page) and its CSV
   …/at-risk                   the prevention board: cases past target, at risk or unanswered, the rules' verdicts, quick actions, sweep log (?state=&owner=&page=)
-  …/kpis                      configuring support KPIs: targets, business hours, KPI cards and their targets, prevention rules, who is a manager
+  …/kpis                      configuring support KPIs: targets, business hours, KPI cards and their targets, prevention rules, CSAT, who is a manager
   …/no-access                 where a non-manager agent lands
-/api/support/sla/sweep        POST with `Authorization: Bearer $CRON_SECRET` (body `{"live":true}` for a live run): the scheduled prevention sweep
+/api/support/sla/sweep        POST with `Authorization: Bearer $CRON_SECRET` (body `{"live":true}` for a live run): the scheduled prevention sweep, which also runs the CSAT pass (§4d)
 ```
 Code: `src/lib/dataverse/` (client with the production guard, token sources, OData and FetchXML
 helpers), `src/lib/support/` (one file per area; `session.ts` gives `requireAgent()` /
@@ -118,6 +120,45 @@ Known UAT artefacts (not bugs): the seed resolved every case on 12-10-2026, so r
 real creation date and the seed date (almost everything "late"); the seed's notes carry its author, so "touches" credit the seed
 user; the first-response proxy needs the emails and notes the seed copied. Production reads will be truthful.
 
+## 4d. Customer satisfaction (built 2026-10-14)
+One question on a resolved case, answered 1 to 5 with an optional line. The CRM has no satisfaction field and production is read-only, so
+everything lives in Payload: `support-csat` (one row per case: the invitation, the score, the follow-up; case facts copied in at the time so
+the report never goes back to Dataverse) and `support-care-flags` (a manager's "handle with care" flag on an account or contact). The
+pure model is `src/lib/support/csat-model.ts` (tested in `tests/int/support-csat.int.spec.ts`), the server side `src/lib/support/csat.ts`.
+
+How a rating arrives. (1) The customer rates a closed case on its page or from the "Rate us" tag on the closed list. (2) The emailed
+survey: `inviteSurvey` creates the row and mails five links, one per score, to `/support/csat/<token>`; the token is an HMAC of
+`AUTH_SECRET` carrying the case id, number and email and expires after `surveyDays`. It goes out when an agent resolves a case in the
+workspace (`inviteOnResolve`) and from the sweep for the period's resolved cases that `inviteMode` allows ("portal" = raised through the
+portal, "all" = any case with an email; default "portal" because UAT's seeded cases carry real addresses), with one reminder after
+`reminderAfterHours`. Mail reaches customers only through `SMTP_URL`; otherwise the invitation is logged. (3) An agent records a score the
+customer gave on the phone from the case's Customer satisfaction panel (source "agent").
+
+Low scores. A score at or below `unhappyAtOrBelow` (2) opens a follow-up (`pending`), emails the managers (`sweep.managerEmails`) when
+`notifyManagersOnLow` is on, and leaves an internal note on the case through the guarded client. The follow-up queue on
+`/manage/csat#follow-ups` (and the top of the overview) lists them, overdue first against `followUpMinutes` of business hours: a manager
+takes one ("I will call them" → `in-progress`) and closes it with what was agreed (optionally as an internal note on the case); the agent
+can close it from the case too. A later higher score never closes an open follow-up; a later low score after a closed one reopens it.
+
+The care band. `careFrom` reads the customer's latest `careRecent` ratings inside `careWindowDays` plus any active flag: a flag wins;
+an open follow-up or a low last score is **handle with care** (signal); a low score among the recent few, or an average under
+`satisfiedFrom`, is **watch** (solid); otherwise a happy customer. The band is keyed on the case's customer (the account for B2B, so
+every contact of the account shares it) and also matches the rater's contact. Agents see it beside the customer on the case head (with a
+one-line reason under the head), as a mark before the customer in every saved view and on the home page's list, and on the contact or
+account page with the history; managers set or clear the flag there (`customers/care-actions.ts`). The design language allows no second
+hue, so the three bands read by word and weight: signal, solid ink, outlined.
+
+The numbers. `loadDesk` attaches the period's rows (answered in it, or sent in it and unanswered) and every open follow-up; `summarise`
+gives CSAT (share at or above `satisfiedFrom`), the mean, the response rate (answered invitations over invitations), the distribution and
+the follow-up compliance. Five KPI cards (`csat`, `csat-average`, `csat-response-rate`, `csat-unhappy`, `csat-followup`) join the overview;
+engineer cards, the ledger and the engineer page carry CSAT, average and low ratings, credited to the case's owner at the time of the
+rating; the composite gives CSAT 20% when the engineer has responses. `/manage/csat` is the report, with `export.csv`. Settings are the
+`csat` group of `support-settings`, edited on the KPI page.
+
+Verified on UAT the same day with the development sign-in: a phone rating of 2 recorded on CS-01192-C6G7 (internal note written to the
+case, "Handle with care" beside the customer, the rating in the timeline), the follow-up taken and closed from the queue, the CSAT
+page's cards, distribution, breakdown and ledger. Survey mail was logged, not sent (no `SMTP_URL`).
+
 ## 4b. Verified on 2026-10-13 (UAT, development sign-ins)
 - Agent: workspace home, My Active Cases view (columns from the view's layoutxml, sort, search), a case sheet
   (timeline with emails and notes, details, related), one internal note added on the test case CS-431163-Y0L7,
@@ -137,6 +178,9 @@ user; the first-response proxy needs the emails and notes the seed copied. Produ
 - Queue actions are bound, not unbound as `02-dataverse-integration.md` first said: `queues(id)/…AddToQueue`
   with `Target`, `queueitems(id)/…PickFromQueue` with `SystemUser` and `RemoveQueueItem`, `…ReleaseToQueue`.
   Assigning to one of the seven UAT agents without a security role fails with 403; the panel says so.
+- Learnt on 2026-10-14: the saved case views filter on `casetypecode eq 1` (Case), and the portal's customer create sent no case type, so
+  portal-raised cases were invisible in every agent view until an agent set the type; `createCustomerCase` now sends it. The two test
+  cases from 13-10 were typed by hand.
 - Two Dataverse rules learnt the hard way: a case whose customer is a contact must not carry that contact as
   `primarycontactid` (0x8004f865), and UAT's create automation sets a new case's status reason itself (the
   portal does not send one). Both are handled in `src/lib/support/cases.ts`.
@@ -151,6 +195,8 @@ user; the first-response proxy needs the emails and notes the seed copied. Produ
 - Approved page designs in `designs/` (the portal was built straight on the design system).
 - Production: `(Prod)` registrations, `DATAVERSE_URL` switch, read-only week, feature flags
   (`SUPPORT_PORTAL_WRITES` is read nowhere yet).
-- Manager view: a scheduler for the sweep (nothing calls the endpoint yet); per-status durations (the portal has no audit history, so
-  "waiting on customer" pauses are coarse); CSAT and reopen-by-customer signals, which the CRM does not record; the composite score
-  weights are fixed in code (`engineerStats`).
+- Manager view: a scheduler for the sweep (nothing calls the endpoint yet, so emailed surveys and reminders only go out on a manual
+  "Run live"); per-status durations (the portal has no audit history, so "waiting on customer" pauses are coarse); reopen-by-customer
+  signals, which the CRM does not record; the composite score weights are fixed in code (`engineerStats`).
+- CSAT (§4d): `SMTP_URL` before any survey reaches a customer; a scheduler for the sweep; ratings stay in Payload (no CRM column) and
+  one rating per case (a re-rating replaces it); the care band has no per-contact override on account cases; no survey on cancelled cases.

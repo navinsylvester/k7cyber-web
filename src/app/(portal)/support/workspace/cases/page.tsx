@@ -6,6 +6,8 @@ import React from 'react'
 import { ViewTable } from '@/components/support/Ledger'
 import { PageHead, qs } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
+import { careForCustomers } from '@/lib/support/csat'
+import { getSettings } from '@/lib/support/kpi-config'
 import { requireAgent } from '@/lib/support/session'
 import { listCaseViews, PHASE1_VIEWS, runCaseView, type View, type ViewGroup } from '@/lib/support/views'
 
@@ -34,6 +36,8 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
   const q = sp.q?.trim() || undefined
   const dir = sp.dir === 'asc' ? 'asc' : sp.dir === 'desc' ? 'desc' : undefined
   const result = await runCaseView(me.auth, view, { page, q, sort: sp.sort, dir })
+  const settings = await getSettings()
+  const care = settings.csat.enabled ? await careForCustomers(result.rows.map((r) => String(r._customerid_value ?? '')), settings).catch(() => new Map()) : new Map()
   const base = { view: view.name, q, sort: result.sort, dir: result.sort ? result.dir : undefined }
   const viewHref = (v: View, keepQ = false) => PATH + qs({ view: v.name, q: keepQ ? q : undefined })
   const count = result.total !== undefined ? `${result.total.toLocaleString('en-IN')}${result.totalLimitExceeded ? '+' : ''} cases` : result.rows.length ? `${result.rows.length}${result.more ? '+' : ''} cases` : 'No cases'
@@ -110,7 +114,12 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
           </div>
         </form>
 
-        <ViewTable result={result} path={PATH} base={base} caseHref={(id) => `${PATH}/${id}`} minWidth={Math.max(960, result.columns.length * 112)} />
+        <ViewTable result={result} path={PATH} base={base} caseHref={(id) => `${PATH}/${id}`} minWidth={Math.max(960, result.columns.length * 112)} care={care} />
+        {care.size > 0 && [...care.values()].some((c) => c.level === 'high' || c.level === 'watch') && (
+          <p className="caveats">
+            A mark before a customer&apos;s name is their care band from recent satisfaction ratings or a manager&apos;s flag: filled signal means handle with care, filled ink means watch. Open the customer for the history.
+          </p>
+        )}
       </section>
     </>
   )

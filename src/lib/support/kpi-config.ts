@@ -46,6 +46,7 @@ export const saveSettings = async (s: Settings): Promise<void> => {
       sweep: { enabled: s.sweep.enabled, live: s.sweep.live, managerEmails: s.sweep.managerEmails.join(', ') },
       managerRoles: s.managerRoles.map((name) => ({ name })),
       managers: s.managers.map((email) => ({ email })),
+      csat: { ...s.csat },
     } as never,
   })
   forget(SETTINGS_KEY)

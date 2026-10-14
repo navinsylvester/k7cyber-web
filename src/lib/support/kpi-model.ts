@@ -1,3 +1,4 @@
+import { DEFAULT_CSAT, normaliseCsat, type CsatSettings } from './csat-model'
 import { DEFAULT_HOURS, type BusinessHours } from './sla'
 
 /* The support KPI model (09-portal-guide.md §4c): targets, business hours, the KPI cards, the prevention rules and who counts as a
@@ -6,8 +7,8 @@ import { DEFAULT_HOURS, type BusinessHours } from './sla'
 export type Any = 'any'
 export type TargetRule = { vertical: number | Any; priority: number | Any; origin: number | Any; responseMinutes: number; resolveMinutes: number }
 
-export type KpiKey = 'resolution-sla' | 'response-sla' | 'median-resolution' | 'median-response' | 'fcr' | 'throughput' | 'backlog' | 'breached-open' | 'at-risk' | 'reopen-rate' | 'oldest-open'
-export type KpiUnit = '%' | 'h' | 'min' | 'n' | 'per-day'
+export type KpiKey = 'resolution-sla' | 'response-sla' | 'median-resolution' | 'median-response' | 'fcr' | 'throughput' | 'backlog' | 'breached-open' | 'at-risk' | 'reopen-rate' | 'oldest-open' | 'csat' | 'csat-average' | 'csat-response-rate' | 'csat-unhappy' | 'csat-followup'
+export type KpiUnit = '%' | 'h' | 'min' | 'n' | 'per-day' | 'score'
 export type KpiDef = { key: KpiKey; label: string; short: string; unit: KpiUnit; /** 'up': higher is better. */ direction: 'up' | 'down'; defaultTarget: number | null; what: string }
 
 export const KPI_DEFS: KpiDef[] = [
@@ -22,6 +23,11 @@ export const KPI_DEFS: KpiDef[] = [
   { key: 'at-risk', label: 'Active cases at risk', short: 'At risk', unit: 'n', direction: 'down', defaultTarget: 0, what: 'Active cases past the warning share of their target and not yet past it.' },
   { key: 'reopen-rate', label: 'Reopened', short: 'Reopened', unit: '%', direction: 'down', defaultTarget: 5, what: 'Share of cases resolved in the period that carry more than one resolution, plus active cases that were resolved before.' },
   { key: 'oldest-open', label: 'Oldest active case', short: 'Oldest', unit: 'h', direction: 'down', defaultTarget: null, what: 'Working hours since the oldest active, unpaused case was created.' },
+  { key: 'csat', label: 'Customer satisfaction', short: 'CSAT', unit: '%', direction: 'up', defaultTarget: 85, what: 'Share of survey responses in the period at or above the "satisfied" score (4 of 5 by default).' },
+  { key: 'csat-average', label: 'Average rating', short: 'Avg rating', unit: 'score', direction: 'up', defaultTarget: 4.2, what: 'Mean of the 1–5 scores customers gave in the period.' },
+  { key: 'csat-response-rate', label: 'Survey response rate', short: 'Survey replies', unit: '%', direction: 'up', defaultTarget: 25, what: 'Share of emailed surveys in the period that were answered. Ratings given on the portal without an invitation are not in the base.' },
+  { key: 'csat-unhappy', label: 'Unhappy customers awaiting follow-up', short: 'To call back', unit: 'n', direction: 'down', defaultTarget: 0, what: 'Low scores whose follow-up a manager has not closed yet, whatever the period.' },
+  { key: 'csat-followup', label: 'Unhappy customers contacted within target', short: 'Follow-up SLA', unit: '%', direction: 'up', defaultTarget: 90, what: 'Share of closed follow-ups in the period where the customer was contacted within the follow-up target (working minutes).' },
 ]
 export const kpiDef = (key: KpiKey): KpiDef => KPI_DEFS.find((k) => k.key === key)!
 
@@ -64,6 +70,7 @@ export type Settings = {
   sweep: { enabled: boolean; live: boolean; managerEmails: string[] }
   managerRoles: string[]
   managers: string[]
+  csat: CsatSettings
   updatedAt: string | null
 }
 
@@ -91,6 +98,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sweep: { enabled: true, live: false, managerEmails: [] },
   managerRoles: DEFAULT_MANAGER_ROLES,
   managers: [],
+  csat: DEFAULT_CSAT,
   updatedAt: null,
 }
 
@@ -127,6 +135,8 @@ export const normaliseSettings = (g: Raw | null): Settings => {
   const hours = (g.hours as Raw | undefined) ?? {}
   const days = strs(hours.days).map(Number).filter((d) => d >= 0 && d <= 6)
   const kpis = arr(g.kpis).map((k) => ({ key: String(k.key) as KpiKey, enabled: bool(k.enabled, true), target: numOrNull(k.target) })).filter((k) => KPI_DEFS.some((d) => d.key === k.key))
+  // Cards added after the settings were first saved (the CSAT set) appear with their defaults until a manager decides otherwise.
+  if (kpis.length) for (const d of KPI_DEFS) if (!kpis.some((k) => k.key === d.key)) kpis.push({ key: d.key, enabled: true, target: d.defaultTarget })
   const rules = arr(g.rules).map((r) => ({ key: String(r.key) as RuleKey, enabled: bool(r.enabled, true), thresholdMinutes: numOrNull(r.thresholdMinutes), cooldownHours: num(r.cooldownHours, 8), actions: strs(r.actions).filter((a): a is RuleAction => a in ACTION_LABEL), queueId: typeof r.queueId === 'string' && r.queueId ? r.queueId : null })).filter((r) => RULE_DEFS.some((d) => d.key === r.key))
   const sweep = (g.sweep as Raw | undefined) ?? {}
   return {
@@ -142,6 +152,7 @@ export const normaliseSettings = (g: Raw | null): Settings => {
     sweep: { enabled: bool(sweep.enabled, true), live: bool(sweep.live, false), managerEmails: strs(sweep.managerEmails) },
     managerRoles: arr(g.managerRoles).map((r) => String(r.name ?? '')).filter(Boolean).length ? arr(g.managerRoles).map((r) => String(r.name ?? '')).filter(Boolean) : DEFAULT_MANAGER_ROLES,
     managers: arr(g.managers).map((m) => String(m.email ?? '').toLowerCase()).filter(Boolean),
+    csat: normaliseCsat(g.csat as Raw | undefined),
     updatedAt: typeof g.updatedAt === 'string' ? g.updatedAt : null,
   }
 }

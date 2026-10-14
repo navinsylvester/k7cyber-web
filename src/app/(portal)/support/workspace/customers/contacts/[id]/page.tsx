@@ -3,13 +3,17 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
+import { CareTag } from '@/components/support/Csat'
+import { CareFlagPanel, CsatHistory } from '@/components/support/CustomerCsat'
 import { Crumbs, Empty, Flash, MetaRows, StatusTag, Tid, When } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { fv, lookup } from '@/lib/dataverse/types'
 import { casesForCustomer } from '@/lib/support/cases'
 import { contractsOfAccount, getContact } from '@/lib/support/customers'
 import { dmy, dmyHm } from '@/lib/support/format'
-import { requireAgent } from '@/lib/support/session'
+import { careForCustomer, csatForCustomer, flagHistory, followUpState } from '@/lib/support/csat'
+import { getSettings } from '@/lib/support/kpi-config'
+import { isManager, requireAgent } from '@/lib/support/session'
 
 import { ContactFields, loadGeo } from '../../forms'
 
@@ -25,7 +29,10 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   const c = await getContact(me.auth, id)
   if (!c) notFound()
   const stateId = c._k7_state_value ? String(c._k7_state_value) : null
-  const [cases, contracts, geo] = await Promise.all([casesForCustomer(me.auth, c.contactid, 25).catch(() => []), contractsOfAccount(me.auth, c.contactid), loadGeo(me.auth, stateId)])
+  const settings = await getSettings()
+  const [cases, contracts, geo, care, ratings, flags, manager] = await Promise.all([casesForCustomer(me.auth, c.contactid, 25).catch(() => []), contractsOfAccount(me.auth, c.contactid), loadGeo(me.auth, stateId), careForCustomer(c.contactid, settings), csatForCustomer(c.contactid), flagHistory(c.contactid), isManager(me)])
+  const readings = new Map(ratings.map((r) => [r.id, { status: r.followUp, reading: followUpState(r, settings) }]))
+  const here = `${WS}/customers/contacts/${c.contactid}`
   const account = lookup(c, 'parentcustomerid')
   const name = String(c.fullname ?? '') || '(no name)'
   const inactive = c.statecode === 1
@@ -42,6 +49,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               {fv(c, 'k7_verticaltype') && <span className="tag">{fv(c, 'k7_verticaltype')}</span>}
               {inactive && <span className="tag tag-quiet">Inactive</span>}
               {c.adx_identity_username ? <span className="tag tag-solid">Portal account</span> : null}
+              {settings.csat.enabled && <CareTag care={care} href="#csat" />}
             </div>
           </div>
           <div className="ws-actions">
@@ -110,6 +118,8 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               )}
             </div>
 
+            {settings.csat.enabled && <CsatHistory care={care} ratings={ratings} settings={settings.csat} readings={readings} />}
+
             {contracts.length > 0 && (
               <div style={{ marginTop: 40 }}>
                 <h2 className="sub-head">
@@ -133,6 +143,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
 
           <aside className="ws-side">
             <div className="acts">
+              {settings.csat.enabled && <CareFlagPanel manager={manager} customerId={c.contactid} customerName={name} customerKind="contact" care={care} history={flags} returnTo={here} />}
               <details open={sp.edit === '1'}>
                 <summary>Edit contact</summary>
                 <div className="act-body">

@@ -4,20 +4,23 @@ import { notFound } from 'next/navigation'
 import React from 'react'
 
 import { CategoryPicker } from '@/components/support/CasePickers.client'
+import { CareBand, CareTag, FollowUpTag, RateScale, ScoreTag } from '@/components/support/Csat'
 import { Empty, Field, Flash, MetaRows, Options, Sla, StatusTag, Tid } from '@/components/support/Parts'
 import { AgentTimeline } from '@/components/support/Timeline'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { isGuid } from '@/lib/dataverse/odata'
 import { fv, lookup } from '@/lib/dataverse/types'
 import { getCase } from '@/lib/support/cases'
+import { careForCustomer, csatForCase, followUpState, isUnhappy } from '@/lib/support/csat'
 import { dmy, dmyHm } from '@/lib/support/format'
+import { getSettings } from '@/lib/support/kpi-config'
 import { ACTIVE_STATUS_REASONS, CASE_TYPE, CATEGORY, CONSIDERED_AS, CUSTOMER_TYPE, ORIGIN, PRIORITY, RFE_TYPE, STATE, STATUS, VERTICAL, label } from '@/lib/support/options'
 import { getAgents, getCategories, getProducts, getPublicQueues, getSubcategories, getTeams } from '@/lib/support/reference'
 import { defectsOfCase, rfesOfCase } from '@/lib/support/rfe'
 import { requireAgent } from '@/lib/support/session'
-import { getTimeline } from '@/lib/support/timeline'
+import { getTimeline, type TimelineEntry } from '@/lib/support/timeline'
 
-import { addNoteAction, assignAction, callAction, cancelAction, editAction, emailAction, queueAction, reopenAction, replyAction, resolveAction, rfeAction, statusAction, taskAction } from './actions'
+import { addNoteAction, assignAction, callAction, cancelAction, csatFollowUpAction, csatInviteAction, csatRecordAction, editAction, emailAction, queueAction, reopenAction, replyAction, resolveAction, rfeAction, statusAction, taskAction } from './actions'
 
 export const metadata: Metadata = { title: 'Case' }
 
@@ -28,6 +31,8 @@ const OK: Record<string, string> = {
   status: 'Status reason updated.',
   assign: 'Case assigned.',
   resolve: 'Case resolved.',
+  'resolve-survey': 'Case resolved and the satisfaction survey emailed to the customer.',
+  'resolve-survey-logged': 'Case resolved. The survey was prepared but not emailed: no SMTP_URL is set in this environment.',
   cancel: 'Case cancelled.',
   reopen: 'Case reopened.',
   queue: 'Added to the queue.',
@@ -37,6 +42,10 @@ const OK: Record<string, string> = {
   rfe: 'RFE created and linked to this case.',
   email: 'Email sent to the customer.',
   'email-draft': 'Email saved on the case as a draft: this environment has no synced mailbox, so it was not sent.',
+  'csat-sent': 'Survey emailed to the customer.',
+  'csat-logged': 'Survey prepared but not emailed: no SMTP_URL is set in this environment. The customer can still rate the case on the portal.',
+  'csat-recorded': 'Rating recorded on the case.',
+  'csat-followup': 'Follow-up closed. Thank you for calling the customer back.',
 }
 
 type Tab = 'timeline' | 'details' | 'related'
@@ -50,7 +59,9 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   const me = await requireAgent()
   const c = await getCase(me.auth, id)
   if (!c) notFound()
-  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories] = await Promise.all([
+  const settings = await getSettings()
+  const customerLookup = lookup(c, 'customerid')
+  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care] = await Promise.all([
     getTimeline(me.auth, id, 'agent').catch(() => []),
     rfesOfCase(me.auth, id).catch(() => []),
     defectsOfCase(me.auth, id).catch(() => []),
@@ -60,8 +71,16 @@ export default async function CasePage({ params, searchParams }: { params: Promi
     getProducts(me.auth).catch(() => []),
     getCategories(me.auth).catch(() => []),
     getSubcategories(me.auth).catch(() => []),
+    settings.csat.enabled ? csatForCase(id) : Promise.resolve(null),
+    settings.csat.enabled && customerLookup ? careForCustomer(customerLookup.id, settings) : Promise.resolve(null),
   ])
   const tab: Tab = sp.tab === 'details' || sp.tab === 'related' ? sp.tab : 'timeline'
+  // The customer's rating sits in the timeline where it happened, as the one entry that is neither email nor note.
+  const entries: TimelineEntry[] =
+    rating?.score && rating.respondedAt
+      ? [...timeline, { id: `csat-${rating.id}`, kind: 'csat' as const, when: rating.respondedAt, subject: `Customer rated this case ${rating.score}/5`, html: '', text: rating.comment, preview: rating.comment ? rating.comment.slice(0, 160) : '', by: { id: rating.contactId, name: rating.customerName || 'Customer' }, attachments: [], customerVisible: true, fromCustomer: true, statusLabel: isUnhappy(rating.score, settings.csat) ? 'low' : 'ok' }].sort((a, b) => (a.when < b.when ? 1 : a.when > b.when ? -1 : 0))
+      : timeline
+  const fu = rating ? followUpState(rating, settings) : null
   const active = c.statecode === STATE.ACTIVE
   const here = `${WS}/cases/${id}`
   const customer = lookup(c, 'customerid')
@@ -105,11 +124,28 @@ export default async function CasePage({ params, searchParams }: { params: Promi
               {num('casetypecode') !== undefined && <span className="tag tag-quiet">{fv(c, 'casetypecode')}</span>}
               {fcr !== undefined && <span className="tag tag-quiet">{label(CONSIDERED_AS, fcr)}</span>}
               {num('new_verticaltype') !== undefined && <span className="tag tag-quiet">{fv(c, 'new_verticaltype')}</span>}
+              {rating?.score ? <ScoreTag score={rating.score} settings={settings.csat} prefix="CSAT" word={false} /> : null}
             </div>
           </div>
           <MetaRows
             items={[
-              { k: 'Customer', v: customer ? <Link href={customerHref!}>{customer.name || 'Unnamed'}</Link> : '', sans: true },
+              {
+                k: 'Customer',
+                v: customer ? (
+                  <>
+                    <Link href={customerHref!}>{customer.name || 'Unnamed'}</Link>
+                    {care && care.level !== 'none' ? (
+                      <>
+                        {' '}
+                        <CareTag care={care} href={`${customerHref}#csat`} />
+                      </>
+                    ) : null}
+                  </>
+                ) : (
+                  ''
+                ),
+                sans: true,
+              },
               { k: 'Contact', v: primary && primary.id !== customer?.id ? <Link href={`${WS}/customers/contacts/${primary.id}`}>{primary.name}</Link> : '', sans: true },
               { k: 'Email', v: txt('k7_customeremail') },
               { k: 'Owner', v: owner?.name ?? '', sans: true },
@@ -121,12 +157,14 @@ export default async function CasePage({ params, searchParams }: { params: Promi
           />
         </div>
 
+        {care && <CareBand care={care} href={customerHref ? `${customerHref}#csat` : undefined} />}
+
         <div className="ws-grid">
           <div>
             <nav className="rtabs" aria-label="Case sections" style={{ marginBottom: 24 }}>
               {(
                 [
-                  ['timeline', `Timeline · ${timeline.length}`],
+                  ['timeline', `Timeline · ${entries.length}`],
                   ['details', 'Details'],
                   ['related', `Related · ${rfes.length + defects.length}`],
                 ] as [Tab, string][]
@@ -139,10 +177,10 @@ export default async function CasePage({ params, searchParams }: { params: Promi
             </nav>
 
             {tab === 'timeline' &&
-              (timeline.length === 0 ? (
+              (entries.length === 0 ? (
                 <Empty label="Timeline">Nothing on this case yet. Add a note, log a call or reply to the customer from the panel.</Empty>
               ) : (
-                <AgentTimeline entries={timeline} attachmentHref={attachmentHref} />
+                <AgentTimeline entries={entries} attachmentHref={attachmentHref} />
               ))}
 
             {tab === 'details' && (
@@ -355,7 +393,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
               <div className="acts">
                 <details open={Boolean(sp.ok === 'note' || sp.error?.includes('note'))}>
                   <summary>Add note</summary>
-                  <form action={addNoteAction} className="act-body" encType="multipart/form-data">
+                  <form action={addNoteAction} className="act-body">
                     <input type="hidden" name="id" value={id} />
                     <p>Internal unless you tick the box. Attachments up to 5 MB.</p>
                     <Field id="n-subject" label="Subject">
@@ -521,6 +559,80 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                         Add to queue
                       </button>
                     </form>
+                  </details>
+                )}
+
+                {settings.csat.enabled && (
+                  <details open={Boolean(sp.ok?.startsWith('csat') || (rating?.followUp === 'pending' || rating?.followUp === 'in-progress'))}>
+                    <summary>Customer satisfaction</summary>
+                    <div className="act-body">
+                      {rating?.score ? (
+                        <>
+                          <p>
+                            <ScoreTag score={rating.score} settings={settings.csat} /> on {dmyHm(rating.respondedAt)} · {rating.source === 'agent' ? 'recorded by an agent' : rating.source === 'email' ? 'from the emailed survey' : 'on the portal'}
+                          </p>
+                          {rating.comment && <p style={{ color: 'var(--fg)', fontSize: 15 }}>&ldquo;{rating.comment}&rdquo;</p>}
+                          {rating.followUp !== 'none' && fu && (
+                            <p>
+                              Follow-up <FollowUpTag status={rating.followUp} reading={fu} />
+                              {rating.followUpOwnerName ? ` · ${rating.followUpOwnerName}` : ''}
+                              {rating.followUp === 'done' && rating.followUpNote ? ` · ${rating.followUpNote}` : ''}
+                            </p>
+                          )}
+                          {(rating.followUp === 'pending' || rating.followUp === 'in-progress') && (
+                            <form action={csatFollowUpAction} className="act-body" style={{ padding: 0 }}>
+                              <input type="hidden" name="id" value={id} />
+                              <Field id="fu-note" label="What you agreed with the customer" required>
+                                <textarea id="fu-note" name="note" rows={3} required />
+                              </Field>
+                              <label className="check">
+                                <input type="checkbox" name="caseNote" value="1" defaultChecked />
+                                <span>Also leave an internal note on the case</span>
+                              </label>
+                              <button className="btn btn-primary btn-sm" type="submit">
+                                Customer contacted →
+                              </button>
+                            </form>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {rating?.invitedAt ? (
+                            <p>
+                              Survey emailed {dmyHm(rating.invitedAt)}
+                              {rating.remindedAt ? `, reminded ${dmyHm(rating.remindedAt)}` : ''}; no answer yet.
+                            </p>
+                          ) : active ? (
+                            <p>{settings.csat.inviteOnResolve ? 'The survey goes to the customer when the case is resolved.' : 'No survey has been sent for this case.'}</p>
+                          ) : (
+                            <p>No survey has been sent for this case.</p>
+                          )}
+                          {!active && (
+                            <form action={csatInviteAction}>
+                              <input type="hidden" name="id" value={id} />
+                              <button className="btn btn-line btn-sm" type="submit" disabled={!txt('k7_customeremail')} title={txt('k7_customeremail') ? `To ${txt('k7_customeremail')}` : 'The case has no customer email'}>
+                                {rating?.invitedAt ? 'Send the survey again' : 'Email the survey'}
+                              </button>
+                            </form>
+                          )}
+                          <details className="edit-block">
+                            <summary className="link-u textbtn" style={{ cursor: 'pointer' }}>
+                              Record a rating given on the phone
+                            </summary>
+                            <form action={csatRecordAction} className="act-body" style={{ paddingTop: 12 }}>
+                              <input type="hidden" name="id" value={id} />
+                              <RateScale compact selected={null} />
+                              <Field id="cs-comment" label="What the customer said">
+                                <textarea id="cs-comment" name="comment" rows={2} />
+                              </Field>
+                              <button className="btn btn-line btn-sm" type="submit">
+                                Record rating
+                              </button>
+                            </form>
+                          </details>
+                        </>
+                      )}
+                    </div>
                   </details>
                 )}
 

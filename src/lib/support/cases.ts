@@ -195,11 +195,13 @@ export const getCustomerCase = async (auth: DataverseAuth, scope: CustomerScope,
 
 export type CustomerNewCase = { title: string; description: string; productId?: string; categoryId?: string; subcategoryId?: string; productVersion?: string; serial?: string; vertical?: number }
 
-/** A case raised from the portal: origin Web, customer = the contact (or their account), attribution in adx_createdbyusername. */
+/** A case raised from the portal: origin Web, case type Case (the saved views filter on it: a case without a type is invisible to
+   agents), customer = the contact (or their account), attribution in adx_createdbyusername. */
 export const createCustomerCase = async (auth: DataverseAuth, scope: CustomerScope, c: CustomerNewCase): Promise<{ id: string; ticket: string }> =>
   createCase(auth, {
     title: c.title,
     description: c.description,
+    caseType: 1,
     customer: scope.accountId ? { kind: 'account', id: scope.accountId } : { kind: 'contact', id: scope.contactId },
     // Dynamics refuses a primary contact on a case whose customer is that same contact (0x8004f865); it belongs to account cases.
     primaryContactId: scope.accountId ? scope.contactId : undefined,

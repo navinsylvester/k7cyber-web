@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation'
 
+import { normaliseCsat } from '@/lib/support/csat-model'
 import { getSettings, saveSettings } from '@/lib/support/kpi-config'
 import { asPeriod, KPI_DEFS, RULE_DEFS, type KpiKey, type RuleAction, type RuleKey, type Settings, type TargetRule } from '@/lib/support/kpi-model'
 import { requireManager } from '@/lib/support/session'
@@ -62,8 +63,22 @@ export async function saveSettingsAction(form: FormData): Promise<void> {
     sweep: { enabled: form.get('sweep_enabled') === '1', live: form.get('sweep_live') === '1', managerEmails: lines(s(form, 'sweep_emails')).filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) },
     managerRoles: lines(s(form, 'managerRoles')).length ? lines(s(form, 'managerRoles')) : cur.managerRoles,
     managers: lines(s(form, 'managers')).map((e) => e.toLowerCase()).filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)),
+    csat: normaliseCsat({
+      enabled: form.get('csat_enabled') === '1',
+      satisfiedFrom: n(form, 'csat_satisfiedFrom') ?? cur.csat.satisfiedFrom,
+      unhappyAtOrBelow: n(form, 'csat_unhappyAtOrBelow') ?? cur.csat.unhappyAtOrBelow,
+      inviteMode: s(form, 'csat_inviteMode') || cur.csat.inviteMode,
+      inviteOnResolve: form.get('csat_inviteOnResolve') === '1',
+      reminderAfterHours: n(form, 'csat_reminderAfterHours'),
+      surveyDays: n(form, 'csat_surveyDays') ?? cur.csat.surveyDays,
+      followUpMinutes: n(form, 'csat_followUpMinutes') ?? cur.csat.followUpMinutes,
+      notifyManagersOnLow: form.get('csat_notifyManagersOnLow') === '1',
+      careWindowDays: n(form, 'csat_careWindowDays') ?? cur.csat.careWindowDays,
+      careRecent: n(form, 'csat_careRecent') ?? cur.csat.careRecent,
+    }),
     updatedAt: null,
   }
+  if (next.csat.unhappyAtOrBelow >= next.csat.satisfiedFrom) errors.push('The "unhappy" score must be below the "satisfied" score.')
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: next.hours.timeZone })
   } catch {

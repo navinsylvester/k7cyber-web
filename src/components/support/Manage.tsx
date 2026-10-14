@@ -193,12 +193,13 @@ export const Trend2: React.FC<{ days: { day: string; a: number; b: number }[]; a
 }
 
 /** The manager's sub-navigation: overview, engineers, SLA report, at-risk board, KPI settings. */
-export const ManageNav: React.FC<{ active: 'overview' | 'engineers' | 'sla' | 'at-risk' | 'kpis'; period: Period }> = ({ active, period }) => {
+export const ManageNav: React.FC<{ active: 'overview' | 'engineers' | 'sla' | 'csat' | 'at-risk' | 'kpis'; period: Period }> = ({ active, period }) => {
   const q = `?period=${period}`
   const items: { key: typeof active; label: string; href: string }[] = [
     { key: 'overview', label: 'Overview', href: `${MANAGE}${q}` },
     { key: 'engineers', label: 'Engineers', href: `${MANAGE}/engineers${q}` },
     { key: 'sla', label: 'SLA report', href: `${MANAGE}/sla${q}` },
+    { key: 'csat', label: 'CSAT', href: `${MANAGE}/csat${q}` },
     { key: 'at-risk', label: 'At risk', href: `${MANAGE}/at-risk` },
     { key: 'kpis', label: 'KPI settings', href: `${MANAGE}/kpis` },
   ]

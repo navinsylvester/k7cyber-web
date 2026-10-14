@@ -29,6 +29,9 @@ const SORTS: Record<string, (e: EngineerStats) => number | string> = {
   fcrPct: (e) => e.fcrPct ?? -1,
   perDay: (e) => e.perDay ?? -1,
   touches: (e) => e.touchesPerResolved ?? -1,
+  csatPct: (e) => e.csatPct ?? -1,
+  csatAverage: (e) => e.csatAverage ?? -1,
+  csatUnhappy: (e) => e.csatUnhappy,
   score: (e) => e.score,
 }
 
@@ -82,9 +85,9 @@ export default async function EngineersPage({ searchParams }: { searchParams: Pr
             </Link>
           </div>
           <div className="seg seg-l" role="group" aria-label="Sort cards">
-            {(['score', 'active', 'breached', 'resolved', 'resolvePct', 'medianResolve', 'name'] as const).map((s) => (
+            {(['score', 'active', 'breached', 'resolved', 'resolvePct', 'medianResolve', 'csatPct', 'name'] as const).map((s) => (
               <Link href={PATH + qs(base, { sort: s, dir: undefined })} key={s} aria-pressed={sort === s}>
-                {s === 'score' ? 'Composite' : s === 'resolvePct' ? 'Resolution SLA' : s === 'medianResolve' ? 'Median resolve' : s === 'breached' ? 'Past target' : s.replace(/^\w/, (c) => c.toUpperCase())}
+                {s === 'score' ? 'Composite' : s === 'resolvePct' ? 'Resolution SLA' : s === 'medianResolve' ? 'Median resolve' : s === 'breached' ? 'Past target' : s === 'csatPct' ? 'CSAT' : s.replace(/^\w/, (c) => c.toUpperCase())}
               </Link>
             ))}
           </div>
@@ -101,7 +104,7 @@ export default async function EngineersPage({ searchParams }: { searchParams: Pr
           </div>
         ) : (
           <div className="table-wrap">
-            <table className="dtable" style={{ minWidth: 1180 }}>
+            <table className="dtable" style={{ minWidth: 1420 }}>
               <caption className="sr-only">Engineers</caption>
               <thead>
                 <tr>
@@ -117,6 +120,9 @@ export default async function EngineersPage({ searchParams }: { searchParams: Pr
                   <SortHead col="medianResponse" label="Median response" current={sort} dir={dir} base={base} path={PATH} />
                   <SortHead col="fcrPct" label="FCR" current={sort} dir={dir} base={base} path={PATH} />
                   <SortHead col="touches" label="Touches / case" current={sort} dir={dir} base={base} path={PATH} />
+                  <SortHead col="csatPct" label="CSAT" current={sort} dir={dir} base={base} path={PATH} />
+                  <SortHead col="csatAverage" label="Avg rating" current={sort} dir={dir} base={base} path={PATH} />
+                  <SortHead col="csatUnhappy" label="Low ratings" current={sort} dir={dir} base={base} path={PATH} />
                   <SortHead col="score" label="Composite" current={sort} dir={dir} base={base} path={PATH} />
                 </tr>
               </thead>
@@ -138,6 +144,11 @@ export default async function EngineersPage({ searchParams }: { searchParams: Pr
                     <td className="num">{n(e.medianResponseMin, ' m')}</td>
                     <td className="num">{n(e.fcrPct, '%')}</td>
                     <td className="num">{n(e.touchesPerResolved)}</td>
+                    <td className="num" title={e.csatResponses ? `${e.csatResponses} ratings` : 'No ratings in the period'}>
+                      {n(e.csatPct, '%')}
+                    </td>
+                    <td className="num">{n(e.csatAverage)}</td>
+                    <td className={`num${e.csatUnhappy ? ' is-missed' : ''}`}>{e.csatUnhappy}</td>
                     <td className="num">{e.score}</td>
                   </tr>
                 ))}
@@ -146,7 +157,7 @@ export default async function EngineersPage({ searchParams }: { searchParams: Pr
           </div>
         )}
         <p className="caveats">
-          Composite: 40% resolution SLA, 20% response SLA, 20% FCR, 20% a load penalty (25 points per case past target, 10 per case at risk). It orders the cards; it is not a grade. Touches are outgoing emails plus desk notes written in the period, divided by cases resolved.
+          Composite: 40% resolution SLA, 20% response SLA, 20% FCR, 20% a load penalty (25 points per case past target, 10 per case at risk). When an engineer has survey responses in the period, CSAT takes 20% and the first three shrink to 30/15/15. It orders the cards; it is not a grade. Touches are outgoing emails plus desk notes written in the period, divided by cases resolved. CSAT credits the engineer who held the case when the customer rated it.
         </p>
       </section>
     </>
