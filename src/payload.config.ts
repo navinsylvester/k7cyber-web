@@ -16,6 +16,8 @@ import { ReportLeads } from './collections/research/ReportLeads'
 import { Threats } from './collections/research/Threats'
 import { ThreatReports } from './collections/research/ThreatReports'
 import { Vulnerabilities } from './collections/research/Vulnerabilities'
+import { SupportSettings } from './collections/support/SupportSettings'
+import { SupportSlaEvents } from './collections/support/SupportSlaEvents'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
@@ -69,10 +71,10 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, Media, Users],
+  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, Media, Users],
   upload: { limits: { fileSize: 30 * 1024 * 1024 } },
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer],
+  globals: [Header, Footer, SupportSettings],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

@@ -45,6 +45,10 @@ const nextConfig: NextConfig = {
     return webpackConfig
   },
   reactStrictMode: true,
+  // Support portal: case attachments travel through server actions (5 MB, Dataverse's default note limit) plus form overhead.
+  experimental: {
+    serverActions: { bodySizeLimit: '6mb' },
+  },
   redirects,
   turbopack: {
     root: path.resolve(dirname),

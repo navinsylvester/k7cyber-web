@@ -1,0 +1,51 @@
+{
+ "dry_run": false,
+ "source": "https://k7crm.crm8.dynamics.com",
+ "target": "https://k7crmuat.crm8.dynamics.com",
+ "steps": {
+  "views": {
+   "same": 33
+  },
+  "views_detail": [],
+  "app_validation": {
+   "success": null,
+   "issues": []
+  },
+  "app": {
+   "sitemap_same": 1,
+   "component_add": 5,
+   "component_skipped_missing": 4
+  },
+  "app_detail": [
+   "ADD entity transactioncurrency 5f2e7ae7-d327-49b5-a343-61d48f1bcd28",
+   "SKIP entity cea9b4b8-e654-4e8f-a5bb-4009d487e4ce: not in target",
+   "ADD entity uom 02d5dd55-4cbb-4147-9534-1de9bac6d760",
+   "ADD entity uomschedule a317d38b-b2d5-4663-9a06-44611f27ed50",
+   "SKIP entity 16058060-be9d-4908-bf8a-db4597c9b07c: not in target",
+   "ADD entity k7_state af863336-c559-e811-814e-5065f38c8461",
+   "ADD entity k7_region 852cd48c-c159-e811-814e-5065f38c8461",
+   "SKIP entity e0dfd4bb-040c-40c9-8942-eae7e16efd07: not in target",
+   "SKIP form: not in target"
+  ],
+  "published": {
+   "entities": "ok",
+   "sitemaps": "ok",
+   "appmodules": "ok"
+  }
+ },
+ "errors": {},
+ "publish": {
+  "entities": [
+   "incident"
+  ],
+  "optionsets": [],
+  "dashboards": [],
+  "sitemaps": [
+   "4f2623b7-0a9b-e811-a967-000d3af257b1"
+  ],
+  "appmodules": [
+   "4c2623b7-0a9b-e811-a967-000d3af257b1"
+  ]
+ },
+ "backup": "migration/uat-schema-backup-20261012T143024Z.json"
+}

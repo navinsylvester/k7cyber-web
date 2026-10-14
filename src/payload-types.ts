@@ -77,6 +77,7 @@ export interface Config {
     'threat-reports': ThreatReport;
     'report-files': ReportFile;
     'report-leads': ReportLead;
+    'support-sla-events': SupportSlaEvent;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -105,6 +106,7 @@ export interface Config {
     'threat-reports': ThreatReportsSelect<false> | ThreatReportsSelect<true>;
     'report-files': ReportFilesSelect<false> | ReportFilesSelect<true>;
     'report-leads': ReportLeadsSelect<false> | ReportLeadsSelect<true>;
+    'support-sla-events': SupportSlaEventsSelect<false> | SupportSlaEventsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -124,10 +126,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    'support-settings': SupportSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    'support-settings': SupportSettingsSelect<false> | SupportSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -1841,6 +1845,30 @@ export interface ReportLead {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-sla-events".
+ */
+export interface SupportSlaEvent {
+  id: number;
+  caseId: string;
+  ticket: string;
+  rule: string;
+  mode: 'dry-run' | 'live';
+  /**
+   * Comma-separated actions taken or planned.
+   */
+  actions: string;
+  outcome: 'planned' | 'done' | 'failed' | 'skipped';
+  detail?: string | null;
+  runId?: string | null;
+  /**
+   * cron, or the manager who ran the sweep.
+   */
+  actor?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -2068,6 +2096,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'report-leads';
         value: number | ReportLead;
+      } | null)
+    | ({
+        relationTo: 'support-sla-events';
+        value: number | SupportSlaEvent;
       } | null)
     | ({
         relationTo: 'media';
@@ -3002,6 +3034,23 @@ export interface ReportLeadsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-sla-events_select".
+ */
+export interface SupportSlaEventsSelect<T extends boolean = true> {
+  caseId?: T;
+  ticket?: T;
+  rule?: T;
+  mode?: T;
+  actions?: T;
+  outcome?: T;
+  detail?: T;
+  runId?: T;
+  actor?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -3469,6 +3518,134 @@ export interface Footer {
   createdAt?: string | null;
 }
 /**
+ * Targets, business hours, KPI cards and prevention rules for the manager view. Edited from the portal; this is the raw form.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-settings".
+ */
+export interface SupportSetting {
+  id: number;
+  /**
+   * Working minutes to first response and to resolution. The most specific row that matches a case wins (vertical, then priority, then origin).
+   */
+  targets?:
+    | {
+        vertical: 'any' | '100000000' | '100000001' | '100000002' | '767340001';
+        priority: 'any' | '696720000' | '1' | '2' | '3';
+        origin: 'any' | '1' | '2' | '3' | '696720000';
+        responseMinutes: number;
+        resolveMinutes: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * A case is "at risk" once this share of its target has elapsed.
+   */
+  warnAtPercent?: number | null;
+  /**
+   * Phone-origin cases are answered on the call: count them as responded at creation.
+   */
+  phoneCountsAsResponded?: boolean | null;
+  /**
+   * Cases In Progress-Customer are paused: never at risk, excluded from response/resolution timing while waiting.
+   */
+  pauseWhileWaiting?: boolean | null;
+  /**
+   * Subtract Dataverse's on-hold minutes (onholdtime) from the elapsed time.
+   */
+  subtractOnHold?: boolean | null;
+  hours: {
+    mode: 'business' | 'always';
+    /**
+     * HH:MM
+     */
+    start: string;
+    /**
+     * HH:MM
+     */
+    end: string;
+    timeZone: string;
+    days?: ('1' | '2' | '3' | '4' | '5' | '6' | '0')[] | null;
+  };
+  kpis?:
+    | {
+        key:
+          | 'resolution-sla'
+          | 'response-sla'
+          | 'median-resolution'
+          | 'median-response'
+          | 'fcr'
+          | 'throughput'
+          | 'backlog'
+          | 'breached-open'
+          | 'at-risk'
+          | 'reopen-rate'
+          | 'oldest-open';
+        enabled?: boolean | null;
+        /**
+         * Blank = no target, the card only reports.
+         */
+        target?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  defaultPeriod?: ('7d' | '30d' | '90d' | 'mtd') | null;
+  rules?:
+    | {
+        key: 'unowned-at-risk' | 'nudge-at-risk' | 'escalate-breach' | 'stale' | 'waiting-followup';
+        enabled?: boolean | null;
+        /**
+         * Minutes left (at-risk rules) or minutes since last activity (stale, waiting).
+         */
+        thresholdMinutes?: number | null;
+        /**
+         * Do not act on the same case again for this long.
+         */
+        cooldownHours?: number | null;
+        actions?: ('flag' | 'note' | 'queue' | 'email-owner' | 'email-managers')[] | null;
+        /**
+         * Dataverse queue id for the "Add to a queue" action.
+         */
+        queueId?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  sweep?: {
+    /**
+     * The scheduled sweep (POST /api/support/sla/sweep with the cron secret) evaluates the rules.
+     */
+    enabled?: boolean | null;
+    /**
+     * Off: the sweep only records what it would do. On: it writes notes, queues items and sends mail (UAT only; production is read-only in code).
+     */
+    live?: boolean | null;
+    /**
+     * Comma-separated recipients for "Email the managers".
+     */
+    managerEmails?: string | null;
+  };
+  /**
+   * Dataverse security roles that open the manager view.
+   */
+  managerRoles?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Agents who open the manager view regardless of role (work email).
+   */
+  managers?:
+    | {
+        email: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -3540,6 +3717,77 @@ export interface FooterSelect<T extends boolean = true> {
       };
   legal?: T;
   offices?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-settings_select".
+ */
+export interface SupportSettingsSelect<T extends boolean = true> {
+  targets?:
+    | T
+    | {
+        vertical?: T;
+        priority?: T;
+        origin?: T;
+        responseMinutes?: T;
+        resolveMinutes?: T;
+        id?: T;
+      };
+  warnAtPercent?: T;
+  phoneCountsAsResponded?: T;
+  pauseWhileWaiting?: T;
+  subtractOnHold?: T;
+  hours?:
+    | T
+    | {
+        mode?: T;
+        start?: T;
+        end?: T;
+        timeZone?: T;
+        days?: T;
+      };
+  kpis?:
+    | T
+    | {
+        key?: T;
+        enabled?: T;
+        target?: T;
+        id?: T;
+      };
+  defaultPeriod?: T;
+  rules?:
+    | T
+    | {
+        key?: T;
+        enabled?: T;
+        thresholdMinutes?: T;
+        cooldownHours?: T;
+        actions?: T;
+        queueId?: T;
+        id?: T;
+      };
+  sweep?:
+    | T
+    | {
+        enabled?: T;
+        live?: T;
+        managerEmails?: T;
+      };
+  managerRoles?:
+    | T
+    | {
+        name?: T;
+        id?: T;
+      };
+  managers?:
+    | T
+    | {
+        email?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
