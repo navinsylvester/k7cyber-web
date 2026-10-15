@@ -71,8 +71,8 @@
   },
   "lastChange": {
     "by": "Navin Sylvester",
-    "at": "2026-10-15T09:30:00Z",
+    "at": "2026-10-15T10:30:00Z",
     "via": "Claude Code",
-    "note": "FeatureMatrix: included is the glyph in ink, not a pixel per cell (signal is scarce). Earlier today: photography and illustration render greyscale inside figure frames and portraits."
+    "note": "Icon: five social glyphs (LinkedIn, X, YouTube, Instagram, Facebook) on the icon rules; SiteFooter uses them in place of the mono codes. Earlier today: FeatureMatrix ticks in ink; photography greyscale in frames."
   }
 }

@@ -5,4 +5,6 @@ Flat lines on a 32px grid, 2px stroke, square caps, mitred joins, no curve where
 
 **Provide** the path data in a 32-unit viewBox and the pixel's x, y. In React the pixel is a `<rect>` that reads `--signal`.
 
+Five social glyphs are drawn to the same rules for SiteFooter: LinkedIn (the pixel is the dot of the i), X (the tip of one stroke), YouTube (the record light beside the play mark), Instagram (the flash) and Facebook (the end of the f's arm). They stay out of the content icon picker.
+
 **Don't** fill shapes, round caps, use two weights, or add a second pixel. Lucide icons are a stopgap only with square caps and mitred joins set.

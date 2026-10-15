@@ -4023,7 +4023,7 @@ export interface Footer {
       }[]
     | null;
   /**
-   * Two-letter mono labels in 36px frames: in, X, YT, IG, FB.
+   * Drawn glyphs for LinkedIn, X, YouTube, Instagram and Facebook (matched by name); the code is the label for any other network.
    */
   socials?:
     | {

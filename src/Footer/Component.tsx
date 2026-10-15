@@ -2,6 +2,7 @@ import { getCachedGlobal } from '@/utilities/getGlobals'
 import Link from 'next/link'
 import React from 'react'
 
+import { Icon, socialGlyph } from '@/components/k7/Icon'
 import { navHref } from '@/utilities/linkHref'
 
 export async function Footer() {
@@ -16,11 +17,15 @@ export async function Footer() {
           {data?.tagline && <p className="body-s">{data.tagline}</p>}
           {(data?.socials?.length ?? 0) > 0 && (
             <div className="social">
-              {data.socials!.map((s, i) => (
-                <a href={s.url} aria-label={s.name} key={s.id ?? i} rel="noopener noreferrer" target="_blank">
-                  {s.code}
-                </a>
-              ))}
+              {/* The five drawn glyphs (Icon, social); a network without one shows its mono code. */}
+              {data.socials!.map((s, i) => {
+                const glyph = socialGlyph(s.name)
+                return (
+                  <a href={s.url} aria-label={s.name} key={s.id ?? i} rel="noopener noreferrer" target="_blank">
+                    {glyph ? <Icon name={glyph} /> : s.code}
+                  </a>
+                )
+              })}
             </div>
           )}
         </div>

@@ -24,7 +24,7 @@ export const Footer: GlobalConfig = {
     {
       name: 'socials',
       type: 'array',
-      admin: { initCollapsed: true, ...rowLabel, description: 'Two-letter mono labels in 36px frames: in, X, YT, IG, FB.' },
+      admin: { initCollapsed: true, ...rowLabel, description: 'Drawn glyphs for LinkedIn, X, YouTube, Instagram and Facebook (matched by name); the code is the label for any other network.' },
       fields: [
         {
           type: 'row',

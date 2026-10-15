@@ -23,13 +23,33 @@ export const icons = {
 
 export type IconName = keyof typeof icons
 
+/* The five social glyphs for SiteFooter, on the same rules. The pixel is the dot of the i, the tip of a stroke,
+   the record light, the flash, and the end of the f's arm. Not offered in the content icon picker. */
+export const social = {
+  linkedin: { d: 'M9 14v12 M15 26V14h9v12', px: [7.5, 8] },
+  x: { d: 'M8 8l13 13 M24 8L8 24', px: [22.5, 22.5] },
+  youtube: { d: 'M4 8h24v16H4z M13 12l8 4-8 4z', px: [7, 11] },
+  instagram: { d: 'M5 5h22v22H5z M11 11h10v10H11z', px: [22.5, 7.5] },
+  facebook: { d: 'M17 27V8h5 M12 16h10', px: [23.5, 6.5] },
+} as const
+
+export type SocialName = keyof typeof social
+
+/** The social glyph for a network name as the Footer global stores it ("LinkedIn", "X", "YouTube"), or null. */
+export const socialGlyph = (name: string): SocialName | null => {
+  const key = name.toLowerCase().replace(/[^a-z]/g, '')
+  return key in social ? (key as SocialName) : null
+}
+
 export const iconOptions = (Object.keys(icons) as IconName[]).map((value) => ({
   label: value.charAt(0).toUpperCase() + value.slice(1),
   value,
 }))
 
-export const Icon: React.FC<{ name?: IconName | string | null; className?: string }> = ({ name, className = 'licon' }) => {
-  const icon = icons[(name as IconName) in icons ? (name as IconName) : 'grid']
+const all = { ...icons, ...social }
+
+export const Icon: React.FC<{ name?: IconName | SocialName | string | null; className?: string }> = ({ name, className = 'licon' }) => {
+  const icon = all[(name as keyof typeof all) in all ? (name as keyof typeof all) : 'grid']
   return (
     <svg className={className} viewBox="0 0 32 32" aria-hidden="true">
       <path d={icon.d} />
