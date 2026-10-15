@@ -19,6 +19,7 @@ Dataverse must not be touched during development (`07-production-safety.md`).
 | `07-production-safety.md` | UAT vs production rules, no-schema-change rule, rollout gates | before any Dataverse call |
 | `09-portal-guide.md` | **what is built**: routes, the three sign-in doors, enforced rules, how to run, what is not done | starting work, always |
 | `10-product-desk.md` | **the product desk** (designed 2026-10-14, not built): support → principal support → engineering and Lab in Yodiz; the item as a bridge record in Payload, Yodiz behind a swappable adapter, the CRM as a mirror through an outbox, samples by script, the clocks | before any work for engineering, Lab or Yodiz |
+| `12-tester-brief.md` | the phase 1 message to the first testers (2026-10-15): link, the five rules, a 30-minute read-only script with one note; phase 2 scope listed | sending or re-sending the tester brief |
 | `11-staging-readiness.md` | **staging on GCP** (written 2026-10-15): the work list before support staff can test against UAT side by side with production: admin blockers, code changes, GCP build-out, UAT and tester readiness, decisions | planning the staging deployment |
 | `08-implementation-plan.md` | routes, libraries, auth, UI, milestones, env vars, first-session checklist (the intent) | planning questions |
 | `02-dataverse-integration.md` | auth flows, read/write request examples, limits, licensing | coding the client |
