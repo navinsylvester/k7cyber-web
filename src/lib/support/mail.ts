@@ -56,3 +56,20 @@ export const csatOverdueMail = (rows: { ticket: string; customer: string; score:
   subject: `[CSAT] ${rows.length} unhappy ${rows.length === 1 ? 'customer is' : 'customers are'} past the follow-up target`,
   text: `${rows.map((r) => `${r.ticket}  ${r.customer || 'customer'}  ${r.score}/5  waiting ${r.waited}`).join('\n')}\n\nFollow up from the manager view:\n${url}\n\nK7 Support portal`,
 })
+
+/* ---------- Product desk (10-product-desk.md §9): number, title, state and the link; never the hand-off. ---------- */
+
+export const productRaisedMail = (p: { number: string; title: string; kind: string; ticket: string; by: string; url: string }): Omit<Mail, 'to'> => ({
+  subject: `[${p.number}] New ${p.kind} from support: ${p.title}`,
+  text: `${p.by || 'An agent'} raised ${p.number} "${p.title}" (${p.kind}) from case ${p.ticket}. It is waiting for triage.\n\nOpen it on the product desk:\n${p.url}\n\nK7 Support portal`,
+})
+
+export const productAcceptedMail = (p: { number: string; title: string; team: string; priority: string; by: string; trackerKey: string; url: string }): Omit<Mail, 'to'> => ({
+  subject: `[${p.number}] Accepted for ${p.team} at ${p.priority}: ${p.title}`,
+  text: `${p.by || 'Principal support'} accepted ${p.number} "${p.title}" for ${p.team} at ${p.priority}${p.trackerKey ? ` (tracker ${p.trackerKey})` : ''}.\n\n${p.url}\n\nK7 Support portal`,
+})
+
+export const productChangeMail = (p: { number: string; title: string; what: string; by: string; detail: string; url: string }): Omit<Mail, 'to'> => ({
+  subject: `[${p.number}] ${p.what}: ${p.title}`,
+  text: `${p.number} "${p.title}" ${p.what.toLowerCase()}${p.by ? ` (${p.by})` : ''}.${p.detail ? `\n\n${p.detail}` : ''}\n\n${p.url}\n\nK7 Support portal`,
+})

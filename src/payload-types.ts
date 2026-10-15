@@ -80,6 +80,11 @@ export interface Config {
     'support-sla-events': SupportSlaEvent;
     'support-csat': SupportCsat;
     'support-care-flags': SupportCareFlag;
+    'product-items': ProductItem;
+    'product-item-cases': ProductItemCase;
+    'product-item-events': ProductItemEvent;
+    'product-evidence': ProductEvidence;
+    'product-mirror': ProductMirror;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -111,6 +116,11 @@ export interface Config {
     'support-sla-events': SupportSlaEventsSelect<false> | SupportSlaEventsSelect<true>;
     'support-csat': SupportCsatSelect<false> | SupportCsatSelect<true>;
     'support-care-flags': SupportCareFlagsSelect<false> | SupportCareFlagsSelect<true>;
+    'product-items': ProductItemsSelect<false> | ProductItemsSelect<true>;
+    'product-item-cases': ProductItemCasesSelect<false> | ProductItemCasesSelect<true>;
+    'product-item-events': ProductItemEventsSelect<false> | ProductItemEventsSelect<true>;
+    'product-evidence': ProductEvidenceSelect<false> | ProductEvidenceSelect<true>;
+    'product-mirror': ProductMirrorSelect<false> | ProductMirrorSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -131,11 +141,13 @@ export interface Config {
     header: Header;
     footer: Footer;
     'support-settings': SupportSetting;
+    'product-settings': ProductSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'support-settings': SupportSettingsSelect<false> | SupportSettingsSelect<true>;
+    'product-settings': ProductSettingsSelect<false> | ProductSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -1943,6 +1955,204 @@ export interface SupportCareFlag {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-items".
+ */
+export interface ProductItem {
+  id: number;
+  seq: number;
+  number: string;
+  kind: 'defect' | 'enhancement' | 'detection';
+  team: 'engineering' | 'lab';
+  state: 'raised' | 'tracked' | 'needs-info' | 'fixed' | 'released' | 'declined' | 'closed';
+  askedFrom?: ('raised' | 'tracked') | null;
+  priority: 'P1' | 'P2' | 'P3' | 'P4';
+  title: string;
+  /**
+   * The hand-off the agent wrote: what happens, steps, expected vs actual, workaround.
+   */
+  summary?: string | null;
+  severityHint?: ('blocks' | 'degraded' | 'cosmetic') | null;
+  customerImpact?: string | null;
+  productId?: string | null;
+  productName?: string | null;
+  productFamily?: string | null;
+  affectedVersion?: string | null;
+  platform?: string | null;
+  issueCategory?: string | null;
+  subCategory?: string | null;
+  vertical?: number | null;
+  casePriority?: number | null;
+  /**
+   * The engineering record: the issue in the tracker (Yodiz) this item is worked in.
+   */
+  tracker?: {
+    kind?: ('none' | 'yodiz') | null;
+    projectId?: string | null;
+    id?: string | null;
+    key?: string | null;
+    url?: string | null;
+    status?: string | null;
+    category?: string | null;
+    syncedAt?: string | null;
+  };
+  fixedVersion?: string | null;
+  releasedVersion?: string | null;
+  showReleaseToCustomer?: boolean | null;
+  releaseNote?: string | null;
+  declineReason?: ('duplicate' | 'by-design' | 'wont-fix' | 'cannot-reproduce' | 'not-a-bug') | null;
+  declineNote?: string | null;
+  raisedById?: string | null;
+  raisedByName?: string | null;
+  raisedByEmail?: string | null;
+  raisedAt: string;
+  triagedById?: string | null;
+  triagedByName?: string | null;
+  triagedByEmail?: string | null;
+  triagedAt?: string | null;
+  supportOwnerId?: string | null;
+  supportOwnerName?: string | null;
+  supportOwnerEmail?: string | null;
+  productOwner?: string | null;
+  fixedAt?: string | null;
+  releasedAt?: string | null;
+  closedAt?: string | null;
+  lastActivityAt: string;
+  caseCount?: number | null;
+  crmRfeId?: string | null;
+  crmDefectId?: string | null;
+  /**
+   * The RFE or defect number in the CRM (RF0224, DF0094).
+   */
+  crmRef?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-item-cases".
+ */
+export interface ProductItemCase {
+  id: number;
+  itemId: string;
+  itemNumber?: string | null;
+  caseId: string;
+  ticket: string;
+  title?: string | null;
+  productName?: string | null;
+  vertical?: number | null;
+  casePriority?: number | null;
+  customerKind?: ('account' | 'contact') | null;
+  /**
+   * B2B only; never a contact.
+   */
+  accountName?: string | null;
+  supportOwnerId?: string | null;
+  supportOwnerName?: string | null;
+  supportOwnerEmail?: string | null;
+  caseChoice: 'keep-open' | 'workaround-resolved';
+  toldAt?: string | null;
+  linkedById?: string | null;
+  linkedByName?: string | null;
+  linkedAt: string;
+  unlinkedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-item-events".
+ */
+export interface ProductItemEvent {
+  id: number;
+  itemId: string;
+  itemNumber?: string | null;
+  kind:
+    | 'handoff'
+    | 'comment'
+    | 'tracker-comment'
+    | 'state'
+    | 'tracker-status'
+    | 'route'
+    | 'priority'
+    | 'link'
+    | 'unlink'
+    | 'ask'
+    | 'answer'
+    | 'told'
+    | 'sample'
+    | 'mirror';
+  side: 'support' | 'principal' | 'engineering' | 'lab' | 'system';
+  from?: string | null;
+  to?: string | null;
+  byId?: string | null;
+  byName?: string | null;
+  byEmail?: string | null;
+  caseTicket?: string | null;
+  text?: string | null;
+  /**
+   * The tracker comment or change this entry mirrors, so a poll never writes it twice.
+   */
+  externalId?: string | null;
+  evidence?: (number | ProductEvidence)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Screenshots, logs and text up to 10 MB; written by the portal.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-evidence".
+ */
+export interface ProductEvidence {
+  id: number;
+  itemId?: string | null;
+  uploadedBy?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-mirror".
+ */
+export interface ProductMirror {
+  id: number;
+  itemId: string;
+  itemNumber?: string | null;
+  caseId?: string | null;
+  ticket?: string | null;
+  op: 'status' | 'note' | 'task' | 'rfe' | 'defect' | 'yodiz';
+  state: 'pending' | 'done' | 'failed' | 'skipped';
+  attempts?: number | null;
+  /**
+   * The operation as the model produced it.
+   */
+  body?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Who the write ran as: the agent, the service identity, or nobody yet.
+   */
+  actor?: string | null;
+  lastError?: string | null;
+  doneAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -2182,6 +2392,26 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'support-care-flags';
         value: number | SupportCareFlag;
+      } | null)
+    | ({
+        relationTo: 'product-items';
+        value: number | ProductItem;
+      } | null)
+    | ({
+        relationTo: 'product-item-cases';
+        value: number | ProductItemCase;
+      } | null)
+    | ({
+        relationTo: 'product-item-events';
+        value: number | ProductItemEvent;
+      } | null)
+    | ({
+        relationTo: 'product-evidence';
+        value: number | ProductEvidence;
+      } | null)
+    | ({
+        relationTo: 'product-mirror';
+        value: number | ProductMirror;
       } | null)
     | ({
         relationTo: 'media';
@@ -3192,6 +3422,156 @@ export interface SupportCareFlagsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-items_select".
+ */
+export interface ProductItemsSelect<T extends boolean = true> {
+  seq?: T;
+  number?: T;
+  kind?: T;
+  team?: T;
+  state?: T;
+  askedFrom?: T;
+  priority?: T;
+  title?: T;
+  summary?: T;
+  severityHint?: T;
+  customerImpact?: T;
+  productId?: T;
+  productName?: T;
+  productFamily?: T;
+  affectedVersion?: T;
+  platform?: T;
+  issueCategory?: T;
+  subCategory?: T;
+  vertical?: T;
+  casePriority?: T;
+  tracker?:
+    | T
+    | {
+        kind?: T;
+        projectId?: T;
+        id?: T;
+        key?: T;
+        url?: T;
+        status?: T;
+        category?: T;
+        syncedAt?: T;
+      };
+  fixedVersion?: T;
+  releasedVersion?: T;
+  showReleaseToCustomer?: T;
+  releaseNote?: T;
+  declineReason?: T;
+  declineNote?: T;
+  raisedById?: T;
+  raisedByName?: T;
+  raisedByEmail?: T;
+  raisedAt?: T;
+  triagedById?: T;
+  triagedByName?: T;
+  triagedByEmail?: T;
+  triagedAt?: T;
+  supportOwnerId?: T;
+  supportOwnerName?: T;
+  supportOwnerEmail?: T;
+  productOwner?: T;
+  fixedAt?: T;
+  releasedAt?: T;
+  closedAt?: T;
+  lastActivityAt?: T;
+  caseCount?: T;
+  crmRfeId?: T;
+  crmDefectId?: T;
+  crmRef?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-item-cases_select".
+ */
+export interface ProductItemCasesSelect<T extends boolean = true> {
+  itemId?: T;
+  itemNumber?: T;
+  caseId?: T;
+  ticket?: T;
+  title?: T;
+  productName?: T;
+  vertical?: T;
+  casePriority?: T;
+  customerKind?: T;
+  accountName?: T;
+  supportOwnerId?: T;
+  supportOwnerName?: T;
+  supportOwnerEmail?: T;
+  caseChoice?: T;
+  toldAt?: T;
+  linkedById?: T;
+  linkedByName?: T;
+  linkedAt?: T;
+  unlinkedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-item-events_select".
+ */
+export interface ProductItemEventsSelect<T extends boolean = true> {
+  itemId?: T;
+  itemNumber?: T;
+  kind?: T;
+  side?: T;
+  from?: T;
+  to?: T;
+  byId?: T;
+  byName?: T;
+  byEmail?: T;
+  caseTicket?: T;
+  text?: T;
+  externalId?: T;
+  evidence?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-evidence_select".
+ */
+export interface ProductEvidenceSelect<T extends boolean = true> {
+  itemId?: T;
+  uploadedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-mirror_select".
+ */
+export interface ProductMirrorSelect<T extends boolean = true> {
+  itemId?: T;
+  itemNumber?: T;
+  caseId?: T;
+  ticket?: T;
+  op?: T;
+  state?: T;
+  attempts?: T;
+  body?: T;
+  actor?: T;
+  lastError?: T;
+  doneAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -3841,6 +4221,113 @@ export interface SupportSetting {
   createdAt?: string | null;
 }
 /**
+ * Teams, principal support, priorities and clocks, the tracker and the CRM mirror. Edited from the portal; this is the raw form.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-settings".
+ */
+export interface ProductSetting {
+  id: number;
+  /**
+   * Show the escalate panel to agents and the product desk to principal support.
+   */
+  enabled?: boolean | null;
+  /**
+   * Engineering and the Lab. The tracker project is the Yodiz project id (phase B).
+   */
+  teams?:
+    | {
+        key: 'engineering' | 'lab';
+        name: string;
+        inboxEmail?: string | null;
+        trackerProject?: string | null;
+        leads?:
+          | {
+              email: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Who triages: agents holding one of these Dynamics roles or listed by email. Managers pass when the box is ticked.
+   */
+  principals?: {
+    roles?:
+      | {
+          name: string;
+          id?: string | null;
+        }[]
+      | null;
+    emails?:
+      | {
+          email: string;
+          id?: string | null;
+        }[]
+      | null;
+    managersAreprincipals?: boolean | null;
+  };
+  /**
+   * Triage target in working hours (accept or decline), update cadence in working days while tracked.
+   */
+  priorities?:
+    | {
+        key: 'P1' | 'P2' | 'P3' | 'P4';
+        label?: string | null;
+        triageHours?: number | null;
+        updateEveryDays?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  clock?: {
+    /**
+     * Time with product does not count against the engineer's resolution SLA.
+     */
+    pauseWhileWithProduct?: boolean | null;
+    autoCloseDays?: number | null;
+    warnAtPercent?: number | null;
+  };
+  tracker?: {
+    kind?: ('none' | 'yodiz') | null;
+    pollMinutes?: number | null;
+    pollInBusinessHoursOnly?: boolean | null;
+    dailyBudget?: number | null;
+  };
+  /**
+   * Tracker status → bridge state, per project (phase B).
+   */
+  statusMap?:
+    | {
+        tracker?: ('none' | 'yodiz') | null;
+        projectId?: string | null;
+        statusCode: string;
+        statusName?: string | null;
+        state: 'raised' | 'tracked' | 'needs-info' | 'fixed' | 'released' | 'declined' | 'closed';
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * What the desk writes back to Dynamics. Off: everything is recorded in the outbox as pending and nothing reaches the CRM.
+   */
+  mirror?: {
+    enabled?: boolean | null;
+    /**
+     * Create k7_rfe / k7_defect rows at raise (phase B).
+     */
+    createCrmRows?: boolean | null;
+    notesOnLinkedCases?: boolean | null;
+    statusBack?: boolean | null;
+  };
+  notify?: {
+    principalsOnRaise?: boolean | null;
+    inboxOnAccept?: boolean | null;
+    ownerOnChange?: boolean | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -3997,6 +4484,97 @@ export interface SupportSettingsSelect<T extends boolean = true> {
     | {
         email?: T;
         id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-settings_select".
+ */
+export interface ProductSettingsSelect<T extends boolean = true> {
+  enabled?: T;
+  teams?:
+    | T
+    | {
+        key?: T;
+        name?: T;
+        inboxEmail?: T;
+        trackerProject?: T;
+        leads?:
+          | T
+          | {
+              email?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  principals?:
+    | T
+    | {
+        roles?:
+          | T
+          | {
+              name?: T;
+              id?: T;
+            };
+        emails?:
+          | T
+          | {
+              email?: T;
+              id?: T;
+            };
+        managersAreprincipals?: T;
+      };
+  priorities?:
+    | T
+    | {
+        key?: T;
+        label?: T;
+        triageHours?: T;
+        updateEveryDays?: T;
+        id?: T;
+      };
+  clock?:
+    | T
+    | {
+        pauseWhileWithProduct?: T;
+        autoCloseDays?: T;
+        warnAtPercent?: T;
+      };
+  tracker?:
+    | T
+    | {
+        kind?: T;
+        pollMinutes?: T;
+        pollInBusinessHoursOnly?: T;
+        dailyBudget?: T;
+      };
+  statusMap?:
+    | T
+    | {
+        tracker?: T;
+        projectId?: T;
+        statusCode?: T;
+        statusName?: T;
+        state?: T;
+        id?: T;
+      };
+  mirror?:
+    | T
+    | {
+        enabled?: T;
+        createCrmRows?: T;
+        notesOnLinkedCases?: T;
+        statusBack?: T;
+      };
+  notify?:
+    | T
+    | {
+        principalsOnRaise?: T;
+        inboxOnAccept?: T;
+        ownerOnChange?: T;
       };
   updatedAt?: T;
   createdAt?: T;

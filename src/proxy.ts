@@ -15,7 +15,7 @@ const signInUrl = (req: { url: string; nextUrl: { pathname: string; search: stri
 export default auth((req) => {
   const { pathname } = req.nextUrl
   const user = req.auth?.user
-  if (pathname.startsWith('/support/workspace')) {
+  if (pathname.startsWith('/support/workspace') || pathname.startsWith('/support/product')) {
     if (user?.kind !== 'agent') return NextResponse.redirect(signInUrl(req, true))
     return NextResponse.next()
   }

@@ -27,11 +27,11 @@ export default async function RfeDetailPage({ params, searchParams }: { params: 
   const number = String(r.k7_rfeno ?? '')
   return (
     <>
-      <WorkspaceBar active="rfe" />
+      <WorkspaceBar active="product" />
       <section className="sheet ws g-paper">
         <div className="ws-head">
           <div className="ws-head-main">
-            <Crumbs items={[{ label: 'RFEs', href: `${WS}/rfe` }, { label: number || 'RFE' }]} />
+            <Crumbs items={[{ label: 'Product desk', href: `${WS}/product?view=rfes` }, { label: number || 'RFE' }]} />
             <h1 className="h-util">{String(r.k7_rfetitle ?? '')}</h1>
             <div className="tags">
               {number && <span className="tag lid">{number}</span>}

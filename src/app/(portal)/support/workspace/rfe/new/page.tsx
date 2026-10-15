@@ -20,10 +20,10 @@ export default async function NewRfePage({ searchParams }: { searchParams: Promi
   const linked = sp.case ? await getCase(me.auth, sp.case).catch(() => null) : null
   return (
     <>
-      <WorkspaceBar active="rfe" />
+      <WorkspaceBar active="product" />
       <section className="sheet ws g-paper">
         <div className="form-sheet">
-          <Crumbs items={[{ label: 'RFEs', href: `${WS}/rfe` }, { label: 'New RFE' }]} />
+          <Crumbs items={[{ label: 'Product desk', href: `${WS}/product?view=rfes` }, { label: 'New RFE' }]} />
           <h1 className="h-util" style={{ margin: '10px 0 14px' }}>
             New request for enhancement.
           </h1>

@@ -9,6 +9,7 @@ import { list, NotAuthenticated, type DataverseAuth, type Row } from '@/lib/data
 
 import type { CustomerScope } from './cases'
 import { getSettings } from './kpi-config'
+import { getProductSettings } from './product-config'
 import { memo } from './memo'
 
 /* Who is calling, and which Dataverse credential serves them. Agents: their delegated token from the encrypted JWT
@@ -110,6 +111,57 @@ export const sessionIsManager = async (): Promise<boolean> => {
   try {
     const me = await tryAgent()
     return me ? await isManager(me) : false
+  } catch {
+    return false
+  }
+}
+
+/* ---------- Principal support and team leads (10-product-desk.md §2) ---------- */
+
+/** Principal support triages the product desk: agents with one of the configured roles or a listed email; managers when the setting
+    says so; development sign-ins pass. */
+export const isPrincipal = async (me: AgentContext): Promise<boolean> => {
+  if (me.dev) return true
+  const ps = await getProductSettings()
+  const email = me.email.toLowerCase()
+  if (email && (ps.principals.emails.includes(email) || ps.teams.some((t) => t.leads.includes(email)))) return true
+  if (ps.principals.managersAreprincipals && (await isManager(me))) return true
+  if (!ps.principals.roles.length) return false
+  try {
+    const roles = await agentRoles(me.auth, me.userId)
+    const wanted = new Set(ps.principals.roles.map((r) => r.toLowerCase()))
+    return roles.some((r) => wanted.has(r.toLowerCase()))
+  } catch {
+    return false
+  }
+}
+
+/** A lead edits the product desk's settings: a team lead by email, a manager, or a development sign-in. */
+export const isLead = async (me: AgentContext): Promise<boolean> => {
+  if (me.dev) return true
+  const ps = await getProductSettings()
+  const email = me.email.toLowerCase()
+  if (email && ps.teams.some((t) => t.leads.includes(email))) return true
+  return isManager(me)
+}
+
+export const requirePrincipal = async (): Promise<AgentContext> => {
+  const me = await requireAgent()
+  if (!(await isPrincipal(me))) redirect('/support/product/no-access')
+  return me
+}
+
+export const requireLead = async (): Promise<AgentContext> => {
+  const me = await requireAgent()
+  if (!(await isLead(me))) redirect('/support/product/no-access')
+  return me
+}
+
+/** For the workspace bar: whether the session may open the product desk (never throws). */
+export const sessionIsPrincipal = async (): Promise<boolean> => {
+  try {
+    const me = await tryAgent()
+    return me ? await isPrincipal(me) : false
   } catch {
     return false
   }
