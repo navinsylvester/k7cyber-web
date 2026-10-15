@@ -29,7 +29,7 @@ export const FeatureMatrix: React.FC<FeatureMatrixBlock & { meta: SheetMeta }> =
               {g.rows.map((r, j) => (
                 <tr className="row" key={r.id ?? j}>
                   <td className="title">{r.name}</td>
-                  <td className="tick">{r.included ? <i className="pixel" /> : <span className="muted">—</span>}</td>
+                  <td className="tick">{r.included ? '✔' : <span className="muted">—</span>}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,8 +1,10 @@
 import Script from 'next/script'
 import React from 'react'
 
-import { defaultTheme, themeLocalStorageKey } from '../ThemeSelector/types'
+import { themeLocalStorageKey } from '../shared'
 
+/* The server renders the default theme on <html> (dark), so the page paints without JavaScript. This script runs before
+   the body is parsed and only switches to the choice stored under k7-theme, so a light-theme reader never sees dark first. */
 export const InitTheme: React.FC = () => {
   return (
     // eslint-disable-next-line @next/next/no-before-interactive-script-outside-document
@@ -10,18 +12,12 @@ export const InitTheme: React.FC = () => {
       dangerouslySetInnerHTML={{
         __html: `
   (function () {
-    function themeIsValid(theme) {
-      return theme === 'light' || theme === 'dark'
-    }
-
-    var themeToSet = '${defaultTheme}'
-    var preference = window.localStorage.getItem('${themeLocalStorageKey}')
-
-    if (themeIsValid(preference)) {
-      themeToSet = preference
-    }
-
-    document.documentElement.setAttribute('data-theme', themeToSet)
+    try {
+      var choice = window.localStorage.getItem('${themeLocalStorageKey}')
+      if ((choice === 'light' || choice === 'dark') && choice !== document.documentElement.getAttribute('data-theme')) {
+        document.documentElement.setAttribute('data-theme', choice)
+      }
+    } catch (e) {}
   })();
   `,
       }}

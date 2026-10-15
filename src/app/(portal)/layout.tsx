@@ -6,6 +6,7 @@ import React from 'react'
 import { PortalHeader } from '@/components/support/Header'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
+import { defaultTheme } from '@/providers/Theme/shared'
 import { cn } from '@/utilities/ui'
 
 import '../(frontend)/globals.css'
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html className={cn(archivo.variable, plexMono.variable)} lang="en" suppressHydrationWarning>
+    <html className={cn(archivo.variable, plexMono.variable)} data-theme={defaultTheme} lang="en" suppressHydrationWarning>
       <head>
         <InitTheme />
         <link href="/favicon.ico" rel="icon" sizes="32x32" />

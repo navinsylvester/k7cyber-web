@@ -9,7 +9,7 @@ Start with the four grounds and one signal, set everything said in Archivo and e
 - Headlines are statements, not labels: "Pages are case files. Not scrolls." Split a headline in two where the second clause can sit at `dim` opacity.
 - Labels are evidence, set in `label`: a counter (`03/07`), a section name (`THE RECORD`), a date (`29-09-2026`). Never a decorative eyebrow with no information.
 - Dates in tables are DD-MM-YYYY; bylines read "25 Sep 2026". Phone numbers and IDs are set in `meta`.
-- No emoji anywhere. A tick is the signal pixel or the glyph ✔ in `ink`; a cross is ✖ in `acc-ink`.
+- No emoji anywhere. A tick is the signal pixel for a single state (a head, a tab, a live stamp) or the glyph ✔ in `ink` wherever ticks repeat, as in a ledger; a cross is ✖ in `acc-ink`.
 - Product names are exact: K7 Seventh Sense, K7 Seventh Sense MDR, K7 Data Loss Protection, K7 SD-WAN. "Seventh Sense" alone only after the full name has appeared on the page.
 
 ## Grounds and the signal

@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import 'tw-animate-css';
 /* K7 Design Language 2.1 tokens: the single source for colours, type, spacing and cuts. */
 @import '../../../design-system/tokens.css';
 /* The reference component CSS of the design system (sheets, tabs, buttons, tables, rows, header, footer). */
@@ -170,14 +169,8 @@
   }
 }
 
-html {
-  opacity: 0;
-}
-
-html[data-theme='dark'],
-html[data-theme='light'] {
-  opacity: initial;
-}
+/* The theme attribute is rendered on <html> by the server (dark by default) and only overridden by the stored choice before
+   first paint (InitTheme), so nothing is hidden while scripts load and the page reads without JavaScript. */
 
 /* Logo: the white variant in dark, the full-colour variant in light (Logos). */
 .brand .logo-light { display: none; }

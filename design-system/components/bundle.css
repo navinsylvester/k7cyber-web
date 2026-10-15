@@ -286,8 +286,8 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .dtable td { padding: 16px 20px 16px 0; border-bottom: 1px solid var(--ln); vertical-align: top; }
 .dtable td:first-child, .dtable th:first-child { padding-left: 10px; }
 .dtable td.title { font-weight: 500; letter-spacing: -.01em; }
-.dtable td.tick { text-align: left; font-size: 15px; }
-.dtable td.tick .pixel { width: 10px; height: 10px; }
+/* Included is the glyph ✔ in ink: a ledger of thirty rows must not spend thirty signal pixels. */
+.dtable td.tick { text-align: left; font-size: 13px; line-height: 1; }
 .dtable tr.batch th { padding: 26px 0 10px 10px; border-bottom: 1px solid var(--fg); color: var(--fg); }
 .dtable tr.batch th > span { display: inline-flex; gap: 14px; align-items: center; }
 .dtable tr.batch th em { font: 400 13px/1.4 var(--font-sans); text-transform: none; letter-spacing: 0; color: var(--mu); }
