@@ -2,7 +2,7 @@ import NextAuth, { type NextAuthConfig } from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import MicrosoftEntraID from 'next-auth/providers/microsoft-entra-id'
 
-import { agentScope, devProbeEnabled, probeToken, refreshAgentToken } from '@/lib/dataverse/auth'
+import { agentScope, devAgentDoorEnabled, probeToken, refreshAgentToken } from '@/lib/dataverse/auth'
 import { retrieve, whoAmI } from '@/lib/dataverse/client'
 import { entity } from '@/lib/dataverse/odata'
 import type { Row } from '@/lib/dataverse/types'
@@ -12,8 +12,8 @@ import { verifyOtp } from '@/lib/support/otp'
 /* Auth.js v5 (08-implementation-plan.md §2). Providers:
    - microsoft-entra-id: agents; the scope carries Dataverse user_impersonation so the server gets a delegated token.
    - customer: a one-time code verified against its signed token (src/lib/support/otp.ts); maps to a contact.
-   - dev-agent (development only, SUPPORT_DEV_AGENT=probe): the probe's device-code token stands in for an agent
-     until the Entra app registration has admin consent (06-entra-setup.md §A step 6). */
+   - dev-agent (development only, SUPPORT_DEV_AGENT=probe): the probe's device-code token stands in for an agent. Leave it
+     off on any host other people can reach; SUPPORT_DEV_SERVICE=probe keeps the customer side working without it. */
 
 type AgentToken = { kind?: 'agent' | 'customer'; accessToken?: string; refreshToken?: string; expiresAt?: number; userId?: string; contactId?: string; accountId?: string | null; dev?: boolean; error?: string }
 
@@ -53,7 +53,7 @@ providers.push(
   }),
 )
 
-if (devProbeEnabled()) {
+if (devAgentDoorEnabled()) {
   providers.push(
     Credentials({
       id: 'dev-agent',

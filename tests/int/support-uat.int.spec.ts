@@ -12,7 +12,7 @@ import { addPhoneCall, addTask, getTimeline } from '@/lib/support/timeline'
 /* Writes against UAT with the developer's probe token, on rows the test creates itself (07-production-safety.md §6).
    Runs only when SUPPORT_UAT_WRITE_TESTS=1 and the probe cache exists; never against production (the client refuses). */
 
-const enabled = process.env.SUPPORT_UAT_WRITE_TESTS === '1' && process.env.SUPPORT_DEV_AGENT === 'probe' && existsSync('scripts/.token_cache.json') && /k7crmuat/.test(process.env.DATAVERSE_URL ?? '')
+const enabled = process.env.SUPPORT_UAT_WRITE_TESTS === '1' && (process.env.SUPPORT_DEV_AGENT === 'probe' || process.env.SUPPORT_DEV_SERVICE === 'probe') && existsSync('scripts/.token_cache.json') && /k7crmuat/.test(process.env.DATAVERSE_URL ?? '')
 
 // The portal's own test customer (registered through the portal on 2026-10-13).
 const TEST_CONTACT = '0874323f-bec6-f111-a05c-7ced8daf5902'

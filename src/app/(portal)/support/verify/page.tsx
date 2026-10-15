@@ -14,6 +14,7 @@ const ERRORS: Record<string, string> = {
   expired: 'That code has expired or was already used. Request a new one.',
   locked: 'Too many wrong attempts. Request a new code.',
   rate: 'Too many codes requested. Wait a few minutes.',
+  allowlist: 'This test system only sends codes to approved email addresses. Ask the portal team to add yours.',
   account: 'We could not set up your account. Try again, or contact support by phone.',
 }
 

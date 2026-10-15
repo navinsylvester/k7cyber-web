@@ -13,6 +13,14 @@ python3 -I scripts/dataverse-probe.py get WhoAmI   # once: device sign-in, write
 `DATAVERSE_WRITES_ENABLED=1`, and in development `SUPPORT_DEV_AGENT=probe` and
 `SUPPORT_DEV_SHOW_CODE=1`. `.env.example` lists them with comments.
 
+**A host other people can reach** (2026-10-15, `11-staging-readiness.md` §7): swap `SUPPORT_DEV_AGENT=probe` for
+`SUPPORT_DEV_SERVICE=probe` (the customer side keeps the probe token as its service identity, the probe sign-in door
+closes and any session it minted ends) and set `SUPPORT_MAIL_ALLOWLIST` (addresses and `@domains`): mail goes only to
+listed recipients, the rest is logged as suppressed, and the one-time-code steps refuse unlisted addresses before any
+contact lookup. The on-screen code is shown off localhost only when that list is set. `scripts/dev-tunnel.sh up|down` runs
+the Cloudflare quick tunnel and sets or clears `AUTH_URL`, which Auth.js and `session.ts` then use in place of the request's
+host (the tunnel rewrites it to localhost).
+
 Then open http://localhost:3000/support (customers) or http://localhost:3000/support/sign-in?agent=1
 (agents). Tests: `pnpm test:int` runs `tests/int/support-*.int.spec.ts` (guard, FetchXML shaping,
 OData helpers, status mapping, one-time codes, sanitiser) without a tenant.
@@ -22,7 +30,7 @@ OData helpers, status mapping, one-time codes, sanitiser) without a tenant.
 |---|---|---|---|
 | `microsoft-entra-id` | agents | Entra ID OIDC with scope `…/user_impersonation`; the delegated Dataverse token and refresh token live in the encrypted JWT and are read server-side with `getToken` (never through `session`) | `kind: 'agent'`, `userId` = systemuserid from `WhoAmI` |
 | `customer` | customers | a six-digit one-time code by email (`src/lib/support/otp.ts`): the code's hash and the registration details ride in a signed, ten-minute token in an httpOnly cookie; five attempts; the contact is created (`registerContact`) or matched (`findContactByEmail`, newest-modified active wins) when the code verifies | `kind: 'customer'`, `contactId`, `accountId` |
-| `dev-agent` | developers | **development only** (`SUPPORT_DEV_AGENT=probe`, never in production builds): reuses the python probe's device-code refresh token so the workspace runs against UAT before the agent app registration has admin consent (`06-entra-setup.md` §A step 6 is still pending) | `kind: 'agent'`, `dev: true` |
+| `dev-agent` | developers | **development only** (`SUPPORT_DEV_AGENT=probe`, never in production builds): reuses the python probe's device-code refresh token so the workspace runs against UAT as the probe user. The Microsoft door has worked since 2026-10-15, so this is a convenience, not a necessity; `SUPPORT_DEV_SERVICE=probe` keeps the probe token for the customer side with this door shut | `kind: 'agent'`, `dev: true` |
 
 `src/proxy.ts` (Next 16's middleware) gates `/support/workspace/*` to agents and `/support/cases*`,
 `/support/profile` to a session; `/support`, `/support/kb*`, sign-in, register and verify are public.

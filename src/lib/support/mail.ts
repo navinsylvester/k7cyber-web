@@ -1,22 +1,57 @@
 import 'server-only'
 
 /* Outbound mail for the portal: one-time codes and case notifications. SMTP when SMTP_URL is set; the console otherwise
-   (development). Bodies never include case content beyond the number and title. */
+   (development). Bodies never include case content beyond the number and title.
+
+   SUPPORT_MAIL_ALLOWLIST (11-staging-readiness.md item 11): on a shared test host UAT holds real customers' addresses from the
+   seed, so when the list is set the portal writes only to the addresses and domains on it and logs everything else as
+   suppressed. The one-time-code steps use the same list to decide who may ask for a code at all. Unset = no restriction. */
 
 export type Mail = { to: string; subject: string; text: string; html?: string }
+export type SendResult = { sent: boolean; suppressed?: string[] }
 
 export const mailConfigured = (): boolean => Boolean(process.env.SMTP_URL)
 
-export const sendMail = async (m: Mail): Promise<{ sent: boolean }> => {
+/** The allowlist as entries: `name@domain` (one address) or `@domain` / `domain` (every address there); null when unset. */
+export const mailAllowlist = (raw = process.env.SUPPORT_MAIL_ALLOWLIST): string[] | null => {
+  const items = (raw ?? '')
+    .split(/[\s,;]+/)
+    .map((x) => x.trim().toLowerCase())
+    .filter(Boolean)
+    .map((x) => (x.includes('@') ? x : `@${x}`))
+  return items.length ? items : null
+}
+
+/** Whether the portal may write to this address under the allowlist. Accepts `Name <x@y>` as well as bare addresses. */
+export const mailAllowed = (address: string, allow: string[] | null = mailAllowlist()): boolean => {
+  if (!allow) return true
+  const a = (address.match(/<([^>]+)>\s*$/)?.[1] ?? address).trim().toLowerCase()
+  const at = a.lastIndexOf('@')
+  if (at < 1) return false
+  const domain = a.slice(at)
+  return allow.some((e) => (e.startsWith('@') ? e === domain : e === a))
+}
+
+export const sendMail = async (m: Mail): Promise<SendResult> => {
   const from = process.env.SUPPORT_MAIL_FROM || 'K7 Support <support@k7computing.com>'
+  const recipients = m.to.split(',').map((x) => x.trim()).filter(Boolean)
+  const allow = mailAllowlist()
+  const suppressed = recipients.filter((r) => !mailAllowed(r, allow))
+  const to = recipients.filter((r) => mailAllowed(r, allow)).join(', ')
+  const extra = suppressed.length ? { suppressed } : {}
+  if (suppressed.length) {
+    // Addresses only outside production; the body never.
+    console.log(`[support mail] suppressed by SUPPORT_MAIL_ALLOWLIST: ${process.env.NODE_ENV !== 'production' ? suppressed.join(', ') : `${suppressed.length} recipient(s)`} · ${m.subject}`)
+  }
+  if (!to) return { sent: false, ...extra }
   if (!process.env.SMTP_URL) {
-    if (process.env.NODE_ENV !== 'production') console.log(`[support mail → ${m.to}] ${m.subject}\n${m.text}`)
-    return { sent: false }
+    if (process.env.NODE_ENV !== 'production') console.log(`[support mail → ${to}] ${m.subject}\n${m.text}`)
+    return { sent: false, ...extra }
   }
   const { createTransport } = await import('nodemailer')
   const t = createTransport(process.env.SMTP_URL)
-  await t.sendMail({ from, to: m.to, subject: m.subject, text: m.text, html: m.html })
-  return { sent: true }
+  await t.sendMail({ from, to, subject: m.subject, text: m.text, html: m.html })
+  return { sent: true, ...extra }
 }
 
 export const otpMail = (code: string, purpose: 'sign-in' | 'register'): Omit<Mail, 'to'> => ({

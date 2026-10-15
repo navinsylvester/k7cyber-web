@@ -53,9 +53,11 @@ Local dev uses Payload's push mode (schema synced on start). Credentials in `.en
   client in `src/lib/dataverse/` (write guard first), domain in `src/lib/support/` (`session.ts` gives
   `requireAgent()` / `requireCustomer()`; every customer query carries `customerScopeFilter`). Parts in
   `src/components/support/`. Tests: `tests/int/support-*.int.spec.ts` (no tenant needed).
-- Development sign-in: `SUPPORT_DEV_AGENT=probe` in `.env` lets the workspace use the probe's token
-  cache until the agent app registration has admin consent; `SUPPORT_DEV_SHOW_CODE=1` shows customers'
-  one-time codes on the verify page while no `SMTP_URL` is set.
+- Development sign-in: the Microsoft door works for agents (verified 2026-10-15). `SUPPORT_DEV_AGENT=probe` in `.env`
+  also opens the probe-user door; `SUPPORT_DEV_SERVICE=probe` only lets the customer side use the probe token in place
+  of the missing service app. `SUPPORT_DEV_SHOW_CODE=1` shows customers' one-time codes on the verify page while no
+  `SMTP_URL` is set. On any host other people can reach: door off, `SUPPORT_MAIL_ALLOWLIST` set (mail and codes go
+  only to listed addresses/domains; the on-screen code needs it off localhost).
 - Manager view at `/support/workspace/manage` (agents with a manager role, 09 §4c): KPI cards, engineer efficiency, SLA violation
   report, the at-risk board and the prevention sweep (`POST /api/support/sla/sweep` with `CRON_SECRET`). Targets, business hours,
   KPI cards and rules are configured on `/manage/kpis` and stored in the Payload global `support-settings`; the sweep log is the

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { getToken } from 'next-auth/jwt'
 
 import { auth } from '@/auth'
-import { probeToken, refreshAgentToken } from '@/lib/dataverse/auth'
+import { devAgentDoorEnabled, probeToken, refreshAgentToken } from '@/lib/dataverse/auth'
 import { list, NotAuthenticated, type DataverseAuth, type Row } from '@/lib/dataverse'
 
 import type { CustomerScope } from './cases'
@@ -18,13 +18,26 @@ import { memo } from './memo'
 export type AgentContext = { kind: 'agent'; userId: string; name: string; email: string; dev: boolean; auth: DataverseAuth }
 export type CustomerContext = { kind: 'customer'; scope: CustomerScope; name: string; auth: DataverseAuth }
 
-const secureCookie = (): boolean => /^https:/i.test(process.env.AUTH_URL ?? process.env.NEXT_PUBLIC_SERVER_URL ?? '')
+/** Which session cookie to read: the same rule Auth.js applies when it writes it. `AUTH_URL` wins when set; otherwise the
+    request's own protocol, which a tunnel or load balancer reports in `x-forwarded-proto` (https → `__Secure-`), so localhost
+    over http and the same server behind https can be used side by side. */
+const secureCookie = (h: Headers): boolean => {
+  if (process.env.AUTH_URL) return /^https:/i.test(process.env.AUTH_URL)
+  const proto = h.get('x-forwarded-proto')
+  if (proto) return proto.split(',')[0]!.trim().replace(/:$/, '').toLowerCase() === 'https'
+  return /^https:/i.test(process.env.NEXT_PUBLIC_SERVER_URL ?? '')
+}
 
 const agentToken = async (dev: boolean): Promise<string> => {
-  if (dev) return (await probeToken()).accessToken
+  if (dev) {
+    // A session minted by the dev-agent door dies with the door: closing it also ends any cookie that is still around.
+    if (!devAgentDoorEnabled()) throw new NotAuthenticated('The development sign-in is off.')
+    return (await probeToken()).accessToken
+  }
   const secret = process.env.AUTH_SECRET
   if (!secret) throw new NotAuthenticated('AUTH_SECRET is not set.')
-  const t = (await getToken({ req: { headers: await headers() }, secret, secureCookie: secureCookie() })) as (Record<string, unknown> & { accessToken?: string; refreshToken?: string; expiresAt?: number }) | null
+  const h = await headers()
+  const t = (await getToken({ req: { headers: h }, secret, secureCookie: secureCookie(h) })) as (Record<string, unknown> & { accessToken?: string; refreshToken?: string; expiresAt?: number }) | null
   if (!t?.accessToken) throw new NotAuthenticated()
   if (t.expiresAt && Date.now() / 1000 > t.expiresAt - 60 && t.refreshToken) {
     // The proxy persists refreshed tokens on the next request; here we only need a usable one now.
