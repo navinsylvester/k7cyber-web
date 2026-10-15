@@ -101,6 +101,12 @@
   .article-grid { grid-template-columns: 240px minmax(0, 40rem) minmax(0, 1fr); gap: clamp(40px, 5cqw, 80px); }
   .toc { position: sticky; top: 84px; align-self: start; }
 }
+/* L13 · The record rail: numbered paragraphs that can be cited. The number is the anchor; the target paragraph takes a 2px signal rule. */
+.record { counter-reset: para; }
+.record > .para { position: relative; padding-left: 56px; }
+.record > .para > .para-n { position: absolute; left: 0; top: .55em; text-decoration: none; color: var(--mu, var(--muted)); white-space: nowrap; }
+.record > .para > .para-n:hover, .record > .para:target > .para-n { color: var(--acc); }
+.record > .para:target::before { content: ""; position: absolute; left: -14px; top: .2em; bottom: .2em; width: 2px; background: var(--signal); }
 .toc { border-top: 1px solid var(--fg); }
 .toc summary { list-style: none; cursor: pointer; padding: 12px 0; display: flex; justify-content: space-between; }
 .toc summary::-webkit-details-marker { display: none; }
@@ -112,10 +118,9 @@
 .toc li a.is-active { border-left-color: var(--signal); color: var(--fg); }
 .prose pre .tok-k { color: #FF6647; }
 .prose pre .tok-c { opacity: .55; }
-.code-head { display: flex; justify-content: space-between; gap: 12px; margin: 1.6em 0 0; padding: 10px 22px; background: var(--code); color: #EFEEE8; border-bottom: 1px solid rgba(239, 238, 232, .14); }
-.code-head + pre { margin-top: 0; }
-.code-head .textbtn { color: #EFEEE8; font: inherit; letter-spacing: inherit; text-transform: inherit; }
-.code-head .textbtn:hover { color: #FF6647; }
+/* Code is filed (bundle.css .code/.ftab): the tab names the language and the length, and copies it. */
+.prose .code.filed { margin: calc(1.2em + var(--tab-h)) 0 1.6em; }
+.prose .code pre { margin: 0; }
 .prose figure.fig { margin: 2em 0; }
 .prose figure.fig .ph { --ar: 16 / 7; }
 .prose figure.fig > figcaption { margin-top: 10px; color: var(--mu, var(--muted)); }
@@ -201,17 +206,23 @@
 .report-actions .label { color: var(--mu, var(--muted)); }
 .year-filter { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; margin-bottom: 32px; }
 .seg-l button { padding: 9px 14px; font-size: 12px; }
+/* The lead dialog arrives stamped: no entry transition; a filed sheet whose tab carries the report and the pixel blinking twice. */
 dialog.lead {
-  border: 1px solid var(--ln, var(--line));
+  margin: auto; /* the global reset zeroes it; a modal centres through margin: auto */
+  border: 0;
   padding: 0;
+  background: transparent;
+  color: inherit;
   width: min(560px, calc(100% - 32px));
-  max-height: calc(100% - 32px);
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
 }
 dialog.lead::backdrop { background: rgba(10, 10, 9, .66); }
-.lead-inner { padding: 28px clamp(20px, 4vw, 36px) 32px; display: flex; flex-direction: column; gap: 22px; }
-.lead-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.lead-head .x { border: 0; background: none; cursor: pointer; font-size: 22px; line-height: 1; padding: 4px; }
+.lead-sheet { background: var(--bg); color: var(--fg); }
+.lead-sheet > .ftab { font-weight: 400; }
+.lead-sheet > .ftab .x { border: 0; background: none; cursor: pointer; margin-left: auto; }
+/* The sheet scrolls inside; the sheet itself never clips, or it would clip its own tab. */
+.lead-inner { padding: 28px clamp(20px, 4vw, 36px) 32px; display: flex; flex-direction: column; gap: 22px; max-height: calc(100dvh - 32px - var(--tab-h)); overflow: auto; }
 .lead h2 { margin: 0; font-size: 30px; line-height: 1.05; letter-spacing: -.035em; font-weight: 600; }
 .lead p { margin: 0; color: var(--mu, var(--muted)); font-size: 15px; }
 .lead form { display: flex; flex-direction: column; gap: 22px; }

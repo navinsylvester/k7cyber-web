@@ -96,50 +96,50 @@ export default async function TopThreatsPage({ searchParams }: { searchParams: P
               )}
             </div>
           </form>
-          <div className="results label">
-            <span id="tt-cap">
+          <div className="ledger filed">
+            <div className="ftab label" id="tt-cap">
               Showing {r.docs.length} of {r.totalDocs} · sorted by {args.sort === 'seen' ? 'last seen' : args.sort}, {dir === 'desc' ? 'newest' : 'A to Z'} first
-            </span>
-            <span>Select a column to sort</span>
-          </div>
-          <div className="table-wrap">
-            <table className="dtable" style={{ minWidth: 760 }}>
-              <caption className="sr-only">Top threats detected by K7 Labs</caption>
-              <thead>
-                <tr>
-                  <SortHead col="name" label="K7 detection name" current={args.sort!} dir={dir} base={base} path={PATH} />
-                  <SortHead col="os" label="Affected OS" current={args.sort!} dir={dir} base={base} path={PATH} />
-                  <SortHead col="prevalence" label="Prevalence" current={args.sort!} dir={dir} base={base} path={PATH} />
-                  <SortHead col="seen" label="Last seen" current={args.sort!} dir={dir} base={base} path={PATH} />
-                  <SortHead col="version" label="AV definition version" current={args.sort!} dir={dir} base={base} path={PATH} />
-                </tr>
-              </thead>
-              <tbody>
-                {r.docs.map((t) => (
-                  <tr className="row" key={t.id}>
-                    <td className="id">
-                      <LidDet name={t.detectionName} href={`/research/top-threats/${t.slug}`} />
-                    </td>
-                    <td>{(t.affectedOs ?? []).map((o) => OS[o] ?? o).join(', ')}</td>
-                    <td>
-                      <Prev value={t.prevalence} />
-                    </td>
-                    <td className="date">{dmy(t.lastSeen)}</td>
-                    <td className="ver">{t.avDefinitionVersion}</td>
+            </div>
+            <span className="ledger-hint label">Select a column to sort</span>
+            <div className="table-wrap">
+              <table className="dtable" style={{ minWidth: 760 }}>
+                <caption className="sr-only">Top threats detected by K7 Labs</caption>
+                <thead>
+                  <tr>
+                    <SortHead col="name" label="K7 detection name" current={args.sort!} dir={dir} base={base} path={PATH} />
+                    <SortHead col="os" label="Affected OS" current={args.sort!} dir={dir} base={base} path={PATH} />
+                    <SortHead col="prevalence" label="Prevalence" current={args.sort!} dir={dir} base={base} path={PATH} />
+                    <SortHead col="seen" label="Last seen" current={args.sort!} dir={dir} base={base} path={PATH} />
+                    <SortHead col="version" label="AV definition version" current={args.sort!} dir={dir} base={base} path={PATH} />
                   </tr>
-                ))}
-                {r.docs.length === 0 && (
-                  <tr className="empty">
-                    <td colSpan={5}>
-                      No detections match these filters.{' '}
-                      <Link className="link-u" href={PATH}>
-                        Clear filters
-                      </Link>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {r.docs.map((t) => (
+                    <tr className="row" key={t.id}>
+                      <td className="id">
+                        <LidDet name={t.detectionName} href={`/research/top-threats/${t.slug}`} />
+                      </td>
+                      <td>{(t.affectedOs ?? []).map((o) => OS[o] ?? o).join(', ')}</td>
+                      <td>
+                        <Prev value={t.prevalence} />
+                      </td>
+                      <td className="date">{dmy(t.lastSeen)}</td>
+                      <td className="ver">{t.avDefinitionVersion}</td>
+                    </tr>
+                  ))}
+                  {r.docs.length === 0 && (
+                    <tr className="empty">
+                      <td colSpan={5}>
+                        No detections match these filters.{' '}
+                        <Link className="link-u" href={PATH}>
+                          Clear filters
+                        </Link>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
           <Pager page={args.page!} totalPages={r.totalPages} href={(n) => PATH + qs(base, { page: n > 1 ? n : undefined })} label="Threat pages" count={`${TABLE_PAGE} per page`} />
         </section>

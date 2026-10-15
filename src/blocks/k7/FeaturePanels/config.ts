@@ -60,7 +60,7 @@ export const FeaturePanels: Block = {
             },
           ],
         },
-        { name: 'label', type: 'text', admin: { description: 'Mono label in acc-ink above the title.' } },
+        { name: 'label', type: 'text', admin: { description: 'The panel\'s tab (S7): a mono label with the evidence, e.g. AMTSO · award. Without it the panel has no tab.' } },
         { name: 'title', type: 'text', required: true },
         { name: 'text', type: 'textarea' },
         { name: 'bullets', type: 'array', admin: { initCollapsed: true, ...rowLabel }, fields: [{ name: 'text', type: 'text', required: true }] },
@@ -77,7 +77,7 @@ export const FeaturePanels: Block = {
             { name: 'tags', type: 'array', admin: { ...rowLabel }, fields: [{ name: 'name', type: 'text', required: true }] },
           ],
         },
-        { name: 'onPanel', type: 'checkbox', defaultValue: true, admin: { description: 'Panel ground inside the cut (off: paper).' } },
+        { name: 'onPanel', type: 'checkbox', defaultValue: true, admin: { description: 'Panel ground (off: paper).' } },
       ],
     },
     {

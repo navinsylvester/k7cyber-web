@@ -93,7 +93,7 @@ export default async function PostPage({ params }: Args) {
             <div className="article-grid">
               <Toc items={toc} />
               <div>
-                <Prose data={post.content} />
+                <Prose data={post.content} rail />
                 {detections.length > 0 && (
                   <div className="det label" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 32, paddingTop: 12, borderTop: '1px solid var(--fg)' }}>
                     <span className="pixel" aria-hidden="true" />

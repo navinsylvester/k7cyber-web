@@ -12,7 +12,7 @@ export const IndexRows: React.FC<IndexRowsBlock & { meta: SheetMeta }> = ({ meta
       <svg aria-hidden="true" className="sheet-pattern">
         <defs>
           <pattern id="pt2" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M14 0L6 20" stroke="currentColor" strokeWidth="1" fill="none" />
+            <path d="M14.56 0L5.44 20" stroke="currentColor" strokeWidth="1" fill="none" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#pt2)" />

@@ -13,13 +13,13 @@ The support-portal parts from section 09 (reference CSS: `src/app/(portal)/porta
 
 **S6 Timeline (`tl`)** the agent's thread: timestamp column in mono, a kind tag (Email, Internal note, Portal note, Call, Task), the author, the subject, and the body behind a summary (+/−). Internal notes carry a dashed tag.
 
-**S7 Ledger (`dtable` in the workspace)** the saved view's columns as mono heads, sortable through the head links, the case number as the row link, dates DD-MM-YYYY, status as a tag. Pages of 25; the pager and the count sit in `ledger-foot`.
+**S7 Ledger (`dtable` in the workspace)** the saved view's columns as mono heads, sortable through the head links, the case number as the row link, dates DD-MM-YYYY, status as a tag. Pages of 25; the pager and the count sit in `ledger-foot`. Where a list has a results line (products, customers) it is filed: the line is the ledger's tab and the heads sit on a band (DataTable); the case views keep their count in the foot.
 
 **S8 Action panels (`acts`)** the right column of a case: each action is a `details` block with a short form (note, reply, status, assign, resolve, cancel, reopen, queue, call, task). Confirmation is a checkbox inside the form, never a browser dialog.
 
 **S9 Charts (`bars`, `cols`, `trend`)** dashboards on the ledger grid: horizontal bars for categories (sorted by size, twelve plus "Other"), columns for short series, an inline SVG line with a signal end-point for trends. Ink only; Critical is signal.
 
-**S10 Workspace bar (`wsbar`)** the sitemap of the mobile app as research-style tabs under the header, with the quick search on the right. The current section joins the sheet's ground.
+**S10 Workspace bar (`wsbar`)** the sitemap of the mobile app as research-style tabs under the header, with the quick search on the right; the tabs are 40px and cut on the 7 like every tab. The current section joins the sheet's ground.
 
 **S11 Choice tiles (`choice`)** radio groups as tiles for the choices a customer makes with one tap: what the case is about, individual or organisation. The chosen tile inverts; hover on the chosen tile goes signal.
 

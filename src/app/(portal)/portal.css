@@ -21,7 +21,7 @@
 .wsbar { border-bottom: 1px solid var(--ln); }
 .wsbar-in { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 28px; padding: 14px var(--pad-fluid) 0; }
 .wsbar .rtabs { margin: 0; padding: 0; flex: 1 1 auto; }
-.wsbar .rtab { height: 40px; }
+.wsbar .rtab { height: 40px; --h: 40px; }
 .wssearch { flex: 1 1 260px; max-width: 360px; margin-bottom: 8px; }
 @container (max-width: 760px) { .wsbar .rtabs { flex-basis: 100%; order: 2; } .wssearch { max-width: none; order: 1; } }
 .wssearch .control { border-bottom-width: 1px; }

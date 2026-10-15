@@ -2,6 +2,17 @@
 
 Newest first. Each entry names the rule, the reference CSS and the parts it touched, so the system describes the site as built (README.md, "Keeping it current"). Until 2026-10-15 the folder mirrored the Design System artifact unchanged (SOURCE.md).
 
+## 2026-10-15 · 2.2, the case file
+
+- **The language is named**: K7 Design Language is a case file. README opens with the two marks, the pixel and the tab; new sections *The pixel*, *The test* (would it survive a photocopy?) and *The words*; the Signatures keep S1 to S6 and gain S7 Filed and S8 The record rail. `tokens.json` is version 2.2.
+- **S2 The Seven** replaces the cut. The 7 in `k7-icon.svg` is 24.5° from vertical, descending left; the old cut was a 45° top-right chamfer, its mirror. New tokens `seven` and `seven-run`; `cut-tab`, `cut-btn` and `cut-feature` are gone. Every tab's right edge now runs its full height on the 7 (`--tab7`): `.sheet-tab`, `.rtab` (and the 40px workspace tabs in `portal.css`), `.btn-primary`, `.btn-ink`, `.btn-sm`, the new `.wordmark-mark`. Nothing else is cut. `bundle.css`, `tokens.css`, `globals.css` comment; SheetTab, Button, Tab previews.
+- **S7 Filed** (`.filed`, `.ftab`, `.ledger`, `.ledger-hint`, `.code` in `bundle.css`; new part `Tab`): the feature panel's label moves onto its tab and the panel's corner is square (`FeaturePanels` block, the blog's `PostFeature`, the threat-reports lead; FeaturePanel README and preview; the Home and Platform artboards); the Labs vulnerability and top-threats ledgers and the support products and customers lists raise the results line as their tab with the heads on a band (DataTable README and preview, LabsParts L4, SupportParts S7); the report cover's series label is its tab over a square `cover-body` (`Cover.tsx`, the home cover, ReportCover README and preview, the Home artboard); code is filed with the language and the line count on its tab (`Code` block, `research.css`); the lead dialog is a filed sheet whose tab carries the report title (`Lead.client.tsx`, `research.css`, LabsParts L11).
+- **S4 The stair** steps .82em, .41em, 0 so the line starts sit on the 7 (`bundle.css`; Hero README). **PT2 Seven hatch** is drawn at 24.5° (`M14.56 0 L5.44 20`: `IndexRows` block, Pattern README and preview, the Home artboard, the Cover poster).
+- **Motion**: said things ease, counted things step; a thing that arrives is stamped, `.pixel.is-stamp` blinks twice (the lead dialog). Written in Type and Layout and motion; no eased counter existed to remove, and StatRow stays still.
+- **S8 The record rail** on Labs pages only: `Prose` numbers paragraphs when given `rail` (the post page) and the CVE record numbers its technical information (`.record`, `.para`, `.para-n` in `research.css`; LabsParts L13; Prose README).
+- **The pixel** is named as the crown jewel: README section, `tokens.json` usage, Icon README; `.pixel` comment in `bundle.css`.
+- The proposal page this came from: https://claude.ai/artifact/GyqcEiHjRxrDcf82cQwx1K
+
 ## 2026-10-15
 
 - **Icon, SiteFooter**: five social glyphs (LinkedIn, X, YouTube, Instagram, Facebook) drawn on the icon rules, each with its one pixel placed where it means something. SiteFooter shows them at 32px in the 36px frames in place of the two-letter mono codes, which remain the fallback for a network without a glyph. `src/components/k7/Icon.tsx` (`social`), `src/Footer`, the desktop artboards and `designs/k7chrome.py`, the Icon and SiteFooter previews.

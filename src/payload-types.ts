@@ -948,7 +948,7 @@ export interface FeaturePanelsBlock {
       footRight?: string | null;
     };
     /**
-     * Mono label in acc-ink above the title.
+     * The panel's tab (S7): a mono label with the evidence, e.g. AMTSO · award. Without it the panel has no tab.
      */
     label?: string | null;
     title: string;
@@ -1000,7 +1000,7 @@ export interface FeaturePanelsBlock {
         | null;
     };
     /**
-     * Panel ground inside the cut (off: paper).
+     * Panel ground (off: paper).
      */
     onPanel?: boolean | null;
     id?: string | null;

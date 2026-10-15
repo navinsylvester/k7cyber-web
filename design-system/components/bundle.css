@@ -1,12 +1,11 @@
-/* K7 Design Language 2.1 — component stylesheet. Colours, cut sizes and type come from tokens.css.
+/* K7 Design Language 2.2 — component stylesheet. Colours, the 7's angle and type come from tokens.css.
    Ported from k7-research.css (K7 Research section, Oct 2026) and the Homepage v2 mockup. No radius, no shadows, no gradients. */
 
 :root {
   --ease: cubic-bezier(.7, 0, .2, 1);
   --pad-fluid: clamp(20px, 2.8cqw, 40px);
-  --cut-tab-path: polygon(0 0, calc(100% - var(--cut-tab)) 0, 100% var(--cut-tab), 100% 100%, 0 100%);
-  --cut-btn-path: polygon(0 0, calc(100% - var(--cut-btn)) 0, 100% var(--cut-btn), 100% 100%, 0 100%);
-  --cut-feature-path: polygon(0 0, calc(100% - var(--cut-feature)) 0, 100% var(--cut-feature), 100% 100%, 0 100%);
+  /* S2 · The tab: full top edge, right edge descending to the left at the 7's angle. --h is the element's height. */
+  --tab7: polygon(0 0, 100% 0, calc(100% - var(--h, var(--tab-h)) * var(--seven-run)) 100%, 0 100%);
 }
 
 /* ---------- Grounds: every section is a sheet ---------- */
@@ -46,10 +45,12 @@ button { font: inherit; color: inherit; }
 .body-l { font-size: 17px; line-height: 1.55; text-wrap: pretty; }
 .body-s { font-size: 15px; line-height: 1.5; }
 
-/* S5 Signal pixel */
+/* S5 · The pixel: the one dot of the language. Always a square; it blinks in steps, never fades, and only when live. */
 .pixel { display: inline-block; flex: none; width: var(--pixel); height: var(--pixel); background: var(--signal); }
 .g-signal .pixel { background: var(--on-signal); }
 .pixel.is-live { animation: k7-blink 1.6s steps(1) infinite; }
+/* A thing that arrives is stamped: no entry transition, and the pixel on its tab blinks twice. */
+.pixel.is-stamp { animation: k7-blink .5s steps(1) 2; }
 @keyframes k7-blink { 50% { opacity: .15; } }
 
 /* ---------- Sheets and the tab walk (S1) ---------- */
@@ -57,9 +58,9 @@ button { font: inherit; color: inherit; }
 .sheet-tab {
   position: absolute; bottom: calc(100% - 1px);
   left: calc(var(--pad-fluid) + (100% - 2 * var(--pad-fluid) - var(--tab-w)) * var(--k, 1));
-  width: var(--tab-w); height: var(--tab-h); padding: 0 14px;
+  width: var(--tab-w); height: var(--tab-h); --h: var(--tab-h); padding: 0 calc(14px + var(--h) * var(--seven-run) / 2) 0 14px;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  background: var(--bg); color: var(--fg); clip-path: var(--cut-tab-path);
+  background: var(--bg); color: var(--fg); clip-path: var(--tab7);
 }
 .sheet-tab > span:first-child { display: flex; align-items: center; gap: 8px; }
 .sheet-tab.is-state { left: auto; right: var(--pad-fluid); width: auto; min-width: var(--tab-w); padding-right: 28px; justify-content: flex-start; gap: 10px; }
@@ -75,6 +76,9 @@ button { font: inherit; color: inherit; }
 .brand svg, .brand img { display: block; }
 .brand img { height: 26px; width: auto; }
 .wordmark { font-weight: 800; font-size: 22px; letter-spacing: -.05em; font-stretch: 112%; font-variation-settings: 'wdth' 112; line-height: 1; }
+/* The type-set wordmark's square: the tab shape at 22px, in signal. */
+.wordmark-mark { width: 22px; height: 22px; --h: 22px; flex: none; background: var(--signal); clip-path: var(--tab7); }
+.g-signal .wordmark-mark { background: var(--on-signal); }
 .brand .label { opacity: var(--quiet); }
 .main-nav { margin-left: auto; display: flex; gap: 22px; white-space: nowrap; font-size: 15px; font-weight: 500; letter-spacing: -.01em; }
 .main-nav a, .main-nav button { text-decoration: none; padding: 6px 0; position: relative; display: inline-flex; align-items: center; gap: 7px; background: none; border: 0; cursor: pointer; }
@@ -115,7 +119,7 @@ button { font: inherit; color: inherit; }
 .crumbs [aria-current] { color: var(--fg); }
 .rtabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin: 0 calc(-1 * var(--pad-fluid)); padding: 0 var(--pad-fluid); }
 .rtabs::-webkit-scrollbar { display: none; }
-.rtab { flex: none; display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 28px 0 14px; text-decoration: none; color: var(--mu); clip-path: var(--cut-tab-path); transition: background .24s var(--ease), color .24s; }
+.rtab { flex: none; display: flex; align-items: center; gap: 8px; height: 42px; --h: 42px; padding: 0 calc(14px + var(--h) * var(--seven-run) / 2) 0 14px; text-decoration: none; color: var(--mu); clip-path: var(--tab7); transition: background .24s var(--ease), color .24s; }
 .rtab:hover { background: var(--fg); color: var(--bg); }
 .rtab[aria-current="page"] { color: var(--ink); background: var(--panel); }
 .rtab .pixel { display: none; }
@@ -123,15 +127,16 @@ button { font: inherit; color: inherit; }
 
 /* ---------- Buttons and links ---------- */
 .btn { display: inline-flex; align-items: center; gap: 14px; height: var(--btn-h); padding: 0 22px 0 20px; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; border: 0; white-space: nowrap; transition: background .24s var(--ease), color .24s; }
-.btn-primary { background: var(--signal); color: var(--on-signal); clip-path: var(--cut-btn-path); padding-right: 28px; }
+.btn-primary { background: var(--signal); color: var(--on-signal); --h: var(--btn-h); clip-path: var(--tab7); padding-right: calc(20px + var(--h) * var(--seven-run) / 2); }
 .btn-primary:hover { background: var(--fg); color: var(--bg); }
 .g-signal .btn-primary { background: var(--on-signal); color: var(--signal); }
 .g-signal .btn-primary:hover { background: var(--contrast-ink); color: var(--on-signal); }
-.btn-ink { background: var(--ink); color: var(--paper); clip-path: var(--cut-btn-path); padding-right: 28px; }
+.btn-ink { background: var(--ink); color: var(--paper); --h: var(--btn-h); clip-path: var(--tab7); padding-right: calc(20px + var(--h) * var(--seven-run) / 2); }
 .btn-ink:hover { background: var(--paper); color: var(--ink); }
 .btn-line { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 1px var(--fg); }
 .btn-line:hover { background: var(--fg); color: var(--bg); }
 .btn-sm { height: 36px; padding: 0 14px; font-size: 13px; gap: 10px; }
+.btn-sm.btn-primary, .btn-sm.btn-ink { --h: 36px; padding-right: calc(14px + var(--h) * var(--seven-run) / 2); }
 .btn[disabled] { opacity: var(--disabled); pointer-events: none; }
 .link-u { font-weight: 600; text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px; transition: text-decoration-thickness .24s var(--ease); }
 .link-u:hover { text-decoration-thickness: 3px; color: inherit; }
@@ -210,10 +215,11 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .hero-home .pattern { position: absolute; inset: 0; width: 100%; height: 100%; opacity: var(--pattern-mid); pointer-events: none; -webkit-mask-image: linear-gradient(100deg, transparent 30%, #000 75%); mask-image: linear-gradient(100deg, transparent 30%, #000 75%); }
 .hero-home > *:not(.pattern) { position: relative; }
 .stair { margin: clamp(40px, 5.5cqw, 80px) 0 0; font-size: min(calc((100cqw - 2 * var(--pad-fluid)) / 12.6), 128px); line-height: .9; letter-spacing: -.055em; font-weight: 600; }
+/* S4 · The three line starts sit on the 7's line: .9em of line height × tan(24.5°) = .41em per step. */
 .stair > span { display: block; }
-.stair > span:nth-child(1) { padding-left: 2em; }
-.stair > span:nth-child(2) { padding-left: 1em; }
-@container (max-width: 640px) { .stair { font-size: calc((100cqw - 2 * var(--pad-fluid)) / 10.4); } .stair > span:nth-child(1) { padding-left: 1em; } .stair > span:nth-child(2) { padding-left: .5em; } }
+.stair > span:nth-child(1) { padding-left: .82em; }
+.stair > span:nth-child(2) { padding-left: .41em; }
+@container (max-width: 640px) { .stair { font-size: calc((100cqw - 2 * var(--pad-fluid)) / 10.4); } }
 .redact { position: relative; display: inline-block; color: transparent; background: var(--signal); transition: color .24s, background .24s var(--ease); cursor: default; }
 .redact:hover, .redact:focus { color: var(--fg); background: transparent; }
 .redact-note { display: inline-flex; gap: 8px; margin-top: 14px; color: var(--mu); }
@@ -243,8 +249,32 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .facts .k { flex: none; width: 92px; font: 500 12px/1.6 var(--font-mono); letter-spacing: .06em; color: var(--acc); text-transform: uppercase; }
 .facts .v { font-size: 17px; line-height: 1.45; }
 
-/* ---------- Feature panel (cut) ---------- */
-.feature { clip-path: var(--cut-feature-path); padding: clamp(20px, 2.6cqw, 36px); display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; position: relative; transition: background .28s var(--ease), color .28s; color: var(--t-fg); background: var(--t-bg); }
+/* ---------- S7 · Filed: a container with its own ground raises a tab that carries its evidence ---------- */
+.filed { position: relative; margin-top: var(--tab-h); }
+.ftab { position: absolute; bottom: calc(100% - 1px); left: 0; height: var(--tab-h); --h: var(--tab-h);
+  display: inline-flex; align-items: center; gap: 10px; padding: 0 calc(14px + var(--h) * var(--seven-run) / 2) 0 14px;
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: var(--t-bg, var(--bg)); color: var(--t-fg, var(--fg)); clip-path: var(--tab7);
+  transition: background .28s var(--ease), color .28s; }
+.ftab.is-right { left: auto; right: 0; }
+.ftab .textbtn, .ftab .x { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
+.ftab .textbtn:hover, .ftab .x:hover { color: var(--acc); }
+.ftab .x { margin-left: 4px; font-size: 18px; line-height: 1; padding: 0 2px; }
+/* A hint that sits in the tab's row, at the right, and is not a tab. */
+.ledger-hint { position: absolute; right: 0; bottom: 100%; height: var(--tab-h); display: flex; align-items: center; color: var(--mu); }
+/* The ledger: the head as a band on the next ground, the results line as its tab, rows on hairlines. */
+.ledger { --t-bg: var(--panel); --t-fg: var(--ink); }
+.g-panel .ledger { --t-bg: var(--paper); }
+.g-contrast .ledger { --t-bg: var(--paper); --t-fg: var(--contrast-ink); }
+.ledger .table-wrap { border-top: 0; }
+.ledger thead th { background: var(--t-bg); border-bottom: 1px solid var(--fg); padding-top: 12px; padding-bottom: 12px; }
+.ledger thead th:first-child, .ledger td:first-child { padding-left: 14px; }
+/* Code is filed on the code ground; the tab names the language and copies it. */
+.code { --t-bg: var(--code); --t-fg: var(--contrast-ink); }
+.code pre { margin: 0; }
+
+/* ---------- Feature panel (filed) ---------- */
+.feature { padding: clamp(20px, 2.6cqw, 36px); display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; position: relative; transition: background .28s var(--ease), color .28s; color: var(--t-fg); background: var(--t-bg); }
 .feature.on-panel { --t-bg: var(--panel); --t-fg: var(--ink); }
 .feature.is-link:hover, .feature.is-link:focus-within { --t-fg: var(--bg); --t-bg: var(--fg); }
 @container (min-width: 760px) { .feature.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; } .feature.two > .ph { aspect-ratio: auto; min-height: 260px; } }
@@ -411,12 +441,15 @@ details.more[open] summary::after { content: "−"; }
 .fresh-ago { opacity: .62; }
 .copy { margin-left: 10px; font: 400 10px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; background: none; border: 1px solid var(--ln); padding: 4px 6px; cursor: pointer; vertical-align: 1px; }
 .copy:hover { background: var(--fg); color: var(--bg); }
-.cover { container-type: inline-size; position: relative; aspect-ratio: 3 / 4; background: #0a0a09; color: var(--contrast-ink); box-shadow: inset 0 0 0 1px var(--contrast-line); clip-path: polygon(0 0, 88% 0, 100% 9%, 100% 100%, 0 100%); display: flex; flex-direction: column; justify-content: space-between; padding: 7%; overflow: hidden; }
-.cover-top { display: flex; align-items: center; gap: 4cqw; font: 500 5.4cqw/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
-.cover-series { font-size: 9cqw; line-height: 1; letter-spacing: -.035em; font-weight: 600; margin-top: 8cqw; max-width: 8em; }
+/* The cover is filed: its label is a tab in the cover's own ground, scaled with the cover, over a square body. */
+.cover { container-type: inline-size; position: relative; --t-bg: #0a0a09; --t-fg: var(--contrast-ink); color: var(--t-fg); }
+.cover > .ftab { position: static; display: flex; width: max-content; height: 15cqw; --h: 15cqw; gap: 3cqw; padding: 0 calc(5cqw + var(--h) * var(--seven-run) / 2) 0 5cqw; font-size: 5.4cqw; font-weight: 500; }
+.cover > .ftab svg { width: 7cqw; height: 7cqw; flex: none; }
+.cover-body { aspect-ratio: 3 / 4; background: var(--t-bg); box-shadow: inset 0 0 0 1px var(--contrast-line); display: flex; flex-direction: column; justify-content: space-between; padding: 7%; overflow: hidden; }
+.cover-series { font-size: 9cqw; line-height: 1; letter-spacing: -.035em; font-weight: 600; margin-top: 2cqw; max-width: 8em; }
 .cover-period { font-size: 30cqw; line-height: .82; letter-spacing: -.04em; font-weight: 600; font-stretch: 62%; font-variation-settings: 'wdth' 62; }
 .cover-period .yr { display: block; }
-.cover-period .sig { display: inline-block; width: .16em; height: .16em; margin-left: .04em; background: var(--signal); clip-path: polygon(0 0, 60% 0, 100% 40%, 100% 100%, 0 100%); }
+.cover-period .sig { display: inline-block; width: .16em; height: .16em; margin-left: .04em; background: var(--signal); }
 .cover-foot { display: flex; justify-content: space-between; gap: 2cqw; font: 400 4.6cqw/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; opacity: var(--quiet); border-top: 1px solid var(--contrast-line); padding-top: 3.5cqw; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
