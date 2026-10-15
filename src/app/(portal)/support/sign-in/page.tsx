@@ -5,7 +5,7 @@ import React from 'react'
 
 import { auth } from '@/auth'
 import { Field, Flash } from '@/components/support/Parts'
-import { devProbeEnabled } from '@/lib/dataverse/auth'
+import { devAgentDoorEnabled } from '@/lib/dataverse/auth'
 
 import { agentSignIn, requestSignInCode } from './actions'
 
@@ -14,6 +14,7 @@ export const metadata: Metadata = { title: 'Sign in' }
 const ERRORS: Record<string, string> = {
   email: 'That does not look like an email address.',
   rate: 'Too many codes requested. Wait a few minutes and try again.',
+  allowlist: 'This test system only sends codes to approved email addresses. Ask the portal team to add yours.',
   NoDataverseAccess: 'Your Microsoft account signed in, but it has no access to the support system. Ask the CRM administrator for a role.',
   SessionExpired: 'Your session ended. Sign in again.',
   probe: 'The probe token could not be used. Run the probe once to sign in (python3 -I scripts/dataverse-probe.py get WhoAmI).',
@@ -68,7 +69,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         <button className={`btn ${agentFirst ? 'btn-primary' : 'btn-line'}`} type="submit" name="provider" value="microsoft-entra-id">
           Sign in with Microsoft →
         </button>
-        {devProbeEnabled() && (
+        {devAgentDoorEnabled() && (
           <button className="btn btn-line" type="submit" name="provider" value="dev-agent" title="Uses scripts/.token_cache.json (development only)">
             Continue as probe user
           </button>

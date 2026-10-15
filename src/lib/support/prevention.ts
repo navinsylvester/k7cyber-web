@@ -150,11 +150,11 @@ export const runSweep = async (auth: DataverseAuth, o: { actor: string; live?: b
           const email = agents.find((x) => x.id === v.c.owner.id)?.email
           if (!email) throw new Error('owner has no email')
           const r = await sendMail({ to: email, subject: `[SLA] ${v.c.ticket}: ${v.label}`, text: `${v.c.ticket} "${v.c.title}"\n${v.reason}.\nTarget ${fmtMinutes(v.c.resolve.target)}; ${fmtLeft(v.c.resolve)}.\n\n${caseUrl(v.c.id)}` })
-          notes.push(r.sent ? 'owner emailed' : 'owner email logged (no SMTP)')
+          notes.push(r.sent ? 'owner emailed' : r.suppressed?.length ? 'owner email suppressed (allowlist)' : 'owner email logged (no SMTP)')
         } else if (a === 'email-managers') {
           if (!settings.sweep.managerEmails.length) throw new Error('no manager emails configured')
           const r = await sendMail({ to: settings.sweep.managerEmails.join(', '), subject: `[SLA] ${v.c.ticket}: ${v.label}`, text: `${v.c.ticket} "${v.c.title}" owned by ${v.c.owner.name}\n${v.reason}.\nTarget ${fmtMinutes(v.c.resolve.target)}; ${fmtLeft(v.c.resolve)}.\n\n${caseUrl(v.c.id)}` })
-          notes.push(r.sent ? 'managers emailed' : 'manager email logged (no SMTP)')
+          notes.push(r.sent ? 'managers emailed' : r.suppressed?.length ? 'manager email suppressed (allowlist)' : 'manager email logged (no SMTP)')
         } else notes.push('flagged')
       } catch (e) {
         failed = true

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { getToken } from 'next-auth/jwt'
 
 import { auth } from '@/auth'
-import { probeToken, refreshAgentToken } from '@/lib/dataverse/auth'
+import { devAgentDoorEnabled, probeToken, refreshAgentToken } from '@/lib/dataverse/auth'
 import { list, NotAuthenticated, type DataverseAuth, type Row } from '@/lib/dataverse'
 
 import type { CustomerScope } from './cases'
@@ -21,7 +21,11 @@ export type CustomerContext = { kind: 'customer'; scope: CustomerScope; name: st
 const secureCookie = (): boolean => /^https:/i.test(process.env.AUTH_URL ?? process.env.NEXT_PUBLIC_SERVER_URL ?? '')
 
 const agentToken = async (dev: boolean): Promise<string> => {
-  if (dev) return (await probeToken()).accessToken
+  if (dev) {
+    // A session minted by the dev-agent door dies with the door: closing it also ends any cookie that is still around.
+    if (!devAgentDoorEnabled()) throw new NotAuthenticated('The development sign-in is off.')
+    return (await probeToken()).accessToken
+  }
   const secret = process.env.AUTH_SECRET
   if (!secret) throw new NotAuthenticated('AUTH_SECRET is not set.')
   const t = (await getToken({ req: { headers: await headers() }, secret, secureCookie: secureCookie() })) as (Record<string, unknown> & { accessToken?: string; refreshToken?: string; expiresAt?: number }) | null

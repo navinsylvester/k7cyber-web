@@ -18,7 +18,7 @@ build needs. The items below are grouped by who unblocks them. Sizes are rough a
 ## 1. Blockers outside the code
 | # | item | who | notes |
 |---|---|---|---|
-| 1 | **Entra admin consent for the agent app** "K7 Support Portal – Agents (Dev)" | a Global or Cloud Application Administrator | The Dynamics CRM delegated `user_impersonation` is added; consent is not granted and the Graph OIDC scopes (`openid profile email offline_access`) are not pre-registered. Navin has no directory role. Do `06-entra-setup.md` §A step 6, add the staging redirect URI `https://<staging host>/api/auth/callback/microsoft-entra-id`, and set *assignment required* with a testers group (step 7). Without consent nobody can sign in on staging: the `dev-agent` door is compiled out of production builds (`NODE_ENV`). |
+| 1 | ~~Entra admin consent for the agent app~~ **done 2026-10-15**: Navin signed in through the Microsoft door and got a working delegated Dataverse token (consent exists; user consent or an admin grant, not established) | Navin (owner) | Left: add the staging redirect URI `https://<staging host>/api/auth/callback/microsoft-entra-id`, register the Graph OIDC scopes if a tester's first sign-in prompts for them, and set *assignment required* with a testers group (`06-entra-setup.md` §A step 7). |
 | 2 | **Service app registration and its application user in UAT** | Navin creates the registration (`06` §B); the CRM admin adds the application user | Customer registration and sign-in, My cases, the sweep endpoint and the CSAT pass all run as `{ kind: 'service' }`. In development that falls back to the probe token; a production build has no fallback. System Customizer for the smoke test, then the *Portal API* role from `07` §4. |
 | 3 | **An SMTP relay** (`SMTP_URL`) | Navin with IT | One-time codes are the only way a customer gets in and they leave only through SMTP; a production build does not even log them. Also survey invitations, low-score and prevention mails, product desk mails. Microsoft 365 SMTP AUTH on a support mailbox, or a transactional sender. Switch it on only after item 11. |
 | 4 | **UAT capacity deadline** | the licence owner | Tenant over its Dataverse entitlement (47.5 GB entitled, 49.2 GB used on 2026-10-12). Microsoft's storage validation rolls out 2026-11-09 to 2026-12-04 and puts non-PAYG sandboxes into administration mode 30 days after it starts, UAT included. Buy capacity, link UAT to pay-as-you-go, or request the 45-day extension before the window. |
@@ -32,13 +32,13 @@ build needs. The items below are grouped by who unblocks them. Sizes are rough a
 | 8 | **A database the build can reach** | decision + ½ day | `src/app/(frontend)/[slug]/page.tsx` prerenders through `generateStaticParams`, so `next build` queries Postgres. Options: Cloud Build with the Cloud SQL proxy; build on the dev machine against the local database and push the image; or make those pages dynamic on staging. First deploy: build locally and push. |
 | 9 | **Payload migrations** | 2–3 h | No `src/migrations`. Local dev uses push mode, which runs only under `next dev`. Generate the first migration (ten support collections, two globals, the site's collections) and run `payload migrate` at container start or as a deploy step. |
 | 10 | **Durable file storage** | ½ day | `Media` (`public/media`), `ReportFiles` (`uploads/reports`) and `ProductEvidence` (`uploads/product`) write to local disk; Cloud Run's disk is ephemeral, so a tester's evidence file vanishes at the next restart. Add the Payload GCS storage adapter for those three collections, enabled only when a bucket name is set so local stays local. **First cloud-specific dependency in the repo** (against the "nothing cloud-specific" decision in `CLAUDE.md`): needs Navin's okay. |
-| 11 | **A mail allowlist for staging** | small | UAT holds real customers' addresses from the seed. Once SMTP is set, a live sweep with `csat.inviteMode` = all, a prevention rule that emails owners, or a case notification could reach a real customer. Add an env allowlist (domains or addresses) honoured in `src/lib/support/mail.ts`; everything else is logged. Until then keep `inviteMode` = portal and `sweep.live` off. |
+| 11 | ~~A mail allowlist for staging~~ **done 2026-10-15** | — | `SUPPORT_MAIL_ALLOWLIST` (addresses and `@domains`) in `src/lib/support/mail.ts`: listed recipients are mailed, the rest logged as suppressed (the sweep log says which); the one-time-code steps refuse unlisted addresses before any contact lookup, and the on-screen code appears off localhost only when the list is set. Set it on every shared host; keep `inviteMode` = portal and `sweep.live` off until SMTP exists. |
 | 12 | **One instance, or a shared store** | none if pinned | OTP attempt counts and the send limiter (`otp.ts`), the reference memo (`memo.ts`) and the service token cache are per process. Staging: min = max = 1 instance, documented. Production: OTP counters move to Postgres. |
 | 13 | **Robots and access on the staging host** | small | The portal layout is `noindex`, but the public site and `/admin` ship in the same image. Make `next-sitemap.config.cjs` disallow everything under a staging flag; decide whether an IP allowlist goes in front (item 23). |
 | 14 | **Secure cookies behind HTTPS** | config | `session.ts` decides the secure flag from `AUTH_URL` or `NEXT_PUBLIC_SERVER_URL`; both must be the https staging origin. `trustHost` is already on. |
 | 15 | **Health route and structured logs** | small | `/api/health` that checks Postgres; JSON log lines for Cloud Logging. Bodies are never logged already (`07` §1b). |
 | 16 | **Feature gaps testers will hit against the Hub** | decide | Case merge is missing. City/State/Region admin is missing. Email from the workspace is created but never sent (UAT has no synced mailbox; Pending Send). Per-status durations are coarse. The product desk has no Yodiz adapter (phase B); tracker keys are typed by hand. Decide which block the test and which the tester guide lists as known. |
-| 17 | **Keep off** | none | `SUPPORT_DEV_AGENT`, `SUPPORT_DEV_SHOW_CODE`, `SUPPORT_UAT_WRITE_TESTS`, `DATAVERSE_MOCK` unset; the token cache never in the image. `SUPPORT_PORTAL_WRITES` is read nowhere yet and belongs to go-live (`07` §7), not staging. |
+| 17 | **Keep off** | none | `SUPPORT_DEV_AGENT`, `SUPPORT_DEV_SERVICE`, `SUPPORT_DEV_SHOW_CODE`, `SUPPORT_UAT_WRITE_TESTS`, `DATAVERSE_MOCK` unset; the token cache never in the image. `SUPPORT_PORTAL_WRITES` is read nowhere yet and belongs to go-live (`07` §7), not staging. |
 
 ## 3. GCP staging
 | # | item | notes |
@@ -62,8 +62,9 @@ Plain env:       NEXT_PUBLIC_SERVER_URL=https://<staging host>   AUTH_URL=https:
                  AUTH_MICROSOFT_ENTRA_ID_ISSUER=https://login.microsoftonline.com/005ef94f-7dbd-4d0e-a29a-494e2a63d911/v2.0
                  DATAVERSE_URL=https://k7crmuat.crm8.dynamics.com   DATAVERSE_TENANT_ID=005ef94f-7dbd-4d0e-a29a-494e2a63d911
                  DATAVERSE_WRITES_ENABLED=1   SUPPORT_MAIL_FROM="K7 Support <support@k7computing.com>"   YODIZ_URL_PATTERN=…
-                 new (items 10, 11, 13): the GCS bucket name, the mail allowlist, the staging robots flag
-Never set:       SUPPORT_DEV_AGENT  SUPPORT_DEV_SHOW_CODE  SUPPORT_UAT_WRITE_TESTS  DATAVERSE_MOCK
+                 SUPPORT_MAIL_ALLOWLIST=@k7computing.com,...   (item 11)
+                 new (items 10, 13): the GCS bucket name, the staging robots flag
+Never set:       SUPPORT_DEV_AGENT  SUPPORT_DEV_SERVICE  SUPPORT_DEV_SHOW_CODE  SUPPORT_UAT_WRITE_TESTS  DATAVERSE_MOCK
 ```
 
 ## 4. Test readiness (UAT and people)
@@ -84,4 +85,20 @@ Never set:       SUPPORT_DEV_AGENT  SUPPORT_DEV_SHOW_CODE  SUPPORT_UAT_WRITE_TES
 - UAT capacity (item 4).
 
 ## 6. Suggested order
-Items 6 and 23 first → 7–11 as one code pass → 18–25 → items 1–3 with the admins while the service comes up → 27–31 → testers.
+Items 23 first → 7–10 as one code pass → 18–25 → items 2–3 with the admins while the service comes up → 27–31 → testers.
+
+## 7. The short path: a few testers before any of §2–§3 (decided 2026-10-15)
+Not a deployment: the dev server on Navin's machine, against UAT, reached through an https tunnel. Everything in §2 and §3
+is skipped; items 2, 3, 4 and 9 do not apply. What it takes:
+1. **An https hostname.** Entra accepts http redirects only for localhost. `cloudflared tunnel --url http://localhost:3000`
+   gives a trusted hostname with no account; add `allowedDevOrigins: ['*.trycloudflare.com']` to `next.config.ts`, point
+   `NEXT_PUBLIC_SERVER_URL` at it, register `https://<host>/api/auth/callback/microsoft-entra-id` on the app registration
+   (owner can), keep the tunnel process alive for the window and re-register if it restarts.
+2. **Only the Microsoft door.** `SUPPORT_DEV_AGENT` unset, `SUPPORT_DEV_SERVICE=probe` (customer side), `SUPPORT_MAIL_ALLOWLIST`
+   set to the testers' addresses or `@k7computing.com` (item 11). `SUPPORT_DEV_SHOW_CODE=1` may stay: codes show only for
+   listed addresses. Optional: *assignment required* on the enterprise app.
+3. **A UAT security role per tester** (item 29): sign-in ends at "no access to the support system" without one; seven agents
+   have none. Re-seed first if the testers want the week's cases (item 28).
+4. **The five rules** (item 31, one paragraph is enough): UAT only, data ends at the last seed, mail reaches nobody outside the
+   allowlist, never resolve or cancel a real customer's seeded case, where to report.
+Limits: first loads compile, the machine stays on, one process (item 12 holds by construction), UAT writes shared with the CRM admin.

@@ -7,8 +7,10 @@ import { NotAuthenticated } from './errors'
 /* Token sources for the Dataverse Web API (docs/support-portal/02-dataverse-integration.md §1–2).
    - Agents sign in with Entra ID; their delegated token comes from the Auth.js session (src/auth.ts) and is refreshed here.
    - Customers never reach Dataverse themselves: the server calls Dataverse as the service application user.
-   - Development only: `SUPPORT_DEV_AGENT=probe` reuses the python probe's device-code refresh token (scripts/.token_cache.json)
-     so the portal runs against UAT before the Entra app registrations are consented. Off in production builds. */
+   - Development only, off in production builds: the python probe's device-code refresh token (scripts/.token_cache.json) stands in
+     for credentials that do not exist yet. `SUPPORT_DEV_SERVICE=probe` uses it as the service identity (customer-side calls) while
+     the service app registration (06-entra-setup.md §B) is missing; `SUPPORT_DEV_AGENT=probe` does that too and also opens the
+     `dev-agent` sign-in door, so the workspace runs as the probe user. On a host testers can reach, set only the first. */
 
 export const PRODUCTION_HOSTS = ['k7crm.crm8.dynamics.com', 'k7crm.api.crm8.dynamics.com'] as const
 
@@ -80,7 +82,7 @@ export const serviceToken = async (): Promise<string> => {
     const p = await probeToken()
     return p.accessToken
   }
-  throw new NotAuthenticated('No service credentials: set DATAVERSE_CLIENT_ID/SECRET (06-entra-setup.md §B) or SUPPORT_DEV_AGENT=probe in development.')
+  throw new NotAuthenticated('No service credentials: set DATAVERSE_CLIENT_ID/SECRET (06-entra-setup.md §B), or SUPPORT_DEV_SERVICE=probe in development.')
 }
 
 /* ---------- Development: the probe's token cache ---------- */
@@ -88,7 +90,13 @@ export const serviceToken = async (): Promise<string> => {
 const PROBE_CLIENT = '51f81489-12ee-4a9e-aaae-a2591f45987d' // Microsoft's sample public client for Dataverse, as scripts/dataverse-probe.py uses
 const probeCachePath = () => path.join(process.cwd(), 'scripts', '.token_cache.json')
 
-export const devProbeEnabled = (): boolean => process.env.NODE_ENV !== 'production' && process.env.SUPPORT_DEV_AGENT === 'probe'
+const notProduction = () => process.env.NODE_ENV !== 'production'
+
+/** The probe's token cache may be read: as the service identity (`SUPPORT_DEV_SERVICE=probe`) or for the dev-agent door (`SUPPORT_DEV_AGENT=probe`). */
+export const devProbeEnabled = (): boolean => notProduction() && (process.env.SUPPORT_DEV_AGENT === 'probe' || process.env.SUPPORT_DEV_SERVICE === 'probe')
+
+/** The `dev-agent` sign-in door is open: anyone who reaches the sign-in page can act as the probe user. Never on a shared host. */
+export const devAgentDoorEnabled = (): boolean => notProduction() && process.env.SUPPORT_DEV_AGENT === 'probe'
 
 let probeMemo: AgentTokens | null = null
 

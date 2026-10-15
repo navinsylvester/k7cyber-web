@@ -16,6 +16,7 @@ const ERRORS: Record<string, string> = {
   mobile: 'Enter a mobile number with 10 to 15 digits, or leave it empty.',
   organisation: 'Tell us the name of your organisation.',
   rate: 'Too many codes requested. Wait a few minutes and try again.',
+  allowlist: 'This test system only sends codes to approved email addresses. Ask the portal team to add yours.',
 }
 
 type SP = { email?: string; firstName?: string; lastName?: string; mobile?: string; kind?: string; organisation?: string; error?: string; next?: string; new?: string }
