@@ -35,7 +35,7 @@ build needs. The items below are grouped by who unblocks them. Sizes are rough a
 | 11 | ~~A mail allowlist for staging~~ **done 2026-10-15** | — | `SUPPORT_MAIL_ALLOWLIST` (addresses and `@domains`) in `src/lib/support/mail.ts`: listed recipients are mailed, the rest logged as suppressed (the sweep log says which); the one-time-code steps refuse unlisted addresses before any contact lookup, and the on-screen code appears off localhost only when the list is set. Set it on every shared host; keep `inviteMode` = portal and `sweep.live` off until SMTP exists. |
 | 12 | **One instance, or a shared store** | none if pinned | OTP attempt counts and the send limiter (`otp.ts`), the reference memo (`memo.ts`) and the service token cache are per process. Staging: min = max = 1 instance, documented. Production: OTP counters move to Postgres. |
 | 13 | **Robots and access on the staging host** | small | The portal layout is `noindex`, but the public site and `/admin` ship in the same image. Make `next-sitemap.config.cjs` disallow everything under a staging flag; decide whether an IP allowlist goes in front (item 23). |
-| 14 | **Secure cookies behind HTTPS** | config | `session.ts` decides the secure flag from `AUTH_URL` or `NEXT_PUBLIC_SERVER_URL`; both must be the https staging origin. `trustHost` is already on. |
+| 14 | **Secure cookies behind HTTPS** | config | `session.ts` reads the session cookie by the rule Auth.js writes it: `AUTH_URL` when set, else the request's `x-forwarded-proto` (done 2026-10-15). On Cloud Run set `AUTH_URL` to the https staging origin anyway. `trustHost` is already on. |
 | 15 | **Health route and structured logs** | small | `/api/health` that checks Postgres; JSON log lines for Cloud Logging. Bodies are never logged already (`07` §1b). |
 | 16 | **Feature gaps testers will hit against the Hub** | decide | Case merge is missing. City/State/Region admin is missing. Email from the workspace is created but never sent (UAT has no synced mailbox; Pending Send). Per-status durations are coarse. The product desk has no Yodiz adapter (phase B); tracker keys are typed by hand. Decide which block the test and which the tester guide lists as known. |
 | 17 | **Keep off** | none | `SUPPORT_DEV_AGENT`, `SUPPORT_DEV_SERVICE`, `SUPPORT_DEV_SHOW_CODE`, `SUPPORT_UAT_WRITE_TESTS`, `DATAVERSE_MOCK` unset; the token cache never in the image. `SUPPORT_PORTAL_WRITES` is read nowhere yet and belongs to go-live (`07` §7), not staging. |
@@ -90,13 +90,19 @@ Items 23 first → 7–10 as one code pass → 18–25 → items 2–3 with the 
 ## 7. The short path: a few testers before any of §2–§3 (decided 2026-10-15)
 Not a deployment: the dev server on Navin's machine, against UAT, reached through an https tunnel. Everything in §2 and §3
 is skipped; items 2, 3, 4 and 9 do not apply. What it takes:
-1. **An https hostname.** Entra accepts http redirects only for localhost. `cloudflared tunnel --url http://localhost:3000`
-   gives a trusted hostname with no account; add `allowedDevOrigins: ['*.trycloudflare.com']` to `next.config.ts`, point
-   `NEXT_PUBLIC_SERVER_URL` at it, register `https://<host>/api/auth/callback/microsoft-entra-id` on the app registration
-   (owner can), keep the tunnel process alive for the window and re-register if it restarts.
+1. **An https hostname.** Entra accepts http redirects only for localhost. `scripts/dev-tunnel.sh up` starts a Cloudflare quick
+   tunnel (trusted hostname, no account), waits for its URL, sets `AUTH_URL` in `.env` and prints the callback to register on the
+   app registration (owner can). The quick tunnel rewrites `Host` to `localhost:3000`, which is why `AUTH_URL` must name the
+   public origin (Auth.js builds the Microsoft callback from it) and why `next.config.ts` lists `*.trycloudflare.com` both in
+   `allowedDevOrigins` (dev assets) and `experimental.serverActions.allowedOrigins` (posts whose browser origin is the tunnel).
+   The URL changes on every start, so re-register after a restart; `down` removes `AUTH_URL` so localhost sign-in works again.
+   The script pins `--edge-ip-version 4 --protocol http2`: this network has no IPv6 route to Cloudflare and the default QUIC
+   connection stalled 40–80 s on the first request after idle (measured 2026-10-15); over TCP/IPv4 every request took about a second.
+   While `AUTH_URL` points at the tunnel, sign in through the tunnel URL, not localhost. `NEXT_PUBLIC_SERVER_URL` stays localhost.
 2. **Only the Microsoft door.** `SUPPORT_DEV_AGENT` unset, `SUPPORT_DEV_SERVICE=probe` (customer side), `SUPPORT_MAIL_ALLOWLIST`
-   set to the testers' addresses or `@k7computing.com` (item 11). `SUPPORT_DEV_SHOW_CODE=1` may stay: codes show only for
-   listed addresses. Optional: *assignment required* on the enterprise app.
+   set to the testers' addresses or `@k7computing.com` (item 11); the script refuses to start without them. `SUPPORT_DEV_SHOW_CODE=1`
+   may stay: codes show only for listed addresses, and a request that carries forwarded headers never counts as local.
+   Optional: *assignment required* on the enterprise app.
 3. **A UAT security role per tester** (item 29): sign-in ends at "no access to the support system" without one; seven agents
    have none. Re-seed first if the testers want the week's cases (item 28).
 4. **The five rules** (item 31, one paragraph is enough): UAT only, data ends at the last seed, mail reaches nobody outside the

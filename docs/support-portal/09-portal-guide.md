@@ -17,7 +17,9 @@ python3 -I scripts/dataverse-probe.py get WhoAmI   # once: device sign-in, write
 `SUPPORT_DEV_SERVICE=probe` (the customer side keeps the probe token as its service identity, the probe sign-in door
 closes and any session it minted ends) and set `SUPPORT_MAIL_ALLOWLIST` (addresses and `@domains`): mail goes only to
 listed recipients, the rest is logged as suppressed, and the one-time-code steps refuse unlisted addresses before any
-contact lookup. The on-screen code is shown off localhost only when that list is set.
+contact lookup. The on-screen code is shown off localhost only when that list is set. `scripts/dev-tunnel.sh up|down` runs
+the Cloudflare quick tunnel and sets or clears `AUTH_URL`, which Auth.js and `session.ts` then use in place of the request's
+host (the tunnel rewrites it to localhost).
 
 Then open http://localhost:3000/support (customers) or http://localhost:3000/support/sign-in?agent=1
 (agents). Tests: `pnpm test:int` runs `tests/int/support-*.int.spec.ts` (guard, FetchXML shaping,

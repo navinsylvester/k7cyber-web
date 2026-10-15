@@ -27,7 +27,10 @@ const safeNext = (n: unknown): string | undefined => (typeof n === 'string' && /
 const showCodeHere = async (): Promise<boolean> => {
   if (process.env.SUPPORT_DEV_SHOW_CODE !== '1' || process.env.NODE_ENV === 'production' || mailConfigured()) return false
   if (mailAllowlist()) return true
-  const host = ((await headers()).get('host') ?? '').toLowerCase().replace(/:\d+$/, '').replace(/^\[|\]$/g, '')
+  const h = await headers()
+  // A tunnel or proxy may rewrite Host to localhost; the forwarded headers it adds give it away.
+  if (h.get('x-forwarded-for') || h.get('x-forwarded-proto') || h.get('x-forwarded-host')) return false
+  const host = (h.get('host') ?? '').toLowerCase().replace(/:\d+$/, '').replace(/^\[|\]$/g, '')
   return host === 'localhost' || host === '127.0.0.1' || host === '::1'
 }
 

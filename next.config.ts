@@ -46,9 +46,13 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: true,
   // Support portal: case attachments travel through server actions (5 MB, Dataverse's default note limit) plus form overhead.
+  // The dev server reached through a Cloudflare quick tunnel (docs/support-portal/11-staging-readiness.md §7): the tunnel
+  // rewrites Host to localhost:3000, so server-action posts arrive with a browser origin that differs from the host, and Next
+  // blocks its own dev assets for any origin it was not started on; both need the tunnel's domain listed.
   experimental: {
-    serverActions: { bodySizeLimit: '6mb' },
+    serverActions: { bodySizeLimit: '6mb', allowedOrigins: ['*.trycloudflare.com'] },
   },
+  allowedDevOrigins: ['*.trycloudflare.com'],
   redirects,
   turbopack: {
     root: path.resolve(dirname),

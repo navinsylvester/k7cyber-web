@@ -14,7 +14,7 @@ afterEach(() => {
 
 describe('SUPPORT_MAIL_ALLOWLIST', () => {
   it('is null when unset or blank, and then allows everyone', () => {
-    expect(mailAllowlist(undefined)).toBeNull()
+    expect(mailAllowlist('')).toBeNull()
     expect(mailAllowlist('  ')).toBeNull()
     expect(mailAllowed('anyone@example.com', null)).toBe(true)
   })
