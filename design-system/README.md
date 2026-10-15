@@ -44,6 +44,7 @@ Six quirks make a K7 page recognisable with the logo covered. Use one per view.
 
 - Three patterns, as texture never decoration, each once per sheet at most, between `pattern-min` and `pattern-max` ink, fading away from text through a linear mask. PT1 Registration: 32px tile, 8px plus mark, 1px stroke, `pattern-mid` ink, mask at 100°; the hero sheet. PT2 Seven hatch: 20px tile, one stroke at the angle of the 7, `pattern-min` ink, mask at 260°; the contrast sheet. PT3 Dot field: 24px tile, 2px square, `pattern-max` ink, no mask; only inside figure frames.
 - Figures carry a `caption` in mono and live in a 1px `line` frame. A placeholder figure (`.ph`) is the dot field in a frame with its caption bottom-left; use it wherever the content doc says <Image>, <Icon> or <Animation> until the asset exists.
+- Photography and illustration are evidence, not decoration, and never bring a second palette. Inside a figure frame (`.ph`) and in portraits (`.avatar`), every photograph and illustration renders greyscale: the blog's featured images, the leadership portraits, the office maps. A drawn cover (`ReportCover`, `.is-cover`) keeps its colour. Figures inside an article (`.prose figure.fig`), screenshots, charts and diagrams, keep their colour too: there the colour is information.
 - Home-page devices (redaction, log strip, year rings, the interception matrix, the seven hatch) stay on the home page. Research and product pages carry none of them.
 
 ## Components

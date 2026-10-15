@@ -7,7 +7,7 @@ export const Cover: React.FC<{ period: string; range?: string | null; series?: s
   const url = image && typeof image === 'object' ? (image.sizes?.medium?.url ?? image.url) : null
   if (url) {
     return (
-      <figure className={`ph ${className}`} style={{ '--ar': '3/4' } as React.CSSProperties}>
+      <figure className={`ph is-cover ${className}`} style={{ '--ar': '3/4' } as React.CSSProperties}>
         <img src={url} alt={`Cover: ${series ?? 'Report'}, ${period}`} />
       </figure>
     )
