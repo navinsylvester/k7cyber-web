@@ -16,6 +16,12 @@ import { ReportLeads } from './collections/research/ReportLeads'
 import { Threats } from './collections/research/Threats'
 import { ThreatReports } from './collections/research/ThreatReports'
 import { Vulnerabilities } from './collections/research/Vulnerabilities'
+import { ProductEvidence } from './collections/support/ProductEvidence'
+import { ProductItemCases } from './collections/support/ProductItemCases'
+import { ProductItemEvents } from './collections/support/ProductItemEvents'
+import { ProductItems } from './collections/support/ProductItems'
+import { ProductMirror } from './collections/support/ProductMirror'
+import { ProductSettings } from './collections/support/ProductSettings'
 import { SupportCareFlags } from './collections/support/SupportCareFlags'
 import { SupportCsat } from './collections/support/SupportCsat'
 import { SupportSettings } from './collections/support/SupportSettings'
@@ -73,10 +79,10 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportCsat, SupportCareFlags, Media, Users],
+  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, Media, Users],
   upload: { limits: { fileSize: 30 * 1024 * 1024 } },
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, SupportSettings],
+  globals: [Header, Footer, SupportSettings, ProductSettings],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

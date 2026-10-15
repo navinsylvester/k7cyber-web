@@ -3,7 +3,7 @@ import React from 'react'
 
 import { sessionIsManager } from '@/lib/support/session'
 
-export type WsSection = 'home' | 'cases' | 'queues' | 'customers' | 'kb' | 'products' | 'rfe' | 'dashboards' | 'search' | 'manage'
+export type WsSection = 'home' | 'cases' | 'queues' | 'customers' | 'kb' | 'products' | 'product' | 'rfe' | 'dashboards' | 'search' | 'manage'
 
 export const WS = '/support/workspace'
 
@@ -15,7 +15,7 @@ const SECTIONS: { key: WsSection; label: string; href: string }[] = [
   { key: 'dashboards', label: 'Dashboards', href: `${WS}/dashboards/active-cases` },
   { key: 'kb', label: 'Knowledge', href: `${WS}/kb` },
   { key: 'products', label: 'Products', href: `${WS}/products` },
-  { key: 'rfe', label: 'RFEs', href: `${WS}/rfe` },
+  { key: 'product', label: 'Product desk', href: `${WS}/product` },
 ]
 
 const MANAGE_SECTION: { key: WsSection; label: string; href: string } = { key: 'manage', label: 'Manage', href: `${WS}/manage` }

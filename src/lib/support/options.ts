@@ -100,6 +100,27 @@ export const RFE_STATUS: Option[] = [
   { value: 696720004, label: 'Closed' },
   { value: 696720000, label: 'Status for Principle Support' },
 ]
+export const RFE_RECEIVED_FROM: Option[] = [
+  { value: 100000000, label: 'Customer' },
+  { value: 100000001, label: 'Partner' },
+  { value: 100000002, label: 'Support' },
+  { value: 100000003, label: 'Potential' },
+  { value: 696720000, label: 'Enterprise Team' },
+]
+export const DEFECT_STATUS: Option[] = [
+  { value: 696720000, label: 'In Progress - Support' },
+  { value: 696720001, label: 'In Progress – Threat Lab' },
+  { value: 696720002, label: 'In Progress – Core support' },
+  { value: 696720003, label: 'In Progress – R&D' },
+  { value: 696720004, label: 'Closed – Engineering' },
+  { value: 696720005, label: 'Closed' },
+]
+export const DEFECT_PRIORITY: Option[] = [
+  { value: 696720003, label: 'Critical' },
+  { value: 696720000, label: 'High' },
+  { value: 696720001, label: 'Medium' },
+  { value: 696720002, label: 'Low' },
+]
 export const RFE_TYPE: Option[] = [
   { value: 100000000, label: 'Support RFE' },
   { value: 100000001, label: 'Customer RFE' },

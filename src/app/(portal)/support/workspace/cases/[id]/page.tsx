@@ -6,6 +6,7 @@ import React from 'react'
 import { CategoryPicker } from '@/components/support/CasePickers.client'
 import { CareBand, CareTag, CauseTag, FollowUpTag, RateScale, ReasonSelect, ScoreTag } from '@/components/support/Csat'
 import { Empty, Field, Flash, MetaRows, Options, Sla, StatusTag, Tid } from '@/components/support/Parts'
+import { Pid, ProductBand, PRODUCT } from '@/components/support/Product'
 import { AgentTimeline } from '@/components/support/Timeline'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { isGuid } from '@/lib/dataverse/odata'
@@ -14,13 +15,15 @@ import { getCase } from '@/lib/support/cases'
 import { careForCustomer, causeOf, csatForCase, followUpState, isUnhappy } from '@/lib/support/csat'
 import { dmy, dmyHm } from '@/lib/support/format'
 import { getSettings } from '@/lib/support/kpi-config'
-import { ACTIVE_STATUS_REASONS, CASE_TYPE, CATEGORY, CONSIDERED_AS, CUSTOMER_TYPE, ORIGIN, PRIORITY, RFE_TYPE, STATE, STATUS, VERTICAL, label } from '@/lib/support/options'
+import { ACTIVE_STATUS_REASONS, CASE_TYPE, CATEGORY, CONSIDERED_AS, CUSTOMER_TYPE, ORIGIN, PRIORITY, STATE, STATUS, VERTICAL, label } from '@/lib/support/options'
+import { caseFacts, itemsForCase, KIND_LABEL, KINDS, productContext, SEVERITIES, SEVERITY_LABEL, STATE_LABEL, suggestItems, WITH_LABEL, withOf } from '@/lib/support/product'
 import { getAgents, getCategories, getProducts, getPublicQueues, getSubcategories, getTeams } from '@/lib/support/reference'
 import { defectsOfCase, rfesOfCase } from '@/lib/support/rfe'
 import { requireAgent } from '@/lib/support/session'
 import { getTimeline, type TimelineEntry } from '@/lib/support/timeline'
 
-import { addNoteAction, assignAction, callAction, cancelAction, csatFollowUpAction, csatInviteAction, csatRecordAction, editAction, emailAction, queueAction, reopenAction, replyAction, resolveAction, rfeAction, statusAction, taskAction } from './actions'
+import { answerAction, toldAction } from '../../../product/items/[number]/actions'
+import { addNoteAction, assignAction, callAction, cancelAction, csatFollowUpAction, csatInviteAction, csatRecordAction, editAction, emailAction, escalateAction, linkItemAction, queueAction, reopenAction, replyAction, resolveAction, statusAction, taskAction } from './actions'
 
 export const metadata: Metadata = { title: 'Case' }
 
@@ -39,7 +42,6 @@ const OK: Record<string, string> = {
   call: 'Call logged.',
   task: 'Task created.',
   edit: 'Details saved.',
-  rfe: 'RFE created and linked to this case.',
   email: 'Email sent to the customer.',
   'email-draft': 'Email saved on the case as a draft: this environment has no synced mailbox, so it was not sent.',
   'csat-sent': 'Survey emailed to the customer.',
@@ -83,6 +85,57 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   const fu = rating ? followUpState(rating, settings) : null
   const active = c.statecode === STATE.ACTIVE
   const here = `${WS}/cases/${id}`
+  // The product desk (10-product-desk.md §4.1): the items this case is linked to, and candidates to link to before raising a new one.
+  const pctx = await productContext()
+  const productLinks = pctx.settings.enabled ? await itemsForCase(id) : []
+  const activeLink = productLinks.find((x) => x.item.state !== 'closed') ?? null
+  const suggestions = pctx.settings.enabled && !activeLink ? await suggestItems(caseFacts(c).productFamily, c.title).catch(() => []) : []
+  const newItemForm = (
+        <form action={escalateAction} className="act-body" style={{ padding: 0 }}>
+          <input type="hidden" name="id" value={id} />
+          <p>{suggestions.length ? 'Not one of these? Raise a new item.' : 'Hand this to product: principal support triages it and routes it to engineering or the Lab.'} Product reads what you write here, not the case.</p>
+          <div className="seg-choice" role="radiogroup" aria-label="Kind">
+            {KINDS.map((k, i) => (
+              <label key={k}>
+                <input type="radio" name="kind" value={k} defaultChecked={i === 0} />
+                {KIND_LABEL[k]}
+              </label>
+            ))}
+          </div>
+          <Field id="pe-title" label="Title" required>
+            <input id="pe-title" name="title" required maxLength={200} defaultValue={c.title} />
+          </Field>
+          <Field id="pe-summary" label="Hand-off" required hint="What happens, the steps, expected vs actual, the workaround. No contact details unless product needs them.">
+            <textarea id="pe-summary" name="summary" rows={5} required />
+          </Field>
+          <Field id="pe-severity" label="Severity" select>
+            <select id="pe-severity" name="severity" defaultValue="degraded">
+              <Options items={SEVERITIES.map((s) => ({ value: s, label: SEVERITY_LABEL[s] }))} />
+            </select>
+          </Field>
+          <Field id="pe-impact" label="Customer impact" hint="How many, which verticals, in words.">
+            <input id="pe-impact" name="impact" maxLength={300} />
+          </Field>
+          <Field id="pe-ev" label="Evidence" hint="Screenshots, logs, text; 10 MB each. Never a sample.">
+            <input id="pe-ev" name="evidence" type="file" multiple />
+          </Field>
+          {active && (
+            <div className="seg-choice" role="radiogroup" aria-label="The case">
+              <label>
+                <input type="radio" name="caseChoice" value="keep-open" defaultChecked />
+                Keep open with product
+              </label>
+              <label>
+                <input type="radio" name="caseChoice" value="workaround-resolved" />
+                Workaround given
+              </label>
+            </div>
+          )}
+          <button className="btn btn-primary btn-sm" type="submit">
+            Raise item →
+          </button>
+        </form>
+  )
   const customer = lookup(c, 'customerid')
   const customerHref = customer ? `${WS}/customers/${customer.logicalName === 'account' ? 'accounts' : 'contacts'}/${customer.id}` : undefined
   const primary = lookup(c, 'primarycontactid')
@@ -110,7 +163,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
             </li>
           </ol>
         </nav>
-        {sp.ok && OK[sp.ok] && <Flash>{OK[sp.ok]}</Flash>}
+        {sp.ok && <Flash>{OK[sp.ok] ?? sp.ok}</Flash>}
         {sp.error && <Flash kind="error">{sp.error}</Flash>}
 
         <div className="case-head">
@@ -158,6 +211,24 @@ export default async function CasePage({ params, searchParams }: { params: Promi
         </div>
 
         {care && <CareBand care={care} href={customerHref ? `${customerHref}#csat` : undefined} />}
+        {activeLink && (
+          <ProductBand
+            item={activeLink.item}
+            link={activeLink.link}
+            settings={pctx.settings}
+            action={
+              activeLink.item.state === 'needs-info' || (activeLink.item.state === 'released' && !activeLink.link.toldAt) ? (
+                <a className="label" href="#product-panel">
+                  {activeLink.item.state === 'needs-info' ? 'Answer ↓' : 'Tell the customer ↓'}
+                </a>
+              ) : (
+                <Link className="label" href={`${PRODUCT}/items/${activeLink.item.number}`}>
+                  Open item →
+                </Link>
+              )
+            }
+          />
+        )}
 
         <div className="ws-grid">
           <div>
@@ -166,7 +237,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                 [
                   ['timeline', `Timeline · ${entries.length}`],
                   ['details', 'Details'],
-                  ['related', `Related · ${rfes.length + defects.length}`],
+                  ['related', `Related · ${rfes.length + defects.length + productLinks.length}`],
                 ] as [Tab, string][]
               ).map(([t, l]) => (
                 <Link className="rtab label on-panel" href={tabHref(t)} key={t} {...(t === tab ? { 'aria-current': 'page' as const } : {})}>
@@ -316,13 +387,37 @@ export default async function CasePage({ params, searchParams }: { params: Promi
             )}
 
             {tab === 'related' && (
+              <>
+              {productLinks.length > 0 && (
+                <div style={{ marginBottom: 40 }}>
+                  <h2 className="sub-head">
+                    Product items <span className="label">{productLinks.length}</span>
+                  </h2>
+                  <div className="mini-rows">
+                    {productLinks.map(({ item, link }) => (
+                      <Link className="mini-row" href={`${PRODUCT}/items/${item.number}`} key={item.id}>
+                        <span className="t">
+                          {item.number} · {item.title}
+                        </span>
+                        <span className="s">
+                          {KIND_LABEL[item.kind]} · {STATE_LABEL[item.state]} · {item.priority}
+                          {item.tracker.key ? ` · ${item.tracker.key}` : ''}
+                          {item.caseCount > 1 ? ` · ${item.caseCount} cases` : ''}
+                          {link.toldAt ? ' · customer told' : ''}
+                        </span>
+                        <span className="r">{dmy(link.linkedAt)}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="two-col">
                 <div>
                   <h2 className="sub-head">
-                    RFEs <span className="label">{rfes.length}</span>
+                    RFEs in the CRM <span className="label">{rfes.length}</span>
                   </h2>
                   {rfes.length === 0 ? (
-                    <Empty label="RFEs">No request for enhancement is linked to this case.</Empty>
+                    <Empty label="RFEs">No RFE row in the CRM is linked to this case. Raise an enhancement item from the Escalate to product panel; the desk creates the row.</Empty>
                   ) : (
                     <div className="mini-rows">
                       {rfes.map((r) => (
@@ -336,39 +431,13 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                       ))}
                     </div>
                   )}
-                  <details className="edit-block" style={{ marginTop: 24 }}>
-                    <summary className="btn btn-line btn-sm">Convert to RFE</summary>
-                    <form action={rfeAction} className="form-grid" style={{ marginTop: 20 }}>
-                      <input type="hidden" name="id" value={id} />
-                      <Field id="r-title" label="RFE title" required span>
-                        <input id="r-title" name="title" defaultValue={c.title} required maxLength={200} />
-                      </Field>
-                      <Field id="r-type" label="Type" required select>
-                        <select id="r-type" name="type" defaultValue="100000000" required>
-                          <Options items={RFE_TYPE} />
-                        </select>
-                      </Field>
-                      <Field id="r-yodiz" label="Yodiz id">
-                        <input id="r-yodiz" name="yodizId" />
-                      </Field>
-                      <Field id="r-users" label="Number of users">
-                        <input id="r-users" name="users" inputMode="numeric" />
-                      </Field>
-                      <div className="form-actions span-2">
-                        <button className="btn btn-primary btn-sm" type="submit">
-                          Create RFE →
-                        </button>
-                        <span className="hint">Product, serial, customer and vertical are copied from the case.</span>
-                      </div>
-                    </form>
-                  </details>
                 </div>
                 <div>
                   <h2 className="sub-head">
-                    Defects <span className="label">{defects.length}</span>
+                    Defects in the CRM <span className="label">{defects.length}</span>
                   </h2>
                   {defects.length === 0 ? (
-                    <Empty label="Defects">No defect is linked to this case. Defects are raised from the Customer Service Hub.</Empty>
+                    <Empty label="Defects">No defect row in the CRM is linked to this case. Raise a defect or detection item from the Escalate to product panel; the desk creates the row.</Empty>
                   ) : (
                     <div className="mini-rows">
                       {defects.map((d) => (
@@ -382,6 +451,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   )}
                 </div>
               </div>
+              </>
             )}
           </div>
 
@@ -559,6 +629,92 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                         Add to queue
                       </button>
                     </form>
+                  </details>
+                )}
+
+                {pctx.settings.enabled && (
+                  <details id="product-panel" open={Boolean(activeLink && (activeLink.item.state === 'needs-info' || (activeLink.item.state === 'released' && !activeLink.link.toldAt)))}>
+                    <summary>{activeLink ? 'Product' : 'Escalate to product'}</summary>
+                    <div className="act-body">
+                      {activeLink ? (
+                        <>
+                          <p>
+                            <Pid number={activeLink.item.number} href={`${PRODUCT}/items/${activeLink.item.number}`} /> is {STATE_LABEL[activeLink.item.state].toLowerCase()} {WITH_LABEL[withOf(activeLink.item.state, activeLink.item.team)]}.{activeLink.item.caseCount > 1 ? ` ${activeLink.item.caseCount} cases behind it.` : ''}
+                          </p>
+                          {activeLink.item.state === 'needs-info' && (
+                            <form action={answerAction} className="act-body" style={{ padding: 0 }}>
+                              <input type="hidden" name="number" value={activeLink.item.number} />
+                              <input type="hidden" name="return" value={here} />
+                              <Field id="pa-text" label="Your answer to product" required>
+                                <textarea id="pa-text" name="text" rows={3} required />
+                              </Field>
+                              <button className="btn btn-primary btn-sm" type="submit">
+                                Send answer →
+                              </button>
+                            </form>
+                          )}
+                          {activeLink.item.state === 'released' && !activeLink.link.toldAt && (
+                            <form action={toldAction} className="act-body" style={{ padding: 0 }}>
+                              <input type="hidden" name="number" value={activeLink.item.number} />
+                              <input type="hidden" name="return" value={here} />
+                              <input type="hidden" name="caseId" value={id} />
+                              <p>
+                                Shipped{activeLink.item.releasedVersion ? ` in ${activeLink.item.releasedVersion}` : ''}.{activeLink.item.releaseNote ? ` ${activeLink.item.releaseNote}` : ''}
+                              </p>
+                              <Field id="pt-text" label="Reply to the customer">
+                                <textarea id="pt-text" name="text" rows={3} defaultValue={`Good news: the issue behind this case is fixed${activeLink.item.releasedVersion ? ` in version ${activeLink.item.releasedVersion}` : ''}. ${activeLink.item.releaseNote || 'Please update K7 and tell us if it persists.'}`} />
+                              </Field>
+                              <label className="check">
+                                <input type="checkbox" name="post" value="1" defaultChecked />
+                                <span>Post it as a reply the customer sees on the portal</span>
+                              </label>
+                              <button className="btn btn-primary btn-sm" type="submit">
+                                Tell the customer →
+                              </button>
+                            </form>
+                          )}
+                          <Link className="link-u" href={`${PRODUCT}/items/${activeLink.item.number}`}>
+                            Open the item →
+                          </Link>
+                          <details className="edit-block">
+                            <summary className="link-u textbtn" style={{ cursor: 'pointer' }}>
+                              Raise another item from this case
+                            </summary>
+                            <div style={{ paddingTop: 12 }}>{newItemForm}</div>
+                          </details>
+                        </>
+                      ) : (
+                        <>
+                          {suggestions.length > 0 && (
+                            <>
+                              <p>Is it one of these? Linking adds this case to the item and counts the demand.</p>
+                              <div className="suggest">
+                                {suggestions.map((s) => (
+                                  <div className="suggest-row" key={s.id}>
+                                    <span className="t">
+                                      <Pid number={s.number} href={`${PRODUCT}/items/${s.number}`} /> {s.title}
+                                    </span>
+                                    <span className="s">
+                                      {KIND_LABEL[s.kind]} · {STATE_LABEL[s.state]} · {s.caseCount === 1 ? '1 case' : `${s.caseCount} cases`}
+                                      {s.productFamily ? ` · ${s.productFamily}` : ''}
+                                    </span>
+                                    <form action={linkItemAction}>
+                                      <input type="hidden" name="id" value={id} />
+                                      <input type="hidden" name="itemId" value={s.id} />
+                                      <input type="hidden" name="caseChoice" value="keep-open" />
+                                      <button className="btn btn-line btn-sm" type="submit">
+                                        Link
+                                      </button>
+                                    </form>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                          {newItemForm}
+                        </>
+                      )}
+                    </div>
                   </details>
                 )}
 

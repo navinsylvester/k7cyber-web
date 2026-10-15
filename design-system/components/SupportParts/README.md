@@ -49,8 +49,18 @@ The support-portal parts from section 09 (reference CSS: `src/app/(portal)/porta
 
 **S24 Area stack (`stack`, `stack-rows`)** one 14px bar split by area on a shared scale, the total in mono at the right: a row per product family, per week or per repeat customer. Segments use the same weights as the cause square, plus a dotted muted segment for the unclassified; each segment can link into the filtered ledger. A `legend.areas` key sits under the first stack on a page.
 
-**Use** on `/support` (customers) and `/support/workspace` (agents). Customer pages open with a `help-hero` or a compact `ws` sheet; workspace pages are always `ws` sheets so the data sits near the fold.
+**S25 Item tag (`item-tag`)** the product desk's item reads like a case: `PD-` dim, the digits full weight, mono (`Pid`). Kind and bridge state share one Tag ("Defect · Tracked") with the tracker key and status beside it in mono (`tracker-ref`). `tag-signal` only where someone must act now: a question waiting on the desk (seen by support), a raised item past its triage target (seen by principal support). Released is solid; declined and closed at 60% ink. The priority is a quiet tag; P1 alone goes signal.
+
+**S26 Product band (`product-band`)** one line under a case head while an item is active: the number, the item tag, team · owner · priority · version in `muted`, whose turn it is, and the one action that fits (Answer, Tell the customer, Open item). A 2px `signal` top rule when the item needs information from the desk.
+
+**S27 Hand-off thread (`thread`)** the item's stream in the timeline shape, newest first: timestamp column in mono, the side as an avatar (support outlined, principal support outlined with a dot, engineering and the Lab solid), dashed tags for state and tracker entries, a signal tag for a question, dotted muted entries for what the portal did (mirror results). Text at 15px, evidence as tags. Nothing in it reaches a customer.
+
+**S28 Impact strip (`impact`)** five counters under the item head on hairlines: linked cases, B2B accounts, verticals, first raised, last raised. The case count goes `acc-ink` when demand grew after triage.
+
+**S29 Clocks (`slam`, reused)** the product side's meters in the SLA meter's shape: the triage clock on a raised item (working hours against the priority's target) and the update cadence while tracked (working days since the last activity). Hatched at risk, `signal` past target, met once triaged, dim while paused.
+
+**Use** on `/support` (customers), `/support/workspace` (agents) and `/support/product` (principal support). Customer pages open with a `help-hero` or a compact `ws` sheet; workspace pages are always `ws` sheets so the data sits near the fold.
 
 **Provide** the case row (number, title, status reason, priority, dates), the timeline entries with their audience flag, the view's columns, and the chart series.
 
-**Don't** show Dynamics status reasons, owners or SLA flags to customers; grade engineers by colour (the composite orders cards, it is never shown as a traffic light); put more than one primary button in a view; colour states by hue (they read by word and weight; the care band is signal, solid or outlined, never red, amber and green; the four areas of a low score are ink, signal, hatched and outlined, never four colours); let a customer see a note that was not written through the portal; show a customer their own care band.
+**Don't** show Dynamics status reasons, owners or SLA flags to customers; grade engineers by colour (the composite orders cards, it is never shown as a traffic light); put more than one primary button in a view; colour states by hue (they read by word and weight; the care band is signal, solid or outlined, never red, amber and green; the four areas of a low score are ink, signal, hatched and outlined, never four colours); let a customer see a note that was not written through the portal; show a customer their own care band; show a customer anything from an item's thread; colour the two desks (they read by avatar weight: outlined support, solid product).

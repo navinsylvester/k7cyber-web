@@ -1,6 +1,6 @@
 # Support portal (Dynamics 365 / Dataverse) — planning handoff
 
-Status 2026-10-13: **first build in the repo** (see `09-portal-guide.md`): agent workspace and customer self-service on UAT, with registration by one-time code. Planning status 2026-10-12: planning complete. **Development environment: UAT**
+Staging 2026-10-15: the work list for a GCP staging deployment is `11-staging-readiness.md`. Design 2026-10-14: the **product desk** for developers and Labs is designed in `10-product-desk.md` (phase A built the same day, `09-portal-guide.md` §4f). Status 2026-10-13: **first build in the repo** (see `09-portal-guide.md`): agent workspace and customer self-service on UAT, with registration by one-time code. Planning status 2026-10-12: planning complete. **Development environment: UAT**
 (`https://k7crmuat.crm8.dynamics.com`, `07-production-safety.md` §1 and §1c): the tenant is over
 its Dataverse database entitlement, so no sandbox can be created or copied, and the existing UAT
 sandbox was prepared instead — support schema synced from production, customer-facing automation
@@ -18,6 +18,8 @@ Dataverse must not be touched during development (`07-production-safety.md`).
 | `03-metadata-summary.md` | confirmed table/column logical names, option values, lookups, counts, app inventory | any field or API question |
 | `07-production-safety.md` | UAT vs production rules, no-schema-change rule, rollout gates | before any Dataverse call |
 | `09-portal-guide.md` | **what is built**: routes, the three sign-in doors, enforced rules, how to run, what is not done | starting work, always |
+| `10-product-desk.md` | **the product desk** (designed 2026-10-14, not built): support → principal support → engineering and Lab in Yodiz; the item as a bridge record in Payload, Yodiz behind a swappable adapter, the CRM as a mirror through an outbox, samples by script, the clocks | before any work for engineering, Lab or Yodiz |
+| `11-staging-readiness.md` | **staging on GCP** (written 2026-10-15): the work list before support staff can test against UAT side by side with production: admin blockers, code changes, GCP build-out, UAT and tester readiness, decisions | planning the staging deployment |
 | `08-implementation-plan.md` | routes, libraries, auth, UI, milestones, env vars, first-session checklist (the intent) | planning questions |
 | `02-dataverse-integration.md` | auth flows, read/write request examples, limits, licensing | coding the client |
 | `06-entra-setup.md` | click-by-click app registrations, UAT access, External ID tenant | setting up sign-in |

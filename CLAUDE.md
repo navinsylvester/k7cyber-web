@@ -64,5 +64,11 @@ Local dev uses Payload's push mode (schema synced on start). Credentials in `.en
   the Payload collections `support-csat` and `support-care-flags`, never in the CRM. Low scores open a follow-up on `/manage/csat` and mark the customer
   "handle with care" (`careFrom` in `src/lib/support/csat-model.ts`), shown beside the customer on case heads, lists and customer pages. The sweep's
   CSAT pass emails surveys only for the cases `csat.inviteMode` allows (default: portal cases) and only through `SMTP_URL`.
+- Product desk (support → principal support → engineering and Lab in Yodiz): designed in `docs/support-portal/10-product-desk.md`,
+  **phase A built 2026-10-14** (09 §4f): `/support/product` (principal support's inbox, items, settings) and `/support/workspace/product`
+  (the desk's side), the *Escalate to product* panel and band on the case sheet. Items are a bridge record in Payload (`product-*`
+  collections, `product-settings` global); the tracker sits behind `src/lib/support/tracker/` (link-only now, Yodiz in phase B); the CRM
+  mirror writes notes, tasks, the status reason and the `k7_rfe`/`k7_defect` rows (an enhancement is an RFE, a defect or detection a defect),
+  as the acting agent, logged in `product-mirror`; the old RFEs tab is merged into the desk; samples never enter the portal.
 - `scripts/dataverse-probe.py` queries Dataverse from the shell (`DV_*` in `.env`); its
   token cache `scripts/.token_cache.json` and any `spec/` output are git-ignored.

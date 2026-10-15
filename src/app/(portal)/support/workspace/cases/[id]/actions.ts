@@ -8,7 +8,8 @@ import { addCaseToQueue, assignCase, cancelCase, getCase, reopenCase, resolveCas
 import { asReason, asScore, closeFollowUp, csatForCase, inviteSurvey, recordResponse, snapshotOf } from '@/lib/support/csat'
 import { getSettings } from '@/lib/support/kpi-config'
 import { ACTIVE_STATUS_REASONS, STATE, STATUS } from '@/lib/support/options'
-import { createRfe } from '@/lib/support/rfe'
+import { EVIDENCE_MIME } from '@/collections/support/ProductEvidence'
+import { asCaseChoice, asKind, asSeverity, getItemById, linkCase, raiseItem, type EvidenceFile } from '@/lib/support/product'
 import { requireAgent } from '@/lib/support/session'
 import { addNote, addPhoneCall, addTask, NOTE_TO_CUSTOMER, sendEmailReply } from '@/lib/support/timeline'
 
@@ -381,41 +382,6 @@ export async function editAction(form: FormData): Promise<void> {
   done(id, 'edit', 'details')
 }
 
-export async function rfeAction(form: FormData): Promise<void> {
-  const me = await requireAgent()
-  const id = caseId(form)
-  const title = str(form, 'title')
-  const type = num(form, 'type')
-  const yodizId = str(form, 'yodizId')
-  const users = str(form, 'users')
-  let msg: string | null = null
-  if (title.length < 3) msg = 'Give the RFE a title.'
-  else if (!type) msg = 'Pick the RFE type.'
-  if (msg) fail(id, msg, 'related')
-  try {
-    const c = await getCase(me.auth, id)
-    if (!c) msg = 'That case no longer exists.'
-    else {
-      const customerIsAccount = String(c['_customerid_value@Microsoft.Dynamics.CRM.lookuplogicalname'] ?? '') === 'account'
-      await createRfe(me.auth, {
-        title,
-        type: type!,
-        yodizId: yodizId || undefined,
-        users: users || undefined,
-        serial: c.k7_2ndserialnumber ? String(c.k7_2ndserialnumber) : undefined,
-        caseId: id,
-        productId: c._productid_value ? String(c._productid_value) : undefined,
-        accountId: customerIsAccount && c._customerid_value ? String(c._customerid_value) : undefined,
-        vertical: typeof c.new_verticaltype === 'number' ? c.new_verticaltype : undefined,
-      })
-    }
-  } catch (e) {
-    msg = userMessage(e, 'agent')
-  }
-  if (msg) fail(id, msg, 'related')
-  done(id, 'rfe', 'related')
-}
-
 export async function emailAction(form: FormData): Promise<void> {
   const me = await requireAgent()
   const id = caseId(form)
@@ -436,4 +402,74 @@ export async function emailAction(form: FormData): Promise<void> {
   }
   if (msg) fail(id, msg)
   done(id, sent ? 'email' : 'email-draft')
+}
+
+/* ---------- Product desk (10-product-desk.md §4.1): raise an item or join an existing one, as the signed-in agent ---------- */
+
+const EVIDENCE_MAX = 10 * 1024 * 1024
+
+const evidenceFrom = async (form: FormData): Promise<EvidenceFile[] | string> => {
+  const out: EvidenceFile[] = []
+  for (const f of form.getAll('evidence')) {
+    if (!(f instanceof File) || f.size === 0) continue
+    if (f.size > EVIDENCE_MAX) return `${f.name} is over 10 MB.`
+    const mime = f.type || 'application/octet-stream'
+    if (!EVIDENCE_MIME.includes(mime) && !/\.(log|txt|json|csv)$/i.test(f.name)) return `${f.name}: only screenshots, logs, text, PDF and zip files. Samples go to the Lab store by script.`
+    out.push({ name: f.name, mime, bytes: Buffer.from(await f.arrayBuffer()) })
+  }
+  return out
+}
+
+export async function escalateAction(form: FormData): Promise<void> {
+  const me = await requireAgent()
+  const id = caseId(form)
+  const kind = asKind(str(form, 'kind'))
+  const title = str(form, 'title')
+  const summary = str(form, 'summary')
+  const severity = asSeverity(str(form, 'severity'))
+  const impact = str(form, 'impact')
+  let msg: string | null = null
+  if (!kind) msg = 'Say what kind of item this is.'
+  else if (title.length < 5) msg = 'Give the item a title product will recognise.'
+  else if (summary.length < 20) msg = 'Write the hand-off: what happens, the steps, what you expected, the workaround if any.'
+  if (msg) fail(id, msg)
+  const files = await evidenceFrom(form)
+  if (typeof files === 'string') fail(id, files)
+  let number = ''
+  try {
+    const c = await getCase(me.auth, id)
+    if (!c) msg = 'That case no longer exists.'
+    else {
+      const caseChoice = c.statecode === STATE.ACTIVE ? asCaseChoice(str(form, 'caseChoice')) : 'workaround-resolved'
+      const r = await raiseItem({ id: me.userId, name: me.name || me.email, email: me.email, auth: me.auth }, c, { kind: kind!, title, summary, severityHint: severity, customerImpact: impact, caseChoice, evidence: files as EvidenceFile[] })
+      number = r.item.number
+    }
+  } catch (e) {
+    msg = userMessage(e, 'agent')
+  }
+  if (msg) fail(id, msg)
+  redirect(`${WS}/cases/${id}?ok=${encodeURIComponent(`${number} raised with principal support. It shows under the case head; the thread is on the item.`)}`)
+}
+
+export async function linkItemAction(form: FormData): Promise<void> {
+  const me = await requireAgent()
+  const id = caseId(form)
+  const itemId = str(form, 'itemId')
+  let msg: string | null = null
+  let number = ''
+  try {
+    const [c, item] = await Promise.all([getCase(me.auth, id), getItemById(itemId)])
+    if (!c) msg = 'That case no longer exists.'
+    else if (!item) msg = 'That item no longer exists.'
+    else {
+      const caseChoice = c.statecode === STATE.ACTIVE ? asCaseChoice(str(form, 'caseChoice')) : 'workaround-resolved'
+      const r = await linkCase({ id: me.userId, name: me.name || me.email, email: me.email, auth: me.auth }, item, c, caseChoice)
+      if ('error' in r) msg = r.error
+      else number = r.item.number
+    }
+  } catch (e) {
+    msg = userMessage(e, 'agent')
+  }
+  if (msg) fail(id, msg)
+  redirect(`${WS}/cases/${id}?ok=${encodeURIComponent(`Linked to ${number}. Product sees one more case behind it.`)}`)
 }

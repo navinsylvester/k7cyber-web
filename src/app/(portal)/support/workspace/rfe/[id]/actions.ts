@@ -11,7 +11,7 @@ import { requireAgent } from '@/lib/support/session'
 export async function updateRfeAction(form: FormData): Promise<void> {
   const me = await requireAgent()
   const id = String(form.get('id') ?? '')
-  if (!isGuid(id)) redirect(`${WS}/rfe`)
+  if (!isGuid(id)) redirect(`${WS}/product?view=rfes`)
   const back = (q: Record<string, string>) => redirect(`${WS}/rfe/${id}?${new URLSearchParams(q).toString()}`)
   const title = String(form.get('title') ?? '').trim()
   if (title.length < 3) back({ error: 'The title needs at least three characters.', edit: '1' })

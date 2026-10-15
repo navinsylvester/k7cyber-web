@@ -56,7 +56,13 @@ generic OIDC provider in `src/auth.ts` and reuse `registerContact`/`findContactB
 /support/workspace/customers  contacts and accounts: search, pages (care band, satisfaction history, the manager's care-flag panel), create, edit (state → city picker through /workspace/geo/cities)
 /support/workspace/kb         read, draft, edit (publishing stays in Dynamics)
 /support/workspace/products   the active catalogue by family
-/support/workspace/rfe        RFEs (create, edit) and defects (read)
+/support/workspace/product    the desk's side of the product loop (§4f): questions from product, released items to tell the customer, mine, all open;
+                              ?view=rfes|defects are the CRM's own RFE and defect lists (the old /workspace/rfe redirects here; /rfe/[id] and /rfe/new stay for rows without a case)
+/support/product              principal support's inbox (§4f): to triage with the triage clock, waiting on the desk, with product with the cadence, released
+  …/items (+ /[number])       every item as a ledger (?state&team&kind&priority&q&sort&dir&page); the item: head, clocks, impact strip, hand-off, cases, thread, actions
+  …/settings                  leads: teams, principal support, priorities and clocks, the CRM mirror switches, notifications
+  …/evidence/[id]             an evidence file, served only to a signed-in agent
+  …/no-access                 where an agent who is not principal support or a lead lands
 /support/workspace/manage     manager view (§4c): overview (KPI cards, SLA strip, trend, top engineers; ?period=7d|30d|90d|mtd)
   …/engineers (+ /[id])       engineer efficiency as cards or a sortable ledger (?view=cards|table&sort=&dir=&all=1); one engineer against the team
   …/sla (+ /export.csv)       SLA violation report: compliance, breakdowns (?by=), trend, the ledger of breaches (?kind&state&owner&priority&vertical&page) and its CSV
@@ -181,6 +187,59 @@ The engineer page adds "low ratings laid at support", so an engineer is not mark
 the area split with a link. Pure functions (`areaCounts`, `causeLines`, `productLines`, `repeatCustomers`, `causeBuckets`) are tested
 in `tests/int/support-csat.int.spec.ts`. Parts S22–S24 in `design-system/components/SupportParts/README.md`.
 
+## 4f. The product desk, phase A (built 2026-10-14)
+The loop between the desk and product (design: `10-product-desk.md`; this is what phase A built). An agent raises an **item** from a case
+(action panel *Escalate to product*: kind, title, hand-off, severity, impact, evidence, and whether the case stays open with product or
+was resolved with a workaround); first the panel asks *"Is it one of these?"* and offers open items on the same product family to **link**
+instead. Items are the bridge record in Payload (`product-items`, with `product-item-cases`, `product-item-events`, `product-evidence`,
+`product-mirror` and the global `product-settings`, group "Product desk" in /admin); the pure model (`src/lib/support/product-model.ts`:
+states, who may move what, the clocks, the mirror operations) is tested in `tests/int/support-product.int.spec.ts`; the server side is
+`product.ts`, the outbox `product-mirror.ts`, the tracker port and the link-only adapter `src/lib/support/tracker/`.
+
+States: raised → tracked → fixed → released → closed, with needs-info (ball with the desk) and declined; `withOf(state, team)` says whose
+turn it is. **Principal support** (agents with a configured Dynamics role, a listed email, or managers when the setting allows; the development
+sign-in passes; `requirePrincipal()`) triages on `/support/product`: accept (team, priority P1–P4, a typed tracker key such as BG-3301, the
+product owner's email), ask the desk, decline with a reason, record fixed and released (version or VDB version, a release line, optionally
+shown to customers), re-route, re-prioritise, close, reopen. The desk answers questions, tells the customer when something shipped (posts the
+release line as a portal reply) and closes, from the case band, the item page or `/support/workspace/product`. Every move writes an event into
+the thread; both desks see it, customers never.
+
+The CRM mirror (`10-product-desk.md` §6) writes only what agents write today and runs **as the acting agent** through the guarded client:
+at raise, an internal note `Product desk: PD-0001 raised (defect)` and the status reason to **In Progress-Principle Support** (when the case is
+kept open); at accept for the Lab, **In Progress-Lab**; on a question, a note and a **task** for the support owner; at released or declined,
+back to **In Progress-Support**, only if the case still sits in a loop status. Every write is recorded in `product-mirror` (done, skipped,
+pending, failed) and summarised as a system entry in the thread; `mirror.enabled` in the settings (default off) decides whether anything is
+sent at all; a refused or failed write never blocks the product side and can be retried from the item. Clocks (§7 of the design): the triage
+target and the update cadence per priority on the desk's business hours, shown as meters on the inbox and the item.
+
+**Merged with the RFEs the same day** (Navin: "shouldn't RFEs and product be merged?"): one workspace tab, *Product desk*; the CRM's RFE and
+defect lists are two views of `/support/workspace/product`; the case sheet's *Convert to RFE* form is gone (an enhancement item is the way) and its
+Related tab lists product items first, then the CRM rows read-only. The CRM rows moved from phase B into phase A: with `mirror.createCrmRows` on
+(default), raising an enhancement creates the `k7_rfe` row (Customer RFE, received from Customer, Open, linked to the case, product, account,
+vertical) and raising a defect or detection creates the `k7_defect` row (In Progress - Support, priority from P1–P4 as Critical/High/Medium/Low,
+linked to the case and the customer), as the agent; the item stores the row's id and number (`crmRef`, shown on the item and in the desk's lists).
+Accept, fixed, released, declined, reopen, a priority change and a tracker key then update the row: RFE Open → In-Progress - Accepted → Closed /
+Closed – Rejected; defect In Progress - Support → Threat Lab or R&D → Closed – Engineering → Closed; the tracker key goes to `k7_yodizid`.
+`crmRowOpsFor` in the model is tested; `createDefect`/`updateDefect` join `rfe.ts`. A case that already has an item can raise another
+(*Raise another item from this case* under the Product panel).
+
+Merge verified on UAT the same evening, rows on: PD-0002 (enhancement) raised from CS-01194-B4N9 created **RF0071** (Customer RFE, received from
+Customer, Open, linked to the case and the product); accepted with tracker key US-4001 → the row read In-Progress - Accepted with the YODIZ id;
+declined as works-as-designed → Closed – Rejected, the case back to In Progress-Support. PD-0003 (defect, severity blocks) created **DF0041**
+(In Progress - Support, High, linked to the case, customer Portal Test, incident number filled); accepted for the Lab at P1 with BG-7001 → the
+row read In Progress – Threat Lab, Critical, BG-7001, and the case moved to In Progress-Lab. The old `/support/workspace/rfe` list redirected to
+the desk's CRM view, where both rows appear with their status tags. Note for anyone driving the portal with browser automation in dev mode: the
+first form submit on a freshly compiled page is sometimes swallowed before hydration; the server log shows no POST, a second click goes through.
+
+Verified on UAT on 2026-10-14 with the development sign-in, mirror on: PD-0001 raised from the test case CS-01194-B4N9 (status reason moved to
+In Progress-Principle Support, the note in the timeline, the band under the head); accepted for engineering at P1 with tracker key BG-9001;
+a question asked (a task and a note on the case, the band went signal) and answered from the case page; marked fixed in 17.1.0423 and
+released in 17.1 with a release line shown to customers (the case went back to In Progress-Support); *Tell the customer* from the case band
+posted the release line as a portal reply and marked the case told; the item closed from `/support/workspace/product`. Every mirror write
+read "done" in the thread. Mail went to the server log (no `SMTP_URL`). PD-0001 and those notes stay in UAT and Payload as test data. Not in phase A: the Yodiz adapter,
+`k7_rfe`/`k7_defect` rows and `k7_yodizid`, the sweep's outbox drain, the manager numbers and the `with-product` SLA state, the customer's
+hint, the sample script, the engineering door (phases B and C of the design).
+
 ## 4b. Verified on 2026-10-13 (UAT, development sign-ins)
 - Agent: workspace home, My Active Cases view (columns from the view's layoutxml, sort, search), a case sheet
   (timeline with emails and notes, details, related), one internal note added on the test case CS-431163-Y0L7,
@@ -210,6 +269,10 @@ in `tests/int/support-csat.int.spec.ts`. Parts S22–S24 in `design-system/compo
   no longer needs them (mass deletes stay the CRM owner's call).
 
 ## 5. What is not done
+- Product desk phases B and C (`10-product-desk.md` §10): the Yodiz adapter and status map, the CRM rows at raise and `k7_yodizid`, the
+  outbox drain in the sweep and the auto-close, the manager cards and `/manage/product`, the `with-product` SLA state, the customer's hint,
+  `k7-sample-submit.py` and the samples API, the engineering door, releases, the Zapier bridge. Phase A's mirror runs as the acting agent, so
+  nothing needs the service identity yet.
 - Entra admin consent for the agent app (needs a tenant admin); the service app registration and
   application user (§B); SMTP for the codes and notifications (`SMTP_URL`); the one-time-code
   attempt counter and send limiter are in memory (one server).
