@@ -71,8 +71,8 @@
   },
   "lastChange": {
     "by": "Navin Sylvester",
-    "at": "2026-10-15T10:30:00Z",
+    "at": "2026-10-15T11:30:00Z",
     "via": "Claude Code",
-    "note": "Icon: five social glyphs (LinkedIn, X, YouTube, Instagram, Facebook) on the icon rules; SiteFooter uses them in place of the mono codes. Earlier today: FeatureMatrix ticks in ink; photography greyscale in frames."
+    "note": "The repository copy is the source of truth from today: Building in React, Where each part lives and Keeping it current in README.md; CHANGELOG.md; LabsParts covers all of section 08; Build lines replace the shadcn lines; previews carry the social glyphs and the ink ticks."
   }
 }

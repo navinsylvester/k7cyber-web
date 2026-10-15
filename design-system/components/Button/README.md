@@ -7,4 +7,4 @@ The three actions of the language: primary is `signal` with the top-right cut, s
 
 **Don't** add icons other than the arrow, round the corners, add a shadow, or put two primary buttons in one sheet. Hover is the inversion (ink on ground), not a tint. Disabled is `disabled` opacity with pointer events off.
 
-**shadcn** Button: variants `default` (primary), `outline` (line), `link`; set `rounded-none`, remove the shadow, apply the clip-path on `default`.
+**Build** `Actions` (`src/components/k7/Actions.tsx`) renders a block's actions as `btn btn-primary`, `btn btn-line` or `link-u` from the link's appearance; the header's call to action is the same classes with `btn-sm`.

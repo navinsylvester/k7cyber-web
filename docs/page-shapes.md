@@ -1,6 +1,6 @@
 # Page shapes → components → Payload blocks
 
-Source: `content/source/k7-enterprise-website-content.md` (export of the "K7 Enterprise Website Content" Google Doc, 8 Oct 2026). ~60 content pages and ~51 forms collapse into the templates below. Every template is a `Pages` document whose `layout` is a list of the blocks on the right; the same React/shadcn block components render both the static previews and the Payload front end.
+Source: `content/source/k7-enterprise-website-content.md` (export of the "K7 Enterprise Website Content" Google Doc, 8 Oct 2026). ~60 content pages and ~51 forms collapse into the templates below. Every template is a `Pages` document whose `layout` is a list of the blocks on the right; the same React block components (`src/blocks/k7`, on the design system classes) render every page.
 
 ## Templates
 
@@ -15,38 +15,42 @@ Source: `content/source/k7-enterprise-website-content.md` (export of the "K7 Ent
 | Compliance | ADHICS, CBUAE, DPDP | PageBanner → Rich text |
 | Comparison | K7 vs CrowdStrike | PageBanner (2 CTAs) → Intro copy → 4-column comparison table (✔/✖ bullets, section rows) → CTAs |
 | Listing | Insight, News, Press Releases, Events | PageBanner → Card grid fed from a collection or feed |
-| Research hub | Research (K7 Labs, Lab Blog, Vulnerabilities, Top Threats) | Already built as static pages in `~/office_docs/website/k7-research` on Design Language 2.1 |
+| Research hub | Research (K7 Labs, Lab Blog, Vulnerabilities, Top Threats, Threat Reports) | Built in this repo under `src/app/(frontend)/research/` on the section 08 parts (`design-system/components/LabsParts`), fed by the research collections |
 | Company | About K7, Leadership, Careers, Partners, Media Centre, Certifications, Testimonials | PageBanner → Rich text / LeaderGrid / LogoWall / Partner two-column + form / Logo downloads / Testimonial list |
 | Contact | Contact Us | Banner image → 3 ContactLocation cards with map → Enquiry form |
-| Support | Support | Link-out to third-party portal with K7 skin |
+| Support | Support | The support portal in this repo under `src/app/(portal)/support/` on the section 09 parts (`design-system/components/SupportParts`), against Dynamics 365 |
 | Form | 30 Enquiry, 11 Request Demo, 10 Request Quote | One FormBlock. Enquiry/Demo share the field set (company, contact person, email, phone, country[India], state, city, comment, consent ×2). Quote adds "number of endpoints/users" style sizing fields. Each form carries a `product` tag so submissions route correctly. |
 
-## Component inventory (design system → shadcn)
+## Component inventory (content doc → design system part → block)
 
-| Component | Used by | shadcn base |
+The content doc names cards and tiles; the design language turns parallel content into rows (`design-system/README.md`, Components). No component library is in use: every part is plain React on `bundle.css` (`design-system/README.md`, Building in React).
+
+| Content doc part | Used by | Design system part → built as |
 |---|---|---|
-| SiteHeader (3-level mega menu, Support, CTA) | all | NavigationMenu, Sheet (mobile) |
-| SiteFooter (5 link columns, legal, socials) | all | — |
-| Hero | Home | Button |
-| PageBanner | every inner page | Button |
-| SectionHeader (eyebrow, heading, lede) | all | — |
-| Button (primary / secondary / text, arrow) | all | Button |
-| FeatureTile (icon, title, text) in 2/3/4-col grid | Product, Addon, Industry, Service | Card |
-| CapabilityTile with hover card | Home | HoverCard / Dialog on touch |
-| StatTile | Home, About | — |
-| ModuleChip grid with ✓ / + states and expansion | Home, Platform, Product | Toggle, Collapsible |
-| IndustryCard (+ expanded: capabilities, compliance pills, Learn more) | Home, Platform | Card, Badge |
-| FeatureMatrix (✔ table) | Product | Table |
-| ComparisonTable (4 col, ✔/✖ lists, section rows, sticky head) | Comparison | Table |
-| Testimonial (quote, name, company; carousel) | Home, Industry, Testimonials | Carousel |
-| InsightCard (cover, type label, title, link) | Platform, Industry, Insight | Card |
-| CompliancePill | Home, Platform, Industry | Badge |
-| LogoWall | About, Partners | — |
-| LeaderCard | Leadership | Card, Avatar |
-| ContactLocation | Contact | Card |
-| CtaBand | every inner page | Button |
-| EnquiryForm (inputs, country/state selects, textarea, consent checkboxes, privacy link) | Forms, Partners, Contact | Form, Input, Select, Textarea, Checkbox |
-| ListCard (news / event / press) | Listing | Card |
+| SiteHeader (3-level mega menu, Support, CTA) | all | SiteHeader → `src/Header` from the `header` global |
+| SiteFooter (5 link columns, legal, socials) | all | SiteFooter → `src/Footer` from the `footer` global; the social glyphs from Icon |
+| Hero | Home | Hero → `homeHero` block |
+| PageBanner | every inner page | PageBanner → `pageBanner` block |
+| SectionHeader (eyebrow, heading, lede) | all | SheetHead, in every sheet block |
+| Button (primary / secondary / text, arrow) | all | Button → `Actions` (`btn-primary`, `btn-line`, `link-u`) |
+| FeatureTile (icon, title, text) in 2/3/4-col grid | Product, Addon, Industry, Service | CapabilityRow → `capabilityRows` block |
+| CapabilityTile with hover card | Home | CapabilityRow with tags → `capabilityRows` block; no hover card |
+| StatTile | Home, About | StatRow → the facts in the `intro` block |
+| ModuleChip grid with ✓ / + states and expansion | Home, Platform, Product | ModuleChips → `moduleGrid` block |
+| IndustryCard (+ expanded: capabilities, compliance pills, Learn more) | Home, Platform | IndexRow → `indexRows` block; compliance as plain text in the description |
+| Feature panel with figure (animation, award, report cover) | Platform, Home | FeaturePanel → `featurePanels` and `panelGrid` blocks |
+| FeatureMatrix (✔ table) | Product | FeatureMatrix → `featureMatrix` block, ✔ in ink |
+| ComparisonTable (4 col, ✔/✖ lists, section rows, sticky head) | Comparison | ComparisonTable → `comparisonTable` block |
+| Testimonial (quote, name, company; carousel) | Home, Industry, Testimonials | Quote → `testimonials` block from the `testimonials` collection |
+| InsightCard (cover, type label, title, link) | Platform, Industry, Insight | PublicationRow → `publicationRows` block |
+| CompliancePill | Home, Platform, Industry | Tag, inside capability rows and module tiles |
+| Rich text (compliance, company pages) | Compliance, Company | Prose → `prose` block |
+| LogoWall | About, Partners | LogoWall; no block yet (company pages not built) |
+| LeaderCard | Leadership | LeaderRow; no block yet (company pages not built) |
+| ContactLocation | Contact | ContactLocation → `locations` block |
+| CtaBand | every inner page | CtaSheet → `ctaSheet` block |
+| EnquiryForm (inputs, country/state selects, textarea, consent checkboxes, privacy link) | Forms, Partners, Contact | EnquiryForm on Field → `formSheet` block (form-builder plugin) |
+| ListCard (news / event / press) | Listing | PublicationRow or IndexRow; listing pages not built yet |
 
 ## Payload model
 

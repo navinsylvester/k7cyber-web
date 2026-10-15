@@ -7,4 +7,4 @@ A row with a 48px icon, a title and one sentence, in a two-column ledger under a
 
 **Don't** turn these into cards, add a Learn More to each, or exceed four words plus one sentence. If a row needs a link, the title is the link.
 
-**shadcn** No primitive; a plain list component. In Payload it is the `featureGrid` block.
+**Build** the `CapabilityRows` block (`capabilityRows`), a plain list on `cap-list`; the Labs landing and the home page use the same rows with tags.

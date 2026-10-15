@@ -7,4 +7,4 @@ One labelled form control: an underline in `ink` that turns `signal` on focus an
 
 **Don't** box the inputs, round them, add icons inside them, or colour the label. Placeholders are examples, not instructions. Error copy says what to fix.
 
-**shadcn** Form + Input / Select / Textarea / Checkbox with `border-0 border-b-2 rounded-none bg-transparent px-0 text-[19px] focus-visible:ring-0 focus-visible:border-primary`; Label with the `label` type.
+**Build** the `field` and `control` markup from `bundle.css` around native inputs, selects, textareas and checkboxes, never a widget; the `FormSheet` block renders form-builder documents with it, and the Labs and Support forms use the same markup.

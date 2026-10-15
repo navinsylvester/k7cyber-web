@@ -72,8 +72,31 @@ Six quirks make a K7 page recognisable with the logo covered. Use one per view.
 - Use the supplied files in `assets/Logos`, never a redrawn mark. The full logo on `paper` in light; the white variant on `paper` in dark and on `contrast`; the square and icon variants where height is under 40px. The orange inside them is `logo-orange` (#EC6A23), which is not `signal`: do not recolour the mark, and do not use `logo-orange` elsewhere.
 - Where the type-set wordmark is used instead (the research pages), it is a 22px `signal` square cut top-right beside "K7" in `wordmark`, with CYBERSECURITY in `label` at `quiet` opacity.
 
-## Consuming in React, Tailwind and shadcn/ui
+## Building in React
 
-- Map the tokens onto shadcn's CSS variables, dark first: `--background: paper`, `--foreground: ink`, `--card: panel`, `--card-foreground: ink`, `--popover: panel`, `--primary: signal`, `--primary-foreground: on-signal`, `--secondary: panel`, `--muted: panel`, `--muted-foreground: muted`, `--accent: signal`, `--accent-foreground: on-signal`, `--destructive: acc-ink`, `--border: line`, `--input: ink`, `--ring: signal`, `--radius: 0`. Keep `contrast`, `acc-ink`, `code`, the `-line`/`-muted`/`-tint` sets and the `cut` values as extra variables.
+- Parts are plain React on the classes in `components/bundle.css`: `Sheet`, `SheetHead`, `Actions` and `Icon` in `src/components/k7/`, one block per sheet in `src/blocks/k7/` (`RenderBlocks` numbers the sheets, places the tabs and alternates the grounds), the research parts in `src/components/research/`, the support parts in `src/components/support/`. The header and footer are `src/Header` and `src/Footer`, fed by their globals.
 - Keep the grounds as classes (`g-paper`, `g-panel`, `g-contrast`, `g-signal`) that set `--bg`, `--fg`, `--acc`, `--line`, `--muted`, `--tint`; components read those, so one component works on every ground.
-- Override shadcn defaults that the language forbids: radius 0, no shadows, hover as inversion, square icon caps. Button, Badge (Tag), Input, Checkbox, Table, NavigationMenu, Sheet, Collapsible, Dialog and Form are the shadcn primitives in use.
+- No component library. The shadcn parts the scaffold came with were removed on 2026-10-15: nothing on the site rendered them, and they carried radius, shadows and rings. `src/app/(frontend)/globals.css` keeps the token-to-variable mapping (`--background: paper`, `--foreground: ink`, `--primary: signal`, `--border: line`, `--ring: signal`, `--radius: 0` and the rest) so Tailwind utilities read the language. If a primitive is ever added, it is restyled to the language before it ships (radius 0, no shadow, hover as inversion, square caps) and gets a README in `components/` like every other part.
+- The theme attribute is rendered on `<html>` by the server (dark) and only overridden by the reader's stored choice before first paint, so nothing is hidden while scripts load.
+
+## Where each part lives
+
+| Parts | Rules | Reference CSS | React |
+| --- | --- | --- | --- |
+| Grounds, type, sheets and tabs, header, footer, buttons, tags, placeholders, rows, tables, forms, quotes, chips, prose, CTA sheet, icons | `components/<Name>/README.md` | `components/bundle.css` | `src/components/k7`, `src/blocks/k7`, `src/Header`, `src/Footer` |
+| 08 · Labs | `components/LabsParts/README.md` | `src/app/(frontend)/research.css` | `src/components/research`, `src/app/(frontend)/research` |
+| 09 · Support | `components/SupportParts/README.md` | `src/app/(portal)/portal.css` | `src/components/support`, `src/app/(portal)/support` |
+| Tokens | this file | `tokens.json`, generated to `tokens.css` | imported by the frontend and portal stylesheets |
+| Page designs | `designs/README.md` | the artboards in `designs/`, on the same two files | the templates in `docs/page-shapes.md` |
+
+## Keeping it current
+
+The design system describes the site as built, so a change to how anything looks is a change to the design system, made in the same commit:
+
+1. **Rules**: the part's `components/<Name>/README.md` (for sections 08 and 09, `LabsParts` and `SupportParts`), and this file when a language-level rule moves.
+2. **Reference CSS**: `components/bundle.css`, or `research.css` and `portal.css` for the Labs and Support parts.
+3. **Reference markup**: the part's `preview.html` when its markup changes.
+4. **Designs**: the artboards in `designs/` that show the part, and `designs/k7chrome.py` for the shared chrome.
+5. **Record**: a line in `CHANGELOG.md` and the `lastChange` note in `design-system.json`.
+
+A new part gets its folder, README and preview before its first use. Nothing is temporary: if it ships, it is in the system.

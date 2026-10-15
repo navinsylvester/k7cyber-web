@@ -7,4 +7,4 @@ A customer testimonial: the person (avatar or logo, name, company, optional tag)
 
 **Don't** italicise, add stars, or fade quotes in. One quote visible at a time.
 
-**shadcn** Carousel for the home page; a plain list elsewhere. Payload: `testimonials` block relating to the `testimonials` collection.
+**Build** the `Testimonials` block (`testimonials`) from the `testimonials` collection; no carousel library.

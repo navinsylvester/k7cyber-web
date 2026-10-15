@@ -7,4 +7,4 @@ The "Modules & Addons" table of a product page: modules down the left, products 
 
 **Don't** use colour to mean included; the tick plus the dash reads without colour. Never the signal pixel per cell: a ledger of thirty rows would spend thirty pixels, and signal is scarce. The one pixel is in the `is-k7` head. Scroll horizontally inside `table-wrap` on narrow screens rather than stacking.
 
-**shadcn** Table with `rounded-none`; Payload: `featureMatrix` block.
+**Build** the `FeatureMatrix` block (`featureMatrix`) on `dtable`, one table per section with its count in the head.

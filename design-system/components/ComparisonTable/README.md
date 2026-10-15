@@ -7,4 +7,4 @@ The competitor comparison (K7 vs CrowdStrike): four columns, criteria grouped un
 
 **Don't** shade the K7 column, use green/red fills, or truncate bullets. On narrow screens the table scrolls inside `table-wrap`; a stacked Accordion per criterion is the mobile alternative.
 
-**shadcn** Table. Payload: `comparisonTable` block with a `competitor` field.
+**Build** the `ComparisonTable` block (`comparisonTable`) on `dtable`, with a `competitor` field; a line that starts with ✖ or x becomes a gap.

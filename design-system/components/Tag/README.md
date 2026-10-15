@@ -7,4 +7,4 @@ A mono, uppercase, 1px-bordered label for anything counted or classified: compli
 
 **Don't** colour tags by category, round them, or use a tag as a heading. Never more than one `tag-signal` in a group.
 
-**shadcn** Badge with `variant="outline"`, `rounded-none`, `font-mono uppercase tracking-[.08em] text-[11px]`.
+**Build** the `tag` class with `tag-solid`, `tag-signal` and `tag-quiet`; the blog's `CategoryTags` and the support state, care and cause tags are the same element.

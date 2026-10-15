@@ -7,4 +7,4 @@ The sticky 60px bar with the logo, the eight top-level items from the Header Men
 
 **Don't** show more than one panel, add icons to nav items, or shrink the logo under 26px. Below 1040px the nav collapses behind a Menu button and opens the mobile list (24px rows with a pixel on the current page).
 
-**shadcn** NavigationMenu for the bar and panel; Sheet for the mobile list; the theme toggle is a two-button group, not a Switch.
+**Build** `src/Header/Component.client.tsx` from the `header` global: the bar, the mega panel on `g-panel`, the mobile list behind the Menu button, and the theme toggle as a two-button group; no menu library.

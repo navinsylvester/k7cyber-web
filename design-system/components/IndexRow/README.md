@@ -7,4 +7,4 @@ Parallel content is a list, not a card grid: a numbered row with a title, a desc
 
 **Don't** add images or icons to rows except the 32px publication icon in PublicationRow. Never more than ~12 rows without a filter.
 
-**shadcn** No primitive. Payload: `industryGrid` and `listing` blocks.
+**Build** the `IndexRows` block (`indexRows`) and `PublicationRows` (`publicationRows`) on `irow`; the Labs listings and the support case rows reuse the shape.

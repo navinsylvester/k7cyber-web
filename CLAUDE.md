@@ -7,6 +7,7 @@ One Next.js 16 app with Payload 3 inside it: the public site and the CMS admin (
 ## Layout
 - `src/` — the app. `src/app/(frontend)` is the public site, `src/app/(payload)` the admin. Collections in `src/collections`, blocks in `src/blocks`, globals in `src/Header` and `src/Footer`, config in `src/payload.config.ts`.
 - `design-system/` — K7 Design Language 2.1: `tokens.json` is the source of truth, `tokens.css` is generated from it and imported by `src/app/(frontend)/globals.css`, `components/bundle.css` is the reference CSS each React component must reproduce, `components/<Name>/README.md` the rules per part. Read `design-system/README.md` before touching any UI.
+- The design system is kept current with the code. Any change to how a part looks updates, in the same commit, its README (`LabsParts` and `SupportParts` for sections 08 and 09), the reference CSS, its `preview.html` when the markup changes, the artboards in `designs/` that show it, and a line in `design-system/CHANGELOG.md` plus the note in `design-system.json`. The checklist is `design-system/README.md`, "Keeping it current".
 - `designs/` — the approved page designs (Claude Design artboards) per template. Build pages to match these.
 - `docs/page-shapes.md` — which blocks each page template is made of, and the Payload collections/globals/blocks model.
 - `content/source/` — the content doc export the pages are written from.

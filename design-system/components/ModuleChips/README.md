@@ -7,4 +7,4 @@
 
 **Don't** colour tiles by category, round them, or make them all on by default; "switch on capabilities as required" is the point.
 
-**shadcn** Toggle / ToggleGroup, with Collapsible for the expansion. Payload: `moduleGrid` block.
+**Build** the `ModuleGrid` block (`moduleGrid`) on the `module` tiles, with the core and add-on states as the tick and plus marks.

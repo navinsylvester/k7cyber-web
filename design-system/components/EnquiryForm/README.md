@@ -7,4 +7,4 @@ The one lead form behind every Enquire, Request Demo and Request Quote link: a `
 
 **Don't** add a hero above the form, box it, or split it across steps. Keep "Select all" as the first checkbox, as the content specifies.
 
-**shadcn** Form (react-hook-form + zod) composed of Field; submit with Button `default`. In Payload, this is the `form` block rendering a document from the form-builder plugin.
+**Build** the `FormSheet` block (`formSheet`) renders a form-builder document with `Field`; submit is `btn btn-primary`.
