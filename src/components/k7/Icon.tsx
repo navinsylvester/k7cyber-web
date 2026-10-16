@@ -46,6 +46,15 @@ export const social = {
 
 export type SocialName = keyof typeof social
 
+/* The chrome glyphs, on the same rules, for the site's own controls. `theme`: a square cut by the seven, the cut-off part
+   hatched at the same angle, the pixel on the tab; the theme's inversion makes it read as the positive or the negative print.
+   Not offered in the content icon picker. */
+export const chrome = {
+  theme: { d: 'M4 4h24v24H4z M24 4L13 28 M28 10l-8.2 18 M28 18l-4.6 10', px: [8, 8] },
+} as const
+
+export type ChromeName = keyof typeof chrome
+
 /** The social glyph for a network name as the Footer global stores it ("LinkedIn", "X", "YouTube"), or null. */
 export const socialGlyph = (name: string): SocialName | null => {
   const key = name.toLowerCase().replace(/[^a-z]/g, '')
@@ -57,9 +66,9 @@ export const iconOptions = (Object.keys(icons) as IconName[]).map((value) => ({
   value,
 }))
 
-const all = { ...icons, ...social }
+const all = { ...icons, ...social, ...chrome }
 
-export const Icon: React.FC<{ name?: IconName | SocialName | string | null; className?: string }> = ({ name, className = 'licon' }) => {
+export const Icon: React.FC<{ name?: IconName | SocialName | ChromeName | string | null; className?: string }> = ({ name, className = 'licon' }) => {
   const icon = all[(name as keyof typeof all) in all ? (name as keyof typeof all) : 'grid']
   return (
     <svg className={className} viewBox="0 0 32 32" aria-hidden="true">

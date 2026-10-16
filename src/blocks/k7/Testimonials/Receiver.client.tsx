@@ -8,10 +8,24 @@ import type { TestimonialsBlock } from '@/payload-types'
    station; when it arrives the quote is replaced with no transition and the pixel on its station blinks twice (is-stamp).
    Counted things step: the needle moves in STEPS jumps over the dwell, never eased. A negative testimonial is interference on the band: named on the status line, with K7's one-line reply under it.
    Hover or focus holds the band; a press tunes. Under prefers-reduced-motion nothing scans and the needle rests on the station. */
+type Band = 'positive' | 'negative'
 const STEPS = 24
+/* The figure beside the transmission (design-system/components/Receiver, the carrier): a mast with the pixel at its tip and the
+   trace it receives, a clean square wave on the praise band and interference on the complaints band. Drawn on the line rules. */
+const CARRIER = { positive: 'M56 112h22v-40h22v40h22v-40h22v40h22v-40h22v40h22v-40h22v40h22v-40h22v40h22', negative: 'M56 112h14v-44h6v36h18v-18h6v52h16v-66h8v42h20v-10h8v28h14v-56h8v48h18v-22h12v26h14v-40h8v32h14v-14h10v18h16v-50h8v44h14v-24h12' }
+const Carrier: React.FC<{ band: Band }> = ({ band }) => (
+  <figure className="rx-fig" aria-hidden="true">
+    <svg viewBox="0 0 320 176">
+      <path className="base" d="M56 152h248" />
+      <path className="mast" d="M24 152V28 M12 40l12-12 12 12" />
+      <rect className="px" x="21" y="22" width="6" height="6" />
+      <path className="trace" d={CARRIER[band]} />
+    </svg>
+    <figcaption className="label muted">Fig. 02 · {band === 'negative' ? 'Interference' : 'Carrier'}</figcaption>
+  </figure>
+)
 const ch = (k: number) => String(k + 1).padStart(2, '0')
 
-type Band = 'positive' | 'negative'
 const onBand = (t: TestimonialsBlock['items'][number], band: Band) => (t.sentiment === 'negative' ? 'negative' : 'positive') === band
 
 export const Receiver: React.FC<{ items: TestimonialsBlock['items']; dwell?: number | null }> = ({ items: all, dwell }) => {
@@ -89,6 +103,7 @@ export const Receiver: React.FC<{ items: TestimonialsBlock['items']; dwell?: num
             <blockquote>{empty}</blockquote>
           </figure>
         )}
+        <Carrier band={bandName} />
         {items.map((t, k) => (
           <figure className={k === i ? 'rx-tx is-on' : 'rx-tx'} key={t.id ?? k} aria-hidden={k !== i}>
             <blockquote>{t.quote}</blockquote>
