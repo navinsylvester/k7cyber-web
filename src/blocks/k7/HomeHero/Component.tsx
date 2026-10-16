@@ -81,8 +81,8 @@ export const HomeHero: React.FC<HomeHeroBlock & { index: number; count: number }
         <div className="hero-copy">
           <h1 className="h-hero">
             <span>{line1}</span>
-            <span>{line2}</span>
-            <span>{line3}</span>
+            <span className="dim">{line2}</span>
+            <span className="dim">{line3}</span>
           </h1>
           <p className="lede">{withBold(lede)}</p>
           <Actions items={actions} />

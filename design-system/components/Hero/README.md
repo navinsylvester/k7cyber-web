@@ -1,7 +1,7 @@
 # Hero
 The home page opener: the product name flush left on three lines, the lede with two actions, the stack figure on the right, the registration pattern (PT1) fading from the headline, and the log strip (S6). The stair (S4) and the redacted word (S3) are not here: they open the sheet after it (SheetHead with `stair` and `redact`).
 
-**Use** once, on the home page. The headline is the product name, one word per line, flush left, never redacted. The live pixel in the meta line blinks in steps only when the threat-lab feed is live.
+**Use** once, on the home page. The headline is the product name, one word per line, flush left, never redacted; the first line, the brand, is ink and the lines after it sit at `dim` (since 2026-10-16), the same split a sheet headline makes with its second clause, so K7 stands and the product name follows. The live pixel in the meta line blinks in steps only when the threat-lab feed is live.
 
 **The stack**: three tab-shaped plates (S2) stacked foot first, sensor, platform, agentic SOC on top, the top plate narrower so it sits on the one below; two square-capped arrows up the chain; each plate carries a mono label, its line in Archivo and an optional mono note. One signal pixel climbs the chain in five steps on a 5s loop, `steps(1)`, never eased; under prefers-reduced-motion it rests on the top plate. Plates are filled with the ground, so the registration pattern stays outside them. Strokes 2px, currentColor; no fill but the ground, no second colour but the pixel.
 
