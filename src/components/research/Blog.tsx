@@ -46,10 +46,10 @@ export const CategoryTags: React.FC<{ post: Post; max?: number }> = ({ post, max
 
 /* The lead post of a listing: a feature panel with the image, the latest label and the categories. */
 export const PostFeature: React.FC<{ post: Post }> = ({ post }) => (
-  <article className="feature g-panel">
+  <article className="feature g-panel filed">
+    <div className="ftab label">Latest · {byline(post.publishedAt)}</div>
     <Placeholder caption="Featured image · 1200 × 600" image={post.featuredImage} size="large" />
     <div className="feature-body">
-      <span className="label">Latest · {byline(post.publishedAt)}</span>
       <h2 className="h-title">
         <Link href={`/research/lab-blog/${post.slug}`}>{post.title}</Link>
       </h2>

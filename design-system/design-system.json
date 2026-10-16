@@ -71,8 +71,8 @@
   },
   "lastChange": {
     "by": "Navin Sylvester",
-    "at": "2026-10-15T11:30:00Z",
+    "at": "2026-10-16T23:00:00Z",
     "via": "Claude Code",
-    "note": "The repository copy is the source of truth from today: Building in React, Where each part lives and Keeping it current in README.md; CHANGELOG.md; LabsParts covers all of section 08; Build lines replace the shadcn lines; previews carry the social glyphs and the ink ticks."
+    "note": "Account, a new part: the ledger that sums, its statement filed beside a drawn cover, for the home page's Why K7 sheet. CapabilityRow gains the numbered ledger (cap-ledger, the scope list) for the home page's four capabilities. IndexRow may carry one glyph per row before the arrow (ilist-glyphs); Icon gains the seven industries (bank, mortarboard, capitol, cross, factory, terminal, bag) and the home industry index carries them."
   }
 }

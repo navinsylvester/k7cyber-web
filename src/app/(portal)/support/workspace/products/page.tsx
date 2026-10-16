@@ -42,11 +42,10 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             )}
           </div>
         </form>
-        <div className="results label">
-          <span>
+        <div className="ledger filed">
+          <div className="ftab label">
             Showing {sorted.length} of {all.length} · grouped by family
-          </span>
-        </div>
+          </div>
         <div className="table-wrap">
           <table className="dtable" style={{ minWidth: 760 }} data-grouped="">
             <caption className="sr-only">Products</caption>
@@ -93,6 +92,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
               })}
             </tbody>
           </table>
+        </div>
         </div>
       </section>
     </>

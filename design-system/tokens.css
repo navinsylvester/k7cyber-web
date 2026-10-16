@@ -1,4 +1,4 @@
-/* K7 Design Language 2.1 — CSS variables generated from tokens.json. Dark is the default theme; [data-theme="light"] swaps paper and ink. signal never moves. */
+/* K7 Design Language 2.2 — CSS variables generated from tokens.json. Dark is the default theme; [data-theme="light"] swaps paper and ink. signal never moves. */
 :root, [data-theme="dark"] {
   --paper: #0a0a09;
   --panel: #1c1c19;
@@ -41,9 +41,8 @@
   --measure-prose: 40rem;
 
   --radius-0: 0;
-  --cut-tab: 12px;
-  --cut-btn: 14px;
-  --cut-feature: 28px;
+  --seven: 24.5deg;
+  --seven-run: 0.4557;
 
   --dim: 0.42;
   --quiet: 0.7;

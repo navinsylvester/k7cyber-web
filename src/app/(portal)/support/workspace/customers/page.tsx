@@ -65,11 +65,10 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
             )}
           </div>
         </form>
-        <div className="results label">
-          <span>
+        <div className="ledger filed">
+          <div className="ftab label">
             {rows.length} {kind} {q ? `matching “${q}”` : '· recently modified'}
-          </span>
-        </div>
+          </div>
         {kind === 'contacts' ? (
           <Ledger caption="Contacts" heads={[{ label: 'Name' }, { label: 'Email' }, { label: 'Mobile' }, { label: 'Organisation' }, { label: 'City' }, { label: 'Modified' }]}>
             {rows.length === 0 && (
@@ -111,6 +110,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
             ))}
           </Ledger>
         )}
+        </div>
       </section>
     </>
   )

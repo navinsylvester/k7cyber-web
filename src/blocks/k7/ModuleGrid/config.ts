@@ -56,6 +56,15 @@ export const ModuleGrid: Block = {
         { name: 'legendLinkUrl', type: 'text', admin: { width: '50%', condition: (_, s) => Boolean(s?.legend) } },
       ],
     },
+    /* The tally (home page): the count of modules that are on steps as add-ons are pressed, and the demo request carries them. */
+    { name: 'tally', type: 'checkbox', defaultValue: false, admin: { description: 'Add the tally bar under the grid: the count of modules that are on and a demo request that carries them (home page).' } },
+    {
+      type: 'row',
+      fields: [
+        { name: 'tallyNote', type: 'text', defaultValue: '1 agent · 1 console', admin: { width: '50%', condition: (_, s) => Boolean(s?.tally) } },
+        { name: 'requestUrl', type: 'text', defaultValue: '/contact-us', admin: { width: '50%', description: 'The request lands here with ?modules=EPP,EDR,…', condition: (_, s) => Boolean(s?.tally) } },
+      ],
+    },
     actions(2),
   ],
 }

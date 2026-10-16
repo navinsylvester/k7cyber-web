@@ -16,15 +16,14 @@ export const Cover: React.FC<{ period: string; range?: string | null; series?: s
   const annual = /^annual$/i.test(a ?? '')
   return (
     <div className={`cover ${className}`} role="img" aria-label={`Cover: ${series ?? 'Cyber Threat Monitor'}, ${period}`}>
-      <div>
-        <div className="cover-top">
-          <svg viewBox="0 0 22 22" aria-hidden="true">
-            <path d="M0 0h15l7 7v15H0z" fill="#FF4521" />
-          </svg>
-          K7 Labs
-        </div>
-        <div className="cover-series">{series?.replace(/ Report$/, '') ?? 'Cyber Threat Monitor'}</div>
+      <div className="ftab label">
+        <svg viewBox="0 0 22 22" aria-hidden="true">
+          <path d="M0 0h22l-10 22H0z" fill="#FF4521" />
+        </svg>
+        K7 Labs
       </div>
+      <div className="cover-body">
+      <div className="cover-series">{series?.replace(/ Report$/, '') ?? 'Cyber Threat Monitor'}</div>
       <div className="cover-period">
         {annual ? (
           <>
@@ -47,6 +46,7 @@ export const Cover: React.FC<{ period: string; range?: string | null; series?: s
       <div className="cover-foot">
         <span>{range}</span>
         <span>Report</span>
+      </div>
       </div>
     </div>
   )

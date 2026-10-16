@@ -46,9 +46,29 @@ const textNode = ({ node }: { node: { text: string; format?: number } }) => {
   return <>{el}</>
 }
 
-const converters: JSXConvertersFunction<Nodes> = ({ defaultConverters }) => ({
+const pad2 = (n: number) => String(n).padStart(2, '0')
+
+/* L13 · The record rail: on a Labs article every paragraph with text is numbered (§ 01 …) and the number is its anchor. */
+const makeConverters = (rail: boolean): JSXConvertersFunction<Nodes> => {
+  let n = 0
+  return ({ defaultConverters }) => ({
   ...defaultConverters,
   text: textNode as never,
+  paragraph: ({ node, nodesToJSX }) => {
+    const children = nodesToJSX({ nodes: node.children })
+    const hasText = node.children.some((c) => c.type !== 'text' || Boolean((c as { text?: string }).text?.trim()))
+    if (!rail || !hasText) return <p>{children}</p>
+    n += 1
+    const id = `p${pad2(n)}`
+    return (
+      <p className="para" id={id}>
+        <a className="para-n label" href={`#${id}`} aria-label={`Paragraph ${n}`}>
+          § {pad2(n)}
+        </a>
+        {children}
+      </p>
+    )
+  },
   heading: ({ node, nodesToJSX }) => {
     const Tag = node.tag as 'h2' | 'h3' | 'h4'
     const text = nodesToJSX({ nodes: node.children })
@@ -84,6 +104,9 @@ const converters: JSXConvertersFunction<Nodes> = ({ defaultConverters }) => ({
       </div>
     ),
   },
-})
+  })
+}
 
-export const Prose: React.FC<{ data: Parameters<typeof RichText>[0]['data']; className?: string }> = ({ data, className = 'prose' }) => <RichText className={className} converters={converters} data={data} />
+export const Prose: React.FC<{ data: Parameters<typeof RichText>[0]['data']; className?: string; rail?: boolean }> = ({ data, className = 'prose', rail = false }) => (
+  <RichText className={rail ? `${className} record` : className} converters={makeConverters(rail)} data={data} />
+)

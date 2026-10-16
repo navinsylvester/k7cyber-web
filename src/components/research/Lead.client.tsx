@@ -9,6 +9,31 @@ export const LeadButton: React.FC<{ reportId: number; title: string; className?:
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  /* The dialog arrives stamped: no transition; the pixel on its tab blinks twice on every open. */
+
+  const open = () => {
+
+    const d = ref.current
+
+    if (!d) return
+
+    const px = d.querySelector<HTMLElement>('.is-stamp')
+
+    if (px) {
+
+      px.style.animation = 'none'
+
+      void px.offsetWidth
+
+      px.style.animation = ''
+
+    }
+
+    d.showModal()
+
+  }
+
+
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const form = e.currentTarget
@@ -37,19 +62,18 @@ export const LeadButton: React.FC<{ reportId: number; title: string; className?:
 
   return (
     <>
-      <button className={className} type="button" onClick={() => ref.current?.showModal()}>
+      <button className={className} type="button" onClick={open}>
         {label} <span aria-hidden="true">→</span>
       </button>
-      <dialog className={`lead g-paper${done ? ' is-done' : ''}`} ref={ref} aria-labelledby={`lead-h-${reportId}`} onClick={(e) => e.target === ref.current && ref.current?.close()}>
-        <div className="lead-inner">
-          <div className="lead-head">
-            <span className="label">
-              <span className="pixel" aria-hidden="true" /> {title}
-            </span>
+      <dialog className={`lead${done ? ' is-done' : ''}`} ref={ref} aria-labelledby={`lead-h-${reportId}`} onClick={(e) => e.target === ref.current && ref.current?.close()}>
+        <div className="lead-sheet g-panel filed">
+          <div className="ftab label">
+            <span className="pixel is-stamp" aria-hidden="true" /> {title}
             <button className="x" type="button" aria-label="Close" onClick={() => ref.current?.close()}>
               ×
             </button>
           </div>
+          <div className="lead-inner">
           <form noValidate onSubmit={submit}>
             <div>
               <h2 id={`lead-h-${reportId}`}>Get the report</h2>
@@ -126,6 +150,7 @@ export const LeadButton: React.FC<{ reportId: number; title: string; className?:
                 Close
               </button>
             </div>
+          </div>
           </div>
         </div>
       </dialog>

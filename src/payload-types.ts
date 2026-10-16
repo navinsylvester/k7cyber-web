@@ -564,10 +564,9 @@ export interface HomeHeroBlock {
   line1: string;
   line2: string;
   /**
-   * The last line; its final word is redacted.
+   * The headline is the product name, one word per line, flush left.
    */
   line3: string;
-  redactNote?: string | null;
   /**
    * Wrap the platform name in **double asterisks**.
    */
@@ -593,6 +592,26 @@ export interface HomeHeroBlock {
            */
           appearance?: ('primary' | 'line' | 'text') | null;
         };
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The stack on the right, foot first: sensor, platform, agentic SOC. Exactly three rows draw it; fewer draw nothing.
+   */
+  figure?:
+    | {
+        /**
+         * e.g. 01 · Sensor
+         */
+        label: string;
+        /**
+         * e.g. Proprietary, unified
+         */
+        value: string;
+        /**
+         * Optional mono line, e.g. EPP · EDR · XDR · MDR
+         */
+        note?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -629,6 +648,15 @@ export interface IntroBlock {
    */
   lede?: string | null;
   /**
+   * Set the headline as the stair (S4): one word per line, stepping onto the 7. Not for the first sheet.
+   */
+  stair?: boolean | null;
+  /**
+   * Redact the last word (S3); hover or tap declassifies. Home page only.
+   */
+  redact?: boolean | null;
+  redactNote?: string | null;
+  /**
    * Two columns of body copy, or a stack beside the fact ledger.
    */
   paragraphs?:
@@ -652,6 +680,37 @@ export interface IntroBlock {
       }[]
     | null;
   /**
+   * Optional glyph beside the paragraphs, drawn on the icon rules (home page: puzzle). With a glyph the lede sets above the headline and the paragraphs at lede size on the right, their **terms** as inverted blocks.
+   */
+  symbol?:
+    | (
+        | 'surface'
+        | 'shield'
+        | 'grid'
+        | 'beacon'
+        | 'bars'
+        | 'hex'
+        | 'certificate'
+        | 'pulse'
+        | 'document'
+        | 'screen'
+        | 'lock'
+        | 'ledger'
+        | 'devices'
+        | 'archive'
+        | 'key'
+        | 'network'
+        | 'puzzle'
+        | 'bank'
+        | 'mortarboard'
+        | 'capitol'
+        | 'cross'
+        | 'factory'
+        | 'terminal'
+        | 'bag'
+      )
+    | null;
+  /**
    * Optional fact ledger beside the paragraphs: key + value (Since · 1991, building …).
    */
   facts?:
@@ -661,6 +720,61 @@ export interface IntroBlock {
         id?: string | null;
       }[]
     | null;
+  /**
+   * The account (Account): the facts sum. Each value sets large, the last fact is the total under a double rule, stamped as a block, and the paragraphs sit beside at lede size with their **terms** as blocks. Home page, Why K7.
+   */
+  account?: boolean | null;
+  /**
+   * With the account: the paragraphs sit in a filed panel beside a drawn cover, as the record sheet files its report. Leave the series empty for no panel.
+   */
+  panel?: {
+    /**
+     * The panel's tab (S7).
+     */
+    label?: string | null;
+    /**
+     * The glyph on the cover's tab.
+     */
+    icon?:
+      | (
+          | 'surface'
+          | 'shield'
+          | 'grid'
+          | 'beacon'
+          | 'bars'
+          | 'hex'
+          | 'certificate'
+          | 'pulse'
+          | 'document'
+          | 'screen'
+          | 'lock'
+          | 'ledger'
+          | 'devices'
+          | 'archive'
+          | 'key'
+          | 'network'
+          | 'puzzle'
+          | 'bank'
+          | 'mortarboard'
+          | 'capitol'
+          | 'cross'
+          | 'factory'
+          | 'terminal'
+          | 'bag'
+        )
+      | null;
+    cover?: {
+      brand?: string | null;
+      /**
+       * e.g. Accountability
+       */
+      series?: string | null;
+      period?: string | null;
+      year?: string | null;
+      footLeft?: string | null;
+      footRight?: string | null;
+    };
+  };
   /**
    * Optional: a hairline-gridded figure of labelled lists, e.g. the MDR architecture.
    */
@@ -747,6 +861,10 @@ export interface CapabilityRowsBlock {
    * One or two sentences, under 46 characters per line.
    */
   lede?: string | null;
+  /**
+   * The numbered ledger (home page): each row sets its index large with the icon under it, and its tags become a scope list on hairlines headed by the scope label and the count.
+   */
+  numbered?: boolean | null;
   rows: {
     icon?:
       | (
@@ -766,6 +884,14 @@ export interface CapabilityRowsBlock {
           | 'archive'
           | 'key'
           | 'network'
+          | 'puzzle'
+          | 'bank'
+          | 'mortarboard'
+          | 'capitol'
+          | 'cross'
+          | 'factory'
+          | 'terminal'
+          | 'bag'
         )
       | null;
     /**
@@ -777,7 +903,7 @@ export interface CapabilityRowsBlock {
      */
     text: string;
     /**
-     * Optional tags under the sentence (home page capabilities).
+     * Optional tags under the sentence; in the numbered ledger they are the scope list.
      */
     tags?:
       | {
@@ -785,6 +911,10 @@ export interface CapabilityRowsBlock {
           id?: string | null;
         }[]
       | null;
+    /**
+     * What the tags are, as the scope list's head in the numbered ledger: Covers, Controls, Frameworks. Defaults to Scope.
+     */
+    scopeLabel?: string | null;
     id?: string | null;
   }[];
   actions?:
@@ -866,6 +996,14 @@ export interface ModuleGridBlock {
             | 'archive'
             | 'key'
             | 'network'
+            | 'puzzle'
+            | 'bank'
+            | 'mortarboard'
+            | 'capitol'
+            | 'cross'
+            | 'factory'
+            | 'terminal'
+            | 'bag'
           )
         | null;
       name: string;
@@ -885,6 +1023,15 @@ export interface ModuleGridBlock {
   legend?: boolean | null;
   legendLinkLabel?: string | null;
   legendLinkUrl?: string | null;
+  /**
+   * Add the tally bar under the grid: the count of modules that are on and a demo request that carries them (home page).
+   */
+  tally?: boolean | null;
+  tallyNote?: string | null;
+  /**
+   * The request lands here with ?modules=EPP,EDR,…
+   */
+  requestUrl?: string | null;
   actions?:
     | {
         link: {
@@ -946,9 +1093,40 @@ export interface FeaturePanelsBlock {
       year?: string | null;
       footLeft?: string | null;
       footRight?: string | null;
+      /**
+       * The glyph on the cover's tab: archive for a report, certificate for an award.
+       */
+      icon?:
+        | (
+            | 'surface'
+            | 'shield'
+            | 'grid'
+            | 'beacon'
+            | 'bars'
+            | 'hex'
+            | 'certificate'
+            | 'pulse'
+            | 'document'
+            | 'screen'
+            | 'lock'
+            | 'ledger'
+            | 'devices'
+            | 'archive'
+            | 'key'
+            | 'network'
+            | 'puzzle'
+            | 'bank'
+            | 'mortarboard'
+            | 'capitol'
+            | 'cross'
+            | 'factory'
+            | 'terminal'
+            | 'bag'
+          )
+        | null;
     };
     /**
-     * Mono label in acc-ink above the title.
+     * The panel's tab (S7): a mono label with the evidence, e.g. AMTSO · award. Without it the panel has no tab.
      */
     label?: string | null;
     title: string;
@@ -1000,7 +1178,7 @@ export interface FeaturePanelsBlock {
         | null;
     };
     /**
-     * Panel ground inside the cut (off: paper).
+     * Panel ground (off: paper).
      */
     onPanel?: boolean | null;
     id?: string | null;
@@ -1313,6 +1491,37 @@ export interface IndexRowsBlock {
   arrow?: string | null;
   rows: {
     title: string;
+    /**
+     * A glyph before the arrow; the industry index carries one per row.
+     */
+    icon?:
+      | (
+          | 'surface'
+          | 'shield'
+          | 'grid'
+          | 'beacon'
+          | 'bars'
+          | 'hex'
+          | 'certificate'
+          | 'pulse'
+          | 'document'
+          | 'screen'
+          | 'lock'
+          | 'ledger'
+          | 'devices'
+          | 'archive'
+          | 'key'
+          | 'network'
+          | 'puzzle'
+          | 'bank'
+          | 'mortarboard'
+          | 'capitol'
+          | 'cross'
+          | 'factory'
+          | 'terminal'
+          | 'bag'
+        )
+      | null;
     description: string;
     link?: {
       type?: ('reference' | 'custom') | null;
@@ -1372,6 +1581,14 @@ export interface PublicationRowsBlock {
           | 'archive'
           | 'key'
           | 'network'
+          | 'puzzle'
+          | 'bank'
+          | 'mortarboard'
+          | 'capitol'
+          | 'cross'
+          | 'factory'
+          | 'terminal'
+          | 'bag'
         )
       | null;
     title: string;
@@ -2557,7 +2774,6 @@ export interface HomeHeroBlockSelect<T extends boolean = true> {
   line1?: T;
   line2?: T;
   line3?: T;
-  redactNote?: T;
   lede?: T;
   actions?:
     | T
@@ -2572,6 +2788,14 @@ export interface HomeHeroBlockSelect<T extends boolean = true> {
               label?: T;
               appearance?: T;
             };
+        id?: T;
+      };
+  figure?:
+    | T
+    | {
+        label?: T;
+        value?: T;
+        note?: T;
         id?: T;
       };
   log?:
@@ -2593,6 +2817,9 @@ export interface IntroBlockSelect<T extends boolean = true> {
   headline?: T;
   dimClause?: T;
   lede?: T;
+  stair?: T;
+  redact?: T;
+  redactNote?: T;
   paragraphs?:
     | T
     | {
@@ -2607,12 +2834,30 @@ export interface IntroBlockSelect<T extends boolean = true> {
         value?: T;
         id?: T;
       };
+  symbol?: T;
   facts?:
     | T
     | {
         k?: T;
         v?: T;
         id?: T;
+      };
+  account?: T;
+  panel?:
+    | T
+    | {
+        label?: T;
+        icon?: T;
+        cover?:
+          | T
+          | {
+              brand?: T;
+              series?: T;
+              period?: T;
+              year?: T;
+              footLeft?: T;
+              footRight?: T;
+            };
       };
   figure?:
     | T
@@ -2673,6 +2918,7 @@ export interface CapabilityRowsBlockSelect<T extends boolean = true> {
   headline?: T;
   dimClause?: T;
   lede?: T;
+  numbered?: T;
   rows?:
     | T
     | {
@@ -2685,6 +2931,7 @@ export interface CapabilityRowsBlockSelect<T extends boolean = true> {
               name?: T;
               id?: T;
             };
+        scopeLabel?: T;
         id?: T;
       };
   actions?:
@@ -2736,6 +2983,9 @@ export interface ModuleGridBlockSelect<T extends boolean = true> {
   legend?: T;
   legendLinkLabel?: T;
   legendLinkUrl?: T;
+  tally?: T;
+  tallyNote?: T;
+  requestUrl?: T;
   actions?:
     | T
     | {
@@ -2779,6 +3029,7 @@ export interface FeaturePanelsBlockSelect<T extends boolean = true> {
               year?: T;
               footLeft?: T;
               footRight?: T;
+              icon?: T;
             };
         label?: T;
         title?: T;
@@ -3024,6 +3275,7 @@ export interface IndexRowsBlockSelect<T extends boolean = true> {
     | T
     | {
         title?: T;
+        icon?: T;
         description?: T;
         link?:
           | T

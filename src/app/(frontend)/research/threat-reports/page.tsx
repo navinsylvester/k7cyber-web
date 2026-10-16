@@ -58,11 +58,11 @@ export default async function ThreatReportsPage({ searchParams }: { searchParams
             </StateTab>
           )}
           {lead && (
-            <article className="feature g-panel report-feature">
+            <article className="feature g-panel report-feature filed">
+              <div className="ftab label">Latest report · published {byline(lead.publishedAt)}</div>
               <Cover period={lead.period} range={lead.periodRange} series={lead.reportType} image={lead.cover} />
               <div className="feature-body">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <span className="label">Latest report · published {byline(lead.publishedAt)}</span>
                   <h2 className="h-title">
                     {lead.title}, {lead.period}
                   </h2>

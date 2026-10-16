@@ -1,5 +1,6 @@
 import type { Block } from 'payload'
 
+import { iconOptions } from '@/components/k7/Icon'
 import { link } from '@/fields/link'
 import { rowLabel, sheetFields, sheetHeadFields } from '../shared'
 
@@ -27,7 +28,13 @@ export const IndexRows: Block = {
       minRows: 1,
       admin: { initCollapsed: true, ...rowLabel },
       fields: [
-        { name: 'title', type: 'text', required: true },
+        {
+          type: 'row',
+          fields: [
+            { name: 'title', type: 'text', required: true, admin: { width: '70%' } },
+            { name: 'icon', type: 'select', options: iconOptions, admin: { width: '30%', description: 'A glyph before the arrow; the industry index carries one per row.' } },
+          ],
+        },
         { name: 'description', type: 'textarea', required: true },
         link({ disableLabel: true, appearances: false }),
       ],

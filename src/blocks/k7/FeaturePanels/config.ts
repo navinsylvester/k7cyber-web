@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { iconOptions } from '@/components/k7/Icon'
+
 import { actions, rowLabel, sheetFields, sheetHeadFields } from '../shared'
 
 /* FeaturePanel: the cut panel with a figure (placeholder or report cover) beside a body, or two bodies.
@@ -58,9 +60,10 @@ export const FeaturePanels: Block = {
                 { name: 'footRight', type: 'text', defaultValue: 'Report', admin: { width: '50%' } },
               ],
             },
+            { name: 'icon', type: 'select', options: iconOptions, defaultValue: 'archive', admin: { description: 'The glyph on the cover\'s tab: archive for a report, certificate for an award.' } },
           ],
         },
-        { name: 'label', type: 'text', admin: { description: 'Mono label in acc-ink above the title.' } },
+        { name: 'label', type: 'text', admin: { description: 'The panel\'s tab (S7): a mono label with the evidence, e.g. AMTSO · award. Without it the panel has no tab.' } },
         { name: 'title', type: 'text', required: true },
         { name: 'text', type: 'textarea' },
         { name: 'bullets', type: 'array', admin: { initCollapsed: true, ...rowLabel }, fields: [{ name: 'text', type: 'text', required: true }] },
@@ -77,7 +80,7 @@ export const FeaturePanels: Block = {
             { name: 'tags', type: 'array', admin: { ...rowLabel }, fields: [{ name: 'name', type: 'text', required: true }] },
           ],
         },
-        { name: 'onPanel', type: 'checkbox', defaultValue: true, admin: { description: 'Panel ground inside the cut (off: paper).' } },
+        { name: 'onPanel', type: 'checkbox', defaultValue: true, admin: { description: 'Panel ground (off: paper).' } },
       ],
     },
     {

@@ -21,15 +21,21 @@ const ERRORS: Record<string, string> = {
   dev: 'The development sign-in is off.',
   OAuthCallbackError: 'Microsoft sign-in did not complete. Try again.',
   AccessDenied: 'Microsoft sign-in was refused for this account.',
-  Configuration: 'Agent sign-in is not configured on this server.',
+  Configuration: 'Microsoft sign-in failed on the server side. Try again from this page; if it keeps failing, tell the portal team.',
 }
 
-/* One page, two doors: customers by email code (left), K7 staff by Microsoft sign-in (right). The side the visitor came for leads. */
+/* The codes the customer door sends. Every other code is the Microsoft door's, including the ones Auth.js redirects here
+   itself (OAuthCallbackError, AccessDenied, Configuration) without the `agent=1` flag, so they are placed by code, not by flag. */
+const CUSTOMER_ERRORS = new Set(['email', 'rate', 'allowlist'])
+
+/* One page, two doors: customers by email code (left), K7 staff by Microsoft sign-in (right). The side the visitor came for leads,
+   and an error from a door is shown on that door's side, which then leads. */
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; agent?: string; error?: string; email?: string }> }) {
   const sp = await searchParams
   const s = await auth()
   if (s?.user) redirect(s.user.kind === 'agent' ? '/support/workspace' : (sp.next && sp.next.startsWith('/support') ? sp.next : '/support/cases'))
-  const agentFirst = sp.agent === '1'
+  const staffError = !!sp.error && !CUSTOMER_ERRORS.has(sp.error)
+  const agentFirst = sp.agent === '1' || staffError
   const error = sp.error ? (ERRORS[sp.error] ?? 'Sign-in did not complete. Try again.') : null
   const next = sp.next && sp.next.startsWith('/support') ? sp.next : undefined
 
@@ -38,7 +44,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       <span className="label muted">Customers</span>
       <h1 className="h-util">Sign in with your email.</h1>
       <p>No password. We send a six-digit code to your email address; it works for ten minutes.</p>
-      {error && !agentFirst && <Flash kind="error">{error}</Flash>}
+      {error && !staffError && <Flash kind="error">{error}</Flash>}
       <form action={requestSignInCode} className="form-grid">
         {next && <input type="hidden" name="next" value={next} />}
         <Field id="email" label="Email address" required span>
@@ -63,7 +69,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         Support workspace.
       </h2>
       <p>Sign in with your K7 Microsoft account. You work in Dynamics as yourself: the same cases, queues and rights.</p>
-      {error && agentFirst && <Flash kind="error">{error}</Flash>}
+      {error && staffError && <Flash kind="error">{error}</Flash>}
       <form action={agentSignIn} className="actions">
         {next && <input type="hidden" name="next" value={next} />}
         <button className={`btn ${agentFirst ? 'btn-primary' : 'btn-line'}`} type="submit" name="provider" value="microsoft-entra-id">
