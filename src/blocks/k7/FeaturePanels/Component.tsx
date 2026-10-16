@@ -4,31 +4,10 @@ import React from 'react'
 import type { FeaturePanelsBlock } from '@/payload-types'
 
 import { Actions } from '@/components/k7/Actions'
-import { Icon } from '@/components/k7/Icon'
+import { Cover } from '@/components/k7/Cover'
 import { Sheet, SheetHead, type SheetMeta, bodyGap, withBold } from '@/components/k7/Sheet'
 
 type Panel = FeaturePanelsBlock['panels'][number]
-
-const Cover: React.FC<{ c: Panel['cover'] }> = ({ c }) => (
-  <div className="cover" style={{ alignSelf: 'start', maxWidth: 260 }}>
-    <div className="ftab label">
-      <Icon name="archive" className="licon" />
-      {c?.brand}
-    </div>
-    <div className="cover-body">
-      <div className="cover-series">{c?.series}</div>
-      <div className="cover-period">
-        <span className="yr">{c?.period}</span>
-        {c?.year}
-        <span className="sig" />
-      </div>
-      <div className="cover-foot">
-        <span>{c?.footLeft}</span>
-        <span>{c?.footRight}</span>
-      </div>
-    </div>
-  </div>
-)
 
 const Body: React.FC<{ p: Panel }> = ({ p }) => (
   <div className="feature-body">
@@ -96,7 +75,7 @@ export const FeaturePanels: React.FC<FeaturePanelsBlock & { meta: SheetMeta }> =
                 <figcaption>{p.caption}</figcaption>
               </figure>
             )}
-            {p.media === 'cover' && <Cover c={p.cover} />}
+            {p.media === 'cover' && <Cover c={p.cover} icon={p.cover?.icon} />}
             <Body p={p} />
             {p.media === 'none' && <Aside p={p} />}
           </article>

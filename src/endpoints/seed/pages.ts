@@ -183,11 +183,12 @@ export const homePage: PageData = {
       tabLabel: 'Capabilities',
       ground: 'paper',
       headline: 'Four capabilities.',
+      numbered: true,
       rows: [
-        { icon: 'screen', title: 'Comprehensive Infrastructure Protection', text: 'Prevention, detection and response across your IT ecosystem.', tags: names(['Endpoints', 'Servers', 'Operational technology', 'Network', 'Mobile devices', 'Cloud']) },
-        { icon: 'lock', title: 'Security for Sensitive Data', text: 'Complete control over where data lives and moves.', tags: names(['Data loss prevention', 'Compliance-oriented reporting']) },
-        { icon: 'hex', title: 'Multi-OS Patch Management', text: 'Close vulnerabilities before they can be exploited.', tags: names(['Vulnerability identification', 'Automated patching']) },
-        { icon: 'ledger', title: 'Integrated Compliance', text: 'With one platform, compliance is continuous, auditable and mapped to the frameworks that matter.', tags: names(['DPDP', 'PCI DSS', 'ISO 27001', 'GDPR', 'CBUAE', 'ADHICS']) },
+        { icon: 'screen', title: 'Comprehensive Infrastructure Protection', text: 'Prevention, detection and response across your IT ecosystem.', tags: names(['Endpoints', 'Servers', 'Operational technology', 'Network', 'Mobile devices', 'Cloud']), scopeLabel: 'Covers' },
+        { icon: 'lock', title: 'Security for Sensitive Data', text: 'Complete control over where data lives and moves.', tags: names(['Data loss prevention', 'Compliance-oriented reporting']), scopeLabel: 'Controls' },
+        { icon: 'hex', title: 'Multi-OS Patch Management', text: 'Close vulnerabilities before they can be exploited.', tags: names(['Vulnerability identification', 'Automated patching']), scopeLabel: 'Steps' },
+        { icon: 'ledger', title: 'Integrated Compliance', text: 'With one platform, compliance is continuous, auditable and mapped to the frameworks that matter.', tags: names(['DPDP', 'PCI DSS', 'ISO 27001', 'GDPR', 'CBUAE', 'ADHICS']), scopeLabel: 'Frameworks' },
       ],
     },
     {
@@ -235,13 +236,13 @@ export const homePage: PageData = {
       numbered: true,
       pattern: true,
       rows: [
-        { title: 'BFSI', description: 'Cybersecurity solutions that enable compliance for BFSI enterprises. PCI DSS · RBI · SEBI · DPDP · CBUAE · SAMA', link: { type: 'custom', url: '/bfsi' } },
-        { title: 'Education', description: 'Campus cybersecurity and compliance for institutions of higher learning. PCI DSS · DPDP', link: { type: 'custom', url: '/education' } },
-        { title: 'Government', description: 'Cybersecurity and compliance for organisations that drive national and economic development. PCI DSS · DPDP', link: { type: 'custom', url: '/government' } },
-        { title: 'Healthcare', description: 'Securing operations and maintaining compliance for healthcare organisations. PCI DSS · DPDP · ADHICS · NABIDH', link: { type: 'custom', url: '/healthcare' } },
-        { title: 'Manufacturing', description: 'Reinforcing cybersecurity and maintaining compliance in manufacturing facilities. PCI DSS · DPDP', link: { type: 'custom', url: '/manufacturing' } },
-        { title: 'IT/ITES', description: 'Cybersecurity and compliance enablement for professional services and IT/ITES enterprises. GDPR · PCI DSS · ISO 27001 · ISO 22301 · DPDP · RBI · SEBI · CBUAE · SAMA · ADHICS · NABIDH', link: { type: 'custom', url: '/professional-services' } },
-        { title: 'Retail', description: 'Cybersecurity and compliance reinforcement for large-format retail. PCI DSS · DPDP', link: { type: 'custom', url: '/retail' } },
+        { title: 'BFSI', icon: 'bank', description: 'Cybersecurity solutions that enable compliance for BFSI enterprises. PCI DSS · RBI · SEBI · DPDP · CBUAE · SAMA', link: { type: 'custom', url: '/bfsi' } },
+        { title: 'Education', icon: 'mortarboard', description: 'Campus cybersecurity and compliance for institutions of higher learning. PCI DSS · DPDP', link: { type: 'custom', url: '/education' } },
+        { title: 'Government', icon: 'capitol', description: 'Cybersecurity and compliance for organisations that drive national and economic development. PCI DSS · DPDP', link: { type: 'custom', url: '/government' } },
+        { title: 'Healthcare', icon: 'cross', description: 'Securing operations and maintaining compliance for healthcare organisations. PCI DSS · DPDP · ADHICS · NABIDH', link: { type: 'custom', url: '/healthcare' } },
+        { title: 'Manufacturing', icon: 'factory', description: 'Reinforcing cybersecurity and maintaining compliance in manufacturing facilities. PCI DSS · DPDP', link: { type: 'custom', url: '/manufacturing' } },
+        { title: 'IT/ITES', icon: 'terminal', description: 'Cybersecurity and compliance enablement for professional services and IT/ITES enterprises. GDPR · PCI DSS · ISO 27001 · ISO 22301 · DPDP · RBI · SEBI · CBUAE · SAMA · ADHICS · NABIDH', link: { type: 'custom', url: '/professional-services' } },
+        { title: 'Retail', icon: 'bag', description: 'Cybersecurity and compliance reinforcement for large-format retail. PCI DSS · DPDP', link: { type: 'custom', url: '/retail' } },
       ],
     },
     {
@@ -256,6 +257,12 @@ export const homePage: PageData = {
         { k: '03', v: 'Accountability' },
         { k: 'Together', v: 'A single accountable partner' },
       ],
+      account: true,
+      panel: {
+        label: 'K7 CyberSecurity · commitment',
+        icon: 'shield',
+        cover: { brand: 'K7 CyberSecurity', series: 'Accountability', period: 'Since', year: '1991', footLeft: 'Three commitments', footRight: 'One partner' },
+      },
       paragraphs: texts([
         'Organisations do not just buy security technology; they entrust a partner with their data, operations, reputation and business continuity.',
         'We build cybersecurity around one responsibility: protecting our customers and being there when security matters most.',
@@ -272,9 +279,8 @@ export const homePage: PageData = {
       lede: 'K7 Labs is one of the world’s leading antimalware research and threat intelligence centres, analysing hundreds of thousands of malware samples every day.',
       panels: [
         {
-          media: 'placeholder',
-          caption: 'Image · AMTSO award',
-          ratio: '4/3',
+          media: 'cover',
+          cover: { brand: 'AMTSO', series: 'Real Time Threat List Contributor of the Year', period: '', year: 'RTTL', footLeft: 'Anti-malware testing', footRight: 'Award', icon: 'certificate' },
           label: 'AMTSO · award',
           title: 'Real Time Threat List Contributor of the Year',
           text: 'Anti-Malware Testing Standards Organization.',

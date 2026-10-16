@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { iconOptions } from '@/components/k7/Icon'
+
 import { actions, rowLabel, sheetFields, sheetHeadFields } from '../shared'
 
 /* FeaturePanel: the cut panel with a figure (placeholder or report cover) beside a body, or two bodies.
@@ -58,6 +60,7 @@ export const FeaturePanels: Block = {
                 { name: 'footRight', type: 'text', defaultValue: 'Report', admin: { width: '50%' } },
               ],
             },
+            { name: 'icon', type: 'select', options: iconOptions, defaultValue: 'archive', admin: { description: 'The glyph on the cover\'s tab: archive for a report, certificate for an award.' } },
           ],
         },
         { name: 'label', type: 'text', admin: { description: 'The panel\'s tab (S7): a mono label with the evidence, e.g. AMTSO · award. Without it the panel has no tab.' } },

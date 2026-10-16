@@ -13,6 +13,12 @@ export const CapabilityRows: Block = {
     ...sheetFields('Benefits'),
     ...sheetHeadFields,
     {
+      name: 'numbered',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { description: 'The numbered ledger (home page): each row sets its index large with the icon under it, and its tags become a scope list on hairlines headed by the scope label and the count.' },
+    },
+    {
       name: 'rows',
       type: 'array',
       required: true,
@@ -27,7 +33,8 @@ export const CapabilityRows: Block = {
           ],
         },
         { name: 'text', type: 'textarea', required: true, admin: { description: 'One sentence. Wrap one term in **double asterisks** to keep it bold.' } },
-        { name: 'tags', type: 'array', admin: { initCollapsed: true, ...rowLabel, description: 'Optional tags under the sentence (home page capabilities).' }, fields: [{ name: 'name', type: 'text', required: true }] },
+        { name: 'tags', type: 'array', admin: { initCollapsed: true, ...rowLabel, description: 'Optional tags under the sentence; in the numbered ledger they are the scope list.' }, fields: [{ name: 'name', type: 'text', required: true }] },
+        { name: 'scopeLabel', type: 'text', admin: { description: 'What the tags are, as the scope list\'s head in the numbered ledger: Covers, Controls, Frameworks. Defaults to Scope.', condition: (_, siblings, { blockData }) => Boolean(blockData?.numbered) } },
       ],
     },
     actions(2),

@@ -43,6 +43,48 @@ export const Intro: Block = {
       fields: [{ type: 'row', fields: [{ name: 'k', type: 'text', required: true, admin: { width: '30%' } }, { name: 'v', type: 'text', required: true, admin: { width: '70%' } }] }],
     },
     {
+      name: 'account',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { description: 'The account (Account): the facts sum. Each value sets large, the last fact is the total under a double rule, stamped as a block, and the paragraphs sit beside at lede size with their **terms** as blocks. Home page, Why K7.', condition: (_, s) => (s?.facts?.length ?? 0) > 1 },
+    },
+    {
+      name: 'panel',
+      type: 'group',
+      admin: { description: 'With the account: the paragraphs sit in a filed panel beside a drawn cover, as the record sheet files its report. Leave the series empty for no panel.', condition: (_, s) => Boolean(s?.account) },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            { name: 'label', type: 'text', defaultValue: 'K7 CyberSecurity · commitment', admin: { width: '60%', description: 'The panel\'s tab (S7).' } },
+            { name: 'icon', type: 'select', options: iconOptions, defaultValue: 'shield', admin: { width: '40%', description: 'The glyph on the cover\'s tab.' } },
+          ],
+        },
+        {
+          name: 'cover',
+          type: 'group',
+          fields: [
+            {
+              type: 'row',
+              fields: [
+                { name: 'brand', type: 'text', defaultValue: 'K7 CyberSecurity', admin: { width: '25%' } },
+                { name: 'series', type: 'text', admin: { width: '25%', description: 'e.g. Accountability' } },
+                { name: 'period', type: 'text', defaultValue: 'Since', admin: { width: '25%' } },
+                { name: 'year', type: 'text', defaultValue: '1991', admin: { width: '25%' } },
+              ],
+            },
+            {
+              type: 'row',
+              fields: [
+                { name: 'footLeft', type: 'text', admin: { width: '50%' } },
+                { name: 'footRight', type: 'text', admin: { width: '50%' } },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
       name: 'figure',
       type: 'group',
       admin: { description: 'Optional: a hairline-gridded figure of labelled lists, e.g. the MDR architecture.' },

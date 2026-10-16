@@ -182,6 +182,11 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .irow-grid > .arrow { grid-row: 1; grid-column: 3; }
 .irow-grid > .desc { grid-row: 2; grid-column: 2 / -1; }
 @container (min-width: 760px) { .irow-grid { grid-template-columns: 32px minmax(0, 1fr) minmax(0, 1.2fr) auto; column-gap: 28px; align-items: center; } .irow-grid > .n { padding-top: 0; } .irow-grid > .arrow { grid-column: 4; } .irow-grid > .desc { grid-row: 1; grid-column: 3; } }
+/* An index with glyphs (the industries): one 32px icon per row, set before the arrow, in a column of its own so the arrows stay in line. */
+.ilist-glyphs .irow-grid { grid-template-columns: 32px minmax(0, 1fr) auto auto; }
+.ilist-glyphs .irow-grid > .licon { grid-row: 1; grid-column: 3; align-self: center; }
+.ilist-glyphs .irow-grid > .arrow { grid-column: 4; }
+@container (min-width: 760px) { .ilist-glyphs .irow-grid { grid-template-columns: 32px minmax(0, 1fr) minmax(0, 1.2fr) auto auto; } .ilist-glyphs .irow-grid > .licon { grid-column: 4; } .ilist-glyphs .irow-grid > .arrow { grid-column: 5; } }
 
 /* ---------- Footer ---------- */
 .site-footer { padding: clamp(48px, 6cqw, 88px) var(--pad-fluid) 28px; }
@@ -269,6 +274,26 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .cap-list .licon { width: 48px; height: 48px; }
 .cap-list h3 { margin: 4px 0 8px; font-size: 21px; line-height: 1.15; letter-spacing: -.025em; font-weight: 600; }
 .cap-list p { margin: 0; font-size: 16px; line-height: 1.5; color: var(--mu); max-width: 48ch; }
+/* CapabilityRow, numbered (the home page's four capabilities): each capability is a row on the ledger with its index set large in
+   the counting width and the icon under it, the title and sentence beside, and its scope, the tags, as a list on hairlines headed by
+   what it is and how many, as tags a size up. One column below 760px, the scope under the body to 1000px, three columns above. */
+.cap-ledger { border-top: 1px solid var(--fg); }
+.cap-ledger > .cap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px 32px; padding: clamp(28px, 3.2cqw, 48px) 0; border-bottom: 1px solid var(--ln); }
+.cap-n { display: flex; align-items: flex-end; gap: 20px; }
+.cap-n .num { font-size: clamp(56px, 6.4cqw, 104px); line-height: .82; font-weight: 600; letter-spacing: -.045em; }
+.cap-n .licon { width: 48px; height: 48px; }
+.cap-body { display: flex; flex-direction: column; gap: 14px; }
+.cap-body .h-title { font-size: clamp(24px, 2.6cqw, 38px); }
+.cap-body p { margin: 0; font-size: clamp(16px, 1.3cqw, 19px); line-height: 1.45; color: var(--mu); max-width: 40ch; }
+.scope { border-top: 1px solid var(--fg); align-self: start; }
+.scope-head { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0 0; }
+/* The scope is tags a size up (13px), in ink, always shown. While the row is hovered they fill with signal and carry ink, the
+   language's inversion on its 240ms curve, nothing else moving. */
+.scope ul.tags { list-style: none; margin: 0; padding: 12px 0 0; gap: 8px; }
+.scope .tag { font-size: 13px; padding: 6px 10px; transition: background .24s var(--ease), color .24s var(--ease), border-color .24s var(--ease); }
+.cap:hover .scope .tag { background: var(--signal); color: var(--on-signal); border-color: var(--signal); }
+@container (min-width: 760px) { .cap-ledger > .cap { grid-template-columns: clamp(104px, 12cqw, 168px) minmax(0, 1fr); } .cap-n { grid-row: 1 / 3; flex-direction: column; align-items: flex-start; gap: 24px; } .cap-ledger .scope { grid-column: 2; } }
+@container (min-width: 1000px) { .cap-ledger > .cap { grid-template-columns: clamp(104px, 12cqw, 168px) minmax(0, 1.1fr) minmax(0, 1fr); column-gap: clamp(32px, 4cqw, 64px); } .cap-n { grid-row: 1; } .cap-ledger .scope { grid-column: 3; grid-row: 1; } }
 .conf-list { border-top: 1px solid var(--fg); }
 .conf-list > div { display: flex; flex-wrap: wrap; gap: 6px 32px; align-items: baseline; justify-content: space-between; padding: clamp(16px, 2cqw, 26px) 0; border-bottom: 1px solid var(--ln); }
 .conf-list .n { font-size: clamp(30px, 4.4cqw, 72px); line-height: .95; letter-spacing: -.045em; font-weight: 600; }
@@ -281,6 +306,30 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .facts > div { display: flex; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--ln); }
 .facts .k { flex: none; width: 92px; font: 500 12px/1.6 var(--font-mono); letter-spacing: .06em; color: var(--acc); text-transform: uppercase; }
 .facts .v { font-size: 17px; line-height: 1.45; }
+/* Account (design-system/components/Account): a ledger that sums. The entries set large on hairlines with their index in acc-ink;
+   the last row is the total under a double rule, its value a block of ink (`term`). The statement sits beside it at lede size,
+   its terms as blocks too, so the paragraph's claim and the ledger's total are the same mark. Nothing moves. */
+.account-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px clamp(32px, 5cqw, 80px); align-items: start; }
+@container (min-width: 900px) { .account-layout { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); } }
+.account { border-top: 1px solid var(--fg); }
+.account > div { display: grid; grid-template-columns: 92px minmax(0, 1fr); column-gap: 20px; align-items: baseline; padding: clamp(18px, 2.2cqw, 30px) 0; border-bottom: 1px solid var(--ln); }
+.account .k { font: 500 12px/1.6 var(--font-mono); letter-spacing: .06em; color: var(--acc); text-transform: uppercase; }
+.account .v { font-size: clamp(28px, 3.4cqw, 52px); line-height: 1.04; letter-spacing: -.035em; font-weight: 600; text-wrap: balance; }
+.account > .account-sum { margin-top: -1px; border-top: 3px double var(--fg); border-bottom: 0; }
+.account-sum .term { font-weight: 600; }
+.account-copy { display: flex; flex-direction: column; gap: 18px; max-width: var(--measure-lede); }
+@container (min-width: 900px) { .account-copy { justify-self: end; width: 100%; max-width: 400px; } } /* flush right, the same column as the lede in the sheet head */
+.account-copy .lede { max-width: none; }
+@container (max-width: 480px) { .account > div { grid-template-columns: minmax(0, 1fr); row-gap: 8px; } }
+/* With a panel (`has-panel`): the copy is filed beside a drawn cover, as the record sheet files its report. The ledger narrows to
+   five twelfths and starts level with the panel's top edge, its tab rising above both; the words size down to fit the column. */
+.account-layout.has-panel .feature-body p { opacity: 1; color: var(--mu); }
+@container (min-width: 900px) {
+  .account-layout.has-panel { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+  .account-layout.has-panel .account { margin-top: var(--tab-h); }
+  .account-layout.has-panel .account > div { grid-template-columns: 72px minmax(0, 1fr); }
+  .account-layout.has-panel .account .v { font-size: clamp(26px, 2.8cqw, 42px); }
+}
 
 /* ---------- S7 · Filed: a container with its own ground raises a tab that carries its evidence ---------- */
 .filed { position: relative; margin-top: var(--tab-h); }
@@ -309,6 +358,7 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 /* ---------- Feature panel (filed) ---------- */
 .feature { padding: clamp(20px, 2.6cqw, 36px); display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; position: relative; transition: background .28s var(--ease), color .28s; color: var(--t-fg); background: var(--t-bg); }
 .feature.on-panel { --t-bg: var(--panel); --t-fg: var(--ink); }
+.feature.on-paper { --t-bg: var(--paper); --t-fg: var(--ink); } /* a panel on a panel sheet stands on paper */
 .feature.is-link:hover, .feature.is-link:focus-within { --t-fg: var(--bg); --t-bg: var(--fg); }
 @container (min-width: 760px) { .feature.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; } .feature.two > .ph { aspect-ratio: auto; min-height: 260px; } }
 .feature-body { display: flex; flex-direction: column; gap: 18px; }
