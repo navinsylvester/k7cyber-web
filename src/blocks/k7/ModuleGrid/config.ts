@@ -13,6 +13,16 @@ export const ModuleGrid: Block = {
     ...sheetFields('The platform'),
     ...sheetHeadFields,
     {
+      name: 'layout',
+      type: 'select',
+      defaultValue: 'tiles',
+      options: [
+        { label: 'Tiles (ModuleChips)', value: 'tiles' },
+        { label: 'Switchboard: rows with a switch each, the tally summed', value: 'switchboard' },
+      ],
+      admin: { description: 'The switchboard (Switchboard) sets the core as rows marked On with the sum beneath, and the add-ons as rows with an Off | On switch each. Home page.' },
+    },
+    {
       name: 'groups',
       type: 'array',
       required: true,

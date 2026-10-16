@@ -1,7 +1,7 @@
 # ModuleChips
-"Modular by design": a hairline-gridded set of toggle tiles, each with an icon, a ✓ or + state, the module name and one line.
+"Modular by design": a hairline-gridded set of toggle tiles, each with an icon, a ✓ or + state, the module name and one line. Since 2026-10-16 the home page sets the same content as the Switchboard; the tiles remain for the Platform page.
 
-**Use** on the home page and the Platform page for the core solutions (MDR, XDR, EDR, EPS) and add-ons (DLP, IAM, Patch Management, Advanced Endpoint Management, Agentic SOC, Log Retention, File Security Monitoring). A tile that is on is inverted; pressing a + tile turns it on. Where the doc asks for an expansion, the pressed tile opens an Accordion or FeaturePanel below the grid with the module's full description.
+**Use** on the Platform page for the core solutions (MDR, XDR, EDR, EPS) and add-ons (DLP, IAM, Patch Management, Advanced Endpoint Management, Agentic SOC, Log Retention, File Security Monitoring). A tile that is on is inverted; pressing a + tile turns it on. Where the doc asks for an expansion, the pressed tile opens an Accordion or FeaturePanel below the grid with the module's full description.
 
 **Provide** {icon, name, line, on, href}, in groups where the page separates core from add-ons (Core · 04, Add-ons · 07). Keep the order the content doc uses.
 
