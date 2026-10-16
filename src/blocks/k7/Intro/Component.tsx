@@ -3,20 +3,44 @@ import React from 'react'
 import type { IntroBlock } from '@/payload-types'
 
 import { Actions } from '@/components/k7/Actions'
+import { Icon } from '@/components/k7/Icon'
 import { Sheet, SheetHead, type SheetMeta, bodyGap, withBold } from '@/components/k7/Sheet'
 
 const cell: React.CSSProperties = { background: 'var(--bg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }
 const list: React.CSSProperties = { margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6, fontSize: 15 }
 
-export const Intro: React.FC<IntroBlock & { meta: SheetMeta }> = ({ meta, tabLabel, headline, dimClause, lede, notice, specs, facts, paragraphs, figure, coverage, actions }) => {
+export const Intro: React.FC<IntroBlock & { meta: SheetMeta }> = ({ meta, tabLabel, headline, dimClause, lede, stair, redact, redactNote, notice, specs, facts, paragraphs, figure, symbol, coverage, actions }) => {
   const cells = figure?.cells ?? []
   const tags = coverage?.tags ?? []
   const specList = specs ?? []
   const factList = facts ?? []
-  const single = (paragraphs?.length ?? 0) === 1 && !specList.length && !factList.length
+  const hasSymbol = Boolean(symbol)
+  const single = (paragraphs?.length ?? 0) === 1 && !specList.length && !factList.length && !hasSymbol
   return (
-    <Sheet meta={meta} tabLabel={tabLabel} id="overview">
-      <SheetHead headline={headline} dimClause={dimClause} lede={lede} />
+    <Sheet meta={meta} tabLabel={tabLabel} id={tabLabel ? tabLabel.toLowerCase().replace(/\W+/g, '-') : 'overview'}>
+      <SheetHead
+        headline={headline}
+        dimClause={dimClause}
+        lede={hasSymbol ? undefined : lede}
+        kicker={hasSymbol ? lede : undefined}
+        stair={Boolean(stair)}
+        redact={Boolean(redact)}
+        redactNote={redactNote}
+        aside={
+          hasSymbol ? (
+            <div className="symbol-row">
+              <Icon name={symbol} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                {(paragraphs ?? []).map((p, i) => (
+                  <p className="lede" key={p.id ?? i}>
+                    {withBold(p.text, 'term')}
+                  </p>
+                ))}
+              </div>
+            </div>
+          ) : undefined
+        }
+      />
 
       {notice && (
         <div className="notice" style={{ marginTop: 'clamp(32px, 4cqw, 56px)', maxWidth: '62ch' }}>
@@ -31,7 +55,7 @@ export const Intro: React.FC<IntroBlock & { meta: SheetMeta }> = ({ meta, tabLab
         </p>
       )}
 
-      {!single && ((paragraphs?.length ?? 0) > 0 || specList.length > 0 || factList.length > 0) && (
+      {!single && !hasSymbol && ((paragraphs?.length ?? 0) > 0 || specList.length > 0 || factList.length > 0) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px clamp(32px, 5cqw, 80px)', alignItems: 'flex-start', ...bodyGap }}>
           {factList.length > 0 && (
             <div className="facts" style={{ flex: '0 1 360px' }}>
@@ -69,6 +93,17 @@ export const Intro: React.FC<IntroBlock & { meta: SheetMeta }> = ({ meta, tabLab
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {hasSymbol && specList.length > 0 && (
+        <div className="spec-strip" style={bodyGap}>
+          {specList.map((sp, i) => (
+            <div key={sp.id ?? i}>
+              <span className="label muted">{sp.label}</span>
+              <span className="v">{sp.value}</span>
+            </div>
+          ))}
         </div>
       )}
 

@@ -1,8 +1,12 @@
 # Hero
-The home page opener, and the only place the home-page devices appear together: the registration pattern (PT1) fading from the headline, the stair (S4), one redacted word (S3), the lede with two actions, and the log strip (S6).
+The home page opener: the product name flush left on three lines, the lede with two actions, the stack figure on the right, the registration pattern (PT1) fading from the headline, and the log strip (S6). The stair (S4) and the redacted word (S3) are not here: they open the sheet after it (SheetHead with `stair` and `redact`).
 
-**Use** once, on the home page. The headline is three lines stepping .82em, .41em, 0, so the line starts sit on the 7's line; the redacted word is the one the reader should want, and hover or tap declassifies it. The live pixel in the meta line blinks in steps only when the threat-lab feed is live.
+**Use** once, on the home page. The headline is the product name, one word per line, flush left, never redacted. The live pixel in the meta line blinks in steps only when the threat-lab feed is live.
 
-**Provide** the three headline lines and which word is redacted, the lede (the content doc's "Beyond The Obvious" paragraph), the two actions, and the log-strip entries (real detections from K7 Labs, newest first, repeated once for the loop).
+**The stack**: three tab-shaped plates (S2) stacked foot first, sensor, platform, agentic SOC on top, the top plate narrower so it sits on the one below; two square-capped arrows up the chain; each plate carries a mono label, its line in Archivo and an optional mono note. One signal pixel climbs the chain in five steps on a 5s loop, `steps(1)`, never eased; under prefers-reduced-motion it rests on the top plate. Plates are filled with the ground, so the registration pattern stays outside them. Strokes 2px, currentColor; no fill but the ground, no second colour but the pixel.
 
-**Don't** use the stair, redaction or log strip on any other page; the Platform page and products open with PageBanner. Never a background image, video or glow behind the headline.
+**Provide** the three headline lines (K7 / Seventh / Sense), the lede (the content doc's hero line, "Unified Endpoint-To-SOC Security Platform"), the two actions, the three layers of the stack foot first ({label, value, note}: 01 · Sensor, 02 · Platform, 03 · Agentic SOC with the pillar lines), and the log-strip entries (real detections from K7 Labs, newest first, repeated once for the loop).
+
+**Don't** step or redact the hero headline, use the stack, stair or log strip on any other page (the Platform page and products open with PageBanner), or animate anything in the stack but the one pixel. Never a background image, video or glow behind the headline.
+
+**Build** the `HomeHero` block (`homeHero`): `h-hero`, `hero-body`, `hero-copy`, `hero-fig` and the `stack` SVG in `bundle.css`.

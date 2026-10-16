@@ -2,8 +2,9 @@ import type { Block } from 'payload'
 
 import { actions, rowLabel } from '../shared'
 
-/* Hero (design-system/components/Hero): the home opener. The stair (S4), one redacted word (S3), the lede with two
-   actions, the registration pattern (PT1) and the log strip (S6). Home page only. */
+/* Hero (design-system/components/Hero): the home opener. The product name flush left on three lines, the lede with two
+   actions, the stack figure (sensor, platform, agentic SOC) on the right, the registration pattern (PT1) and the log
+   strip (S6). The stair and the redaction (S4, S3) belong to the sheet after it. Home page only. */
 export const HomeHero: Block = {
   slug: 'homeHero',
   dbName: 'hhero', // Postgres identifiers are limited to 63 characters; keep block table names short.
@@ -22,12 +23,27 @@ export const HomeHero: Block = {
       fields: [
         { name: 'line1', type: 'text', required: true, admin: { width: '33%' } },
         { name: 'line2', type: 'text', required: true, admin: { width: '33%' } },
-        { name: 'line3', type: 'text', required: true, admin: { width: '34%', description: 'The last line; its final word is redacted.' } },
+        { name: 'line3', type: 'text', required: true, admin: { width: '34%', description: 'The headline is the product name, one word per line, flush left.' } },
       ],
     },
-    { name: 'redactNote', type: 'text', defaultValue: '↳ Redacted. Hover or tap to read' },
     { name: 'lede', type: 'textarea', required: true, admin: { description: 'Wrap the platform name in **double asterisks**.' } },
     actions(2),
+    {
+      name: 'figure',
+      type: 'array',
+      maxRows: 3,
+      admin: { initCollapsed: true, ...rowLabel, description: 'The stack on the right, foot first: sensor, platform, agentic SOC. Exactly three rows draw it; fewer draw nothing.' },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            { name: 'label', type: 'text', required: true, admin: { width: '40%', description: 'e.g. 01 · Sensor' } },
+            { name: 'value', type: 'text', required: true, admin: { width: '60%', description: 'e.g. Proprietary, unified' } },
+          ],
+        },
+        { name: 'note', type: 'text', admin: { description: 'Optional mono line, e.g. EPP · EDR · XDR · MDR' } },
+      ],
+    },
     {
       name: 'log',
       type: 'array',

@@ -19,6 +19,7 @@ export const icons = {
   archive: { d: 'M10 4h13l5 5v18H10z M23 4v5h5 M6 8v23h17', px: [14, 13] },
   key: { d: 'M18 4h10v10H18z M18 14L4 28 M8 24l4 4 M12 20l3 3', px: [21.5, 7.5] },
   network: { d: 'M4 24h8v4H4z M20 24h8v4h-8z M12 4h8v4h-8z M16 8v8 M8 24v-8h16v8', px: [14.5, 14.5] },
+  puzzle: { d: 'M4 4h11v11H4z M4 17h11v11H4z M17 17h11v11H17z', px: [21, 8] }, // three pieces; the pixel marks the missing one
 } as const
 
 export type IconName = keyof typeof icons

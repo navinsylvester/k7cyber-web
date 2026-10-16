@@ -210,21 +210,54 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .meta-rows dd { font: 500 13px/1.3 var(--font-mono); letter-spacing: .02em; }
 .meta-rows dd.sans { font: 400 15px/1.45 var(--font-sans); }
 
-/* ---------- Home hero: stair (S4), redaction (S3), log strip (S6), registration pattern (PT1) ---------- */
+/* ---------- Home hero: the product name flush left, the stack figure, log strip (S6), registration pattern (PT1) ---------- */
 .hero-home { position: relative; overflow: hidden; padding-top: clamp(28px, 3cqw, 44px); padding-bottom: calc(var(--tab-h) + 24px); }
 .hero-home .pattern { position: absolute; inset: 0; width: 100%; height: 100%; opacity: var(--pattern-mid); pointer-events: none; -webkit-mask-image: linear-gradient(100deg, transparent 30%, #000 75%); mask-image: linear-gradient(100deg, transparent 30%, #000 75%); }
 .hero-home > *:not(.pattern) { position: relative; }
-.stair { margin: clamp(40px, 5.5cqw, 80px) 0 0; font-size: min(calc((100cqw - 2 * var(--pad-fluid)) / 12.6), 128px); line-height: .9; letter-spacing: -.055em; font-weight: 600; }
-/* S4 · The three line starts sit on the 7's line: .9em of line height × tan(24.5°) = .41em per step. */
+.hero-body { display: flex; flex-wrap: wrap; gap: 40px clamp(32px, 5cqw, 80px); align-items: flex-end; margin: clamp(40px, 5.5cqw, 80px) 0 clamp(40px, 5cqw, 64px); }
+.hero-copy { flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: clamp(28px, 3.5cqw, 48px); }
+.hero-copy .lede { max-width: 54ch; }
+/* The lede-and-actions row the Labs landing still uses under its headline. */
+.hero-foot { display: flex; flex-wrap: wrap; gap: 32px clamp(32px, 5cqw, 80px); align-items: flex-end; justify-content: space-between; margin: clamp(48px, 6cqw, 88px) 0 clamp(40px, 5cqw, 64px); }
+.hero-foot .lede { flex: 1 1 380px; max-width: 54ch; }
+/* The hero headline: the product name, one word per line, flush left. No step, no redaction: those belong to the sheet after it. */
+.h-hero { margin: 0; font-size: min(calc((100cqw - 2 * var(--pad-fluid)) / 12.6), 128px); line-height: .9; letter-spacing: -.055em; font-weight: 600; }
+.h-hero > span { display: block; }
+@container (max-width: 640px) { .h-hero { font-size: calc((100cqw - 2 * var(--pad-fluid)) / 10.4); } }
+/* The stack: sensor, platform, agentic SOC as three tab-shaped plates, two arrows up, one pixel climbing in steps. */
+.hero-fig { flex: 1 1 360px; max-width: 560px; margin: 0 0 0 auto; }
+.hero-fig .stack { display: block; width: 100%; height: auto; stroke-linecap: square; stroke-linejoin: miter; }
+.stack .plate { fill: var(--bg); stroke: currentColor; stroke-width: 2; }
+.stack .line { fill: none; stroke: currentColor; stroke-width: 2; }
+.stack .lbl { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; fill: currentColor; }
+.stack .lbl.mu { fill: var(--mu); }
+.stack .val { font-family: var(--font-sans); font-size: 17px; font-weight: 500; letter-spacing: -.01em; fill: currentColor; }
+.stack .px { fill: var(--signal); }
+.stack .climb { animation: k7-climb 5s steps(1) infinite; }
+@keyframes k7-climb { 0% { transform: translateY(0); } 20% { transform: translateY(-62px); } 40% { transform: translateY(-124px); } 60% { transform: translateY(-186px); } 80%, 100% { transform: translateY(-248px); } }
+/* S4 · The stair: one word per line, the starts stepping .82em, .41em, 0 so they sit on the 7's line (.9em of line height × tan 24.5°).
+   On any headline but the hero's. The home page sets no stair headline since 2026-10-16. */
 .stair > span { display: block; }
 .stair > span:nth-child(1) { padding-left: .82em; }
 .stair > span:nth-child(2) { padding-left: .41em; }
-@container (max-width: 640px) { .stair { font-size: calc((100cqw - 2 * var(--pad-fluid)) / 10.4); } }
+.sheet-head > .h-wrap { flex: 1 1 440px; }
+/* A kicker: the lede set above the headline in the left column instead of beside it (the puzzle sheet: the problem over the
+   statement, the answer at lede size on the right). */
+.sheet-head .kicker { margin: 0 0 clamp(20px, 2.2cqw, 32px); }
+/* The right column of a sheet head may stack content under the lede (head-aside), filling the height a tall headline leaves. */
+.sheet-head > .head-aside { flex: 0 1 560px; display: flex; flex-direction: column; gap: 32px; }
+.head-aside .lede { max-width: var(--measure-lede); }
+/* A glyph beside a paragraph (Icon at 80px): the puzzle on the home page's opening sheet, as an icon sits beside a capability row. */
+.symbol-row { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 24px 28px; align-items: start; }
+.symbol-row > .licon { width: 80px; height: 80px; }
+.symbol-row .body-l { font-size: 17px; }
+/* A term: a word a paragraph wants seen, as an inverted block, ink on ground in either theme (an inversion, as hover is). */
+.term { padding: .04em .3em; background: var(--fg); color: var(--bg); font-weight: 500; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.g-contrast .term, .g-signal .term { background: var(--bg); color: var(--fg); }
+@container (max-width: 520px) { .symbol-row { grid-template-columns: minmax(0, 1fr); } .symbol-row > .licon { width: 64px; height: 64px; } }
 .redact { position: relative; display: inline-block; color: transparent; background: var(--signal); transition: color .24s, background .24s var(--ease); cursor: default; }
 .redact:hover, .redact:focus { color: var(--fg); background: transparent; }
 .redact-note { display: inline-flex; gap: 8px; margin-top: 14px; color: var(--mu); }
-.hero-foot { display: flex; flex-wrap: wrap; gap: 32px clamp(32px, 5cqw, 80px); align-items: flex-end; justify-content: space-between; margin: clamp(48px, 6cqw, 88px) 0 clamp(40px, 5cqw, 64px); }
-.hero-foot .lede { flex: 1 1 380px; max-width: 54ch; }
 .logstrip { margin: 0 calc(-1 * var(--pad-fluid)); border-top: 1px solid var(--ln); overflow: hidden; white-space: nowrap; font: 400 12px/1 var(--font-mono); letter-spacing: .04em; padding: 12px 0; }
 .logstrip > span { display: inline-block; padding-right: 3em; animation: k7-marq 70s linear infinite; }
 @keyframes k7-marq { to { transform: translateX(-50%); } }
@@ -368,7 +401,10 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .location .meta-rows dd a { text-decoration: none; }
 
 /* ---------- Module chips (toggle grid) and accordion ---------- */
-.modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 1px; background: var(--ln); box-shadow: inset 0 0 0 1px var(--ln); }
+.modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 1px; }
+/* Each tile draws its own hairline, so a short last row leaves the ground bare rather than a block of line. */
+.module, .module-legend { box-shadow: 0 0 0 1px var(--ln); }
+.module-legend { background: var(--bg); padding: 18px 18px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
 .module { background: var(--bg); padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 12px; text-align: left; border: 0; cursor: pointer; color: inherit; transition: background .24s var(--ease), color .24s; }
 a.module { text-decoration: none; }
 .module:hover { background: var(--fg); color: var(--bg); }
@@ -379,6 +415,11 @@ a.module { text-decoration: none; }
 .module p { margin: 0; font-size: 14px; line-height: 1.45; opacity: .78; }
 .module.is-on { background: var(--fg); color: var(--bg); }
 .module.is-on:hover { background: var(--signal); color: var(--on-signal); }
+/* The tally (home page): a bar under the grid. The count is a figure at width 62 that steps as add-ons are pressed;
+   the demo request at the right carries the modules that are on. */
+.module-tally { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 28px; padding: 20px 0; border-bottom: 1px solid var(--ln); }
+.module-tally .count { font-size: 28px; line-height: 1; letter-spacing: -.03em; font-weight: 600; }
+.module-tally .link-u { margin-left: auto; }
 details.more summary { cursor: pointer; list-style: none; display: inline-flex; gap: 8px; }
 details.more summary::-webkit-details-marker { display: none; }
 details.more summary::after { content: "+"; }
@@ -452,4 +493,4 @@ details.more[open] summary::after { content: "−"; }
 .cover-period .sig { display: inline-block; width: .16em; height: .16em; margin-left: .04em; background: var(--signal); }
 .cover-foot { display: flex; justify-content: space-between; gap: 2cqw; font: 400 4.6cqw/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; opacity: var(--quiet); border-top: 1px solid var(--contrast-line); padding-top: 3.5cqw; }
 
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } .stack .climb { transform: translateY(-248px); } }
