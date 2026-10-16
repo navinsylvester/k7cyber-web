@@ -8,6 +8,7 @@ import type { Header } from '@/payload-types'
 import { Logo } from '@/components/Logo/Logo'
 import { useTheme } from '@/providers/Theme'
 import { linkHref, navHref } from '@/utilities/linkHref'
+import { Icon } from '@/components/k7/Icon'
 
 type NavItem = NonNullable<Header['navItems']>[number]
 
@@ -81,14 +82,15 @@ export const SiteHeader: React.FC<{ data: Header }> = ({ data }) => {
         </nav>
 
         <div className="hdr-tools">
-          <div className="seg" role="group" aria-label="Theme">
-            <button type="button" aria-pressed={theme !== 'light'} onClick={() => setTheme('dark')}>
-              Dark
-            </button>
-            <button type="button" aria-pressed={theme === 'light'} onClick={() => setTheme('light')}>
-              Light
-            </button>
-          </div>
+          <button
+            type="button"
+            className="theme-btn"
+            aria-label={theme === 'light' ? 'Theme: light. Switch to dark.' : 'Theme: dark. Switch to light.'}
+            title={theme === 'light' ? 'Switch to dark' : 'Switch to light'}
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+          >
+            <Icon name="theme" />
+          </button>
           {cta?.label && (
             <Link className="btn btn-primary btn-sm" href={linkHref(cta)}>
               {cta.label}
