@@ -964,6 +964,10 @@ export interface ModuleGridBlock {
    * One or two sentences, under 46 characters per line.
    */
   lede?: string | null;
+  /**
+   * The switchboard (Switchboard) sets the core as rows marked On with the sum beneath, and the add-ons as rows with an Off | On switch each. Home page.
+   */
+  layout?: ('tiles' | 'switchboard') | null;
   groups: {
     /**
      * Optional head, e.g. Solutions
@@ -1626,6 +1630,14 @@ export interface TestimonialsBlock {
    * One or two sentences, under 46 characters per line.
    */
   lede?: string | null;
+  /**
+   * The receiver (Receiver): stations on a dial, the status line, the scale whose needle sweeps in steps to the next quote. Home page. Off: the plain quote.
+   */
+  receiver?: boolean | null;
+  /**
+   * Seconds on each station before the needle reaches the next.
+   */
+  dwell?: number | null;
   items: {
     quote: string;
     name: string;
@@ -1634,6 +1646,14 @@ export interface TestimonialsBlock {
      * e.g. CBUAE audit
      */
     tag?: string | null;
+    /**
+     * The band carries the bad with the good. A negative one is named Interference on the status line and shows our reply. To be fed by reviews automatically later.
+     */
+    sentiment?: ('positive' | 'negative') | null;
+    /**
+     * One line from K7 under a negative testimonial: plain, light, never defensive.
+     */
+    reply?: string | null;
     id?: string | null;
   }[];
   id?: string | null;
@@ -2962,6 +2982,7 @@ export interface ModuleGridBlockSelect<T extends boolean = true> {
   headline?: T;
   dimClause?: T;
   lede?: T;
+  layout?: T;
   groups?:
     | T
     | {
@@ -3323,6 +3344,8 @@ export interface TestimonialsBlockSelect<T extends boolean = true> {
   headline?: T;
   dimClause?: T;
   lede?: T;
+  receiver?: T;
+  dwell?: T;
   items?:
     | T
     | {
@@ -3330,6 +3353,8 @@ export interface TestimonialsBlockSelect<T extends boolean = true> {
         name?: T;
         company?: T;
         tag?: T;
+        sentiment?: T;
+        reply?: T;
         id?: T;
       };
   id?: T;

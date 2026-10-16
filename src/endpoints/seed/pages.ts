@@ -197,6 +197,7 @@ export const homePage: PageData = {
       ground: 'panel',
       headline: 'Modular by design.',
       lede: 'Switch on capabilities as required, managed from the same console.',
+      layout: 'switchboard',
       groups: [
         {
           label: 'Core',
@@ -306,15 +307,34 @@ export const homePage: PageData = {
       tabLabel: 'Customers',
       ground: 'panel',
       headline: 'In their words.',
+      receiver: true,
+      dwell: 10,
       items: [
         {
-          quote: 'We pride ourselves on maintaining the highest standards in the transfer of funds as even a single mishap will destroy customer trust. In pursuit of this goal, we engaged K7 Cyber Security to audit our compliance with CBUAE’s IT guidelines on Business Continuity Management and Information Security. We are extremely pleased with the approach, methodology, and professionalism demonstrated by the team from K7 and appreciate the comprehensive and well-structured audit report that was submitted.',
+          quote: 'We engaged K7 Cyber Security to audit our compliance with CBUAE’s IT guidelines on Business Continuity Management and Information Security. We are extremely pleased with the approach, methodology, and professionalism demonstrated by the team from K7 and appreciate the comprehensive and well-structured audit report that was submitted.',
           name: 'Arun Henry',
           company: 'Hadi Express Exchange',
           tag: 'CBUAE audit',
         },
-        { quote: 'Testimonial 2: approved quote required.', name: 'Name, Designation', company: 'Organisation', tag: 'Placeholder' },
-        { quote: 'Testimonial 3: approved quote required.', name: 'Name, Designation', company: 'Organisation', tag: 'Placeholder' },
+        /* Drafts written in-house (2026-10-16) to stand until the approved quotes arrive: bylines are roles, not people. Replace, never publish as customers' words. */
+        { quote: 'We moved from three consoles to one. Detection and response now sit on the same agent across our plants, and the first audit after the switch closed without a single open finding on endpoint control.', name: 'Head of IT', company: 'A manufacturing group', tag: 'MDR · draft' },
+        { quote: 'Patient data cannot leave the network unaccounted for. K7 gave us the controls to say where it lives and where it moves, and the reporting to show the regulator the same picture we see.', name: 'Chief Information Officer', company: 'A hospital network', tag: 'DPDP · draft' },
+        {
+          quote: 'The console asks me to confirm before it quarantines a file. I would rather it just quarantined it.',
+          name: 'Systems Administrator',
+          company: 'A retail chain',
+          tag: 'EPP · draft',
+          sentiment: 'negative',
+          reply: 'Fair. We would rather ask once than apologise twice, and the policy that skips the prompt is one toggle away.',
+        },
+        {
+          quote: 'On day one the agent flagged our own deployment script as suspicious. It was our script.',
+          name: 'DevOps Lead',
+          company: 'A software exporter',
+          tag: 'EDR · draft',
+          sentiment: 'negative',
+          reply: 'It was behaving suspiciously, to be fair to the agent. Ten minutes on a call and it now flags only the scripts that are not yours.',
+        },
       ],
     },
     cta('Tell us about your organisation and a K7 engineer will get in touch.', [custom('Request demo →', '/contact-us', 'primary'), custom('Explore platform', '/k7-seventh-sense')], 'Ready when you are.'),
