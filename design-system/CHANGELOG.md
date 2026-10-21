@@ -2,6 +2,12 @@
 
 Newest first. Each entry names the rule, the reference CSS and the parts it touched, so the system describes the site as built (README.md, "Keeping it current"). Until 2026-10-15 the folder mirrored the Design System artifact unchanged (SOURCE.md).
 
+## 2026-10-21
+
+- **SiteHeader, the logo**: the two supplied horizontal logo files are trimmed to their mark (`viewBox` 52 52 528 134; half of the 632×239 box was clear space, so a 26px logo was 13px of mark) and the bar sets it at 36px (28px under 520px), level with the 36px frames beside it, so the brand is the heaviest thing on the bar; the portal header shares the Logo component, and the footer's 30px logo grows with the trim. `public/logos/k7-cybersecurity-logo*.svg`, `Logo.tsx`, `.brand img` in `bundle.css`; SiteHeader README; every desktop artboard and `designs/k7chrome.py`.
+- **Hero, the halves**: from 1000px the copy and the stack are two equal columns, so the figure stands at the headline's scale, as tall as the copy from the brand to the actions, where before it was a drawing a third of the sheet beside it; below 1000px it sits under the copy. `.hero-body`, `.hero-fig` in `bundle.css`; Hero README and preview.
+- **Switchboard, uncluttered**: "Modular by design" is the core filed as one block on paper (its tab Core · Always on, the four names large with a mono gloss each, the base line 1 agent · 1 console) beside a ledger of the seven add-ons, each its index, name, gloss and Off | On switch, a row that is on stamping its index as a block; the sum beneath on the double rule, and one action to the Platform page for the detail. The icons, the eleven descriptions, the rail and its plugs are gone; the add-ons, the moat, take the wider column. `Switchboard.client.tsx`, the `moduleGrid` block (the `line` is a gloss on the switchboard); `.switchboard`, `.sw-*` in `bundle.css`; Switchboard README and preview; ModuleChips README; the Home artboard and seed (the glosses, the action).
+
 ## 2026-10-16
 
 - **Receiver, the carrier**: a figure beside the transmission from 1000px, a mast with the pixel at its tip and the trace it receives, a clean square wave on the praise band and interference on the complaints band, captioned Fig. 02, so the quote's measure no longer leaves the sheet bare. `Receiver.client.tsx` (`Carrier`); `.rx-fig` in `bundle.css`; Receiver README and preview; the Home artboard.

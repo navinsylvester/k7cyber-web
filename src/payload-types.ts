@@ -965,7 +965,7 @@ export interface ModuleGridBlock {
    */
   lede?: string | null;
   /**
-   * The switchboard (Switchboard) sets the core as rows marked On with the sum beneath, and the add-ons as rows with an Off | On switch each. Home page.
+   * The switchboard (Switchboard) files the core as one block (the names large, each with its line as a mono gloss) and sets the add-ons as a ledger of rows with an Off | On switch each, the sum on a double rule. Icons are not drawn; keep each line to a few words. Home page.
    */
   layout?: ('tiles' | 'switchboard') | null;
   groups: {
@@ -1012,6 +1012,9 @@ export interface ModuleGridBlock {
         | null;
       name: string;
       on?: boolean | null;
+      /**
+       * One line under the name; on the switchboard a gloss of a few words (e.g. Endpoint protection platform).
+       */
       line: string;
       /**
        * Where the tile leads; leave empty for a toggle.
