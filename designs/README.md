@@ -1,6 +1,6 @@
 # Page designs
 
-Mirror of the Design canvas https://claude.ai/artifact/KAf1PvdASMjpvpANYVpqhF ("K7 Enterprise Website Pages"), one folder per page template from `docs/page-shapes.md`. Each `.dc.html` is a Claude Design artboard: fluid markup on the K7 Design Language 2.1 classes (`design-system/components/bundle.css`) with variables from `design-system/tokens.css`. The canvas serves those two files under `ds/k7/`; the logo files are canvas uploads.
+Mirror of the Design canvas https://claude.ai/artifact/KAf1PvdASMjpvpANYVpqhF ("K7 Enterprise Website Pages"), one folder per page template from `docs/page-shapes.md`. Each `.dc.html` is a Claude Design artboard: fluid markup on the K7 Design Language 2.2 classes (`design-system/components/bundle.css`) with variables from `design-system/tokens.css`. The canvas serves those two files under `ds/k7/`; the logo files are canvas uploads.
 
 | Folder | Artboards | Template |
 |---|---|---|
