@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import React from 'react'
 
+import { USER_STATUS_LABEL, type LegalChange, type UserStatus } from '@/lib/partner/organisation-model'
 import { PARTNER_ROLE_LABEL, PARTNER_TYPE_LABEL, STAFF_ROLE_LABEL, type PartnerRole, type PartnerType, type StaffRole } from '@/lib/partner/settings-model'
 import { APPLICATION_STATUS_LABEL, type ApplicationStatus } from '@/lib/partner/status'
 import type { PartnerOrg } from '@/lib/partner/users'
@@ -106,3 +107,26 @@ export const MobileVerifiedTag: React.FC<{ contact: { mobileVerifiedAt: string |
 
 /** The application number, K7A-00001, in the P1 shape. */
 export const Aid: React.FC<{ number: string; href?: string; display?: boolean }> = ({ number, href, display }) => <Pid id={number || 'K7A-—'} href={href} display={display} />
+
+/* ---------- M3: the organisation and its people ---------- */
+
+/** P11 User state: Active solid, Invited dashed (not yet here), Disabled closed. Never signal: no one must act on a user's state. */
+export const UserStateTag: React.FC<{ status: UserStatus }> = ({ status }) => <span className={status === 'active' ? 'tag tag-solid' : status === 'disabled' ? 'tag tag-closed' : 'tag tag-dashed'}>{USER_STATUS_LABEL[status]}</span>
+
+/** P12 The legal-identity edit as a diff: one row per changed field, the current value dim, the proposed one in ink. */
+export const LegalChanges: React.FC<{ changes: LegalChange[] }> = ({ changes }) => (
+  <dl className="ledit">
+    {changes.map((c) => (
+      <div key={c.field}>
+        <dt className="label">{c.label}</dt>
+        <dd>
+          <span className="from">{c.from || '—'}</span>
+          <span className="arrow" aria-hidden="true">
+            →
+          </span>
+          <span className="to">{c.to || '—'}</span>
+        </dd>
+      </div>
+    ))}
+  </dl>
+)

@@ -1,4 +1,4 @@
-# Partner portal: the build plan (written 2026-10-22; M1 and M2 built the same day)
+# Partner portal: the build plan (written 2026-10-22; M1, M2 and M3 built the same day)
 
 What has to be done to deliver `01-requirements.md`, in the order it should be done, with the
 decisions taken so far and a status that any session can pick up. Read `CLAUDE.md`,
@@ -40,8 +40,8 @@ not for its history.
 | M0 | CRM facts and decisions confirmed, questions answered by the author | **in progress**: UAT explored 2026-10-22; production counts and the author's answers remain (§7) |
 | M1 | Skeleton: route group, layout, section 10 CSS, settings global, partner session kind, portal guide | **done 2026-10-22** (`04-portal-guide.md`) |
 | M2 | Registration and onboarding (§3): public form, codes, review queue, approval → org, admin login, partner ID, CRM account | **done 2026-10-22**, clicked end to end on both sides and the CRM job run on UAT (`04-portal-guide.md` §3–5) |
-| M3 | Partner sign-in, organisation profile, users and roles (§2, FR-REG-07) | **next** |
-| M4 | Deal registration (§7): form, routing, CRM conflict check, approval desk, protection, extension, CRM push | not started |
+| M3 | Partner sign-in, organisation profile, users and roles (§2, FR-REG-07) | **done 2026-10-22**, clicked end to end on both sides on localhost (`04-portal-guide.md` §3–5, §7) |
+| M4 | Deal registration (§7): form, routing, CRM conflict check, approval desk, protection, extension, CRM push | **next** |
 | M5 | Deal dashboard (§8): hourly CRM sync into a read model, cards, list, charts, reconciliation log | not started |
 | M6 | Collateral library (§6) | not started |
 | M7 | Schemes and eligibility (§9) | not started |
@@ -221,10 +221,11 @@ Tick as done; dates in the session log.
 - [ ] Link from the marketing Partners page ("Join the programme"): the page itself is not written yet (§7); until then the link sits in the header seed's Partners column, on the partner sign-in page and in the portal footer
 - Also: the K7 settings page (`/partners/portal/k7/settings`), the desk strip (`K7Nav`), `partner-counters` for the ids, `POST /api/partners/outbox` for the drain
 
-### M3 — sign-in, organisation, users (§2, FR-REG-07)
-- [ ] Partner door end to end; home page with status strip; organisation profile; Partner Admin adds/removes users and roles (one user, several roles)
-- [ ] Legal-identity edits go to a pending state and a K7 re-approval queue
-- [ ] Suspension blocks sign-in; scope test: a user of org A never reads org B (pinned)
+### M3 — sign-in, organisation, users (§2, FR-REG-07) (done 2026-10-22)
+- [x] Partner door end to end; home page with status strip; organisation profile (`/partners/portal/organisation`: the facts, the details form that saves at once); Partner Admin adds, edits, disables, re-enables and removes users and their roles (one user, several roles; `/organisation/users`, `/organisation/users/[id]`); the organisation always keeps a standing Partner Admin and nobody disables or demotes themselves
+- [x] Legal-identity edits (legal name, GSTIN, PAN) go to `pendingLegalEdit` (one at a time, withdrawable) and the K7 partners ledger `/partners/portal/k7/partners` (view *Edits waiting*); the Channel Manager approves (applied) or declines (with a note) on the partner sheet; the admins are told
+- [x] Suspension with a reason (every user emailed; the door refuses; sessions end on their next request) and reinstatement on the K7 sheet; the certificate waiver (decision 8) set and cleared there; scope test pinned (`partner-scope`: organisation A never reads B by list or by id, the trail scoped the same way)
+- Not in M3: an `account.update` CRM job for an approved legal-name change (the mirror is create-only, decision 2; the CRM admin carries a rename over by hand; noted on the K7 sheet)
 
 ### M4 — deal registration (§7)
 - [ ] `partner-products` collection and admin (decision 19); form (fields of FR-DEAL-02; products from it; attachments), routing by type (Distributor names the reseller), gate per decision 8
@@ -293,9 +294,9 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
 
 | FR | milestone | status |
 |---|---|---|
-| ROLE-01, 02, 03 | M1, M3 | M1 done (scope rule, several roles per user and per K7 person); M3 adds the user pages |
+| ROLE-01, 02, 03 | M1, M3 | done 2026-10-22 (M1: the scope rule, several roles per user and per K7 person; M3: the user pages, the standing-admin rule, the scope pinned against the database) |
 | REG-01 … 06, 08 | M2 | done 2026-10-22 (REG-03: email code; mobile code behind the SMS adapter, `skipped` and shown as such until a gateway exists; REG-06: the CRM account and contact through the outbox, verified on UAT as ACC-2610-00154) |
-| REG-07 | M3 | — |
+| REG-07 | M3 | done 2026-10-22 (legal name, GSTIN and PAN proposed → Channel Manager approves or declines; the CRM rename stays manual) |
 | DEAL-01 | M4 (org gate), M11 (certificate gate) | — |
 | DEAL-02 … 09 | M4 | — |
 | DASH-01 … 05, 08, 11 | M5 | — |
@@ -379,3 +380,21 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
   its run (a local global with the mirror on must never push the test organisation). Not clicked: the new Partner Admin's first
   sign-in (it would end the agent session in the same browser); the door itself was verified in M1. Test rows left on UAT:
   account ACC-2610-00154 and its contact, both `PP-TEST`.
+- **2026-10-22 (7)** — **M3 built.** `src/lib/partner/organisation-model.ts` (pure: the details and legal validation, `legalChanges`, the user
+  machine, `memberChangeError` / `memberRemoveError`), `organisation.ts` (reads, the K7 ledger and counts, `saveOrgDetails`, `proposeLegalEdit` /
+  `withdrawLegalEdit`, `decideLegalEdit`, `setOrgStatus`, `setWaiver`), `members.ts` (`listMembers` / `loadMember` through the scope, `addMember`,
+  `updateMember`, `setMemberStatus`, `removeMember`, `resendInvitation`); `scope.ts` gains `orgRel` (Postgres ids are numbers on a create);
+  `users.ts` reads the whole organisation row; `partner-orgs` gains `suspendedReason`. Pages: `/partners/portal/organisation` (+ `/users`,
+  `/users/[id]`), `/partners/portal/k7/partners` (+ `/[partnerId]`), the Partners tab and header links, the counts on both homes. Design
+  system: section 10 P11–P12 (README, `partner.css`, CHANGELOG, `design-system.json`). Verified: `npx tsc --noEmit` clean, `pnpm lint` 0 errors,
+  `pnpm test:int` 120 passing with `PARTNER_DB_TESTS=1` (new: `partner-organisation` 8 pure, `partner-scope` 4 with the database: the scope by
+  list and by id, the member rules, propose → withdraw → propose → approve, suspend → door refused → reinstate; the test found that the
+  details save needs a region when the settings list any, as the join form does). Clicked on localhost as the seeded Partner Admin: details
+  saved and recorded; GSTIN and PAN proposed (the pending box with the diff; a form inside a paragraph was a hydration error, fixed); a user
+  invited with two roles, disabled, re-enabled back to Invited, removed behind the confirm; own sheet shows the self-protection. Clicked on
+  the tunnel host with Navin's Microsoft session as Channel Manager: the ledger with the edit counted, the sheet, Approve with a note (the
+  identity applied), Suspend with a reason (the localhost partner session landed on the door with "suspended" at once), Reinstate, waiver to
+  2027-03-31. PP-TEST (K7P-00000) now carries a GSTIN, a PAN and the waiver. No Dataverse calls in this milestone. **Next session starts with
+  M4**: `partner-products` and its admin (decision 19), the deal form and gate (decision 8: approved organisation, active user; the waiver is
+  now on the organisation), the conflict check on portal deals, the approver desk, the deal ID and protection, the `opportunity.create` job,
+  extension and expiry. §7's author questions still open.

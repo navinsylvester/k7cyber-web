@@ -6,7 +6,8 @@ import { PARTNER_TYPE_OPTIONS } from './PartnerSettings'
 
 /* Approved partner organisations (02-build-plan.md §5): created by the approval of an application (M2), never by hand. The
    partner ID is the portal's; the CRM account and contact ids arrive from the outbox. Suspension (M3) blocks every user's
-   sign-in. Written by the portal through the local API with access overridden; admins read the raw rows here. */
+   sign-in and ends their sessions on the next request; a legal-identity edit waits in `pendingLegalEdit` until a Channel Manager
+   decides (FR-REG-07). Written by the portal through the local API with access overridden; admins read the raw rows here. */
 export const PartnerOrgs: CollectionConfig = {
   slug: 'partner-orgs',
   labels: { singular: 'Partner organisation', plural: 'Partner organisations' },
@@ -52,7 +53,8 @@ export const PartnerOrgs: CollectionConfig = {
       ],
     },
     { type: 'row', fields: [{ name: 'waiverUntil', type: 'date', admin: { width: '50%', description: 'The Channel Manager may let an uncertified organisation register deals until this date (decision 8).' } }, { name: 'suspendedAt', type: 'date', admin: { width: '50%' } }] },
-    { name: 'pendingLegalEdit', type: 'json', admin: { description: 'A legal-identity edit awaiting K7 re-approval (FR-REG-07, M3).' } },
+    { name: 'suspendedReason', type: 'textarea', admin: { description: 'Why the Channel Manager suspended it (M3); every user of the organisation reads it.' } },
+    { name: 'pendingLegalEdit', type: 'json', admin: { description: 'A legal-identity edit (legal name, GSTIN, PAN) awaiting K7 re-approval (FR-REG-07, M3): the proposed values, who proposed them, when, why. Written by the portal; null when none.' } },
   ],
   timestamps: true,
 }

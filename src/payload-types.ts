@@ -2464,7 +2464,11 @@ export interface PartnerOrg {
   waiverUntil?: string | null;
   suspendedAt?: string | null;
   /**
-   * A legal-identity edit awaiting K7 re-approval (FR-REG-07, M3).
+   * Why the Channel Manager suspended it (M3); every user of the organisation reads it.
+   */
+  suspendedReason?: string | null;
+  /**
+   * A legal-identity edit (legal name, GSTIN, PAN) awaiting K7 re-approval (FR-REG-07, M3): the proposed values, who proposed them, when, why. Written by the portal; null when none.
    */
   pendingLegalEdit?:
     | {
@@ -4234,6 +4238,7 @@ export interface PartnerOrgsSelect<T extends boolean = true> {
       };
   waiverUntil?: T;
   suspendedAt?: T;
+  suspendedReason?: T;
   pendingLegalEdit?: T;
   updatedAt?: T;
   createdAt?: T;

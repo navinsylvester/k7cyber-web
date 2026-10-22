@@ -6,6 +6,7 @@ import { K7Nav } from '@/components/partner/K7Nav'
 import { StaffRoleTags, Strip } from '@/components/partner/Parts'
 import { owedOutboxCount } from '@/lib/partner/mirror'
 import { unreadCount } from '@/lib/partner/notify'
+import { orgCounts } from '@/lib/partner/organisation'
 import { applicationCounts } from '@/lib/partner/registration'
 import { requireK7 } from '@/lib/partner/session'
 import { STAFF_ROLE_LABEL, getPartnerSettings, type StaffRole } from '@/lib/partner/settings'
@@ -13,7 +14,7 @@ import { STAFF_ROLE_LABEL, getPartnerSettings, type StaffRole } from '@/lib/part
 export const metadata: Metadata = { title: 'Partner desk' }
 
 /* The K7 side's home (02-build-plan.md §4, /partners/portal/k7): who you are here, the roles you hold and what each opens. The
-   queues arrive with their milestones (applications M2, deals M4, partners M3, schemes M7, reports M8, settings M2). */
+   queues arrive with their milestones (applications and settings M2, partners M3, deals M4, schemes M7, reports M8). */
 const OPENS: Record<StaffRole, string> = {
   channelManager: 'applications, every partner organisation, waivers and suspensions',
   dealDeskApprover: 'registered deals, conflicts, decisions and extensions',
@@ -26,10 +27,10 @@ export default async function K7HomePage() {
   const me = await requireK7('/partners/portal/k7')
   const settings = await getPartnerSettings()
   const cm = me.roles.includes('channelManager')
-  const [unread, counts, owed] = await Promise.all([unreadCount({ kind: 'staff', roles: me.roles }), cm ? applicationCounts() : null, cm ? owedOutboxCount() : 0])
+  const [unread, counts, owed, orgs] = await Promise.all([unreadCount({ kind: 'staff', roles: me.roles }), cm ? applicationCounts() : null, cm ? owedOutboxCount() : 0, cm ? orgCounts() : null])
   return (
     <>
-    <K7Nav active="home" roles={me.roles} counts={{ applications: counts?.submitted }} />
+    <K7Nav active="home" roles={me.roles} counts={{ applications: counts?.submitted, partners: orgs?.edits }} />
     <section className="sheet ws g-paper">
       <div className="ws-head">
         <div className="ws-head-main">
@@ -44,6 +45,7 @@ export default async function K7HomePage() {
           { label: 'Roles', value: <StaffRoleTags roles={me.roles} /> },
           { label: 'Unread', value: <Link href="/partners/portal/k7/notifications">{String(unread).padStart(2, '0')} notifications</Link> },
           ...(counts ? [{ label: 'Applications', value: <Link href="/partners/portal/k7/applications">{String(counts.submitted + counts.underReview).padStart(2, '0')} open · {String(counts.submitted).padStart(2, '0')} new</Link> }] : [{ label: 'Staff listed', value: String(settings.staff.length).padStart(2, '0') }]),
+          ...(orgs ? [{ label: 'Partners', value: <Link href="/partners/portal/k7/partners">{String(orgs.approved).padStart(2, '0')} approved{orgs.edits ? ` · ${String(orgs.edits).padStart(2, '0')} edits waiting` : ''}</Link> }] : []),
         ]}
       />
       <div className="phome">

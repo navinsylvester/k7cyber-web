@@ -77,6 +77,11 @@ export default async function PartnerHomePage() {
               <dt>Signed in as</dt>
               <dd className="sans">{me.user.email}</dd>
             </dl>
+            <p className="more">
+              <Link className="link-u" href="/partners/portal/organisation">
+                {me.roles.includes('admin') ? 'The organisation and its users →' : 'The organisation →'}
+              </Link>
+            </p>
           </div>
           {trail.length > 0 && (
             <div>

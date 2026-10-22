@@ -2,13 +2,39 @@ import 'server-only'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { toLegalEdit, type LegalEdit } from './organisation-model'
 import { PARTNER_ROLES, PARTNER_TYPES, type PartnerRole, type PartnerType } from './settings-model'
 
 /* Partner users and their organisations, read for sign-in and for every request's context. Nothing here is cached: a
    suspension or a role change takes effect on the next request (M3). */
 
-export type PartnerOrg = { id: string; partnerId: string; name: string; tradeName: string; type: PartnerType; status: 'approved' | 'suspended'; country: string; regions: string[]; certificate: { status: string; until: string | null }; waiverUntil: string | null }
-export type PartnerUser = { id: string; orgId: string; email: string; name: string; designation: string; mobile: string; roles: PartnerRole[]; status: 'invited' | 'active' | 'disabled'; lastSignInAt: string | null }
+export type PartnerOrg = {
+  id: string
+  partnerId: string
+  name: string
+  tradeName: string
+  type: PartnerType
+  status: 'approved' | 'suspended'
+  gstin: string
+  pan: string
+  address: string
+  city: string
+  state: string
+  country: string
+  pin: string
+  website: string
+  regions: string[]
+  crm: { accountId: string; accountCode: string; contactId: string }
+  certificate: { status: string; until: string | null }
+  waiverUntil: string | null
+  suspendedAt: string | null
+  suspendedReason: string
+  pendingLegalEdit: LegalEdit | null
+  applicationId: string
+  createdAt: string
+  updatedAt: string
+}
+export type PartnerUser = { id: string; orgId: string; email: string; name: string; designation: string; mobile: string; roles: PartnerRole[]; status: 'invited' | 'active' | 'disabled'; invitedAt: string | null; lastSignInAt: string | null; createdAt: string }
 
 const db = () => getPayload({ config: configPromise })
 type Doc = Record<string, unknown>
@@ -17,6 +43,7 @@ const d = (v: unknown): string | null => (typeof v === 'string' && v ? v : null)
 
 export const toOrg = (x: Doc): PartnerOrg => {
   const cert = (x.certificate ?? {}) as Doc
+  const crm = (x.crm ?? {}) as Doc
   return {
     id: s(x.id),
     partnerId: s(x.partnerId),
@@ -24,10 +51,24 @@ export const toOrg = (x: Doc): PartnerOrg => {
     tradeName: s(x.tradeName),
     type: (PARTNER_TYPES as readonly string[]).includes(s(x.type)) ? (s(x.type) as PartnerType) : 'var',
     status: x.status === 'suspended' ? 'suspended' : 'approved',
+    gstin: s(x.gstin),
+    pan: s(x.pan),
+    address: s(x.address),
+    city: s(x.city),
+    state: s(x.state),
     country: s(x.country),
+    pin: s(x.pin),
+    website: s(x.website),
     regions: Array.isArray(x.regions) ? x.regions.map(String) : [],
+    crm: { accountId: s(crm.accountId), accountCode: s(crm.accountCode), contactId: s(crm.contactId) },
     certificate: { status: s(cert.status) || 'none', until: d(cert.until) },
     waiverUntil: d(x.waiverUntil),
+    suspendedAt: d(x.suspendedAt),
+    suspendedReason: s(x.suspendedReason),
+    pendingLegalEdit: toLegalEdit(x.pendingLegalEdit),
+    applicationId: s(x.applicationId),
+    createdAt: s(x.createdAt),
+    updatedAt: s(x.updatedAt),
   }
 }
 
@@ -42,7 +83,9 @@ export const toUser = (x: Doc): PartnerUser => {
     mobile: s(x.mobile),
     roles: Array.isArray(x.roles) ? (x.roles.filter((r) => (PARTNER_ROLES as readonly string[]).includes(String(r))) as PartnerRole[]) : [],
     status: x.status === 'active' ? 'active' : x.status === 'disabled' ? 'disabled' : 'invited',
+    invitedAt: d(x.invitedAt),
     lastSignInAt: d(x.lastSignInAt),
+    createdAt: s(x.createdAt),
   }
 }
 
@@ -70,7 +113,7 @@ export const loadPartnerUser = async (id: string): Promise<{ user: PartnerUser; 
   }
 }
 
-/** Whether this pair may sign in: an active user in an approved organisation (M3 adds the suspension messages). */
+/** Whether this pair may sign in: a user who is not disabled, in an organisation that is not suspended (M3). */
 export const canSignIn = (u: PartnerUser, o: PartnerOrg): { ok: true } | { ok: false; reason: 'user' | 'org' } => {
   if (o.status !== 'approved') return { ok: false, reason: 'org' }
   if (u.status === 'disabled') return { ok: false, reason: 'user' }

@@ -81,3 +81,24 @@
 .staff-table td.tick input { width: 18px; height: 18px; appearance: none; -webkit-appearance: none; border: 1px solid var(--fg); cursor: pointer; }
 .staff-table td.tick input:checked { background: var(--signal); border-color: var(--signal); box-shadow: inset 0 0 0 4px var(--bg); }
 .staff-table th:nth-child(n+3), .staff-table td.tick { text-align: center; padding-right: 10px; }
+
+/* ---------- P11 User state, P12 the legal-identity edit (M3) ---------- */
+.ledit { display: grid; gap: 0; margin: 0; padding: 0; border-top: 1px solid var(--fg); }
+.ledit > div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 20px; padding: 12px 0; border-bottom: 1px solid var(--ln); }
+.ledit dt { color: var(--mu); }
+.ledit dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; font: 400 15px/1.4 var(--font-mono); overflow-wrap: anywhere; }
+.ledit .from { color: var(--mu); text-decoration: line-through; text-decoration-color: var(--ln); }
+.ledit .arrow { color: var(--acc); }
+.ledit .to { font-weight: 500; }
+@container (min-width: 760px) { .ledit > div { grid-template-columns: 140px minmax(0, 1fr); } }
+.pending { padding: 20px 22px 24px; box-shadow: inset 0 0 0 1px var(--fg); }
+.pending h2 { margin: 0 0 8px; display: flex; align-items: center; gap: 10px; }
+.pending .ledit { margin: 12px 0 16px; }
+.members { margin-top: 28px; }
+.members .roles .tag { font-size: 11px; }
+.members td.who { min-width: 200px; }
+.members td.who .muted { font-size: 13px; }
+.members tr.is-off td { color: var(--mu); }
+.org-forms { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(32px, 4cqw, 56px); }
+.org-forms h2 { margin: 0 0 6px; }
+.org-forms > section > .hint { margin: 0 0 20px; }

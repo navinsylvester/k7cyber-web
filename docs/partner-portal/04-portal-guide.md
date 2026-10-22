@@ -1,6 +1,6 @@
-# The partner portal as built (M1–M2, 2026-10-22): routes, doors, rules, how to run it
+# The partner portal as built (M1–M3, 2026-10-22): routes, doors, rules, how to run it
 
-What exists in the repo after the skeleton (M1) and onboarding (M2) milestones, how it fits the support portal it stands on, and
+What exists in the repo after the skeleton (M1), onboarding (M2) and organisation (M3) milestones, how it fits the support portal it stands on, and
 what to check before trusting a page. `02-build-plan.md` is the plan and the cross-session state; this file is "what is built",
 like the support portal's `09-portal-guide.md`. Dynamics is touched by one job so far: the partner account and its contact on
 approval, through the outbox (§5), only when the mirror is switched on; the opportunity arrives with M4.
@@ -47,6 +47,9 @@ page (`requireK7Role`). The `partner` provider loads its Payload lookup lazily s
 /partners/join/submitted             the receipt with the number (K7A-00001)
 /partners/join/status?a=&k=          the applicant's view from the emailed link: state, K7's note, the record; "Edit and resubmit" after a clarification reopens the steps
 /partners/portal                     partner home: the status strip (type, status, roles, certificate), latest notifications, the organisation's facts and recent record
+/partners/portal/organisation        (M3) the organisation: the facts for every user; for the Partner Admin the details form (saves at once) and the legal-identity form (proposes; the waiting proposal as a diff, withdrawable)
+/partners/portal/organisation/users  (M3) Partner Admins: the people with roles, state and last sign-in; the form that invites one more (several roles at once)
+/partners/portal/organisation/users/[id]   (M3) one person: name, designation, mobile, roles; resend the invitation, disable / re-enable, remove behind a confirm; the record
 /partners/portal/notifications       the bell's page, mark all as read
 /partners/portal/no-access           a partner user without the role a page needs
 /partners/portal/sign-in · /verify   the partner door and the K7 door on one page; `?staff=1` leads with the K7 side
@@ -55,19 +58,24 @@ page (`requireK7Role`). The `partner` provider loads its Payload lookup lazily s
 /partners/portal/k7/no-access        an agent without a partner-portal role
 /partners/portal/k7/applications     Channel Managers (M2): counters, views (open · new · under review · awaiting partner · decided · all), search, "assigned to me", the ledger; Run the waiting CRM jobs
 /partners/portal/k7/applications/[number]   the application sheet: the filed facts, Take it, the decision panel (approve · send back · reject, with the note), the record, the organisation and its CRM job (Run / Retry)
+/partners/portal/k7/partners         Channel Managers (M3): every organisation; counters (edits waiting · approved · suspended), views, search by partner ID, name, city, GSTIN or CRM account
+/partners/portal/k7/partners/[partnerId]   the organisation sheet: the legal-identity edit to decide (approve applies it; decline needs a note), the facts, the people, the record; suspend with a reason / reinstate, the certificate waiver, the CRM ids and the application
 /partners/portal/k7/settings         Channel Managers: the whole `partner-settings` global as a form (staff and roles, programme, deals, CRM mirror, notifications)
 /api/partners/outbox                 POST with `Authorization: Bearer <CRON_SECRET>`: runs the pending, failed and skipped CRM jobs as the service identity
 ```
-The desk strip (`K7Nav`) shows a tab only to a role that opens it. Everything the plan lists for later milestones (organisation
-and users, deals, dashboard, collateral, schemes, reports) is not there yet.
+The desk strip (`K7Nav`) shows a tab only to a role that opens it. Everything the plan lists for later milestones (deals, dashboard,
+collateral, schemes, reports) is not there yet.
 
 ## 4. Library (`src/lib/partner/`)
 | file | what |
 |---|---|
 | `session.ts` | `requirePartner(next?)` → `PartnerContext { user, org, scope, roles, actor }`, re-reading the user and organisation from Payload on every request so a suspension or role change bites at once; `requirePartnerRole(roles)`; `requireK7(next?)` / `requireK7Role(roles)` → `K7Context { email, name, roles, dev, actor }`; `tryPartner`, `tryK7`, `partnerSideSession` for the header (never redirect) |
-| `scope.ts` | `orgWhere(scope, extra?, field)` puts the organisation into every Payload `Where` first and throws `ScopeError` on an empty scope; `inScope(scope, row)` for detail pages reached by id. **Rule:** every partner query takes `me.scope`; a review checklist item (FR-ROLE-01) |
+| `scope.ts` | `orgWhere(scope, extra?, field)` puts the organisation into every Payload `Where` first and throws `ScopeError` on an empty scope; `inScope(scope, row)` for detail pages reached by id; `orgRel(scope)` the organisation as a relationship value on a create (Postgres ids are numbers). **Rule:** every partner query takes `me.scope`; a review checklist item (FR-ROLE-01), pinned against the database by `tests/int/partner-scope.int.spec.ts` |
 | `settings-model.ts` / `settings.ts` | the typed settings with defaults and the normaliser; `getPartnerSettings()` (30 s memo), `savePartnerSettings()`, `partnerPortalEnabled()`; `staffRolesFor(email, settings, { dev })` with the two default-on fallbacks (Channel Manager → Deal Desk Approver, Marketing Admin → Scheme Admin); `staffWithRole(role)` for notifications, each person once |
-| `users.ts` | `findPartnerUserByEmail`, `loadPartnerUser`, `canSignIn(user, org)`, `touchSignIn`, `orgUsers(orgId, roles?)` |
+| `users.ts` | `findPartnerUserByEmail`, `loadPartnerUser`, `canSignIn(user, org)` (not disabled, organisation not suspended), `touchSignIn`, `orgUsers(orgId, roles?)`; `toOrg` reads the whole organisation row (identity, address, CRM ids, waiver, suspension, the pending legal edit) |
+| `organisation-model.ts` | (M3) pure: `validateDetails`, `validateLegal`, `normaliseLegal`, `legalChanges(current, proposed)` (the diff; an edit that changes nothing is refused), `toLegalEdit`; the user machine (`canMoveUser`, `reenabledStatus`: back to active, or invited if they never signed in), `validateMember`, `memberChangeError` / `memberRemoveError` (a standing Partner Admin always remains; nobody disables, demotes or removes themselves) |
+| `organisation.ts` | (M3) `loadOrg`, `scopedOrg`, `findOrgByPartnerId`, `listOrgs` / `orgCounts` (K7); `saveOrgDetails` (at once, one audit row naming the changed fields), `proposeLegalEdit` (one at a time → `pendingLegalEdit`, staff bell + mail), `withdrawLegalEdit`, `decideLegalEdit` (approve applies name/GSTIN/PAN; decline needs a note; the admins are told), `setOrgStatus` (suspend with a reason, every user mailed; reinstate), `setWaiver`. No Dataverse call: an approved legal-name change is for the CRM admin until an `account.update` job exists |
+| `members.ts` | (M3) `listMembers(scope)` (admins first), `loadMember(scope, id)` (another organisation's id is null), `addMember` (the address must be new to the portal; invited; the invitation mail), `updateMember` (roles under the rules; a roles change is audited from → to and the person told), `setMemberStatus` (disable / enable), `removeMember` (deletes the row; the trail keeps the email), `resendInvitation` |
 | `audit.ts` | `audit({ actor, object, objectId, objectLabel, action, from, to, orgId, comment, meta })` → one `partner-audit` row, failures logged not thrown; `orgAudit(scope)`, `objectAudit(object, id)` |
 | `notify.ts` | `notify({ event, subject, body, href, to, email? })` with recipients `user`, `org` (its active users, optionally by role) or `staff` (a role): one bell row per partner user, one shared row per staff role, and an email per address when `partner-settings.notify.emailEnabled` (through `sendMail`: `SMTP_URL`, allowlist, the partner sender from the settings); `unreadCount`, `listNotifications`, `markAllRead` over a `BellScope` |
 | `otp.ts` | the partner door's purpose and cookie names over the support primitives |
@@ -82,8 +90,8 @@ and users, deals, dashboard, collateral, schemes, reports) is not there yet.
 ## 5. Data (Payload, `src/collections/partner/`, admin group "Partner portal")
 | collection / global | holds | notes |
 |---|---|---|
-| `partner-orgs` | approved organisations: `partnerId` (unique), type, status approved/suspended, legal fields, regions, `crm.{accountId, accountCode, contactId}`, `certificate`, `waiverUntil`, `pendingLegalEdit` | created by approval (M2); `partner:seed-dev` creates the PP-TEST one |
-| `partner-users` | one person in one organisation: email (unique, lowercased), roles admin/sales/technical (several at once), status invited/active/disabled, `lastSignInAt` | the door's lookup |
+| `partner-orgs` | approved organisations: `partnerId` (unique), type, status approved/suspended, legal fields, regions, `crm.{accountId, accountCode, contactId}`, `certificate`, `waiverUntil`, `suspendedAt` + `suspendedReason` (M3), `pendingLegalEdit` (M3: name, gstin, pan, proposedAt, proposedBy, reason; null when none) | created by approval (M2); `partner:seed-dev` creates the PP-TEST one; the details, the legal identity (through K7), suspension and the waiver are edited by M3's pages |
+| `partner-users` | one person in one organisation: email (unique, lowercased), roles admin/sales/technical (several at once), status invited/active/disabled, `invitedAt`, `lastSignInAt` | the door's lookup; added, changed, disabled and removed by the Partner Admin (M3) |
 | `partner-audit` | the trail: actor, object, objectId, label, action, from → to, orgId, comment, meta | append-only; admin read |
 | `partner-notifications` | the bell: audience user (userId, orgId) or staff (staffRole), event, subject, body, href, readAt, emailedAt / emailTo / emailError | append-only except `readAt` |
 | `partner-applications` | (M2) one per application: number, type, status (draft · submitted · underReview · clarification · approved · rejected), the company fields, `contact` (with `emailVerifiedAt`, `mobileVerifiedAt`, `mobileVerification` none/sms/skipped), regions, `terms` (version, acceptedAt), `assignee`, `decisions[]` (to, by, at, comment), `resumeKey` (never shown), `orgId`, submittedAt, decidedAt | written by `registration.ts` |
@@ -95,7 +103,7 @@ and users, deals, dashboard, collateral, schemes, reports) is not there yet.
 `design-system/components/PartnerParts/README.md` and `src/app/(partner)/partner.css`, loaded over section 09's `portal.css`
 (chrome, forms, flashes, ledgers are shared). Parts P1–P6: the partner ID, the organisation state and type tags, the status
 strip, the bell and its rows, role tags, the partner home. The header is the support portal's `HeaderShell` with `home` and
-`name` props. M2 adds P7 the join steps, P8 the application state tag (and the mobile verification tag), P9 the application summary and P10 the decision panel, with the terms box, the desk strip's count and the settings page's staff table. No partner artboards yet.
+`name` props. M2 adds P7 the join steps, P8 the application state tag (and the mobile verification tag), P9 the application summary and P10 the decision panel, with the terms box, the desk strip's count and the settings page's staff table. M3 adds P11 the user state tag with the users ledger and the member sheet, and P12 the legal-identity edit as a filed box with the change as a diff. No partner artboards yet.
 
 ## 7. Rules the code enforces
 - A partner page reads nothing without `me.scope` (`orgWhere`); an empty scope throws rather than widening.
@@ -106,11 +114,17 @@ strip, the bell and its rows, role tags, the partner home. The header is the sup
 - An application is submitted only with the contact email verified by code; the mobile is verified by SMS when a gateway exists and otherwise marked skipped where the Channel Manager sees it.
 - The status link is number + an unguessable key; a wrong key shows nothing. The join cookie carries the same key, httpOnly, scoped to `/partners/join`.
 - Approval refuses an email that is already a partner user somewhere; the organisation and the Partner Admin are created together, the partner ID from the counter.
+- A partner user is read through the scope even by id (`loadMember`); the Partner Admin's posts re-check the role and the rules on the server, so an organisation never loses its last standing admin and a person never disables or demotes themselves. The email is the sign-in identity and is not edited: remove and add instead.
+- The legal name, GSTIN and PAN change only through a proposal a Channel Manager approves; one proposal at a time; an empty change is refused; a decline needs a note. The details (trade name, address, website, regions) change at once and are audited field by field.
+- Suspension needs a reason, which every user of the organisation gets by email; the door refuses their codes and `requirePartner` re-reads the organisation on every request, so open sessions end at once. Reinstatement clears the reason.
 - Dataverse is written only by the outbox, as the service identity, only when `partner-settings.crm.enabled` is on, only to UAT (production refused in code); the job is recorded whatever happens and can be re-run.
 
-## 8. Not done (next: M3)
-The organisation page, users and roles for the Partner Admin, legal-identity edits with re-approval, suspension (M3); the marketing
-Partners page and its "Join" link (the page is not written; the link is in the header seed, on the sign-in page and in the portal
-footer); the editable mail templates and the approval SLA notice (M8); an SMS gateway. Both sides were clicked end to end on
-localhost on 2026-10-22 (K7A-00003 → K7P-00003, account ACC-2610-00154 with its contact on UAT). Not clicked: the invited Partner
-Admin's first sign-in through the partner door (verified in M1 with the seeded user).
+## 8. Not done (next: M4)
+Deals (M4); an `account.update` CRM job for an approved legal-name change (the CRM admin renames the account by hand; the K7 sheet
+says so); the marketing Partners page and its "Join" link (the page is not written; the link is in the header seed, on the sign-in
+page and in the portal footer); the editable mail templates and the approval SLA notice (M8); an SMS gateway. Both sides were
+clicked end to end on 2026-10-22: M2 on localhost (K7A-00003 → K7P-00003, account ACC-2610-00154 with its contact on UAT) and M3
+on localhost (the Partner Admin) and the tunnel host (the Channel Manager through Microsoft): details, a legal edit proposed and
+approved, a user invited, disabled, re-enabled and removed, the organisation suspended (the partner session fell to the door at
+once), reinstated, a waiver set. Not clicked: an invited user's first sign-in through the partner door (verified in M1 with the
+seeded user).
