@@ -85,6 +85,10 @@ export interface Config {
     'product-item-events': ProductItemEvent;
     'product-evidence': ProductEvidence;
     'product-mirror': ProductMirror;
+    'partner-orgs': PartnerOrg;
+    'partner-users': PartnerUser;
+    'partner-audit': PartnerAudit;
+    'partner-notifications': PartnerNotification;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -121,6 +125,10 @@ export interface Config {
     'product-item-events': ProductItemEventsSelect<false> | ProductItemEventsSelect<true>;
     'product-evidence': ProductEvidenceSelect<false> | ProductEvidenceSelect<true>;
     'product-mirror': ProductMirrorSelect<false> | ProductMirrorSelect<true>;
+    'partner-orgs': PartnerOrgsSelect<false> | PartnerOrgsSelect<true>;
+    'partner-users': PartnerUsersSelect<false> | PartnerUsersSelect<true>;
+    'partner-audit': PartnerAuditSelect<false> | PartnerAuditSelect<true>;
+    'partner-notifications': PartnerNotificationsSelect<false> | PartnerNotificationsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -142,12 +150,14 @@ export interface Config {
     footer: Footer;
     'support-settings': SupportSetting;
     'product-settings': ProductSetting;
+    'partner-settings': PartnerSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'support-settings': SupportSettingsSelect<false> | SupportSettingsSelect<true>;
     'product-settings': ProductSettingsSelect<false> | ProductSettingsSelect<true>;
+    'partner-settings': PartnerSettingsSelect<false> | PartnerSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -965,7 +975,7 @@ export interface ModuleGridBlock {
    */
   lede?: string | null;
   /**
-   * The switchboard (Switchboard) sets the core as rows marked On with the sum beneath, and the add-ons as rows with an Off | On switch each. Home page.
+   * The switchboard (Switchboard) files the core as one block (the names large, each with its line as a mono gloss) and sets the add-ons as a ledger of rows with an Off | On switch each, the sum on a double rule. Icons are not drawn; keep each line to a few words. Home page.
    */
   layout?: ('tiles' | 'switchboard') | null;
   groups: {
@@ -1012,6 +1022,9 @@ export interface ModuleGridBlock {
         | null;
       name: string;
       on?: boolean | null;
+      /**
+       * One line under the name; on the switchboard a gloss of a few words (e.g. Endpoint protection platform).
+       */
       line: string;
       /**
        * Where the tile leads; leave empty for a toggle.
@@ -2390,6 +2403,164 @@ export interface ProductMirror {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-orgs".
+ */
+export interface PartnerOrg {
+  id: number;
+  /**
+   * K7P-00001
+   */
+  partnerId: string;
+  type: 'distributor' | 'integrationPartner' | 'var' | 'msp';
+  status: 'approved' | 'suspended';
+  /**
+   * The partner-applications row this came from (M2).
+   */
+  applicationId?: string | null;
+  /**
+   * Legal name.
+   */
+  name: string;
+  tradeName?: string | null;
+  gstin?: string | null;
+  pan?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  pin?: string | null;
+  website?: string | null;
+  /**
+   * Region codes from the settings.
+   */
+  regions?: string[] | null;
+  /**
+   * Filled by the outbox when the mirror creates the account and the primary contact (03-dynamics-exploration.md §6).
+   */
+  crm?: {
+    accountId?: string | null;
+    /**
+     * alletec_accountid, the CRM number.
+     */
+    accountCode?: string | null;
+    contactId?: string | null;
+  };
+  /**
+   * The organisation certificate (M11). Until then: none, and the deal gate ignores it.
+   */
+  certificate?: {
+    status?: ('none' | 'valid' | 'expired' | 'revoked') | null;
+    until?: string | null;
+  };
+  /**
+   * The Channel Manager may let an uncertified organisation register deals until this date (decision 8).
+   */
+  waiverUntil?: string | null;
+  suspendedAt?: string | null;
+  /**
+   * A legal-identity edit awaiting K7 re-approval (FR-REG-07, M3).
+   */
+  pendingLegalEdit?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-users".
+ */
+export interface PartnerUser {
+  id: number;
+  /**
+   * The one organisation this person belongs to.
+   */
+  org: number | PartnerOrg;
+  email: string;
+  name: string;
+  designation?: string | null;
+  mobile?: string | null;
+  roles: ('admin' | 'sales' | 'technical')[];
+  status: 'invited' | 'active' | 'disabled';
+  invitedAt?: string | null;
+  lastSignInAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-audit".
+ */
+export interface PartnerAudit {
+  id: number;
+  actorKind: 'partner' | 'k7' | 'system';
+  actorId?: string | null;
+  actorName?: string | null;
+  actorEmail?: string | null;
+  /**
+   * The collection slug: partner-orgs, partner-deals …
+   */
+  object: string;
+  objectId: string;
+  /**
+   * K7P-00001, K7D-00042 …
+   */
+  objectLabel?: string | null;
+  action: string;
+  from?: string | null;
+  to?: string | null;
+  /**
+   * The partner organisation the row belongs to, when it belongs to one.
+   */
+  orgId?: string | null;
+  comment?: string | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-notifications".
+ */
+export interface PartnerNotification {
+  id: number;
+  audience: 'user' | 'staff';
+  userId?: string | null;
+  orgId?: string | null;
+  staffRole?: ('channelManager' | 'dealDeskApprover' | 'trainingAdmin' | 'marketingAdmin' | 'schemeAdmin') | null;
+  /**
+   * application.submitted, deal.decided …
+   */
+  event: string;
+  /**
+   * Where the row leads inside the portal.
+   */
+  href?: string | null;
+  subject: string;
+  body?: string | null;
+  readAt?: string | null;
+  emailedAt?: string | null;
+  emailTo?: string | null;
+  emailError?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -2649,6 +2820,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'product-mirror';
         value: number | ProductMirror;
+      } | null)
+    | ({
+        relationTo: 'partner-orgs';
+        value: number | PartnerOrg;
+      } | null)
+    | ({
+        relationTo: 'partner-users';
+        value: number | PartnerUser;
+      } | null)
+    | ({
+        relationTo: 'partner-audit';
+        value: number | PartnerAudit;
+      } | null)
+    | ({
+        relationTo: 'partner-notifications';
+        value: number | PartnerNotification;
       } | null)
     | ({
         relationTo: 'media';
@@ -3849,6 +4036,103 @@ export interface ProductMirrorSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-orgs_select".
+ */
+export interface PartnerOrgsSelect<T extends boolean = true> {
+  partnerId?: T;
+  type?: T;
+  status?: T;
+  applicationId?: T;
+  name?: T;
+  tradeName?: T;
+  gstin?: T;
+  pan?: T;
+  address?: T;
+  city?: T;
+  state?: T;
+  country?: T;
+  pin?: T;
+  website?: T;
+  regions?: T;
+  crm?:
+    | T
+    | {
+        accountId?: T;
+        accountCode?: T;
+        contactId?: T;
+      };
+  certificate?:
+    | T
+    | {
+        status?: T;
+        until?: T;
+      };
+  waiverUntil?: T;
+  suspendedAt?: T;
+  pendingLegalEdit?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-users_select".
+ */
+export interface PartnerUsersSelect<T extends boolean = true> {
+  org?: T;
+  email?: T;
+  name?: T;
+  designation?: T;
+  mobile?: T;
+  roles?: T;
+  status?: T;
+  invitedAt?: T;
+  lastSignInAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-audit_select".
+ */
+export interface PartnerAuditSelect<T extends boolean = true> {
+  actorKind?: T;
+  actorId?: T;
+  actorName?: T;
+  actorEmail?: T;
+  object?: T;
+  objectId?: T;
+  objectLabel?: T;
+  action?: T;
+  from?: T;
+  to?: T;
+  orgId?: T;
+  comment?: T;
+  meta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-notifications_select".
+ */
+export interface PartnerNotificationsSelect<T extends boolean = true> {
+  audience?: T;
+  userId?: T;
+  orgId?: T;
+  staffRole?: T;
+  event?: T;
+  href?: T;
+  subject?: T;
+  body?: T;
+  readAt?: T;
+  emailedAt?: T;
+  emailTo?: T;
+  emailError?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -4605,6 +4889,120 @@ export interface ProductSetting {
   createdAt?: string | null;
 }
 /**
+ * K7 staff roles, the programme, deal protection, the CRM mirror and notifications. Read by the portal; this is the raw form.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-settings".
+ */
+export interface PartnerSetting {
+  id: number;
+  /**
+   * K7 people who open /partners/portal/k7 after signing in with Microsoft, by work email, with the roles they hold (one person, several roles).
+   */
+  staff?:
+    | {
+        email: string;
+        name?: string | null;
+        roles: ('channelManager' | 'dealDeskApprover' | 'trainingAdmin' | 'marketingAdmin' | 'schemeAdmin')[];
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Channel Managers also act as Deal Desk Approvers.
+   */
+  channelManagersApproveDeals?: boolean | null;
+  /**
+   * Marketing Admins also act as Scheme Admins.
+   */
+  marketingAdminsRunSchemes?: boolean | null;
+  /**
+   * Development sign-ins (the probe door) hold every role. Ignored in production builds.
+   */
+  devStaffPass?: boolean | null;
+  /**
+   * The types a company can apply as. MSP stays off until the author confirms it (decision 6).
+   */
+  partnerTypes?: ('distributor' | 'integrationPartner' | 'var' | 'msp')[] | null;
+  /**
+   * The K7 regions a partner can say it operates in (FR-REG-02).
+   */
+  regions?:
+    | {
+        code: string;
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  terms: {
+    /**
+     * Stored on every application with the acceptance time (FR-REG-04).
+     */
+    version: string;
+    /**
+     * Where the programme terms are published.
+     */
+    url?: string | null;
+  };
+  deals: {
+    /**
+     * Deal protection from approval.
+     */
+    protectionDays: number;
+    /**
+     * One extension per deal (decision 15).
+     */
+    extensionDays: number;
+    /**
+     * Working hours for a decision before the breach notice (M8).
+     */
+    approvalSlaHours: number;
+    /**
+     * FR-DEAL-01: a deal needs a certified organisation. Off until the LMS exists (M11, decision 8).
+     */
+    requireCertificate?: boolean | null;
+    /**
+     * Also look for the end customer in the CRM when checking conflicts (03-dynamics-exploration.md §7). Off: portal deals only.
+     */
+    conflictCheckCrm?: boolean | null;
+  };
+  /**
+   * What the outbox writes to Dynamics on approval (decisions 2, 10, 19). Off: the jobs queue as pending and nothing reaches the CRM. UAT only; production is read-only in code.
+   */
+  crm?: {
+    enabled?: boolean | null;
+    ownerRule?: ('approver' | 'fixed') | null;
+    /**
+     * systemuserid for the fixed owner.
+     */
+    ownerId?: string | null;
+    /**
+     * alletec_enquirysource (1 = Partner Referral).
+     */
+    enquirySource?: number | null;
+    /**
+     * alletec_productcategory until the product has its own value (36 = Others).
+     */
+    productCategory?: number | null;
+    /**
+     * Opportunity name; {customer} and {product} are replaced.
+     */
+    accountNamePattern?: string | null;
+  };
+  notify?: {
+    /**
+     * Email beside the bell. Mail still goes only through SMTP_URL and the allowlist.
+     */
+    emailEnabled?: boolean | null;
+    mailFrom?: string | null;
+    /**
+     * Read notifications older than this are swept (M8).
+     */
+    bellRetentionDays?: number | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -4852,6 +5250,66 @@ export interface ProductSettingsSelect<T extends boolean = true> {
         principalsOnRaise?: T;
         inboxOnAccept?: T;
         ownerOnChange?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-settings_select".
+ */
+export interface PartnerSettingsSelect<T extends boolean = true> {
+  staff?:
+    | T
+    | {
+        email?: T;
+        name?: T;
+        roles?: T;
+        id?: T;
+      };
+  channelManagersApproveDeals?: T;
+  marketingAdminsRunSchemes?: T;
+  devStaffPass?: T;
+  partnerTypes?: T;
+  regions?:
+    | T
+    | {
+        code?: T;
+        name?: T;
+        id?: T;
+      };
+  terms?:
+    | T
+    | {
+        version?: T;
+        url?: T;
+      };
+  deals?:
+    | T
+    | {
+        protectionDays?: T;
+        extensionDays?: T;
+        approvalSlaHours?: T;
+        requireCertificate?: T;
+        conflictCheckCrm?: T;
+      };
+  crm?:
+    | T
+    | {
+        enabled?: T;
+        ownerRule?: T;
+        ownerId?: T;
+        enquirySource?: T;
+        productCategory?: T;
+        accountNamePattern?: T;
+      };
+  notify?:
+    | T
+    | {
+        emailEnabled?: T;
+        mailFrom?: T;
+        bellRetentionDays?: T;
       };
   updatedAt?: T;
   createdAt?: T;

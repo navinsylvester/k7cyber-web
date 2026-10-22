@@ -1,11 +1,13 @@
 import 'server-only'
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto'
 
-/* One-time codes for customer sign-in and registration: stateless, signed with AUTH_SECRET, ten minutes, six digits.
-   The cookie that carries the token is httpOnly; the code travels by email. Attempts are counted per token in memory
-   (five), which is enough for one server; a shared store replaces the map when the portal runs on several. */
+/* One-time codes for customer sign-in and registration, and for the partner portal's door (partner-portal/02-build-plan.md
+   decision 3): stateless, signed with AUTH_SECRET, ten minutes, six digits. The cookie that carries the token is httpOnly;
+   the code travels by email. Attempts are counted per token in memory (five), which is enough for one server; a shared
+   store replaces the map when the portal runs on several. The purpose is part of the signed payload, so a code issued for
+   one door never opens another. */
 
-export type OtpPurpose = 'sign-in' | 'register'
+export type OtpPurpose = 'sign-in' | 'register' | 'partner-sign-in'
 export type OtpPayload = { email: string; purpose: OtpPurpose; exp: number; firstName?: string; lastName?: string; mobile?: string; organisation?: string; next?: string }
 
 export const OTP_TTL_SECONDS = 600

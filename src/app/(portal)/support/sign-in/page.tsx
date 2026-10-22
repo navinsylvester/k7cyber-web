@@ -33,7 +33,7 @@ const CUSTOMER_ERRORS = new Set(['email', 'rate', 'allowlist'])
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; agent?: string; error?: string; email?: string }> }) {
   const sp = await searchParams
   const s = await auth()
-  if (s?.user) redirect(s.user.kind === 'agent' ? '/support/workspace' : (sp.next && sp.next.startsWith('/support') ? sp.next : '/support/cases'))
+  if (s?.user && s.user.kind !== 'partner') redirect(s.user.kind === 'agent' ? '/support/workspace' : (sp.next && sp.next.startsWith('/support') ? sp.next : '/support/cases'))
   const staffError = !!sp.error && !CUSTOMER_ERRORS.has(sp.error)
   const agentFirst = sp.agent === '1' || staffError
   const error = sp.error ? (ERRORS[sp.error] ?? 'Sign-in did not complete. Try again.') : null

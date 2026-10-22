@@ -74,7 +74,7 @@ button { font: inherit; color: inherit; }
 .brand { display: flex; align-items: center; gap: 12px; flex: none; text-decoration: none; color: inherit; }
 .brand:hover { color: inherit; }
 .brand svg, .brand img { display: block; }
-.brand img { height: 26px; width: auto; }
+.brand img { height: 36px; width: auto; } /* the logo file is trimmed to its mark, so this is the mark's height: 36px of the 60px bar, level with the 36px frames beside it (a 26px box with 13px of mark until 2026-10-21) */
 .wordmark { font-weight: 800; font-size: 22px; letter-spacing: -.05em; font-stretch: 112%; font-variation-settings: 'wdth' 112; line-height: 1; }
 /* The type-set wordmark's square: the tab shape at 22px, in signal. */
 .wordmark-mark { width: 22px; height: 22px; --h: 22px; flex: none; background: var(--signal); clip-path: var(--tab7); }
@@ -102,7 +102,7 @@ button { font: inherit; color: inherit; }
   .hdr-tools .menu-btn { display: inline-flex; }
   .hdr-tools { margin-left: auto; }
 }
-@container (max-width: 520px) { .brand .label { display: none; } .hdr-tools .theme-btn { display: none; } }
+@container (max-width: 520px) { .brand .label { display: none; } .brand img { height: 28px; } .hdr-tools .theme-btn { display: none; } } /* the mark at 28px beside the two buttons a phone keeps */
 
 /* Mega menu (enterprise addition): a panel sheet under the bar, columns per sub menu */
 .mega { border-top: 1px solid var(--ln); padding: 28px var(--pad-fluid) 36px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 28px clamp(24px, 3cqw, 56px); }
@@ -231,8 +231,10 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .hero-home { position: relative; overflow: hidden; padding-top: clamp(28px, 3cqw, 44px); padding-bottom: calc(var(--tab-h) + 24px); }
 .hero-home .pattern { position: absolute; inset: 0; width: 100%; height: 100%; opacity: var(--pattern-mid); pointer-events: none; -webkit-mask-image: linear-gradient(100deg, transparent 30%, #000 75%); mask-image: linear-gradient(100deg, transparent 30%, #000 75%); }
 .hero-home > *:not(.pattern) { position: relative; }
-.hero-body { display: flex; flex-wrap: wrap; gap: 40px clamp(32px, 5cqw, 80px); align-items: flex-end; margin: clamp(40px, 5.5cqw, 80px) 0 clamp(40px, 5cqw, 64px); }
-.hero-copy { flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: clamp(28px, 3.5cqw, 48px); }
+/* The copy and the stack are two halves (since 2026-10-21): from 1000px the figure takes the second column at the copy's
+   width, so the drawing stands at the headline's scale rather than a third of it; below that it sits under the copy. */
+.hero-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px clamp(32px, 5cqw, 80px); align-items: end; margin: clamp(40px, 5.5cqw, 80px) 0 clamp(40px, 5cqw, 64px); }
+.hero-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: clamp(28px, 3.5cqw, 48px); }
 .hero-copy .lede { max-width: 54ch; }
 /* The lede-and-actions row the Labs landing still uses under its headline. */
 .hero-foot { display: flex; flex-wrap: wrap; gap: 32px clamp(32px, 5cqw, 80px); align-items: flex-end; justify-content: space-between; margin: clamp(48px, 6cqw, 88px) 0 clamp(40px, 5cqw, 64px); }
@@ -242,7 +244,8 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .h-hero > span { display: block; }
 @container (max-width: 640px) { .h-hero { font-size: calc((100cqw - 2 * var(--pad-fluid)) / 10.4); } }
 /* The stack: sensor, platform, agentic SOC as three tab-shaped plates, two arrows up, one pixel climbing in steps. */
-.hero-fig { flex: 1 1 360px; max-width: 560px; margin: 0 0 0 auto; }
+.hero-fig { max-width: 560px; margin: 0; }
+@container (min-width: 1000px) { .hero-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .hero-fig { max-width: none; } }
 .hero-fig .stack { display: block; width: 100%; height: auto; stroke-linecap: square; stroke-linejoin: miter; }
 .stack .plate { fill: var(--bg); stroke: currentColor; stroke-width: 2; }
 .stack .line { fill: none; stroke: currentColor; stroke-width: 2; }
@@ -523,38 +526,29 @@ a.module { text-decoration: none; }
 .module-tally { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 28px; padding: 20px 0; border-bottom: 1px solid var(--ln); }
 .module-tally .count { font-size: 28px; line-height: 1; letter-spacing: -.03em; font-weight: 600; }
 .module-tally .link-u { margin-left: auto; }
-/* Switchboard (design-system/components/Switchboard): the platform on one rail. Core cells above the rail, add-on cells below,
-   each plugged in by a tick; a module that is on has a 2px tick and an ink plug on the rail (ink, not signal: the marks repeat).
-   The rail carries the note at its ends (1 agent · 1 console). Only the switch inverts. */
-.switchboard { --plug: 28px; }
-.sw-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--fg); }
-.sw-head.is-foot { border-bottom: 0; border-top: 1px solid var(--fg); padding: 12px 0 0; margin-top: 1px; }
-.sw-tier { list-style: none; margin: 1px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 1px; }
-.sw-tier.is-addons { margin: 0 0 1px; }
-.sw-cell { position: relative; padding: 16px 16px 18px; box-shadow: 0 0 0 1px var(--ln); display: flex; flex-direction: column; gap: 10px; }
-.sw-cell .licon { width: 28px; height: 28px; }
-.sw-cell .name { font-size: 16px; font-weight: 600; line-height: 1.2; letter-spacing: -.02em; }
-.sw-cell .name a { text-decoration: none; }
-.sw-cell .name a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.sw-cell .line { font-size: 13px; line-height: 1.4; color: var(--mu); flex: 1 1 auto; }
-.sw-cell .state { align-self: flex-start; margin-top: 2px; }
-.sw-on { font: 400 11px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; padding: 6px 10px; background: var(--fg); color: var(--bg); } /* core: on, not a switch */
-/* the plug: a tick from the cell to the rail, and a node on the rail when the module is on */
-.sw-cell::before { content: ""; position: absolute; left: 50%; width: 1px; height: var(--plug); background: var(--ln); }
-.sw-cell::after { content: ""; position: absolute; left: 50%; width: 7px; height: 7px; margin-left: -3px; background: var(--fg); opacity: 0; }
-.is-core .sw-cell::before { bottom: calc(-1 * var(--plug)); }
-.is-core .sw-cell::after { bottom: calc(-1 * var(--plug) - 3px); }
-.is-addons .sw-cell::before { top: calc(-1 * var(--plug)); }
-.is-addons .sw-cell::after { top: calc(-1 * var(--plug) - 3px); }
-.sw-cell.is-on::before { width: 2px; margin-left: -1px; background: var(--fg); }
-.sw-cell.is-on::after { opacity: 1; }
-.sw-rail { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 16px; height: calc(var(--plug) * 2); }
-.sw-rail::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--fg); }
-.sw-rail .label { position: relative; background: var(--bg); padding: 0 10px 0 0; }
-.sw-rail .label:last-child { padding: 0 0 0 10px; }
-.switchboard .module-tally { margin-top: 24px; }
-/* Below 1080px a tier wraps to more than one row and the plugs would cross the cells above, so the ticks and plugs are dropped; the rail and the switches still say what is on. */
-@container (max-width: 1079px) { .sw-cell::before, .sw-cell::after { display: none; } .switchboard { --plug: 16px; } }
+/* Switchboard (design-system/components/Switchboard): the platform in two columns. The core is one filed block on paper, its
+   tab reading Core · Always on, the four names set large on hairlines with a mono gloss each, and the base line 1 agent · 1 console.
+   The add-ons are a ledger of seven rows, each its index, its name and gloss, and an Off | On switch on the segmented control;
+   a row that is on has its index stamped as a block of ink. Under both, the sum on a double rule, the rule a sum earns. No
+   icons, no descriptions: the detail is the Platform page's. Nothing inverts on hover but the switch. */
+.switchboard { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px clamp(32px, 5cqw, 80px); align-items: stretch; }
+.sw-core { --t-bg: var(--paper); --t-fg: var(--ink); background: var(--t-bg); color: var(--t-fg); padding: clamp(20px, 2.6cqw, 36px); display: flex; flex-direction: column; }
+.sw-names { list-style: none; margin: 0; padding: 0; flex: 1 1 auto; display: flex; flex-direction: column; border-top: 1px solid var(--fg); }
+.sw-names > li { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 8px; padding: clamp(16px, 1.8cqw, 26px) 0; border-bottom: 1px solid var(--ln); }
+.sw-name { font-size: clamp(28px, 3cqw, 44px); line-height: 1; letter-spacing: -.035em; font-weight: 600; }
+.sw-name a { text-decoration: none; }
+.sw-name a:hover { text-decoration: underline; text-underline-offset: 6px; }
+.sw-gloss { font: 400 11px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mu); }
+.sw-base { display: flex; justify-content: space-between; gap: 16px; padding-top: 18px; }
+.sw-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; height: var(--tab-h); border-bottom: 1px solid var(--fg); }
+.sw-ledger { list-style: none; margin: 0; padding: 0; }
+.sw-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; column-gap: 16px; align-items: center; padding: clamp(12px, 1.4cqw, 18px) 0; border-bottom: 1px solid var(--ln); }
+.sw-row .k { justify-self: start; font: 500 12px/1.6 var(--font-mono); letter-spacing: .06em; color: var(--acc); padding: 0 5px; margin: 0 -5px; } /* stamped, not eased, when the row goes on */
+.sw-row.is-on .k { background: var(--fg); color: var(--bg); }
+.sw-row .name { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.sw-row .sw-name { font-size: clamp(20px, 2cqw, 30px); }
+.switchboard .module-tally { grid-column: 1 / -1; margin: 0; padding: 20px 0 0; border-top: 3px double var(--fg); border-bottom: 0; }
+@container (min-width: 1000px) { .switchboard { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } } /* the filed block's tab sits level with the ledger's head */
 details.more summary { cursor: pointer; list-style: none; display: inline-flex; gap: 8px; }
 details.more summary::-webkit-details-marker { display: none; }
 details.more summary::after { content: "+"; }

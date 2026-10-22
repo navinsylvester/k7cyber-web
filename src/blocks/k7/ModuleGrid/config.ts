@@ -18,9 +18,9 @@ export const ModuleGrid: Block = {
       defaultValue: 'tiles',
       options: [
         { label: 'Tiles (ModuleChips)', value: 'tiles' },
-        { label: 'Switchboard: rows with a switch each, the tally summed', value: 'switchboard' },
+        { label: 'Switchboard: the core filed as one block, the add-ons a ledger with a switch each, the sum beneath', value: 'switchboard' },
       ],
-      admin: { description: 'The switchboard (Switchboard) sets the core as rows marked On with the sum beneath, and the add-ons as rows with an Off | On switch each. Home page.' },
+      admin: { description: 'The switchboard (Switchboard) files the core as one block (the names large, each with its line as a mono gloss) and sets the add-ons as a ledger of rows with an Off | On switch each, the sum on a double rule. Icons are not drawn; keep each line to a few words. Home page.' },
     },
     {
       name: 'groups',
@@ -52,7 +52,7 @@ export const ModuleGrid: Block = {
                 { name: 'on', type: 'checkbox', label: 'Core (on)', admin: { width: '30%' } },
               ],
             },
-            { name: 'line', type: 'text', required: true },
+            { name: 'line', type: 'text', required: true, admin: { description: 'One line under the name; on the switchboard a gloss of a few words (e.g. Endpoint protection platform).' } },
             { name: 'url', type: 'text', admin: { description: 'Where the tile leads; leave empty for a toggle.' } },
           ],
         },

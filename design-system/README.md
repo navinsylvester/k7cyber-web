@@ -32,7 +32,7 @@ Start with the four grounds and one signal, set everything said in Archivo and e
 
 ## Type
 
-- Archivo for everything said, IBM Plex Mono for everything counted: indices, timestamps, tags, specs. Both load from Google Fonts with Archivo's width and weight axes: `family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=IBM+Plex+Mono:wght@400;500`.
+- Archivo for everything said, IBM Plex Mono for everything counted: indices, timestamps, tags, specs. The site self-hosts both through `next/font` (no request to Google at runtime; `globals.css` points `--font-sans` and `--font-mono` at them) with Archivo's width and weight axes; the previews and the artboards, which render on their own, load the same axes from Google Fonts: `family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=IBM+Plex+Mono:wght@400;500`.
 - The width axis is the one expressive lever: width 62 for numbers and ledgers (`num`), 100 for everything else, 112 for the type-set wordmark, 125 on hover only.
 - Said things ease, counted things step. Words, rows, panels and the theme invert on the 240ms curve; anything counted (a figure that changes, a meter, a clock, the days-ago, the pixel) moves in steps, never eased, and a figure that does not change does not move (StatRow).
 - Display sizes are fluid, set in container units so they scale with the sheet and nothing is tuned per device; the token lists each style's maximum and its clamp. Hero and page headlines are flush left; never centre a headline.
@@ -123,6 +123,7 @@ The parts have the file's names, in the READMEs, the code comments and the CMS l
 | Grounds, type, the pixel, sheets and tabs, the tab and filed containers (`Tab`), header, footer, buttons, tags, placeholders, rows, tables, forms, quotes, chips, prose, CTA sheet, icons | `components/<Name>/README.md` | `components/bundle.css` | `src/components/k7`, `src/blocks/k7`, `src/Header`, `src/Footer` |
 | 08 · Labs, with the record rail | `components/LabsParts/README.md` | `src/app/(frontend)/research.css` | `src/components/research`, `src/app/(frontend)/research` |
 | 09 · Support | `components/SupportParts/README.md` | `src/app/(portal)/portal.css` | `src/components/support`, `src/app/(portal)/support` |
+| 10 · Partners | `components/PartnerParts/README.md` | `src/app/(partner)/partner.css` (over `portal.css`) | `src/components/partner`, `src/app/(partner)` |
 | Tokens | this file | `tokens.json`, generated to `tokens.css` | imported by the frontend and portal stylesheets |
 | Page designs | `designs/README.md` | the artboards in `designs/`, on the same two files | the templates in `docs/page-shapes.md` |
 
@@ -130,8 +131,8 @@ The parts have the file's names, in the READMEs, the code comments and the CMS l
 
 The design system describes the site as built, so a change to how anything looks is a change to the design system, made in the same commit:
 
-1. **Rules**: the part's `components/<Name>/README.md` (for sections 08 and 09, `LabsParts` and `SupportParts`), and this file when a language-level rule moves.
-2. **Reference CSS**: `components/bundle.css`, or `research.css` and `portal.css` for the Labs and Support parts.
+1. **Rules**: the part's `components/<Name>/README.md` (for sections 08, 09 and 10, `LabsParts`, `SupportParts` and `PartnerParts`), and this file when a language-level rule moves.
+2. **Reference CSS**: `components/bundle.css`, or `research.css`, `portal.css` and `partner.css` for the Labs, Support and Partner parts.
 3. **Reference markup**: the part's `preview.html` when its markup changes.
 4. **Designs**: the artboards in `designs/` that show the part, and `designs/k7chrome.py` for the shared chrome.
 5. **Record**: a line in `CHANGELOG.md` and the `lastChange` note in `design-system.json`.

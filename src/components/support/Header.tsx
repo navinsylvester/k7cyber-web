@@ -13,7 +13,8 @@ import { HeaderShell } from './Header.client'
    Agents see the workspace strip beneath it (WorkspaceBar) on workspace pages. */
 export const PortalHeader: React.FC = async () => {
   const session = await auth()
-  const user = session?.user
+  // A partner-portal session belongs to the other side of the house; here it reads as signed out.
+  const user = session?.user && session.user.kind !== 'partner' ? session.user : undefined
   const agent = user?.kind === 'agent'
   const links = agent
     ? [

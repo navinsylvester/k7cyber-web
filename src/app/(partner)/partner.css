@@ -1,0 +1,41 @@
+/* K7 Design Language 2.2, section 10 · Partners: the parts the partner portal adds to bundle.css and to section 09 (portal.css,
+   which this layout also loads for the portal chrome, forms, flashes and ledgers). Partners get the customer's sheet rhythm;
+   K7 staff get the ledger. Colours, type and cuts come from tokens.css. Rules: design-system/components/PartnerParts/README.md. */
+
+/* ---------- P1 Partner ID ---------- */
+.pid { letter-spacing: .02em; }
+
+/* ---------- P3 Status strip: the organisation's facts on hairlines, read first ---------- */
+.pstrip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 0; margin: 0 0 clamp(28px, 3cqw, 44px); padding: 0; border-top: 1px solid var(--fg); border-bottom: 1px solid var(--ln); }
+.pstrip > div { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px 16px 0; min-width: 0; }
+.pstrip > div + div { padding-left: 20px; box-shadow: -1px 0 0 var(--ln); }
+.pstrip dt { color: var(--mu); }
+.pstrip dd { margin: 0; font-size: 17px; line-height: 1.3; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.pstrip dd .tag { vertical-align: 2px; }
+@container (max-width: 520px) { .pstrip > div + div { box-shadow: none; padding-left: 0; border-top: 1px solid var(--ln); } }
+
+/* ---------- P4 The bell and its rows ---------- */
+.bell { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; text-decoration: none; white-space: nowrap; }
+.bell:hover span:first-child { text-decoration: underline; text-underline-offset: 3px; }
+.bell-n { display: inline-block; min-width: 22px; padding: 2px 5px; text-align: center; background: var(--signal); color: var(--contrast-ink, #0a0a09); font: 500 11px/1.4 var(--font-mono); letter-spacing: .04em; }
+@container (max-width: 760px) { .bell span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
+.ntf { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--fg); }
+.ntf li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 24px; padding: 18px 0; border-bottom: 1px solid var(--ln); }
+.ntf-when { font: 400 12px/1.6 var(--font-mono); color: var(--mu); white-space: nowrap; }
+.ntf-body strong { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.ntf-body strong a { text-decoration: none; }
+.ntf-body strong a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ntf-body p { margin: 6px 0 0; font-size: 15px; color: var(--mu); max-width: 66ch; }
+.ntf li:not(.is-unread) .ntf-body strong { font-weight: 500; }
+@container (min-width: 760px) { .ntf li { grid-template-columns: 120px minmax(0, 1fr); } }
+
+/* ---------- P5 Role tags ---------- */
+.roles { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.tag-dashed { border-style: dashed; }
+
+/* ---------- The partner home: what is yours, what to do next ---------- */
+.phome { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(32px, 4cqw, 56px); }
+@container (min-width: 1080px) { .phome { grid-template-columns: minmax(0, 1fr) 360px; } }
+.phome h2 { margin: 0 0 16px; font-size: 22px; letter-spacing: -.02em; }
+.phome .ledger { margin: 0; }
+.phome .more { margin: 16px 0 0; }

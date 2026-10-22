@@ -1,4 +1,4 @@
-/* K7 Design Language 2.1, section 08 · Labs: the parts the research pages add to bundle.css.
+/* K7 Design Language 2.2, section 08 · Labs: the parts the research pages add to bundle.css.
    Ported from ~/office_docs/website/k7-research/assets/k7-research.css; variables mapped onto tokens.css. */
 .rtab[aria-current="page"], .rtab.is-section { color: var(--ink); }
 .rtab.on-panel[aria-current="page"], .rtab.on-panel.is-section { background: var(--panel); color: var(--ink); }
