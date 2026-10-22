@@ -75,3 +75,20 @@ Local dev uses Payload's push mode (schema synced on start). Credentials in `.en
   as the acting agent, logged in `product-mirror`; the old RFEs tab is merged into the desk; samples never enter the portal.
 - `scripts/dataverse-probe.py` queries Dataverse from the shell (`DV_*` in `.env`); its
   token cache `scripts/.token_cache.json` and any `spec/` output are git-ignored.
+
+## Partner portal (M1 skeleton built 2026-10-22; M2 onboarding next)
+- Start at `docs/partner-portal/README.md`. `02-build-plan.md` is the plan and the cross-session state: status table,
+  decisions, milestones M0–M11 with tick-boxes, traceability and a session log to update at the end of every session.
+  `01-requirements.md` is the source document (Vijaichristopher, 2026-10-06) converted verbatim, with an appendix of gaps;
+  `03-dynamics-exploration.md` is the sales side of Dynamics as found on UAT and the field mappings (partner = `alletec_partnername`
+  on the opportunity, no schema change). The portal is for a new product and starts fresh (create-only mirror, no matching
+  or import of existing customers, partners or deals). The learning side (training, certificates) is the last phase (M10–M11).
+- Built (M1, `04-portal-guide.md` is the state): route group `src/app/(partner)/` under `/partners/portal/…` with its own root layout
+  (`portal.css` + `partner.css` = design-system section 10, `PartnerParts`); the partner door (`partner` Auth.js provider: the support
+  one-time code with purpose `partner-sign-in`, `kind: 'partner'`), `src/proxy.ts` gates, `src/lib/partner/` (`session.ts` gives
+  `requirePartner()` / `requireK7Role()`; every partner query goes through `orgWhere(me.scope)`), collections `partner-orgs`, `-users`,
+  `-audit`, `-notifications` and the global `partner-settings` (K7 roles by work email, not Dataverse roles), `notify()` and the bell,
+  `audit()`. `pnpm partner:seed-dev <email>` makes the PP-TEST organisation and a Partner Admin for development. Tests:
+  `tests/int/partner-*.int.spec.ts` (`partner-notify` needs `PARTNER_DB_TESTS=1` and Postgres).
+- Planned next: `/partners/join` and the application queue (M2), then sign-in and users (M3), deals (M4) with Dataverse only for the
+  partner account and the opportunity through an outbox; `/partners/verify/[id]` and the LMS last.

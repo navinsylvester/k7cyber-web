@@ -8,18 +8,19 @@ import { useTheme } from '@/providers/Theme'
 
 type L = { href: string; label: string }
 
-/* The portal header shell (SiteHeader shape): brand, the audience's links, theme toggle, account, and the Menu button
-   with the phone list beneath the bar. Brand and account arrive rendered from the server. */
-export const HeaderShell: React.FC<{ brand: React.ReactNode; links: L[]; account: React.ReactNode; mobileExtra?: L[] }> = ({ brand, links, account, mobileExtra = [] }) => {
+/* The portal header shell (SiteHeader shape), shared by the support and partner portals: brand, the audience's links, theme
+   toggle, account, and the Menu button with the phone list beneath the bar. Brand and account arrive rendered from the server.
+   `home` is the one link matched exactly (the others match by prefix); `name` labels the navigation. */
+export const HeaderShell: React.FC<{ brand: React.ReactNode; links: L[]; account: React.ReactNode; mobileExtra?: L[]; home?: string; name?: string }> = ({ brand, links, account, mobileExtra = [], home = '/support', name = 'Support' }) => {
   const pathname = usePathname()
   const [mobile, setMobile] = useState(false)
   const { theme, setTheme } = useTheme()
-  const current = (href: string) => (href === '/support' ? pathname === '/support' : pathname.startsWith(href))
+  const current = (href: string) => (href === home ? pathname === home : pathname.startsWith(href))
   return (
     <header className="site-header g-paper">
       <div className="bar">
         {brand}
-        <nav className="main-nav portal-nav" aria-label="Support">
+        <nav className="main-nav portal-nav" aria-label={name}>
           {links.map((l) => (
             <Link href={l.href} key={l.href} {...(current(l.href) ? { 'aria-current': 'page' as const } : {})}>
               {l.label}
@@ -42,7 +43,7 @@ export const HeaderShell: React.FC<{ brand: React.ReactNode; links: L[]; account
         </div>
       </div>
       {mobile && (
-        <nav className="mobile-nav g-panel" aria-label="Support">
+        <nav className="mobile-nav g-panel" aria-label={name}>
           {[...links, ...mobileExtra].map((l) => (
             <Link href={l.href} key={l.href} onClick={() => setMobile(false)} {...(current(l.href) ? { 'aria-current': 'page' as const } : {})}>
               <span>{l.label}</span>

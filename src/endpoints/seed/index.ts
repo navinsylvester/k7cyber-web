@@ -13,7 +13,7 @@ const col = (label: string, url: string, items: [string, string][] = []) => ({ l
 
 const p = (name: string) => `/${name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
 
-const headerMenu = [
+export const headerMenu = [
   {
     label: 'Platform',
     url: '/k7-seventh-sense',
@@ -62,7 +62,14 @@ const headerMenu = [
       col('K7 ISAP', '/k7-isap'),
     ],
   },
-  { label: 'Partners', url: '/partners', columns: [] },
+  {
+    label: 'Partners',
+    url: '/partners',
+    columns: [
+      col('Partner programme', '/partners'),
+      col('Partner portal', '/partners/portal/sign-in', [['Sign in', '/partners/portal/sign-in'], ['K7 partner desk', '/partners/portal/sign-in?staff=1']]),
+    ],
+  },
   {
     label: 'Resources',
     url: '/insight',
@@ -91,12 +98,12 @@ const headerMenu = [
   { label: 'Support', url: '/support', columns: [] },
 ]
 
-const footer = {
+export const footer = {
   tagline: 'Security that answers to you. Superior cybersecurity since 1991, built and supported in-house.',
   columns: [
     { heading: 'Company', links: [nav('Home', '/'), nav('About Us', '/about-k7'), nav('Careers', '/careers'), nav('Contact Us', '/contact-us')] },
     { heading: 'Offer', links: [nav('Platform', '/k7-seventh-sense'), nav('Solutions', '/solutions'), nav('Services', '/services'), nav('Partners', '/partners')] },
-    { heading: 'Resources', links: [nav('Insight', '/insight'), nav('Research', '/research'), nav('Media Room', '/media-room'), nav('Support', '/support')] },
+    { heading: 'Resources', links: [nav('Insight', '/insight'), nav('Research', '/research'), nav('Media Room', '/media-room'), nav('Support', '/support'), nav('Partner portal', '/partners/portal/sign-in')] },
     { heading: 'Legal', links: [nav('Privacy Policy', '/privacy-policy'), nav('EULA', '/eula')] },
   ],
   socials: [

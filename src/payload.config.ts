@@ -9,6 +9,11 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
+import { PartnerAudit } from './collections/partner/PartnerAudit'
+import { PartnerNotifications } from './collections/partner/PartnerNotifications'
+import { PartnerOrgs } from './collections/partner/PartnerOrgs'
+import { PartnerSettings } from './collections/partner/PartnerSettings'
+import { PartnerUsers } from './collections/partner/PartnerUsers'
 import { Authors } from './collections/research/Authors'
 import { Products } from './collections/research/Products'
 import { ReportFiles } from './collections/research/ReportFiles'
@@ -79,10 +84,10 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, Media, Users],
+  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, PartnerOrgs, PartnerUsers, PartnerAudit, PartnerNotifications, Media, Users],
   upload: { limits: { fileSize: 30 * 1024 * 1024 } },
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, SupportSettings, ProductSettings],
+  globals: [Header, Footer, SupportSettings, ProductSettings, PartnerSettings],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

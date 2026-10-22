@@ -11,6 +11,8 @@
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "migrate:labs": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/migrate-labs.ts",
     "seed:page": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed-page.ts",
+    "seed:nav": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed-nav.ts",
+    "partner:seed-dev": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/partner-dev-seed.ts",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "ii": "cross-env NODE_OPTIONS=--no-deprecation pnpm --ignore-workspace install",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",

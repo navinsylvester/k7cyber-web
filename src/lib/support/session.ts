@@ -65,7 +65,8 @@ export const requireAgent = async (): Promise<AgentContext> => {
 /** The signed-in customer, or a redirect to the sign-in page. Every Dataverse call for them carries `scope`. */
 export const requireCustomer = async (next?: string): Promise<CustomerContext> => {
   const s = await auth()
-  if (!s?.user) redirect(`/support/sign-in${next ? `?next=${encodeURIComponent(next)}` : ''}`)
+  // A partner-portal session is no support session: the door is offered, not a loop through the workspace.
+  if (!s?.user || s.user.kind === 'partner') redirect(`/support/sign-in${next ? `?next=${encodeURIComponent(next)}` : ''}`)
   if (s.user.kind !== 'customer' || !s.user.contactId) redirect('/support/workspace')
   return { kind: 'customer', scope: { contactId: s.user.contactId, accountId: s.user.accountId ?? null, email: s.user.email ?? '' }, name: s.user.name ?? '', auth: { kind: 'service' } }
 }
@@ -73,7 +74,7 @@ export const requireCustomer = async (next?: string): Promise<CustomerContext> =
 /** For public pages that adapt when someone is signed in. */
 export const optionalSession = async () => {
   const s = await auth()
-  return s?.user ? s.user : null
+  return s?.user && s.user.kind !== 'partner' ? s.user : null
 }
 
 /** The signed-in agent or null, for route handlers that answer 401 instead of redirecting. */

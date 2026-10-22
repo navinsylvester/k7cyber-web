@@ -7,7 +7,7 @@ import 'server-only'
    seed, so when the list is set the portal writes only to the addresses and domains on it and logs everything else as
    suppressed. The one-time-code steps use the same list to decide who may ask for a code at all. Unset = no restriction. */
 
-export type Mail = { to: string; subject: string; text: string; html?: string }
+export type Mail = { to: string; subject: string; text: string; html?: string; /** Overrides SUPPORT_MAIL_FROM (the partner portal writes as its own sender). */ from?: string }
 export type SendResult = { sent: boolean; suppressed?: string[] }
 
 export const mailConfigured = (): boolean => Boolean(process.env.SMTP_URL)
@@ -33,7 +33,7 @@ export const mailAllowed = (address: string, allow: string[] | null = mailAllowl
 }
 
 export const sendMail = async (m: Mail): Promise<SendResult> => {
-  const from = process.env.SUPPORT_MAIL_FROM || 'K7 Support <support@k7computing.com>'
+  const from = m.from || process.env.SUPPORT_MAIL_FROM || 'K7 Support <support@k7computing.com>'
   const recipients = m.to.split(',').map((x) => x.trim()).filter(Boolean)
   const allow = mailAllowlist()
   const suppressed = recipients.filter((r) => !mailAllowed(r, allow))
