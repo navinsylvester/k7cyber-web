@@ -127,8 +127,10 @@ Networking, …), `alletec_itproductsdetails`, `alletec_dealerforotherav`, `alle
 → account exist but are unused in UAT (0 rows). **No GSTIN or PAN column** (the approval task only
 has a "GST No checked" boolean).
 
-Contacts: `new_customertype` has 696720002 Dealer/Reseller (production 8,110) and 100000002 Partner
-(1,618); `msa_managingpartnerid`; `jobtitle`, `mobilephone`; the `adx_identity_*` columns of the 2019
+Contacts: **no customer-type column of K7's own** (corrected 2026-10-22 when the M2 job ran: UAT refused both
+`new_customertype`, which is the incident's, and `k7_customertype`, the RFE's; the contact has only the stock
+`customertypecode` with one value). The Dealer/Reseller and Partner counts quoted earlier are the incident's;
+the partner relationship lives on the account's type and subtype; `msa_managingpartnerid`; `jobtitle`, `mobilephone`; the `adx_identity_*` columns of the 2019
 Dynamics 365 Portals local login (password hash, lockout, username) are present and belong to the old
 Event Portal, not to be reused.
 
@@ -153,7 +155,7 @@ Channel Manager at approval.
   `alletec_approxlyturnover` from the turnover band, `alletec_noofyearsinitbusiness` from the year of
   incorporation, `alletec_salesforcecount` from company size, `alletec_associatedwithk7on` = approval
   date. Primary contact → a `contact` (`firstname`/`lastname`, `jobtitle`, `emailaddress1`,
-  `mobilephone`, `parentcustomerid`, `new_customertype` 100000002) set as `primarycontactid`.
+  `mobilephone`, `parentcustomerid`; no customer-type column exists on the contact) set as `primarycontactid`.
 - GSTIN, PAN, trade name, company size, partner type detail, terms version and the portal's partner ID
   stay in the portal (no columns). Ask the CRM admin only if sales wants them in the CRM.
 - Back-reference: the portal stores `accountid` and `alletec_accountid`.

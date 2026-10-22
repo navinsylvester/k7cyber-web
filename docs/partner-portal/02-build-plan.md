@@ -1,4 +1,4 @@
-# Partner portal: the build plan (written 2026-10-22; M1 built the same day)
+# Partner portal: the build plan (written 2026-10-22; M1 and M2 built the same day)
 
 What has to be done to deliver `01-requirements.md`, in the order it should be done, with the
 decisions taken so far and a status that any session can pick up. Read `CLAUDE.md`,
@@ -39,8 +39,8 @@ not for its history.
 |---|---|---|
 | M0 | CRM facts and decisions confirmed, questions answered by the author | **in progress**: UAT explored 2026-10-22; production counts and the author's answers remain (§7) |
 | M1 | Skeleton: route group, layout, section 10 CSS, settings global, partner session kind, portal guide | **done 2026-10-22** (`04-portal-guide.md`) |
-| M2 | Registration and onboarding (§3): public form, codes, review queue, approval → org, admin login, partner ID, CRM account | **next** |
-| M3 | Partner sign-in, organisation profile, users and roles (§2, FR-REG-07) | not started |
+| M2 | Registration and onboarding (§3): public form, codes, review queue, approval → org, admin login, partner ID, CRM account | **done 2026-10-22**, clicked end to end on both sides and the CRM job run on UAT (`04-portal-guide.md` §3–5) |
+| M3 | Partner sign-in, organisation profile, users and roles (§2, FR-REG-07) | **next** |
 | M4 | Deal registration (§7): form, routing, CRM conflict check, approval desk, protection, extension, CRM push | not started |
 | M5 | Deal dashboard (§8): hourly CRM sync into a read model, cards, list, charts, reconciliation log | not started |
 | M6 | Collateral library (§6) | not started |
@@ -213,12 +213,13 @@ Tick as done; dates in the session log.
 - [x] `04-portal-guide.md` created; `pnpm generate:types`; int tests `partner-session` (scope, roles, settings, the two code doors) and `partner-notify` (database, `PARTNER_DB_TESTS=1`)
 - Also: `partner-orgs` and `partner-users` collections (the door needs them; M2 fills them), the partner home and the K7 desk home, `pnpm partner:seed-dev`
 
-### M2 — registration and onboarding (§3)
-- [ ] `/partners/join` flow: type, company fields (+ optional GSTIN/PAN), primary contact, regions, email code (SMS adapter no-op), terms with version + timestamp
-- [ ] Application status machine (Submitted → Under review → Approved / Rejected / Clarification needed; Suspended ↔ Approved) with audit rows and emails (FR-REG-08)
-- [ ] K7 queue `/portal/k7/applications`: assign, decide with reason, send back; partner resumes and resubmits from the emailed link
-- [ ] On approval: `partner-orgs` row with partner ID, Partner Admin `partner-users` row, invitation mail; outbox `account.create` + `contact.create` per `03-dynamics-exploration.md` §6 (create only) → ids stored
-- [ ] Link from the marketing Partners page ("Join the programme")
+### M2 — registration and onboarding (§3) (done 2026-10-22)
+- [x] `/partners/join` flow: type, company fields (+ optional GSTIN/PAN), primary contact, regions, email code (SMS adapter no-op), terms with version + timestamp
+- [x] Application status machine (Submitted → Under review → Approved / Rejected / Clarification needed; Suspended ↔ Approved) with audit rows and emails (FR-REG-08)
+- [x] K7 queue `/portal/k7/applications`: assign, decide with reason, send back; partner resumes and resubmits from the emailed link
+- [x] On approval: `partner-orgs` row with partner ID, Partner Admin `partner-users` row, invitation mail; outbox `account.create` (account + contact in one job, resumable) per `03-dynamics-exploration.md` §6 (create only) → ids stored; run on UAT 2026-10-22 (the mirror switch is off by default)
+- [ ] Link from the marketing Partners page ("Join the programme"): the page itself is not written yet (§7); until then the link sits in the header seed's Partners column, on the partner sign-in page and in the portal footer
+- Also: the K7 settings page (`/partners/portal/k7/settings`), the desk strip (`K7Nav`), `partner-counters` for the ids, `POST /api/partners/outbox` for the drain
 
 ### M3 — sign-in, organisation, users (§2, FR-REG-07)
 - [ ] Partner door end to end; home page with status strip; organisation profile; Partner Admin adds/removes users and roles (one user, several roles)
@@ -293,7 +294,7 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
 | FR | milestone | status |
 |---|---|---|
 | ROLE-01, 02, 03 | M1, M3 | M1 done (scope rule, several roles per user and per K7 person); M3 adds the user pages |
-| REG-01 … 06, 08 | M2 | — |
+| REG-01 … 06, 08 | M2 | done 2026-10-22 (REG-03: email code; mobile code behind the SMS adapter, `skipped` and shown as such until a gateway exists; REG-06: the CRM account and contact through the outbox, verified on UAT as ACC-2610-00154) |
 | REG-07 | M3 | — |
 | DEAL-01 | M4 (org gate), M11 (certificate gate) | — |
 | DEAL-02 … 09 | M4 | — |
@@ -302,7 +303,7 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
 | MKT-01 … 04 | M6 | — |
 | SCH-01 … 05 | M7 | — |
 | ELG-01 … 07 | M7 | — |
-| NTF-01 | M1 (spine), M8 (templates, SLA) | M1 done (`notify()`, the bell, email through the allowlist) |
+| NTF-01 | M1 (spine), M8 (templates, SLA) | M1 done (`notify()`, the bell, email through the allowlist); M2 sends the application events (staff bell + mail, applicant mail, the invitation) |
 | non-functional (none written) | M8 | — |
 | TRN-01 … 06, 11, 12, 13, 14 | M10 | — (last phase) |
 | TRN-07, 08, 09, 10 | M11 | — (last phase) |
@@ -343,3 +344,38 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
   under `/partners/portal/k7/applications`, approval → organisation + Partner Admin + invitation, outbox `account.create`
   behind `partner-settings.crm.enabled` (needs the service identity or `SUPPORT_DEV_SERVICE=probe` on UAT), the partner IDs
   (`K7P-00001`, a counter in `ids.ts`), the K7 settings page. §7's author questions still open.
+- **2026-10-22 (5)** — **M2 built.** The join flow `src/app/(partner)/partners/join/` (type → company and contact → code → terms → submitted;
+  `status` from the emailed link with number + key; the draft in `partner-applications` from the first step, its resume key in an httpOnly
+  cookie on `/partners/join`); `src/lib/partner/status.ts` (the application machine and the organisation toggle, pure), `ids.ts`
+  (`K7P-`/`K7A-`/`K7D-` from `partner-counters` by compare-and-swap), `registration-model.ts` (bands on the CRM's values, validation,
+  the account and contact bodies), `registration.ts` (draft, submit, queue, assign, decide, approve → organisation + Partner Admin +
+  invitation + outbox job), `mirror.ts` (`partner-outbox`, `account.create` runs as the service identity with region/state/city/country
+  looked up by name; `drainOutbox`), `sms.ts` (adapter; `PARTNER_SMS_PROVIDER`), `join.ts`; the K7 side `k7/applications` (counters,
+  views, search, ledger), `k7/applications/[number]` (the sheet, the decision panel, the record, the organisation and the CRM job with
+  Run/Retry), `k7/settings` (the whole global as a form), `K7Nav`; `POST /api/partners/outbox`; the `partner-join` OTP purpose. Design
+  system: section 10 P7–P10 (README, `partner.css`, CHANGELOG, `design-system.json`). Verified: `npx tsc --noEmit` clean, `pnpm lint`
+  0 errors, `pnpm test:int` 108 passing with `PARTNER_DB_TESTS=1` (new: `partner-registration` 12 pure, `partner-onboarding` 2 with the
+  database: draft → submitted → clarification → resubmitted → approved, the organisation, the Partner Admin, the pending job, the
+  duplicate-email refusal, consecutive numbers); on localhost the join flow clicked end to end (the code shown on the verify page,
+  both mails in the console, K7A-00003 "PP-TEST Join Flow Private Limited" left in the queue for the K7 click-through). Not clicked:
+  the K7 side (needs an agent session: open `/partners/portal/sign-in?staff=1` with Microsoft and list yourself as Channel Manager in
+  `/admin/globals/partner-settings` → Staff first, or set `SUPPORT_DEV_AGENT=probe`); the CRM job on UAT (turn the mirror on in
+  `/partners/portal/k7/settings`, then Run on the application sheet; the probe token stands in for the service identity). Found: the
+  local global has no regions, so the join form skips the regions step (validation passes with none when the list is empty) — enter
+  the regions in the settings. **Next session starts with M3**: the partner home's status strip is there; add the organisation page,
+  users and roles for the Partner Admin, the legal-identity edit → re-approval queue, suspension (the organisation machine exists in
+  `status.ts`), and the scope test. §7's author questions still open.
+- **2026-10-22 (6)** — **M2 clicked through on the K7 side, with Navin's Microsoft session**, after listing him as Channel Manager
+  and seeding four regions (N, S, WCE, E) in the local global by script. Queue → sheet → Take → Send back (note) → the applicant's
+  status page → Edit and resubmit (South picked; the verify step skipped because the email was unchanged) → back in the queue as
+  Submitted with the assignee kept → Approve from Submitted (assigned first, then approved; K7P-00003, the Partner Admin invited,
+  the full record) → Settings: mirror on → Run now. **Two findings on UAT, both fixed:** the contact has **no customer-type column**
+  (`new_customertype` is the incident's, `k7_customertype` the RFE's; the exploration §4/§6 was wrong and is corrected), so the
+  contact body carries none; and a job that failed after creating the account would have created a second one on retry, so the
+  job now stores the account id on the organisation before the contact and resumes from there (the one orphan was pointed at by
+  hand, not duplicated). Retry → done: ACC-2610-00154, `_primarycontactid` Priya Raman, type 0 (UAT label B2B), subtype Partner,
+  region South, state Tamil Nadu, city Chennai, country India all resolved by name, owner the approving manager, turnover and
+  size bands mapped. The onboarding test now takes a region from the settings and switches `DATAVERSE_WRITES_ENABLED` off for
+  its run (a local global with the mirror on must never push the test organisation). Not clicked: the new Partner Admin's first
+  sign-in (it would end the agent session in the same browser); the door itself was verified in M1. Test rows left on UAT:
+  account ACC-2610-00154 and its contact, both `PP-TEST`.

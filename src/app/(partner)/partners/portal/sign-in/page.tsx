@@ -55,8 +55,8 @@ export default async function PartnerSignInPage({ searchParams }: { searchParams
           <button className={`btn ${staffFirst ? 'btn-line' : 'btn-primary'}`} type="submit">
             Send me a code →
           </button>
-          <Link className="link-u" href="/partners">
-            Not a partner yet? The programme
+          <Link className="link-u" href="/partners/join">
+            Not a partner yet? Apply to the programme
           </Link>
         </div>
       </form>

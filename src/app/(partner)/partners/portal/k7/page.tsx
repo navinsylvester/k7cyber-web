@@ -2,8 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
 
+import { K7Nav } from '@/components/partner/K7Nav'
 import { StaffRoleTags, Strip } from '@/components/partner/Parts'
+import { owedOutboxCount } from '@/lib/partner/mirror'
 import { unreadCount } from '@/lib/partner/notify'
+import { applicationCounts } from '@/lib/partner/registration'
 import { requireK7 } from '@/lib/partner/session'
 import { STAFF_ROLE_LABEL, getPartnerSettings, type StaffRole } from '@/lib/partner/settings'
 
@@ -22,8 +25,11 @@ const OPENS: Record<StaffRole, string> = {
 export default async function K7HomePage() {
   const me = await requireK7('/partners/portal/k7')
   const settings = await getPartnerSettings()
-  const unread = await unreadCount({ kind: 'staff', roles: me.roles })
+  const cm = me.roles.includes('channelManager')
+  const [unread, counts, owed] = await Promise.all([unreadCount({ kind: 'staff', roles: me.roles }), cm ? applicationCounts() : null, cm ? owedOutboxCount() : 0])
   return (
+    <>
+    <K7Nav active="home" roles={me.roles} counts={{ applications: counts?.submitted }} />
     <section className="sheet ws g-paper">
       <div className="ws-head">
         <div className="ws-head-main">
@@ -37,7 +43,7 @@ export default async function K7HomePage() {
           { label: 'Signed in as', value: me.email || '—' },
           { label: 'Roles', value: <StaffRoleTags roles={me.roles} /> },
           { label: 'Unread', value: <Link href="/partners/portal/k7/notifications">{String(unread).padStart(2, '0')} notifications</Link> },
-          { label: 'Staff listed', value: String(settings.staff.length).padStart(2, '0') },
+          ...(counts ? [{ label: 'Applications', value: <Link href="/partners/portal/k7/applications">{String(counts.submitted + counts.underReview).padStart(2, '0')} open · {String(counts.submitted).padStart(2, '0')} new</Link> }] : [{ label: 'Staff listed', value: String(settings.staff.length).padStart(2, '0') }]),
         ]}
       />
       <div className="phome">
@@ -65,16 +71,24 @@ export default async function K7HomePage() {
           <div>
             <h2>Settings</h2>
             <p className="muted" style={{ margin: 0, fontSize: 15 }}>
-              Protection {settings.deals.protectionDays} days · extension {settings.deals.extensionDays} days · decision within {settings.deals.approvalSlaHours} working hours · certificate gate {settings.deals.requireCertificate ? 'on' : 'off'} · CRM mirror {settings.crm.enabled ? 'on' : 'off'}.
+              Protection {settings.deals.protectionDays} days · extension {settings.deals.extensionDays} days · decision within {settings.deals.approvalSlaHours} working hours · certificate gate {settings.deals.requireCertificate ? 'on' : 'off'} · CRM mirror {settings.crm.enabled ? 'on' : 'off'}
+              {owed ? ` · ${owed} CRM job${owed === 1 ? '' : 's'} waiting` : ''} · {settings.staff.length} staff listed.
             </p>
             <p className="more">
-              <Link className="link-u" href="/admin/globals/partner-settings">
-                Edit in the Payload admin
-              </Link>
+              {cm ? (
+                <Link className="link-u" href="/partners/portal/k7/settings">
+                  Edit the settings
+                </Link>
+              ) : (
+                <Link className="link-u" href="/admin/globals/partner-settings">
+                  Edit in the Payload admin
+                </Link>
+              )}
             </p>
           </div>
         </aside>
       </div>
     </section>
+    </>
   )
 }

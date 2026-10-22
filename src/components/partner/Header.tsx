@@ -23,8 +23,14 @@ export const PartnerHeader: React.FC = async () => {
         { href: '/partners/portal/notifications', label: 'Notifications' },
       ]
     : k7
-      ? [{ href: '/partners/portal/k7', label: 'Partner desk' }]
-      : [{ href: '/partners', label: 'The programme' }]
+      ? [
+          { href: '/partners/portal/k7', label: 'Partner desk' },
+          ...(k7.roles.includes('channelManager') ? [{ href: '/partners/portal/k7/applications', label: 'Applications' }] : []),
+        ]
+      : [
+          { href: '/partners', label: 'The programme' },
+          { href: '/partners/join', label: 'Join' },
+        ]
   const unread = partner ? await unreadCount({ kind: 'user', userId: partner.user.id, scope: partner.scope }) : k7 ? await unreadCount({ kind: 'staff', roles: k7.roles }) : 0
   const home = partner ? '/partners/portal' : k7 ? '/partners/portal/k7' : '/partners/portal/sign-in'
   return (

@@ -67,7 +67,7 @@ export const headerMenu = [
     url: '/partners',
     columns: [
       col('Partner programme', '/partners'),
-      col('Partner portal', '/partners/portal/sign-in', [['Sign in', '/partners/portal/sign-in'], ['K7 partner desk', '/partners/portal/sign-in?staff=1']]),
+      col('Partner portal', '/partners/portal/sign-in', [['Join the programme', '/partners/join'], ['Sign in', '/partners/portal/sign-in'], ['K7 partner desk', '/partners/portal/sign-in?staff=1']]),
     ],
   },
   {

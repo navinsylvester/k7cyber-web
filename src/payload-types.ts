@@ -87,8 +87,11 @@ export interface Config {
     'product-mirror': ProductMirror;
     'partner-orgs': PartnerOrg;
     'partner-users': PartnerUser;
+    'partner-applications': PartnerApplication;
     'partner-audit': PartnerAudit;
     'partner-notifications': PartnerNotification;
+    'partner-outbox': PartnerOutbox;
+    'partner-counters': PartnerCounter;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -127,8 +130,11 @@ export interface Config {
     'product-mirror': ProductMirrorSelect<false> | ProductMirrorSelect<true>;
     'partner-orgs': PartnerOrgsSelect<false> | PartnerOrgsSelect<true>;
     'partner-users': PartnerUsersSelect<false> | PartnerUsersSelect<true>;
+    'partner-applications': PartnerApplicationsSelect<false> | PartnerApplicationsSelect<true>;
     'partner-audit': PartnerAuditSelect<false> | PartnerAuditSelect<true>;
     'partner-notifications': PartnerNotificationsSelect<false> | PartnerNotificationsSelect<true>;
+    'partner-outbox': PartnerOutboxSelect<false> | PartnerOutboxSelect<true>;
+    'partner-counters': PartnerCountersSelect<false> | PartnerCountersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -2495,6 +2501,87 @@ export interface PartnerUser {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-applications".
+ */
+export interface PartnerApplication {
+  id: number;
+  /**
+   * K7A-00001, given at submission.
+   */
+  number?: string | null;
+  type: 'distributor' | 'integrationPartner' | 'var' | 'msp';
+  status: 'draft' | 'submitted' | 'underReview' | 'clarification' | 'approved' | 'rejected';
+  /**
+   * The partner-orgs row created on approval.
+   */
+  orgId?: string | null;
+  legalName?: string | null;
+  tradeName?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  pin?: string | null;
+  website?: string | null;
+  yearOfIncorporation?: number | null;
+  size?: ('1-10' | '11-50' | '51-200' | '201-500' | 'gt500') | null;
+  turnover?: ('lt1' | '1-5' | '6-10' | '11-20' | '21-40' | '41-60' | '61-100' | 'gt100') | null;
+  gstin?: string | null;
+  pan?: string | null;
+  /**
+   * Region codes from the settings.
+   */
+  regions?: string[] | null;
+  /**
+   * The primary contact (FR-REG-02); becomes the Partner Admin on approval.
+   */
+  contact?: {
+    name?: string | null;
+    designation?: string | null;
+    email?: string | null;
+    mobile?: string | null;
+    emailVerifiedAt?: string | null;
+    mobileVerifiedAt?: string | null;
+    /**
+     * skipped: no SMS gateway was configured (decision 4).
+     */
+    mobileVerification?: ('none' | 'sms' | 'skipped') | null;
+  };
+  terms?: {
+    version?: string | null;
+    acceptedAt?: string | null;
+  };
+  /**
+   * The Channel Manager reviewing it.
+   */
+  assignee?: {
+    email?: string | null;
+    name?: string | null;
+  };
+  /**
+   * Every status change with who, when and the comment (FR-REG-08); the audit trail has the same rows.
+   */
+  decisions?:
+    | {
+        to: string;
+        byName?: string | null;
+        byEmail?: string | null;
+        at: string;
+        comment?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The secret in the applicant’s link; never shown on a page.
+   */
+  resumeKey?: string | null;
+  submittedAt?: string | null;
+  decidedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "partner-audit".
  */
 export interface PartnerAudit {
@@ -2556,6 +2643,72 @@ export interface PartnerNotification {
   emailedAt?: string | null;
   emailTo?: string | null;
   emailError?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-outbox".
+ */
+export interface PartnerOutbox {
+  id: number;
+  kind: 'account.create' | 'opportunity.create';
+  state: 'pending' | 'done' | 'failed' | 'skipped';
+  attempts?: number | null;
+  orgId?: string | null;
+  /**
+   * partner-orgs, partner-deals …
+   */
+  object?: string | null;
+  objectId?: string | null;
+  objectLabel?: string | null;
+  /**
+   * What the job needs beyond the object itself (the approver, the settings at the time).
+   */
+  payload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * The ids the CRM gave back.
+   */
+  result?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Who queued it.
+   */
+  actor?: string | null;
+  /**
+   * A code, never a body.
+   */
+  lastError?: string | null;
+  doneAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-counters".
+ */
+export interface PartnerCounter {
+  id: number;
+  /**
+   * partner · application · deal
+   */
+  kind: string;
+  value: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -2830,12 +2983,24 @@ export interface PayloadLockedDocument {
         value: number | PartnerUser;
       } | null)
     | ({
+        relationTo: 'partner-applications';
+        value: number | PartnerApplication;
+      } | null)
+    | ({
         relationTo: 'partner-audit';
         value: number | PartnerAudit;
       } | null)
     | ({
         relationTo: 'partner-notifications';
         value: number | PartnerNotification;
+      } | null)
+    | ({
+        relationTo: 'partner-outbox';
+        value: number | PartnerOutbox;
+      } | null)
+    | ({
+        relationTo: 'partner-counters';
+        value: number | PartnerCounter;
       } | null)
     | ({
         relationTo: 'media';
@@ -4092,6 +4257,68 @@ export interface PartnerUsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-applications_select".
+ */
+export interface PartnerApplicationsSelect<T extends boolean = true> {
+  number?: T;
+  type?: T;
+  status?: T;
+  orgId?: T;
+  legalName?: T;
+  tradeName?: T;
+  address?: T;
+  city?: T;
+  state?: T;
+  country?: T;
+  pin?: T;
+  website?: T;
+  yearOfIncorporation?: T;
+  size?: T;
+  turnover?: T;
+  gstin?: T;
+  pan?: T;
+  regions?: T;
+  contact?:
+    | T
+    | {
+        name?: T;
+        designation?: T;
+        email?: T;
+        mobile?: T;
+        emailVerifiedAt?: T;
+        mobileVerifiedAt?: T;
+        mobileVerification?: T;
+      };
+  terms?:
+    | T
+    | {
+        version?: T;
+        acceptedAt?: T;
+      };
+  assignee?:
+    | T
+    | {
+        email?: T;
+        name?: T;
+      };
+  decisions?:
+    | T
+    | {
+        to?: T;
+        byName?: T;
+        byEmail?: T;
+        at?: T;
+        comment?: T;
+        id?: T;
+      };
+  resumeKey?: T;
+  submittedAt?: T;
+  decidedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "partner-audit_select".
  */
 export interface PartnerAuditSelect<T extends boolean = true> {
@@ -4128,6 +4355,36 @@ export interface PartnerNotificationsSelect<T extends boolean = true> {
   emailedAt?: T;
   emailTo?: T;
   emailError?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-outbox_select".
+ */
+export interface PartnerOutboxSelect<T extends boolean = true> {
+  kind?: T;
+  state?: T;
+  attempts?: T;
+  orgId?: T;
+  object?: T;
+  objectId?: T;
+  objectLabel?: T;
+  payload?: T;
+  result?: T;
+  actor?: T;
+  lastError?: T;
+  doneAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-counters_select".
+ */
+export interface PartnerCountersSelect<T extends boolean = true> {
+  kind?: T;
+  value?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -2,10 +2,11 @@ import Link from 'next/link'
 import React from 'react'
 
 import { PARTNER_ROLE_LABEL, PARTNER_TYPE_LABEL, STAFF_ROLE_LABEL, type PartnerRole, type PartnerType, type StaffRole } from '@/lib/partner/settings-model'
+import { APPLICATION_STATUS_LABEL, type ApplicationStatus } from '@/lib/partner/status'
 import type { PartnerOrg } from '@/lib/partner/users'
 import { dmyHm, relative } from '@/lib/support/format'
 
-export { Empty, Field, Flash } from '@/components/support/Parts'
+export { Empty, Field, Flash, Options } from '@/components/support/Parts'
 
 /* Section 10 · Partners (design-system/components/PartnerParts/README.md): the identifier reads the unique part first, status is a
    Tag, the organisation's facts sit on a strip, and the bell counts in a block. Everything else comes from sections 01–09. */
@@ -88,3 +89,20 @@ export const NotificationList: React.FC<{ rows: { id: string; at: string; subjec
     ))}
   </ol>
 )
+
+/* ---------- M2: applications ---------- */
+
+/** P8 Application state: one Tag; signal only where someone must act now (the K7 queue: Submitted; the applicant: Clarification). */
+export const AppStateTag: React.FC<{ status: ApplicationStatus; audience?: 'applicant' | 'k7' }> = ({ status, audience = 'k7' }) => {
+  const signal = audience === 'k7' ? status === 'submitted' : status === 'clarification'
+  const closed = status === 'approved' || status === 'rejected'
+  const cls = signal ? 'tag tag-signal' : status === 'approved' ? 'tag tag-solid' : closed ? 'tag tag-closed' : status === 'draft' ? 'tag tag-quiet' : 'tag tag-state'
+  return <span className={cls}>{APPLICATION_STATUS_LABEL[status]}</span>
+}
+
+/** The mobile's verification state: by SMS, or skipped because no gateway exists (decision 4), which the Channel Manager sees. */
+export const MobileVerifiedTag: React.FC<{ contact: { mobileVerifiedAt: string | null; mobileVerification: 'none' | 'sms' | 'skipped' } }> = ({ contact }) =>
+  contact.mobileVerification === 'sms' && contact.mobileVerifiedAt ? <span className="tag tag-solid">Verified by SMS</span> : contact.mobileVerification === 'skipped' ? <span className="tag tag-quiet" title="No SMS gateway is configured; the number is as given.">Not verified · no SMS gateway</span> : <span className="tag tag-quiet">Not verified</span>
+
+/** The application number, K7A-00001, in the P1 shape. */
+export const Aid: React.FC<{ number: string; href?: string; display?: boolean }> = ({ number, href, display }) => <Pid id={number || 'K7A-—'} href={href} display={display} />

@@ -1,5 +1,5 @@
 # PartnerParts
-The partner-portal parts from section 10 (reference CSS: `src/app/(partner)/partner.css`, loaded over section 09's `portal.css`, whose chrome, forms, flashes and ledgers the partner portal shares). Two audiences again: partner users get the customer's sheet rhythm, fewer and larger things; K7 staff get the ledger. Built from M1 (2026-10-22); parts are added as the milestones in `docs/partner-portal/02-build-plan.md` land.
+The partner-portal parts from section 10 (reference CSS: `src/app/(partner)/partner.css`, loaded over section 09's `portal.css`, whose chrome, forms, flashes and ledgers the partner portal shares). Two audiences again: partner users get the customer's sheet rhythm, fewer and larger things; K7 staff get the ledger. Built from M1 (2026-10-22, P1–P6) and M2 (2026-10-22, P7–P10); parts are added as the milestones in `docs/partner-portal/02-build-plan.md` land.
 
 **P1 Partner ID (`pid`)** the identifier reads like the case number: `K7P-` dim, the number first and full weight, mono (`Pid`, on `tid`); `tid-display` is the large form on the partner's home and on an organisation page. Deal IDs (`K7D-`) and certificate IDs (`K7P-C-`, `K7P-O-`) take the same shape when they arrive.
 
@@ -12,5 +12,13 @@ The partner-portal parts from section 10 (reference CSS: `src/app/(partner)/part
 **P5 Role tags (`roles`, `tag-dashed`)** a person's roles as outlined tags in a row: Partner Admin · Sales · Technical for partner users, the five K7 roles for staff. A role is not a state, so nothing inverts; "No role" is dashed.
 
 **P6 Partner home (`phome`)** the sheet after the strip: the latest notifications and the record in the main column, the organisation's facts (`meta-rows`) in the 360px side column from 1080px. Deals, collateral and schemes join the column as their milestones land.
+
+**P7 The join steps (`jsteps`)** the public application's four steps on the customer track's bars (section 09 `track`): type · company and contact · verify · terms and submit, each cell its index in `acc` mono and its name; the current step's bar is signal, done steps are ink and link back, steps to come are line. A finished application shows every bar in ink. No percentage, no circles.
+
+**P8 Application state (`AppStateTag`)** one `Tag` per state of 01-requirements §3.2: Submitted on signal for the K7 queue (someone must act) and Clarification needed on signal for the applicant (the same rule from their side), Under review solid state, Approved solid, Rejected closed, Draft dashed. `MobileVerifiedTag` says whether the mobile was verified by SMS or skipped for want of a gateway, as a quiet tag the Channel Manager reads. The application number `K7A-00001` (`Aid`) takes P1's shape.
+
+**P9 The application summary (`app-summary`)** the application read back as filed facts: two groups of `meta-rows` (company; primary contact), side by side from 900px, the same component on the terms step (with Edit links on each group), on the applicant's status page and on the K7 sheet (which adds the terms version and the submission date). Verification sits beside the email and the mobile as tags.
+
+**P10 The decision panel (`decide`)** in the side column of the K7 application sheet: the decisions the state allows as a stacked `choice` (approve · send back · reject, with one line each on what follows), the note to the applicant, one primary action. Hairline-filed like the terms box (`terms-box`) on the join page, which holds the acceptance check with the terms version in it. The desk strip (`K7Nav`, section 09's `wsbar`) carries a count block (`rtab-n`) on a tab with new work; the settings page's staff list is a `dtable` of inputs (`staff-table`).
 
 **Doors** the sign-in page is section 09's `signin-split` with the partner door (email → code) and the K7 door (Microsoft) side by side; the one the visitor came for leads.

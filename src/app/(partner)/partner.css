@@ -39,3 +39,45 @@
 .phome h2 { margin: 0 0 16px; font-size: 22px; letter-spacing: -.02em; }
 .phome .ledger { margin: 0; }
 .phome .more { margin: 16px 0 0; }
+
+/* ---------- P7 The join steps: four cells on the track's bars, the current one on signal (M2) ---------- */
+.jsteps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; margin: 0 0 clamp(28px, 3cqw, 40px); padding: 0; list-style: none; }
+.jsteps li { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.jsteps i { display: block; height: 6px; background: var(--ln); }
+.jsteps li.is-done i { background: var(--fg); }
+.jsteps li.is-now i { background: var(--signal); }
+.jsteps .label { color: var(--mu); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jsteps li.is-now .label { color: var(--fg); font-weight: 500; }
+.jsteps .label a { color: inherit; text-decoration: none; }
+.jsteps .label a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.jsteps-n { color: var(--acc); }
+@container (max-width: 520px) { .jsteps .label { white-space: normal; } }
+
+/* ---------- The join form: the region checks in a row, the terms box ---------- */
+.checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 10px 24px; }
+.terms-box { padding: 20px 22px; box-shadow: inset 0 0 0 1px var(--fg); }
+.terms-box .check { font-size: 15px; line-height: 1.5; }
+
+/* ---------- P9 The application summary: two groups of filed facts, side by side from 900px ---------- */
+.app-summary { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(28px, 3cqw, 40px) clamp(32px, 4cqw, 56px); }
+.app-summary .sub-head { margin-bottom: 10px; }
+.app-summary .sub-head .link-u { font-weight: 400; }
+.app-summary .meta-rows dd .tag { margin-left: 8px; vertical-align: 1px; }
+@container (min-width: 900px) { .app-summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.phome > .app-summary { grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 1280px) { .phome > .app-summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+/* ---------- P10 The decision panel: the choice stacked, the note, one primary action; filed in the side column ---------- */
+.decide { padding: 20px 22px 24px; box-shadow: inset 0 0 0 1px var(--fg); }
+.decide h2 { margin: 0 0 8px; }
+.decide .choice label { padding: 12px 14px; }
+.decide .choice .t { font-size: 15px; }
+
+/* ---------- The desk strip's counts and the staff table on the settings page ---------- */
+.rtab-n { display: inline-block; min-width: 20px; padding: 1px 4px; text-align: center; background: var(--signal); color: var(--on-signal); font: 500 10px/1.5 var(--font-mono); letter-spacing: .04em; }
+.rtab[aria-current="page"] .rtab-n, .rtab:hover .rtab-n { background: var(--fg); color: var(--bg); }
+.staff-table input[type="email"], .staff-table input[type="text"], .staff-table input:not([type]) { width: 100%; min-width: 160px; font: 400 14px/1.3 var(--font-sans); background: transparent; color: inherit; border: 0; border-bottom: 1px solid var(--ln); padding: 6px 0; }
+.staff-table input:focus { outline: 0; border-bottom-color: var(--signal); }
+.staff-table td.tick input { width: 18px; height: 18px; appearance: none; -webkit-appearance: none; border: 1px solid var(--fg); cursor: pointer; }
+.staff-table td.tick input:checked { background: var(--signal); border-color: var(--signal); box-shadow: inset 0 0 0 4px var(--bg); }
+.staff-table th:nth-child(n+3), .staff-table td.tick { text-align: center; padding-right: 10px; }
