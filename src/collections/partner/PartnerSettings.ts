@@ -126,6 +126,17 @@ export const PartnerSettings: GlobalConfig = {
           ],
         },
         {
+          label: 'Schemes',
+          fields: [
+            {
+              name: 'schemes',
+              type: 'group',
+              admin: { description: 'Incentive schemes (01-requirements.md §9). Schemes are edited in Partner portal → Schemes; registrations, results and payouts on the partner desk.' },
+              fields: [{ name: 'disputeDays', type: 'number', min: 0, defaultValue: 14, admin: { description: 'FR-ELG-05: days after the results are published in which a partner may raise a dispute. A scheme may set its own.' } }],
+            },
+          ],
+        },
+        {
           label: 'CRM mirror',
           fields: [
             {

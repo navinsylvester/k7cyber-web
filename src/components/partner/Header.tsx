@@ -23,6 +23,7 @@ export const PartnerHeader: React.FC = async () => {
         { href: '/partners/portal/deals', label: 'Deals' },
         { href: '/partners/portal/dashboard', label: 'Dashboard' },
         { href: '/partners/portal/collateral', label: 'Collateral' },
+        { href: '/partners/portal/schemes', label: 'Schemes' },
         { href: '/partners/portal/organisation', label: 'Organisation' },
         { href: '/partners/portal/notifications', label: 'Notifications' },
       ]
@@ -37,6 +38,7 @@ export const PartnerHeader: React.FC = async () => {
             : []),
           ...(k7.roles.includes('dealDeskApprover') ? [{ href: '/partners/portal/k7/deals', label: 'Deals' }] : []),
           ...(k7.roles.includes('marketingAdmin') ? [{ href: '/partners/portal/k7/collateral', label: 'Collateral' }] : []),
+          ...(k7.roles.includes('schemeAdmin') ? [{ href: '/partners/portal/k7/schemes', label: 'Schemes' }] : []),
         ]
       : [
           { href: '/partners', label: 'The programme' },

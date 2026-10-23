@@ -42,6 +42,7 @@ export const savePartnerSettings = async (s: PartnerSettings): Promise<void> => 
       crm: { ...s.crm },
       notify: { ...s.notify },
       collateral: { ...s.collateral },
+      schemes: { ...s.schemes },
     } as never,
   })
   forget(KEY)

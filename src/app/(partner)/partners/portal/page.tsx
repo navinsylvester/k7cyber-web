@@ -7,6 +7,7 @@ import { orgAudit } from '@/lib/partner/audit'
 import { collateralCountFor, PARTNER_COLLATERAL } from '@/lib/partner/collateral'
 import { dealCounts, PARTNER_DASHBOARD, PARTNER_DEALS, registerGate } from '@/lib/partner/deals'
 import { listNotifications } from '@/lib/partner/notify'
+import { PARTNER_SCHEMES, schemeCountFor } from '@/lib/partner/schemes'
 import { requirePartner } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
 import { dmy } from '@/lib/support/format'
@@ -14,11 +15,11 @@ import { dmy } from '@/lib/support/format'
 export const metadata: Metadata = { title: 'Home' }
 
 /* The partner's home (02-build-plan.md §4): the status strip first (who you are here, the organisation's state), then the latest
-   notifications and the organisation's facts. Deals, the dashboard and the collateral library are here; schemes join the page with M7. Every read
+   notifications and the organisation's facts. Deals, the dashboard, the collateral library and the schemes are here. Every read
    carries `me.scope`. */
 export default async function PartnerHomePage() {
   const me = await requirePartner('/partners/portal')
-  const [settings, notifications, trail, deals, blocked, collateral] = await Promise.all([getPartnerSettings(), listNotifications({ kind: 'user', userId: me.user.id, scope: me.scope }, 5), orgAudit(me.scope, 5), dealCounts(me.scope), registerGate(me), collateralCountFor(me)])
+  const [settings, notifications, trail, deals, blocked, collateral, schemes] = await Promise.all([getPartnerSettings(), listNotifications({ kind: 'user', userId: me.user.id, scope: me.scope }, 5), orgAudit(me.scope, 5), dealCounts(me.scope), registerGate(me), collateralCountFor(me), schemeCountFor(me)])
   const regions = settings.regions.filter((r) => me.org.regions.includes(r.code)).map((r) => r.name)
   const unread = notifications.filter((n) => !n.readAt).length
   return (
@@ -98,6 +99,17 @@ export default async function PartnerHomePage() {
             <p className="more">
               <Link className="link-u" href={PARTNER_COLLATERAL}>
                 The library →
+              </Link>
+            </p>
+          </div>
+          <div>
+            <h2>Schemes</h2>
+            <p className="muted" style={{ margin: 0, fontSize: 15 }}>
+              {schemes.open + schemes.registered + schemes.results === 0 ? 'No scheme applies to your organisation right now.' : `${schemes.open ? `${schemes.open} open to register` : ''}${schemes.open && (schemes.registered || schemes.results) ? ', ' : ''}${schemes.registered ? `${schemes.registered} you are in` : ''}${schemes.registered && schemes.results ? ', ' : ''}${schemes.results ? `${schemes.results} result${schemes.results === 1 ? '' : 's'} published` : ''}.`}
+            </p>
+            <p className="more">
+              <Link className="link-u" href={PARTNER_SCHEMES}>
+                {schemes.open ? 'Register for a scheme →' : 'The schemes →'}
               </Link>
             </p>
           </div>

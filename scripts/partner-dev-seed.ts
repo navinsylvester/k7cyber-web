@@ -1,5 +1,5 @@
 /* A test partner organisation and one Partner Admin for development of the partner portal (docs/partner-portal/04-portal-guide.md §1):
-     pnpm partner:seed-dev you@example.com ["Your Name"] [--crm] [--collateral] [--editor]
+     pnpm partner:seed-dev you@example.com ["Your Name"] [--crm] [--collateral] [--editor] [--schemes]
    Idempotent: the organisation PP-TEST (partner ID K7P-00000) is created once, three PP-TEST products once (M4), and the user is created or moved into it. Test rows carry the
    PP-TEST prefix the build plan asks for (02-build-plan.md §0) and never reach the CRM. `--editor` makes (or resets) a Payload admin user with the
    Marketing editor role, pp-test-editor@k7computing.com, whose password is PARTNER_DEV_EDITOR_PASSWORD in .env, for clicking the /admin side of the library. */
@@ -105,6 +105,39 @@ if (process.argv.includes('--editor')) {
   } else {
     await payload.create({ collection: 'users', data: { email: editorEmail, name: 'PP-TEST Marketing editor', roles: ['marketingEditor'], password }, overrideAccess: true })
     console.log(`editor ${editorEmail} created (Marketing editor): sign in at /admin/login`)
+  }
+}
+// `--schemes` files three PP-TEST schemes (M7): one open for registration (automatic), one running that asks for K7's approval
+// (with the PP-TEST organisation already registered), and one closed last quarter (registered, to compute and publish on the
+// desk). Idempotent by name. Slabs on every one; no PDF.
+if (process.argv.includes('--schemes')) {
+  const d = (days: number) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10)
+  const slabs = [
+    { threshold: 500000, benefit: '2% back-end rebate', amount: 10000 },
+    { threshold: 1500000, benefit: '4% back-end rebate', amount: 60000 },
+    { threshold: 3000000, benefit: '6% back-end rebate and a seat at the partner summit', amount: 180000 },
+  ]
+  const SCHEMES = [
+    { name: 'PP-TEST Festive Push', description: 'Won order value on every product between the festive quarter’s dates.', startDate: d(10), endDate: d(100), registrationDeadline: d(30), approvalRequired: false, register: false },
+    { name: 'PP-TEST Endpoint Accelerator', description: 'Endpoint deals won this quarter; K7 approves each registration.', startDate: d(-30), endDate: d(60), registrationDeadline: d(-5), approvalRequired: true, register: true },
+    { name: 'PP-TEST Q2 Growth', description: 'Last quarter’s scheme: closed, waiting for the eligibility run.', startDate: d(-120), endDate: d(-10), registrationDeadline: d(-100), approvalRequired: false, register: true },
+  ]
+  const terms = 'Deals must be registered in the portal and recorded as won in K7’s CRM with a close date inside the scheme’s dates.\n\nThe order value the CRM records is what counts. K7’s review and published result are final subject to the dispute window.\n\nBenefits are paid as a back-end rebate against the partner’s next invoice.'
+  for (const sc of SCHEMES) {
+    const found = await payload.find({ collection: 'partner-schemes', where: { name: { equals: sc.name } }, limit: 1, depth: 0 })
+    let row = found.docs[0]
+    if (!row) {
+      row = await payload.create({ collection: 'partner-schemes', data: { name: sc.name, description: sc.description, terms, status: 'published', startDate: sc.startDate, endDate: sc.endDate, registrationDeadline: sc.registrationDeadline, approvalRequired: sc.approvalRequired, slabs } as never })
+      console.log(`scheme "${sc.name}" created (${row.id})`)
+    } else console.log(`scheme "${sc.name}" exists (${row.id})`)
+    if (!sc.register) continue
+    const reg = await payload.find({ collection: 'partner-scheme-registrations', where: { and: [{ scheme: { equals: row.id } }, { org: { equals: org.id } }] }, limit: 1, depth: 0 })
+    if (reg.docs[0]) continue
+    await payload.create({
+      collection: 'partner-scheme-registrations',
+      data: { scheme: row.id, org: org.id, orgPartnerId: org.partnerId, orgName: org.tradeName || org.name, orgType: org.type, status: 'approved', acceptedBy: { userId: '', name: 'PP-TEST seed', email }, acceptedAt: new Date().toISOString() } as never,
+    })
+    console.log(`  ${org.partnerId} registered for "${sc.name}"`)
   }
 }
 await payload.create({

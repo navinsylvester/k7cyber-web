@@ -98,6 +98,10 @@ export interface Config {
     'partner-sync-runs': PartnerSyncRun;
     'partner-collateral': PartnerCollateral;
     'partner-collateral-files': PartnerCollateralFile;
+    'partner-schemes': PartnerScheme;
+    'partner-scheme-files': PartnerSchemeFile;
+    'partner-scheme-registrations': PartnerSchemeRegistration;
+    'partner-eligibility': PartnerEligibility;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -150,6 +154,10 @@ export interface Config {
     'partner-sync-runs': PartnerSyncRunsSelect<false> | PartnerSyncRunsSelect<true>;
     'partner-collateral': PartnerCollateralSelect<false> | PartnerCollateralSelect<true>;
     'partner-collateral-files': PartnerCollateralFilesSelect<false> | PartnerCollateralFilesSelect<true>;
+    'partner-schemes': PartnerSchemesSelect<false> | PartnerSchemesSelect<true>;
+    'partner-scheme-files': PartnerSchemeFilesSelect<false> | PartnerSchemeFilesSelect<true>;
+    'partner-scheme-registrations': PartnerSchemeRegistrationsSelect<false> | PartnerSchemeRegistrationsSelect<true>;
+    'partner-eligibility': PartnerEligibilitySelect<false> | PartnerEligibilitySelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -3126,6 +3134,217 @@ export interface PartnerCollateralFile {
   height?: number | null;
 }
 /**
+ * Incentive schemes partners register for at /partners/portal/schemes. Published schemes show to the partner types and regions named (empty: everyone). Registrations, results and payouts are handled on the partner desk, not here.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-schemes".
+ */
+export interface PartnerScheme {
+  id: number;
+  name: string;
+  /**
+   * Only Published shows. Archived hides a closed scheme and keeps its results.
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Two or three lines on the listing: what the scheme rewards and for whom.
+   */
+  description?: string | null;
+  /**
+   * The terms and conditions the Partner Admin accepts to register (FR-SCH-03). Plain text; paragraphs separated by a blank line.
+   */
+  terms: string;
+  /**
+   * Deals closed from this day count.
+   */
+  startDate: string;
+  /**
+   * The last day that counts; results are computed after it.
+   */
+  endDate: string;
+  /**
+   * The last day to register; the scheme is "open" until then.
+   */
+  registrationDeadline: string;
+  /**
+   * Partner types it applies to. Empty: all.
+   */
+  types?: ('distributor' | 'integrationPartner' | 'var' | 'msp')[] | null;
+  /**
+   * K7 region codes from the settings (N, S, WCE). Empty: all.
+   */
+  regions?: string[] | null;
+  /**
+   * Only deals with one of these products count. Empty: every product.
+   */
+  products?: (number | PartnerProduct)[] | null;
+  /**
+   * FR-SCH-04: a Scheme Admin approves each registration. Off: registering is immediate.
+   */
+  approvalRequired?: boolean | null;
+  /**
+   * Days after publication in which a partner may dispute the result. Blank: the portal setting (default 14).
+   */
+  disputeDays?: number | null;
+  /**
+   * The scheme document (PDF), served to registered-eligible partners through the portal only.
+   */
+  attachment?: (number | null) | PartnerSchemeFile;
+  /**
+   * Appendix 15: thresholds of won order value (₹) and what each earns. The lowest threshold is the target; the highest slab reached is the benefit. Order does not matter; they are sorted by threshold.
+   */
+  slabs?:
+    | {
+        /**
+         * ₹ won in the window.
+         */
+        threshold: number;
+        /**
+         * What it earns, in words (e.g. 3% back-end rebate, a trip for two).
+         */
+        benefit: string;
+        /**
+         * ₹, when the benefit is money.
+         */
+        amount?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Written by the partner desk when the Scheme Admin computes and publishes the results. Do not edit here.
+   */
+  results?: {
+    computedAt?: string | null;
+    computedBy?: string | null;
+    publishedAt?: string | null;
+    publishedBy?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * The PDF a scheme carries (up to 20 MB); served only through the portal to the partners the scheme applies to.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-scheme-files".
+ */
+export interface PartnerSchemeFile {
+  id: number;
+  uploadedBy?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+}
+/**
+ * Written by the portal. Registrations are decided on the partner desk (/partners/portal/k7/schemes).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-scheme-registrations".
+ */
+export interface PartnerSchemeRegistration {
+  id: number;
+  scheme: number | PartnerScheme;
+  org: number | PartnerOrg;
+  orgPartnerId?: string | null;
+  orgName?: string | null;
+  orgType?: ('distributor' | 'integrationPartner' | 'var' | 'msp') | null;
+  status: 'pending' | 'approved' | 'declined';
+  /**
+   * The Partner Admin who accepted the terms (FR-SCH-03).
+   */
+  acceptedBy?: {
+    userId?: string | null;
+    name?: string | null;
+    email?: string | null;
+  };
+  acceptedAt?: string | null;
+  decision?: {
+    by?: string | null;
+    at?: string | null;
+    note?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Written by the portal when the Scheme Admin computes a closed scheme; reviewed, adjusted, published and paid on the partner desk.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-eligibility".
+ */
+export interface PartnerEligibility {
+  id: number;
+  scheme: number | PartnerScheme;
+  org: number | PartnerOrg;
+  orgPartnerId?: string | null;
+  orgName?: string | null;
+  orgType?: ('distributor' | 'integrationPartner' | 'var' | 'msp') | null;
+  /**
+   * The sum of the deals counted, ₹.
+   */
+  achieved?: number | null;
+  /**
+   * After the adjustment.
+   */
+  final?: number | null;
+  eligible?: boolean | null;
+  /**
+   * The slab reached, 0-based in threshold order; -1 none.
+   */
+  slabIndex?: number | null;
+  target?: number | null;
+  /**
+   * To the target when not eligible; to the next slab when eligible.
+   */
+  gap?: number | null;
+  computedAt?: string | null;
+  /**
+   * The breakdown: dealId, customer, closedOn, value, opportunityNo, products.
+   */
+  dealsCounted?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  adjustment?: {
+    /**
+     * ₹, added to the achieved value; negative to reduce.
+     */
+    amount?: number | null;
+    reason?: string | null;
+    by?: string | null;
+    at?: string | null;
+  };
+  dispute?: {
+    status?: ('none' | 'open' | 'resolved') | null;
+    text?: string | null;
+    raisedBy?: string | null;
+    raisedAt?: string | null;
+    resolution?: string | null;
+    resolvedBy?: string | null;
+    resolvedAt?: string | null;
+  };
+  payout?: {
+    status?: ('pending' | 'processed' | 'paid') | null;
+    reference?: string | null;
+    by?: string | null;
+    at?: string | null;
+    note?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -3438,6 +3657,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'partner-collateral-files';
         value: number | PartnerCollateralFile;
+      } | null)
+    | ({
+        relationTo: 'partner-schemes';
+        value: number | PartnerScheme;
+      } | null)
+    | ({
+        relationTo: 'partner-scheme-files';
+        value: number | PartnerSchemeFile;
+      } | null)
+    | ({
+        relationTo: 'partner-scheme-registrations';
+        value: number | PartnerSchemeRegistration;
+      } | null)
+    | ({
+        relationTo: 'partner-eligibility';
+        value: number | PartnerEligibility;
       } | null)
     | ({
         relationTo: 'media';
@@ -5038,6 +5273,137 @@ export interface PartnerCollateralFilesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-schemes_select".
+ */
+export interface PartnerSchemesSelect<T extends boolean = true> {
+  name?: T;
+  status?: T;
+  description?: T;
+  terms?: T;
+  startDate?: T;
+  endDate?: T;
+  registrationDeadline?: T;
+  types?: T;
+  regions?: T;
+  products?: T;
+  approvalRequired?: T;
+  disputeDays?: T;
+  attachment?: T;
+  slabs?:
+    | T
+    | {
+        threshold?: T;
+        benefit?: T;
+        amount?: T;
+        id?: T;
+      };
+  results?:
+    | T
+    | {
+        computedAt?: T;
+        computedBy?: T;
+        publishedAt?: T;
+        publishedBy?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-scheme-files_select".
+ */
+export interface PartnerSchemeFilesSelect<T extends boolean = true> {
+  uploadedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-scheme-registrations_select".
+ */
+export interface PartnerSchemeRegistrationsSelect<T extends boolean = true> {
+  scheme?: T;
+  org?: T;
+  orgPartnerId?: T;
+  orgName?: T;
+  orgType?: T;
+  status?: T;
+  acceptedBy?:
+    | T
+    | {
+        userId?: T;
+        name?: T;
+        email?: T;
+      };
+  acceptedAt?: T;
+  decision?:
+    | T
+    | {
+        by?: T;
+        at?: T;
+        note?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-eligibility_select".
+ */
+export interface PartnerEligibilitySelect<T extends boolean = true> {
+  scheme?: T;
+  org?: T;
+  orgPartnerId?: T;
+  orgName?: T;
+  orgType?: T;
+  achieved?: T;
+  final?: T;
+  eligible?: T;
+  slabIndex?: T;
+  target?: T;
+  gap?: T;
+  computedAt?: T;
+  dealsCounted?: T;
+  adjustment?:
+    | T
+    | {
+        amount?: T;
+        reason?: T;
+        by?: T;
+        at?: T;
+      };
+  dispute?:
+    | T
+    | {
+        status?: T;
+        text?: T;
+        raisedBy?: T;
+        raisedAt?: T;
+        resolution?: T;
+        resolvedBy?: T;
+        resolvedAt?: T;
+      };
+  payout?:
+    | T
+    | {
+        status?: T;
+        reference?: T;
+        by?: T;
+        at?: T;
+        note?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -5884,6 +6250,15 @@ export interface PartnerSetting {
     maxMb?: number | null;
   };
   /**
+   * Incentive schemes (01-requirements.md §9). Schemes are edited in Partner portal → Schemes; registrations, results and payouts on the partner desk.
+   */
+  schemes?: {
+    /**
+     * FR-ELG-05: days after the results are published in which a partner may raise a dispute. A scheme may set its own.
+     */
+    disputeDays?: number | null;
+  };
+  /**
    * What the outbox writes to Dynamics on approval (decisions 2, 10, 19). Off: the jobs queue as pending and nothing reaches the CRM. UAT only; production is read-only in code.
    */
   crm?: {
@@ -6221,6 +6596,11 @@ export interface PartnerSettingsSelect<T extends boolean = true> {
     | T
     | {
         maxMb?: T;
+      };
+  schemes?:
+    | T
+    | {
+        disputeDays?: T;
       };
   crm?:
     | T

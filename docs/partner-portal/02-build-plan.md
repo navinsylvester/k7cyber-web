@@ -44,7 +44,7 @@ not for its history.
 | M4 | Deal registration (§7): form, routing, CRM conflict check, approval desk, protection, extension, CRM push | **built 2026-10-22** (sessions 8–9), **clicked on both sides and the opportunity landed on UAT 2026-10-23** (session 10: OPP-2610-00268) |
 | M5 | Deal dashboard (§8): hourly CRM sync into a read model, cards, list, charts, reconciliation log | **built 2026-10-23** (session 11): tests pass, the read-back ran against UAT (OPP-2610-00268 read into K7D-00030), both sides clicked on localhost |
 | M6 | Collateral library (§6) | **built 2026-10-23** (session 12): the two collections, the library and item pages, the download route with the rule and Range support, the K7 ledger, the cap as a setting; tests pass, both sides clicked on localhost |
-| M7 | Schemes and eligibility (§9) | **next** |
+| M7 | Schemes and eligibility (§9) | **built 2026-10-23** (session 13): the four collections, the partner pages (listing, scheme, Check eligibility), the K7 ledger, sheet and result sheet, the run, the Finance CSV; tests pass; both sides clicked end to end on localhost and the tunnel host, including a phone width |
 | M8 | Notifications, bell, editable templates, approval SLA, reporting, exports (§10 and the gaps) | not started |
 | M9 | Hardening and staging: non-functional requirements, tests, go-live gate → **launch 1 (no LMS)** | not started |
 | M10 | Training (§4): tracks, courses, modules, video progress, tests, attempts, results, admin | not started (last phase) |
@@ -246,10 +246,11 @@ Tick as done; dates in the session log.
 - [x] Library pages with search and filters; signed-in download route; limit raised to 200 MB for this collection; storage path: `/partners/portal/collateral` (by product, then category; search, product, category, file type), the item sheet, `…/[id]/download` (the rule again, one audit row per download, Range requests honoured, `?inline=1`), the K7 ledger `/partners/portal/k7/collateral` with the rule in words and the download tally; Payload's one global limit is now 200 MB with `maxUpload` keeping Media, report files and deal files at their old caps; the collateral cap is `partner-settings.collateral.maxMb` (200 at most, on the K7 settings page); files under `PARTNER_UPLOAD_DIR` (default `uploads/collateral`)
 - Not in M6: notifications for new collateral (M8's templates), the storage adapter (staging), tiers (decision 7)
 
-### M7 — schemes and eligibility (§9)
-- [ ] Scheme collection with slabs; listing by state and partner eligibility; registration with terms; approval or auto
-- [ ] Progress on running schemes from the deals' CRM snapshots (provisional)
-- [ ] Eligibility run after close; Scheme Admin review with adjustments, publish; partner page with gap; dispute window; payout tracking; Finance export CSV
+### M7 — schemes and eligibility (§9) (built 2026-10-23)
+- [x] `partner-schemes` (edited in `/admin` by marketing editors: name, description, terms, dates, registration deadline, types, regions, products, PDF in `partner-scheme-files`, approvalRequired, disputeDays, slabs[], the `results` group the desk writes) with the phase from the dates (open · starts soon · running · closed); the partner listing in three groups by type and region; registration with the terms accepted by a Partner Admin (`partner-scheme-registrations`), automatic or pending K7's decision on the K7 sheet
+- [x] Progress on a running scheme from the won deals' snapshots (`progressFor`, provisional, the synced line, the progress line against the slabs)
+- [x] `partner-eligibility`: the run (`runEligibility`, the desk button and `POST /api/partners/schemes/run` with `CRON_SECRET` for closed schemes without results), the Scheme Admin's adjustment with a reason, publish (partners told, the dispute window from the settings or the scheme), the partner's Check eligibility page with the gap and the deals counted, the dispute and its resolution, the payout state with reference, the Finance CSV
+- [x] Clicked in Chrome on both sides (session 13): register, progress, compute, adjust twice, publish, the partner's result, dispute and resolution, payout, the CSV through the route, both sides at 390px
 
 ### M8 — notifications, templates, SLA, reporting (§10 and the gaps)
 - [ ] Editable templates per event, bell page, digest rules; approval SLA hours in settings and breach notices to approver and manager
@@ -305,8 +306,8 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
 | DASH-01 … 05, 08, 11 | M5 | built 2026-10-23 (DASH-05: the interval is `crm.syncMinutes`, default 60, the scheduler calls `/api/partners/sync`; DASH-11: one audit row per changed read, the CRM's figures shown, the registration kept; one real run against UAT 2026-10-23) |
 | DASH-10 | — | deferred (fresh start, decision 2) |
 | MKT-01 … 04 | M6 | built 2026-10-23 (MKT-01: product → category; MKT-02: the eight types, the cap a setting ≤ 200 MB, Payload refuses malformed PDFs and scripted SVGs; MKT-03: type, certification, country, region, ANDed; MKT-04: upload, replace as a new version, tag, retire in `/admin`) |
-| SCH-01 … 05 | M7 | — |
-| ELG-01 … 07 | M7 | — |
+| SCH-01 … 05 | M7 | built 2026-10-23 (SCH-01: the admin collection with slabs and the PDF; SCH-02: three groups, type and region, published only; SCH-03: the Partner Admin accepts the terms, name and time stored; SCH-04: per-scheme switch; SCH-05: provisional progress from the snapshots) |
+| ELG-01 … 07 | M7 | built 2026-10-23 (ELG-01: won in the CRM, closed inside the dates, on a named product, at the order value; ELG-02: adjust with reason, publish; ELG-03/04: the page with the slab, the benefit, the gap, the deals; ELG-05: window = setting or the scheme's days; ELG-06: pending · processed · paid with reference; ELG-07: CSV) |
 | NTF-01 | M1 (spine), M8 (templates, SLA) | M1 done (`notify()`, the bell, email through the allowlist); M2 sends the application events (staff bell + mail, applicant mail, the invitation); M4 the deal events (submitted, resubmitted, decided, amended, extension asked and decided, withdrawn, expired, protection ending) |
 | non-functional (none written) | M8 | — |
 | TRN-01 … 06, 11, 12, 13, 14 | M10 | — (last phase) |
@@ -560,3 +561,35 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
   strip stacks, the K7 ledger scrolls, the settings field stacks; the portal header's Dark | Light group overflowed the bar under 520px (a
   section 09 rule since M1, the menu already carries the theme), so it now hides there (`portal.css`, SupportParts README, CHANGELOG).
   Nothing committed (Navin commits). **Next:** M7, schemes and eligibility (§9); §7's author questions still open.
+
+- **Session 13 (2026-10-23, Claude Code): M7 built, schemes and eligibility.** Four collections: `partner-schemes` (the catalogue the Scheme Admin writes in `/admin`
+  with the Payload marketing-editor role: terms, dates, the registration deadline, types, regions, products, `approvalRequired`, `disputeDays`, slabs threshold → benefit →
+  amount, a PDF in `partner-scheme-files` served only through the portal, and a `results` group the desk writes), `partner-scheme-registrations` and `partner-eligibility`
+  (portal-written: the deals counted, achieved, the adjustment, final, eligible, slab, target, gap, the dispute, the payout). `schemes-model.ts` (pure: the phase from the dates,
+  `appliesTo` by type and region, `registerBlocked`, `countedDeal` = won in the CRM + actual close date inside the window + a named product + the dashboard's order value,
+  `standing` against the slabs with the gap to the target or to the next slab, `finalValue`, `resultStatus` (review until published and while a dispute is open), the dispute
+  window, `financeCsv`) and `schemes.ts` (reads for both audiences through `me.scope`, `registerForScheme`, `decideRegistration`, `progressOf`, `runEligibility` per approved
+  registration with recomputation keeping adjustments, `runDueSchemes` for the cron route, `adjustResult`, `publishResults`, `raiseDispute`, `resolveDispute`, `setPayout`,
+  `financeRows`, the counters). Pages: `/partners/portal/schemes` (three filed ledgers), `…/[id]` (slabs, terms, the registration box, the progress line and the deals counted
+  while running), `…/[id]/eligibility` (FR-ELG-03/04, the dispute form, the payout), `…/[id]/attachment`; K7: `/partners/portal/k7/schemes` (counters, views, the ledger with
+  the results' state, *Compute what is due*), `…/[id]` (registrations to decide in the pending box, the results ledger, compute and publish on the decision panel, the CSV
+  link), `…/[id]/results/[partnerId]` (the deals counted, adjust, resolve the dispute, the payout), `…/[id]/export.csv`, `…/[id]/attachment`; `POST /api/partners/schemes/run`.
+  The setting `schemes.disputeDays` (14) in the global, the model and the K7 settings page. Section 10 P22–P24 (`partner.css`, `PartnerParts` README, CHANGELOG,
+  `design-system.json`). `pnpm partner:seed-dev … --schemes` makes three PP-TEST schemes (open, running with approval and registered, closed and registered). Tests:
+  `partner-schemes` (24 pure) and `partner-schemes-db` (3 against Postgres: listing and scope, registration with approval and progress, the run → adjust → rerun → publish →
+  dispute → payout → Finance rows). Verified: `pnpm generate:types`, `npx tsc --noEmit` clean, `pnpm lint` 0 errors, `pnpm test:int` with `PARTNER_DB_TESTS=1` 21 files /
+  207 tests passing. **Clicked in Chrome:** the partner side on localhost as pp-test@k7computing.com (the listing's three groups, the open scheme registered through the
+  terms box with the flash and the registration facts, the running scheme's provisional progress line and deals counted, the closed scheme's Check eligibility page saying
+  under review); the K7 side on the tunnel host through the probe session (the ledger with the counters, the closed scheme's sheet, *Compute the results* → 1 organisation
+  eligible at ₹7,00,000, the result sheet, an adjustment of −3,00,000 making it not eligible with the gap, then −1,00,000 replacing it, the record showing both). Two things
+  the browser caught, fixed: the filed ledger's tab overlapped the heading or paragraph before it (`.phome .counted` margin, since `.phome .ledger` resets margins;
+  `.sch-lede`), and at a phone width the listing's first tab met the head's hint (`.sch-list` margin). For the check two PP-TEST deals got a won snapshot by a throwaway
+  script: K7D-00030 (the real OPP-2610-00268 row: won 2026-08-24, ₹7,00,000) and K7D-86083; the next CRM read-back puts K7D-00030 back as the CRM has it. **Clicked after
+  the session resumed** (the usage limit had interrupted it; an old Claude shell from two days earlier was ended first): publish behind the confirm (the flash, the strip
+  reading *Published*, the results ledger's payout column), the Finance CSV fetched through the route from the K7 session (header row and the PP-TEST row with GSTIN, PAN,
+  admin email, the adjustment and its reason), the payout recorded as processed with a reference and a note (refused without one in the test), the partner signed in again
+  on localhost through the code door and read the published result (Eligible, ₹6,00,000, slab 1, the payout Processed), raised a dispute (the status fell to Under review on
+  both sides), K7 resolved it on the result sheet (the answer and the record on both sides), the unauthenticated routes (export, both attachments → the door; the cron route
+  401 without the secret, `{"schemes":[],"errors":[]}` with it). A phone width through 390px frames on both sides: the partner listing's ledgers scroll in their wrap, the
+  progress and the result stack, the K7 counters, views and ledgers stack and scroll. Not clicked: the attachment routes with a real PDF (none seeded; the collateral test
+  proves the upload path). Nothing committed (Navin commits). **Next:** M8 (notifications, templates, SLA, reporting); §7's author questions still open.

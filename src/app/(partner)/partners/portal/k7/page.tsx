@@ -10,19 +10,20 @@ import { owedOutboxCount } from '@/lib/partner/mirror'
 import { unreadCount } from '@/lib/partner/notify'
 import { orgCounts } from '@/lib/partner/organisation'
 import { applicationCounts } from '@/lib/partner/registration'
+import { schemeCounts } from '@/lib/partner/schemes'
 import { requireK7 } from '@/lib/partner/session'
 import { STAFF_ROLE_LABEL, getPartnerSettings, type StaffRole } from '@/lib/partner/settings'
 
 export const metadata: Metadata = { title: 'Partner desk' }
 
 /* The K7 side's home (02-build-plan.md §4, /partners/portal/k7): who you are here, the roles you hold and what each opens. The
-   queues arrive with their milestones (applications and settings M2, partners M3, deals M4, schemes M7, reports M8). */
+   queues arrive with their milestones (applications and settings M2, partners M3, deals M4, collateral M6, schemes M7, reports M8). */
 const OPENS: Record<StaffRole, string> = {
   channelManager: 'applications, every partner organisation, waivers and suspensions',
   dealDeskApprover: 'registered deals, conflicts, decisions and extensions',
   trainingAdmin: 'courses, tests and question banks (last phase)',
   marketingAdmin: 'the collateral library (edited in the Payload admin, read here) and schemes',
-  schemeAdmin: 'scheme registrations, eligibility runs and payouts',
+  schemeAdmin: 'scheme registrations, the eligibility run, adjustments and publication, disputes, payouts and the Finance export',
 }
 
 export default async function K7HomePage() {
@@ -31,10 +32,11 @@ export default async function K7HomePage() {
   const cm = me.roles.includes('channelManager')
   const dda = me.roles.includes('dealDeskApprover')
   const mkt = me.roles.includes('marketingAdmin')
-  const [unread, counts, owed, orgs, deals, library] = await Promise.all([unreadCount({ kind: 'staff', roles: me.roles }), cm ? applicationCounts() : null, cm || dda ? owedOutboxCount() : 0, cm ? orgCounts() : null, dda ? dealCounts() : null, mkt ? collateralCounts() : null])
+  const sch = me.roles.includes('schemeAdmin')
+  const [unread, counts, owed, orgs, deals, library, schemes] = await Promise.all([unreadCount({ kind: 'staff', roles: me.roles }), cm ? applicationCounts() : null, cm || dda ? owedOutboxCount() : 0, cm ? orgCounts() : null, dda ? dealCounts() : null, mkt ? collateralCounts() : null, sch ? schemeCounts() : null])
   return (
     <>
-    <K7Nav active="home" roles={me.roles} counts={{ applications: counts?.submitted, partners: orgs?.edits, deals: deals?.open, collateral: library?.withoutFile }} />
+    <K7Nav active="home" roles={me.roles} counts={{ applications: counts?.submitted, partners: orgs?.edits, deals: deals?.open, collateral: library?.withoutFile, schemes: schemes ? schemes.pending + schemes.due + schemes.disputes : undefined }} />
     <section className="sheet ws g-paper">
       <div className="ws-head">
         <div className="ws-head-main">
@@ -52,6 +54,7 @@ export default async function K7HomePage() {
           ...(orgs ? [{ label: 'Partners', value: <Link href="/partners/portal/k7/partners">{String(orgs.approved).padStart(2, '0')} approved{orgs.edits ? ` · ${String(orgs.edits).padStart(2, '0')} edits waiting` : ''}</Link> }] : []),
           ...(deals ? [{ label: 'Deals', value: <Link href="/partners/portal/k7/deals">{String(deals.submitted).padStart(2, '0')} new · {String(deals.extensionRequested).padStart(2, '0')} extensions · {String(deals.approved).padStart(2, '0')} protected</Link> }] : []),
           ...(library ? [{ label: 'Collateral', value: <Link href="/partners/portal/k7/collateral">{String(library.published).padStart(2, '0')} published{library.withoutFile ? ` · ${String(library.withoutFile).padStart(2, '0')} without a file` : ''} · {String(library.downloads30).padStart(2, '0')} downloads in 30 days</Link> }] : []),
+          ...(schemes ? [{ label: 'Schemes', value: <Link href="/partners/portal/k7/schemes">{String(schemes.open + schemes.running).padStart(2, '0')} live{schemes.pending ? ` · ${String(schemes.pending).padStart(2, '0')} registrations waiting` : ''}{schemes.due ? ` · ${String(schemes.due).padStart(2, '0')} results due` : ''}{schemes.disputes ? ` · ${String(schemes.disputes).padStart(2, '0')} disputes` : ''}</Link> }] : []),
         ]}
       />
       <div className="phome">

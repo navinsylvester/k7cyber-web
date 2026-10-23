@@ -63,6 +63,7 @@ export async function savePartnerSettingsAction(form: FormData): Promise<void> {
     },
     notify: { emailEnabled: on(form, 'notify_emailEnabled'), mailFrom: s(form, 'notify_mailFrom') || cur.notify.mailFrom, bellRetentionDays: n(form, 'notify_bellRetentionDays', cur.notify.bellRetentionDays, 7) },
     collateral: { maxMb: Math.min(n(form, 'collateral_maxMb', cur.collateral.maxMb, 1), COLLATERAL_MAX_MB_CEILING) },
+    schemes: { disputeDays: n(form, 'schemes_disputeDays', cur.schemes.disputeDays, 0) },
   }
   try {
     await savePartnerSettings(next)

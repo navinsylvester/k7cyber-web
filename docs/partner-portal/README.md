@@ -1,7 +1,6 @@
 # Partner portal — planning handoff
 
-Status 2026-10-22 (later the same day): **M1, the skeleton, is built** (`04-portal-guide.md`); M2 (registration and onboarding)
-is next. Earlier that day: requirements captured and the CRM explored. The source document
+Status 2026-10-23: **M1–M7 are built and clicked** (`04-portal-guide.md`); M8 (notifications, templates, SLA, reporting) is next. Earlier that day: requirements captured and the CRM explored. The source document
 (Vijaichristopher, 2026-10-06) was copied into this folder and converted; the gaps it leaves are listed;
 the sales side of Dynamics was explored on UAT and the field mappings written; the build is planned in
 milestones so that work can continue across many sessions. **The learning side (training, certificates)
