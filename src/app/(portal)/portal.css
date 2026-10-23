@@ -15,7 +15,7 @@
 .who:hover { color: inherit; }
 /* Phones: the avatar and Sign in/out stay; the name, the theme toggle and the header call to action go into the Menu list. */
 @container (max-width: 760px) { .who-name, .hdr-cta { display: none; } }
-@container (max-width: 520px) { .devbar span:last-child { display: none; } }
+@container (max-width: 520px) { .devbar span:last-child { display: none; } .site-header .hdr-tools > .seg { display: none; } } /* a phone keeps the bell, the avatar, Sign out and Menu; the theme choice is in the menu */
 
 /* Workspace strip: sections as research tabs on the panel ground, with the quick search on the right. */
 .wsbar { border-bottom: 1px solid var(--ln); }

@@ -1,5 +1,5 @@
 # SupportParts
-The support-portal parts from section 09 (reference CSS: `src/app/(portal)/portal.css`, the way section 08 lives in `research.css`). Two audiences share one language: customers get fewer, larger things on the sheet rhythm of the site; agents get the ledger.
+The support-portal parts from section 09 (reference CSS: `src/app/(portal)/portal.css`, the way section 08 lives in `research.css`). Two audiences share one language: customers get fewer, larger things on the sheet rhythm of the site; agents get the ledger. The portal header is SiteHeader's shape with the account on the right (the bell, the avatar, *Sign out*); under 1040px the links move into the menu, under 760px the name goes, and under 520px the bar's Dark | Light group goes too (the menu carries the theme), so a phone keeps the mark, the bell, the avatar, *Sign out* and *Menu* on one line.
 
 **S1 Case number (`tid`)** the identifier reads like the Labs identifier: `CS-` dim, the unique part first and full weight, mono. `tid-display` is the large form on a case head.
 

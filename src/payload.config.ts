@@ -11,6 +11,8 @@ import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
 import { PartnerApplications } from './collections/partner/PartnerApplications'
 import { PartnerAudit } from './collections/partner/PartnerAudit'
+import { PartnerCollateral } from './collections/partner/PartnerCollateral'
+import { PartnerCollateralFiles } from './collections/partner/PartnerCollateralFiles'
 import { PartnerCounters } from './collections/partner/PartnerCounters'
 import { PartnerDealFiles } from './collections/partner/PartnerDealFiles'
 import { PartnerDeals } from './collections/partner/PartnerDeals'
@@ -91,8 +93,10 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, PartnerOrgs, PartnerUsers, PartnerApplications, PartnerAudit, PartnerNotifications, PartnerOutbox, PartnerCounters, PartnerProducts, PartnerDeals, PartnerDealFiles, PartnerSyncRuns, Media, Users],
-  upload: { limits: { fileSize: 30 * 1024 * 1024 } },
+  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, PartnerOrgs, PartnerUsers, PartnerApplications, PartnerAudit, PartnerNotifications, PartnerOutbox, PartnerCounters, PartnerProducts, PartnerDeals, PartnerDealFiles, PartnerSyncRuns, PartnerCollateral, PartnerCollateralFiles, Media, Users],
+  // One limit for every upload (Payload's multipart parser reads only this): the partner collateral's 200 MB (FR-MKT-02, decision 13).
+  // The other upload collections keep their own smaller caps through `maxUpload` in src/collections/uploadLimit.ts.
+  upload: { limits: { fileSize: 200 * 1024 * 1024 }, requestSizeLimit: 201 * 1024 * 1024 },
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, SupportSettings, ProductSettings, PartnerSettings],
   plugins,

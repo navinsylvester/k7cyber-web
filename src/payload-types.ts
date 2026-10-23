@@ -96,6 +96,8 @@ export interface Config {
     'partner-deals': PartnerDeal;
     'partner-deal-files': PartnerDealFile;
     'partner-sync-runs': PartnerSyncRun;
+    'partner-collateral': PartnerCollateral;
+    'partner-collateral-files': PartnerCollateralFile;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -109,6 +111,9 @@ export interface Config {
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {
+    'partner-collateral': {
+      files: 'partner-collateral-files';
+    };
     'payload-folders': {
       documentsAndFolders: 'payload-folders' | 'media';
     };
@@ -143,6 +148,8 @@ export interface Config {
     'partner-deals': PartnerDealsSelect<false> | PartnerDealsSelect<true>;
     'partner-deal-files': PartnerDealFilesSelect<false> | PartnerDealFilesSelect<true>;
     'partner-sync-runs': PartnerSyncRunsSelect<false> | PartnerSyncRunsSelect<true>;
+    'partner-collateral': PartnerCollateralSelect<false> | PartnerCollateralSelect<true>;
+    'partner-collateral-files': PartnerCollateralFilesSelect<false> | PartnerCollateralFilesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -3024,6 +3031,101 @@ export interface PartnerSyncRun {
   createdAt: string;
 }
 /**
+ * What partners download at /partners/portal/collateral. Create the item, then add its file under Files (each upload is a version; the newest is served). Published items with a file show to the partners the visibility rule allows.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-collateral".
+ */
+export interface PartnerCollateral {
+  id: number;
+  title: string;
+  /**
+   * Only Published shows. Retired keeps the files and the record.
+   */
+  status: 'draft' | 'published' | 'retired';
+  /**
+   * Within its category; lower first.
+   */
+  order?: number | null;
+  /**
+   * Blank: K7 and the programme (brand, programme guides).
+   */
+  product?: (number | null) | PartnerProduct;
+  category: 'brochure' | 'datasheet' | 'presentation' | 'caseStudy' | 'video' | 'brand' | 'social' | 'email' | 'other';
+  /**
+   * One or two lines under the title: what it is, who it is for, when to use it.
+   */
+  description?: string | null;
+  /**
+   * Free words the search also matches (e.g. SMB, healthcare, Tamil).
+   */
+  tags?: string[] | null;
+  /**
+   * FR-MKT-03. Empty lists mean every partner; the rules that are set must all hold.
+   */
+  visibility?: {
+    /**
+     * Partner types that see it. Empty: all.
+     */
+    types?: ('distributor' | 'integrationPartner' | 'var' | 'msp')[] | null;
+    /**
+     * Certified organisations only (nobody until the LMS issues certificates, M11).
+     */
+    certified?: boolean | null;
+    /**
+     * Country names as the organisation records them (India, Sri Lanka). Empty: all.
+     */
+    countries?: string[] | null;
+    /**
+     * K7 region codes from the settings (N, S, WCE). Empty: all.
+     */
+    regions?: string[] | null;
+  };
+  /**
+   * The versions, newest first. Add one to replace what partners download; the earlier ones stay for the record.
+   */
+  files?: {
+    docs?: (number | PartnerCollateralFile)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * Set when the state first becomes Published.
+   */
+  publishedAt?: string | null;
+  retiredAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * One row per version of a collateral item; the newest is what partners download. PDF, PPT/PPTX, DOC/DOCX, XLS/XLSX, JPG/PNG, SVG, MP4 or ZIP, up to the size the portal settings allow (200 MB at most).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-collateral-files".
+ */
+export interface PartnerCollateralFile {
+  id: number;
+  item: number | PartnerCollateral;
+  /**
+   * Blank: the previous version bumped (1, 2, 3 or 2.1 → 2.2).
+   */
+  version?: string | null;
+  uploadedBy?: string | null;
+  /**
+   * What changed in this version; partners read it on the item.
+   */
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -3328,6 +3430,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'partner-sync-runs';
         value: number | PartnerSyncRun;
+      } | null)
+    | ({
+        relationTo: 'partner-collateral';
+        value: number | PartnerCollateral;
+      } | null)
+    | ({
+        relationTo: 'partner-collateral-files';
+        value: number | PartnerCollateralFile;
       } | null)
     | ({
         relationTo: 'media';
@@ -4883,6 +4993,51 @@ export interface PartnerSyncRunsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-collateral_select".
+ */
+export interface PartnerCollateralSelect<T extends boolean = true> {
+  title?: T;
+  status?: T;
+  order?: T;
+  product?: T;
+  category?: T;
+  description?: T;
+  tags?: T;
+  visibility?:
+    | T
+    | {
+        types?: T;
+        certified?: T;
+        countries?: T;
+        regions?: T;
+      };
+  files?: T;
+  publishedAt?: T;
+  retiredAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-collateral-files_select".
+ */
+export interface PartnerCollateralFilesSelect<T extends boolean = true> {
+  item?: T;
+  version?: T;
+  uploadedBy?: T;
+  note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -5720,6 +5875,15 @@ export interface PartnerSetting {
     conflictCheckCrm?: boolean | null;
   };
   /**
+   * The collateral library (01-requirements.md §6). Items and files are edited in Partner portal → Collateral; this is the rule.
+   */
+  collateral?: {
+    /**
+     * FR-MKT-02: the largest file a Marketing Admin can upload, in MB. The server accepts 200 at most.
+     */
+    maxMb?: number | null;
+  };
+  /**
    * What the outbox writes to Dynamics on approval (decisions 2, 10, 19). Off: the jobs queue as pending and nothing reaches the CRM. UAT only; production is read-only in code.
    */
   crm?: {
@@ -6052,6 +6216,11 @@ export interface PartnerSettingsSelect<T extends boolean = true> {
         endingNoticeDays?: T;
         requireCertificate?: T;
         conflictCheckCrm?: T;
+      };
+  collateral?:
+    | T
+    | {
+        maxMb?: T;
       };
   crm?:
     | T

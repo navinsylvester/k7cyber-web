@@ -4,6 +4,7 @@ import React from 'react'
 
 import { NotificationList, OrgStateTag, Pid, RoleTags, Strip, TypeTag } from '@/components/partner/Parts'
 import { orgAudit } from '@/lib/partner/audit'
+import { collateralCountFor, PARTNER_COLLATERAL } from '@/lib/partner/collateral'
 import { dealCounts, PARTNER_DASHBOARD, PARTNER_DEALS, registerGate } from '@/lib/partner/deals'
 import { listNotifications } from '@/lib/partner/notify'
 import { requirePartner } from '@/lib/partner/session'
@@ -13,11 +14,11 @@ import { dmy } from '@/lib/support/format'
 export const metadata: Metadata = { title: 'Home' }
 
 /* The partner's home (02-build-plan.md §4): the status strip first (who you are here, the organisation's state), then the latest
-   notifications and the organisation's facts. Deals and the dashboard are here; collateral and schemes join the page with their milestones. Every read
+   notifications and the organisation's facts. Deals, the dashboard and the collateral library are here; schemes join the page with M7. Every read
    carries `me.scope`. */
 export default async function PartnerHomePage() {
   const me = await requirePartner('/partners/portal')
-  const [settings, notifications, trail, deals, blocked] = await Promise.all([getPartnerSettings(), listNotifications({ kind: 'user', userId: me.user.id, scope: me.scope }, 5), orgAudit(me.scope, 5), dealCounts(me.scope), registerGate(me)])
+  const [settings, notifications, trail, deals, blocked, collateral] = await Promise.all([getPartnerSettings(), listNotifications({ kind: 'user', userId: me.user.id, scope: me.scope }, 5), orgAudit(me.scope, 5), dealCounts(me.scope), registerGate(me), collateralCountFor(me)])
   const regions = settings.regions.filter((r) => me.org.regions.includes(r.code)).map((r) => r.name)
   const unread = notifications.filter((n) => !n.readAt).length
   return (
@@ -86,6 +87,17 @@ export default async function PartnerHomePage() {
               {' · '}
               <Link className="link-u" href={PARTNER_DASHBOARD}>
                 Dashboard
+              </Link>
+            </p>
+          </div>
+          <div>
+            <h2>Collateral</h2>
+            <p className="muted" style={{ margin: 0, fontSize: 15 }}>
+              {collateral === 0 ? 'Nothing published for your organisation yet.' : `${collateral} item${collateral === 1 ? '' : 's'} of sales and brand material, always the current version.`}
+            </p>
+            <p className="more">
+              <Link className="link-u" href={PARTNER_COLLATERAL}>
+                The library →
               </Link>
             </p>
           </div>

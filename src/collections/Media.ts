@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url'
 
 import { anyone } from '../access/anyone'
 import { authenticated } from '../access/authenticated'
+import { maxUpload, MB } from './uploadLimit'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -23,6 +24,8 @@ export const Media: CollectionConfig = {
     read: anyone,
     update: authenticated,
   },
+  // The site's media keeps the 30 MB it always had; the config's global limit is the partner collateral's 200 MB.
+  hooks: { beforeValidate: [maxUpload(30 * MB)] },
   fields: [
     {
       name: 'alt',
