@@ -5,10 +5,11 @@ import { redirect } from 'next/navigation'
 import { addDealNote, amendDeal, decideDeal, decideExtension, filesFrom, findDealByNumber, K7_DEALS, sweepDeals, type DealChanges } from '@/lib/partner/deals'
 import { drainOutbox, loadJob, runJob } from '@/lib/partner/mirror'
 import { requireK7Role } from '@/lib/partner/session'
+import { syncDeals } from '@/lib/partner/sync'
 import type { DealDecision } from '@/lib/partner/status'
 
 /* The Deal Desk Approver's actions (FR-DEAL-05, FR-DEAL-07, FR-DEAL-09): decide a submitted deal, decide an extension, amend an
-   approved deal, add a note, run the CRM job, run the sweep. The role and the state are re-checked on the server; the library
+   approved deal, add a note, run the CRM job, run the sweep, read the opportunities back for the dashboard (M5). The role and the state are re-checked on the server; the library
    writes the trail and tells the partner. */
 
 const ROLES = ['dealDeskApprover'] as const
@@ -87,4 +88,14 @@ export async function sweepDealsAction(): Promise<void> {
   const r = await sweepDeals()
   const line = `Sweep: ${r.expired.length} expired, ${r.noticed.length} ending notice${r.noticed.length === 1 ? '' : 's'}${r.errors.length ? `, ${r.errors.length} error(s)` : ''}.`
   redirect(`${K7_DEALS}?ok=${encodeURIComponent(line)}`)
+}
+
+/** The dashboard read-back by hand (FR-DASH-05), forced past the interval; back to the log, or to the sheet it was pressed on. */
+export async function syncNowAction(form: FormData): Promise<void> {
+  const dealId = f(form, 'dealId')
+  const me = await requireK7Role([...ROLES], `${K7_DEALS}/sync`)
+  const r = await syncDeals({ trigger: 'manual', actor: me.actor, force: true })
+  const line = r.errors.length && !r.fetched ? `The CRM could not be read: ${r.errors[0]}` : `Read back ${r.scanned} deal${r.scanned === 1 ? '' : 's'}: ${r.changed} changed, ${r.unchanged} unchanged${r.missing ? `, ${r.missing} not found in the CRM` : ''}${r.errors.length ? `, ${r.errors.length} error(s)` : ''}.`
+  if (dealId) back(dealId, r.errors.length && !r.fetched ? { error: line } : { ok: line })
+  redirect(`${K7_DEALS}/sync?${r.errors.length && !r.fetched ? 'error' : 'ok'}=${encodeURIComponent(line)}`)
 }

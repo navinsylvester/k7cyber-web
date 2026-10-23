@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
+import { CrmFacts } from '@/components/partner/Dashboard'
 import { DealFacts, DealStateTag, DealThread, Did, Protection } from '@/components/partner/Deals'
 import { Field, Flash, Strip } from '@/components/partner/Parts'
 import { Crumbs } from '@/components/support/Parts'
@@ -81,6 +82,17 @@ export default async function DealPage({ params, searchParams }: { params: Promi
           )}
         </div>
         <aside className="ws-side">
+          {deal.crm.snapshot.syncedAt && (
+            <div>
+              <h2>In K7’s CRM</h2>
+              <CrmFacts deal={deal} />
+              <p className="more">
+                <Link className="link-u" href="/partners/portal/dashboard">
+                  The dashboard →
+                </Link>
+              </p>
+            </div>
+          )}
           {seller && canRequestExtension(deal) && (
             <div className="decide">
               <h2>Ask for an extension</h2>

@@ -13,7 +13,7 @@ import { requireK7Role } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
 import { dmy, relative } from '@/lib/support/format'
 
-import { runDealOutboxAction, sweepDealsAction } from './actions'
+import { runDealOutboxAction, sweepDealsAction, syncNowAction } from './actions'
 
 export const metadata: Metadata = { title: 'Deals' }
 
@@ -65,6 +65,14 @@ export default async function K7DealsPage({ searchParams }: { searchParams: Prom
                 </button>
               </form>
             )}
+            <form action={syncNowAction}>
+              <button className="btn btn-line btn-sm" type="submit" title="Read the portal's opportunities back from Dynamics for the partner dashboards now">
+                Sync the CRM
+              </button>
+            </form>
+            <Link className="link-u label" href={`${K7_DEALS}/sync`}>
+              Reconciliation log →
+            </Link>
           </div>
         </div>
         {sp.ok && <Flash>{sp.ok}</Flash>}

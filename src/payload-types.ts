@@ -95,6 +95,7 @@ export interface Config {
     'partner-products': PartnerProduct;
     'partner-deals': PartnerDeal;
     'partner-deal-files': PartnerDealFile;
+    'partner-sync-runs': PartnerSyncRun;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -141,6 +142,7 @@ export interface Config {
     'partner-products': PartnerProductsSelect<false> | PartnerProductsSelect<true>;
     'partner-deals': PartnerDealsSelect<false> | PartnerDealsSelect<true>;
     'partner-deal-files': PartnerDealFilesSelect<false> | PartnerDealFilesSelect<true>;
+    'partner-sync-runs': PartnerSyncRunsSelect<false> | PartnerSyncRunsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -2881,7 +2883,7 @@ export interface PartnerDeal {
     | boolean
     | null;
   /**
-   * Filled by the outbox when the opportunity job runs (03-dynamics-exploration.md §7); the snapshot arrives with M5.
+   * Filled by the outbox when the opportunity job runs (03-dynamics-exploration.md §7); the snapshot by the sync (§8, M5).
    */
   crm?: {
     opportunityId?: string | null;
@@ -2895,6 +2897,50 @@ export interface PartnerDeal {
      * The annotation that carries the registration; a retry does not write it twice.
      */
     noteId?: string | null;
+    /**
+     * What Dynamics says about the opportunity, read back by src/lib/partner/sync.ts on the schedule (FR-DASH-05; 03-dynamics-exploration.md §8). The dashboard reads this and nothing live; on stage or value the CRM wins (FR-DASH-11) and the difference is in the audit.
+     */
+    snapshot?: {
+      syncedAt?: string | null;
+      modifiedOn?: string | null;
+      /**
+       * The opportunity’s topic as the CRM names it.
+       */
+      name?: string | null;
+      /**
+       * 0 Open · 1 Won · 2 Lost.
+       */
+      statecode?: number | null;
+      /**
+       * The status reason; 2 = On Hold while open.
+       */
+      statuscode?: number | null;
+      statusLabel?: string | null;
+      /**
+       * alletec_stage, 260760000 Pre Sales … 260760005 Closure.
+       */
+      stage?: number | null;
+      stageLabel?: string | null;
+      /**
+       * The business process flow’s step.
+       */
+      stepName?: string | null;
+      estimatedValue?: number | null;
+      /**
+       * Set on win.
+       */
+      actualValue?: number | null;
+      /**
+       * alletec_nvoiceamount.
+       */
+      invoiceAmount?: number | null;
+      estimatedCloseDate?: string | null;
+      actualCloseDate?: string | null;
+      /**
+       * Why the last read-back could not fill this row (not found, refused); blank when it could.
+       */
+      error?: string | null;
+    };
   };
   updatedAt: string;
   createdAt: string;
@@ -2922,6 +2968,60 @@ export interface PartnerDealFile {
   filesize?: number | null;
   width?: number | null;
   height?: number | null;
+}
+/**
+ * The dashboard read-back from Dynamics, one row per run.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-sync-runs".
+ */
+export interface PartnerSyncRun {
+  id: number;
+  trigger: 'cron' | 'manual' | 'test';
+  /**
+   * Who pressed Sync now; blank for the scheduler.
+   */
+  actor?: string | null;
+  /**
+   * Off when the CRM could not be read at all.
+   */
+  ok?: boolean | null;
+  durationMs?: number | null;
+  /**
+   * Set when the run was for one organisation.
+   */
+  orgId?: string | null;
+  /**
+   * Deals with an opportunity id.
+   */
+  scanned?: number | null;
+  /**
+   * Rows the CRM returned.
+   */
+  fetched?: number | null;
+  /**
+   * Snapshots that differ from the last read.
+   */
+  changed?: number | null;
+  /**
+   * Opportunities the CRM no longer returns.
+   */
+  missing?: number | null;
+  errors?: number | null;
+  /**
+   * What the run would print: one line per changed, missing or failed deal, and the reason when the whole run failed.
+   */
+  lines?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3224,6 +3324,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'partner-deal-files';
         value: number | PartnerDealFile;
+      } | null)
+    | ({
+        relationTo: 'partner-sync-runs';
+        value: number | PartnerSyncRun;
       } | null)
     | ({
         relationTo: 'media';
@@ -4717,6 +4821,25 @@ export interface PartnerDealsSelect<T extends boolean = true> {
         customerAccountId?: T;
         customerContactId?: T;
         noteId?: T;
+        snapshot?:
+          | T
+          | {
+              syncedAt?: T;
+              modifiedOn?: T;
+              name?: T;
+              statecode?: T;
+              statuscode?: T;
+              statusLabel?: T;
+              stage?: T;
+              stageLabel?: T;
+              stepName?: T;
+              estimatedValue?: T;
+              actualValue?: T;
+              invoiceAmount?: T;
+              estimatedCloseDate?: T;
+              actualCloseDate?: T;
+              error?: T;
+            };
       };
   updatedAt?: T;
   createdAt?: T;
@@ -4738,6 +4861,25 @@ export interface PartnerDealFilesSelect<T extends boolean = true> {
   filesize?: T;
   width?: T;
   height?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-sync-runs_select".
+ */
+export interface PartnerSyncRunsSelect<T extends boolean = true> {
+  trigger?: T;
+  actor?: T;
+  ok?: T;
+  durationMs?: T;
+  orgId?: T;
+  scanned?: T;
+  fetched?: T;
+  changed?: T;
+  missing?: T;
+  errors?: T;
+  lines?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -5599,6 +5741,10 @@ export interface PartnerSetting {
      * Opportunity name; {customer} and {product} are replaced.
      */
     accountNamePattern?: string | null;
+    /**
+     * The dashboard read-back (FR-DASH-05): POST /api/partners/sync runs at most this often unless forced; the scheduler may call it more frequently. Default 60.
+     */
+    syncMinutes?: number | null;
   };
   notify?: {
     /**
@@ -5916,6 +6062,7 @@ export interface PartnerSettingsSelect<T extends boolean = true> {
         enquirySource?: T;
         productCategory?: T;
         accountNamePattern?: T;
+        syncMinutes?: T;
       };
   notify?:
     | T

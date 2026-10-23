@@ -35,7 +35,7 @@ export type PartnerSettings = {
   regions: { code: string; name: string }[]
   terms: { version: string; url: string }
   deals: { protectionDays: number; extensionDays: number; approvalSlaHours: number; endingNoticeDays: number; requireCertificate: boolean; conflictCheckCrm: boolean }
-  crm: { enabled: boolean; ownerRule: 'approver' | 'fixed'; ownerId: string; enquirySource: number; productCategory: number; accountNamePattern: string }
+  crm: { enabled: boolean; ownerRule: 'approver' | 'fixed'; ownerId: string; enquirySource: number; productCategory: number; accountNamePattern: string; syncMinutes: number }
   notify: { emailEnabled: boolean; mailFrom: string; bellRetentionDays: number }
 }
 
@@ -48,7 +48,7 @@ export const DEFAULT_PARTNER_SETTINGS: PartnerSettings = {
   regions: [],
   terms: { version: '2026-10', url: '' },
   deals: { protectionDays: 90, extensionDays: 90, approvalSlaHours: 48, endingNoticeDays: 14, requireCertificate: false, conflictCheckCrm: false },
-  crm: { enabled: false, ownerRule: 'approver', ownerId: '', enquirySource: 1, productCategory: 36, accountNamePattern: '{customer}-Fresh-{product}' },
+  crm: { enabled: false, ownerRule: 'approver', ownerId: '', enquirySource: 1, productCategory: 36, accountNamePattern: '{customer}-Fresh-{product}', syncMinutes: 60 },
   notify: { emailEnabled: true, mailFrom: 'K7 Partner Programme <partners@k7computing.com>', bellRetentionDays: 180 },
 }
 
@@ -97,6 +97,7 @@ export const normalisePartnerSettings = (g: Raw | null | undefined): PartnerSett
       enquirySource: num(crm.enquirySource, D.crm.enquirySource),
       productCategory: num(crm.productCategory, D.crm.productCategory),
       accountNamePattern: str(crm.accountNamePattern, D.crm.accountNamePattern) || D.crm.accountNamePattern,
+      syncMinutes: num(crm.syncMinutes, D.crm.syncMinutes, 5),
     },
     notify: {
       emailEnabled: bool(notify.emailEnabled, D.notify.emailEnabled),

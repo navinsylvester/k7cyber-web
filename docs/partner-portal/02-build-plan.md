@@ -1,4 +1,4 @@
-# Partner portal: the build plan (written 2026-10-22; M1 to M4 built the same day)
+# Partner portal: the build plan (written 2026-10-22; M1 to M4 built the same day, M5 on 2026-10-23)
 
 What has to be done to deliver `01-requirements.md`, in the order it should be done, with the
 decisions taken so far and a status that any session can pick up. Read `CLAUDE.md`,
@@ -42,8 +42,8 @@ not for its history.
 | M2 | Registration and onboarding (§3): public form, codes, review queue, approval → org, admin login, partner ID, CRM account | **done 2026-10-22**, clicked end to end on both sides and the CRM job run on UAT (`04-portal-guide.md` §3–5) |
 | M3 | Partner sign-in, organisation profile, users and roles (§2, FR-REG-07) | **done 2026-10-22**, clicked end to end on both sides on localhost (`04-portal-guide.md` §3–5, §7) |
 | M4 | Deal registration (§7): form, routing, CRM conflict check, approval desk, protection, extension, CRM push | **built 2026-10-22** (sessions 8–9), **clicked on both sides and the opportunity landed on UAT 2026-10-23** (session 10: OPP-2610-00268) |
-| M5 | Deal dashboard (§8): hourly CRM sync into a read model, cards, list, charts, reconciliation log | **next** |
-| M6 | Collateral library (§6) | not started |
+| M5 | Deal dashboard (§8): hourly CRM sync into a read model, cards, list, charts, reconciliation log | **built 2026-10-23** (session 11): tests pass, the read-back ran against UAT (OPP-2610-00268 read into K7D-00030), both sides clicked on localhost |
+| M6 | Collateral library (§6) | **next** |
 | M7 | Schemes and eligibility (§9) | not started |
 | M8 | Notifications, bell, editable templates, approval SLA, reporting, exports (§10 and the gaps) | not started |
 | M9 | Hardening and staging: non-functional requirements, tests, go-live gate → **launch 1 (no LMS)** | not started |
@@ -235,10 +235,11 @@ Tick as done; dates in the session log.
 - [x] Extension request and decision; expiry and the protection-ending notice by the sweep (`POST /api/partners/deals/sweep`, the button on the queue); withdraw; partner list with filters (status, product, date, value); edit rules of FR-DEAL-09 (partner edits after a request, K7 amends after approval, notes and files while live)
 - Not in M4: the CRM-side conflict check; the approval SLA notice (M8); editable mail templates (M8)
 
-### M5 — dashboard (§8)
-- [ ] `sync.ts`: the portal's own opportunities by stored id, in batches → the `crm` snapshot on each deal; difference rows in the audit, CRM wins
-- [ ] `POST /api/partners/sync` with `CRON_SECRET`; "Last updated"
-- [ ] Cards, ledger, period filter, charts (pipeline by stage, value by month, by product) on the design system's figures
+### M5 — dashboard (§8) (built 2026-10-23)
+- [x] `sync.ts`: the portal's own opportunities by stored id, in `or` filters of 25 → the `crm.snapshot` group on each deal (state, status reason, stage, step, values, dates, modifiedon, the `OPP-` number read back); one audit row per deal whose read changed (`deal.crm-read` first, then `deal.crm-changed` from → to, the registration's disagreements in the comment), CRM wins and the registration's fields stay; a missing opportunity keeps its values and carries the error; every run a `partner-sync-runs` row
+- [x] `POST /api/partners/sync` with `CRON_SECRET`, throttled by `partner-settings.crm.syncMinutes` (60) unless `{"force":true}`; "Last updated" from the newest run; *Sync the CRM* on the K7 queue and *Read back now* on the K7 sheet; the K7 reconciliation log at `/k7/deals/sync`
+- [x] Cards (FR-DASH-01), the FR-DASH-02 ledger with the outcome tag, the period on the registration date (month · quarter · financial year · 12 months · all), the three charts on section 09's S9 grid (pipeline by stage, value by month, value by product); the CRM facts on both deal sheets
+- Not in M5: CRM-only deals (FR-DASH-10, deferred by decision 2); the opportunity's product lines are not read back (the snapshot is the opportunity's own columns)
 
 ### M6 — collateral (§6)
 - [ ] Collection with product, category, versioning, tags, visibility rules; Marketing Admin edits in `/admin`
@@ -300,7 +301,7 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
 | REG-07 | M3 | done 2026-10-22 (legal name, GSTIN and PAN proposed → Channel Manager approves or declines; the CRM rename stays manual) |
 | DEAL-01 | M4 (org gate), M11 (certificate gate) | M4 done 2026-10-22 (the organisation and user gate; the certificate half is the switch, off until M11, with the waiver) |
 | DEAL-02 … 09 | M4 | done 2026-10-22 (DEAL-04: over portal deals, the CRM switch not built; DEAL-06: the opportunity job written, not yet run on UAT; DEAL-07: one extension, decision 15) |
-| DASH-01 … 05, 08, 11 | M5 | — |
+| DASH-01 … 05, 08, 11 | M5 | built 2026-10-23 (DASH-05: the interval is `crm.syncMinutes`, default 60, the scheduler calls `/api/partners/sync`; DASH-11: one audit row per changed read, the CRM's figures shown, the registration kept; one real run against UAT 2026-10-23) |
 | DASH-10 | — | deferred (fresh start, decision 2) |
 | MKT-01 … 04 | M6 | — |
 | SCH-01 … 05 | M7 | — |
@@ -453,6 +454,38 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
   queue, the conflicts box, approve with changes, the extension decision, amend, Run on the CRM job with the mirror on so the opportunity
   lands on UAT — the PP-TEST organisation needs its `account.create` job done first, or the job fails with "partner account not in CRM");
   then M5 (`sync.ts`, `POST /api/partners/sync`, the `crm.snapshot` group on `partner-deals`, the dashboard). §7's author questions still open.
+
+- **Session 11 (2026-10-23, Claude Code): M5 built, the deal dashboard.** The snapshot group `partner-deals.crm.snapshot` (syncedAt, modifiedOn,
+  name, statecode, statuscode + label, stage + label, stepName, estimated / actual / invoice value, the two close dates, error); the new
+  append-only collection `partner-sync-runs` (one row per read-back) and `partner-settings.crm.syncMinutes` (60; on the K7 settings page).
+  `dashboard-model.ts` (pure: the row → snapshot mapping on the CRM's formatted values with the §2 tables as fallback, the reconciliation
+  diff, the portal's disagreements, the outcome the partner reads, the period on the Indian financial year, the cards and the three charts,
+  ₹ short forms) and `sync.ts` (the portal's own opportunities by id in `or` filters of 25 as the service identity, GET only; the snapshot
+  and the `OPP-` number written onto the deal; `deal.crm-read` / `deal.crm-changed` audit rows from → to with the CRM winning and the
+  registration kept; missing rows keep their values and carry the error; a CRM that cannot be read is a failed run with nothing written;
+  the interval honoured unless forced). `POST /api/partners/sync` with `CRON_SECRET`. Pages: `/partners/portal/dashboard` (the synced line,
+  the period switch, the seven cards, pipeline by stage · value by month · value by product on section 09's S9 grid, the status views, the
+  FR-DASH-02 ledger with the CRM's estimate starred where it differs), `/partners/portal/k7/deals/sync` (the reconciliation log with Sync
+  now), *Sync the CRM* on the K7 queue, *Read back now* and the CRM facts on the K7 sheet, the CRM facts on the partner sheet, the Dashboard
+  link in the header and on the home. Section 10 P17–P19 (`partner.css`, `PartnerParts` README, CHANGELOG, `design-system.json`).
+  Tests: `partner-dashboard` (19 pure) and `partner-sync-db` (1 database run with the CRM stood in by a fetcher: first read, no change,
+  won, missing, unreadable CRM, the interval; scope held). Verified: `pnpm generate:types`, `npx tsc --noEmit` clean, `pnpm lint`
+  0 errors (14 pre-existing warnings), `pnpm test:int` with `PARTNER_DB_TESTS=1` 17 files / 156 tests passing (one schema-push race on
+  the new enum on the very first run, as in session 9; clean after). Two things the tests caught: Dataverse's `fv()` falls back to the raw
+  value, so the model reads the formatted-value annotation directly and falls back to its own tables; a date-only column comes back from
+  Postgres with a time, so `toSnapshot` keeps the day and a second read of the same row compares equal. **Run once against UAT** through
+  the dev server (`POST /api/partners/sync` with `{"force":true}`, the probe token as the service identity): K7D-00030 / OPP-2610-00268
+  read back in 2.4 s as Open · In Progress · Pre Sales · ₹12,00,000 · closing 2027-02-15, one `deal.crm-changed` row, run 19 in the
+  log. That run also showed the database test's one portal-wide run had touched the real local deal (marked it missing), so the test
+  now runs only for its own organisation. The stray row stays (audit row 258 on K7D-00030, `deal.crm-read` "First read-back" written by
+  the test at 05:16 UTC with the missing marker; row 293 at 05:18 is the real read): the session's classifier refused the SQL that would
+  have removed it, so it is Navin's to delete or to leave as the record of what happened. **Clicked on localhost in Chrome:** the partner side
+  as pp-test@k7computing.com (the dashboard: the synced line, the five periods, the cards, the three charts, the ledger with K7D-00030 at
+  Pre Sales · Open from the UAT read and the CRM's closure 15-02-2027, the Dashboard link); the K7 side through the probe door
+  (`SUPPORT_DEV_AGENT=probe` for the check, put back after): the reconciliation log, *Sync now* (0.3 s, 1 unchanged, run 20), the CRM facts
+  on the K7D-00030 sheet. Two things the browser showed and the code fixed: the column chart's twelve month labels collided and the
+  value on the column wrapped (every other label past eight columns, nowrap), and the synced line sat on the lede. Not clicked: the
+  partner deal sheet's CRM facts, the Open/Won/Lost views, a phone width. **Next:** M6, the collateral library (§6); §7's author questions still open.
 
 - **Session 10 (2026-10-23, Claude Code): M4 clicked in Chrome on both sides; the opportunity landed on UAT.** `pnpm dev` restarted (the
   old process, up 15 h, hung on every authenticated page); the Claude-in-Chrome extension navigated this time. Through the tunnel host:

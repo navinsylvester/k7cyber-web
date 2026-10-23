@@ -59,6 +59,7 @@ export async function savePartnerSettingsAction(form: FormData): Promise<void> {
       enquirySource: n(form, 'crm_enquirySource', cur.crm.enquirySource, 0),
       productCategory: n(form, 'crm_productCategory', cur.crm.productCategory, 0),
       accountNamePattern: s(form, 'crm_accountNamePattern') || cur.crm.accountNamePattern,
+      syncMinutes: n(form, 'crm_syncMinutes', cur.crm.syncMinutes, 5),
     },
     notify: { emailEnabled: on(form, 'notify_emailEnabled'), mailFrom: s(form, 'notify_mailFrom') || cur.notify.mailFrom, bellRetentionDays: n(form, 'notify_bellRetentionDays', cur.notify.bellRetentionDays, 7) },
   }

@@ -157,6 +157,9 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                 <Field id="crm_accountNamePattern" label="Opportunity name" span hint="{customer} and {product} are replaced; the sales convention is customer-Fresh-product.">
                   <input id="crm_accountNamePattern" name="crm_accountNamePattern" defaultValue={s.crm.accountNamePattern} />
                 </Field>
+                <Field id="crm_syncMinutes" label="Dashboard read-back, minutes" hint="How often the opportunities are read back for the partner dashboard (FR-DASH-05): the sync route runs at most this often unless forced. Default 60, minimum 5.">
+                  <input id="crm_syncMinutes" name="crm_syncMinutes" inputMode="numeric" defaultValue={s.crm.syncMinutes} />
+                </Field>
               </div>
             </div>
             <div>
