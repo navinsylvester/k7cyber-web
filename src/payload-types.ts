@@ -87,8 +87,14 @@ export interface Config {
     'product-mirror': ProductMirror;
     'partner-orgs': PartnerOrg;
     'partner-users': PartnerUser;
+    'partner-applications': PartnerApplication;
     'partner-audit': PartnerAudit;
     'partner-notifications': PartnerNotification;
+    'partner-outbox': PartnerOutbox;
+    'partner-counters': PartnerCounter;
+    'partner-products': PartnerProduct;
+    'partner-deals': PartnerDeal;
+    'partner-deal-files': PartnerDealFile;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -127,8 +133,14 @@ export interface Config {
     'product-mirror': ProductMirrorSelect<false> | ProductMirrorSelect<true>;
     'partner-orgs': PartnerOrgsSelect<false> | PartnerOrgsSelect<true>;
     'partner-users': PartnerUsersSelect<false> | PartnerUsersSelect<true>;
+    'partner-applications': PartnerApplicationsSelect<false> | PartnerApplicationsSelect<true>;
     'partner-audit': PartnerAuditSelect<false> | PartnerAuditSelect<true>;
     'partner-notifications': PartnerNotificationsSelect<false> | PartnerNotificationsSelect<true>;
+    'partner-outbox': PartnerOutboxSelect<false> | PartnerOutboxSelect<true>;
+    'partner-counters': PartnerCountersSelect<false> | PartnerCountersSelect<true>;
+    'partner-products': PartnerProductsSelect<false> | PartnerProductsSelect<true>;
+    'partner-deals': PartnerDealsSelect<false> | PartnerDealsSelect<true>;
+    'partner-deal-files': PartnerDealFilesSelect<false> | PartnerDealFilesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -2458,7 +2470,11 @@ export interface PartnerOrg {
   waiverUntil?: string | null;
   suspendedAt?: string | null;
   /**
-   * A legal-identity edit awaiting K7 re-approval (FR-REG-07, M3).
+   * Why the Channel Manager suspended it (M3); every user of the organisation reads it.
+   */
+  suspendedReason?: string | null;
+  /**
+   * A legal-identity edit (legal name, GSTIN, PAN) awaiting K7 re-approval (FR-REG-07, M3): the proposed values, who proposed them, when, why. Written by the portal; null when none.
    */
   pendingLegalEdit?:
     | {
@@ -2490,6 +2506,87 @@ export interface PartnerUser {
   status: 'invited' | 'active' | 'disabled';
   invitedAt?: string | null;
   lastSignInAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-applications".
+ */
+export interface PartnerApplication {
+  id: number;
+  /**
+   * K7A-00001, given at submission.
+   */
+  number?: string | null;
+  type: 'distributor' | 'integrationPartner' | 'var' | 'msp';
+  status: 'draft' | 'submitted' | 'underReview' | 'clarification' | 'approved' | 'rejected';
+  /**
+   * The partner-orgs row created on approval.
+   */
+  orgId?: string | null;
+  legalName?: string | null;
+  tradeName?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  pin?: string | null;
+  website?: string | null;
+  yearOfIncorporation?: number | null;
+  size?: ('1-10' | '11-50' | '51-200' | '201-500' | 'gt500') | null;
+  turnover?: ('lt1' | '1-5' | '6-10' | '11-20' | '21-40' | '41-60' | '61-100' | 'gt100') | null;
+  gstin?: string | null;
+  pan?: string | null;
+  /**
+   * Region codes from the settings.
+   */
+  regions?: string[] | null;
+  /**
+   * The primary contact (FR-REG-02); becomes the Partner Admin on approval.
+   */
+  contact?: {
+    name?: string | null;
+    designation?: string | null;
+    email?: string | null;
+    mobile?: string | null;
+    emailVerifiedAt?: string | null;
+    mobileVerifiedAt?: string | null;
+    /**
+     * skipped: no SMS gateway was configured (decision 4).
+     */
+    mobileVerification?: ('none' | 'sms' | 'skipped') | null;
+  };
+  terms?: {
+    version?: string | null;
+    acceptedAt?: string | null;
+  };
+  /**
+   * The Channel Manager reviewing it.
+   */
+  assignee?: {
+    email?: string | null;
+    name?: string | null;
+  };
+  /**
+   * Every status change with who, when and the comment (FR-REG-08); the audit trail has the same rows.
+   */
+  decisions?:
+    | {
+        to: string;
+        byName?: string | null;
+        byEmail?: string | null;
+        at: string;
+        comment?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The secret in the applicant’s link; never shown on a page.
+   */
+  resumeKey?: string | null;
+  submittedAt?: string | null;
+  decidedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2558,6 +2655,273 @@ export interface PartnerNotification {
   emailError?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-outbox".
+ */
+export interface PartnerOutbox {
+  id: number;
+  kind: 'account.create' | 'opportunity.create';
+  state: 'pending' | 'done' | 'failed' | 'skipped';
+  attempts?: number | null;
+  orgId?: string | null;
+  /**
+   * partner-orgs, partner-deals …
+   */
+  object?: string | null;
+  objectId?: string | null;
+  objectLabel?: string | null;
+  /**
+   * What the job needs beyond the object itself (the approver, the settings at the time).
+   */
+  payload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * The ids the CRM gave back.
+   */
+  result?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Who queued it.
+   */
+  actor?: string | null;
+  /**
+   * The error code and message, never a request body.
+   */
+  lastError?: string | null;
+  doneAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-counters".
+ */
+export interface PartnerCounter {
+  id: number;
+  /**
+   * partner · application · deal
+   */
+  kind: string;
+  value: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * What a partner can register a deal for. Only active products are offered on the form; the order is the form’s order.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-products".
+ */
+export interface PartnerProduct {
+  id: number;
+  name: string;
+  sku: string;
+  /**
+   * Groups the products on the form and the dashboard.
+   */
+  family?: string | null;
+  active?: boolean | null;
+  order?: number | null;
+  /**
+   * productid in Dynamics, once the CRM admin has added the product. Blank: the line goes into the note.
+   */
+  crmProductId?: string | null;
+  /**
+   * One line under the name on the form.
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-deals".
+ */
+export interface PartnerDeal {
+  id: number;
+  /**
+   * K7D-00001, given at submission; the registration ID of FR-DEAL-06 once approved.
+   */
+  dealId: string;
+  status: 'submitted' | 'infoRequested' | 'approved' | 'rejected' | 'extensionRequested' | 'expired' | 'withdrawn';
+  org: number | PartnerOrg;
+  /**
+   * The organisation’s K7P number, copied for the ledgers.
+   */
+  orgPartnerId?: string | null;
+  orgName?: string | null;
+  /**
+   * The partner type at submission; a Distributor names the reseller (FR-DEAL-03).
+   */
+  orgType?: string | null;
+  registeredBy?: {
+    userId?: string | null;
+    name?: string | null;
+    email?: string | null;
+  };
+  /**
+   * For a Distributor’s deal: the reseller it is for (FR-DEAL-03, appendix 14). Linked to an organisation when the name matches one; the reseller does not see the deal.
+   */
+  reseller?: {
+    name?: string | null;
+    orgId?: string | null;
+    orgPartnerId?: string | null;
+  };
+  customerName: string;
+  /**
+   * The name normalised for the conflict check (lower case, no punctuation or legal suffix).
+   */
+  customerKey?: string | null;
+  /**
+   * The end customer (FR-DEAL-02).
+   */
+  customer?: {
+    industry?: string | null;
+    city?: string | null;
+    state?: string | null;
+    contactName?: string | null;
+    designation?: string | null;
+    email?: string | null;
+    /**
+     * For the conflict check; blank for a public mail domain.
+     */
+    emailDomain?: string | null;
+    phone?: string | null;
+  };
+  products?:
+    | {
+        product: number | PartnerProduct;
+        /**
+         * Copied at submission.
+         */
+        sku?: string | null;
+        quantity: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * ₹, the partner’s estimate; K7 may correct it (FR-DEAL-05, FR-DEAL-09).
+   */
+  expectedValue: number;
+  closeDate: string;
+  source?: ('prospecting' | 'enquiry' | 'existing' | 'k7Referral' | 'event' | 'tender' | 'other') | null;
+  competitor?: string | null;
+  /**
+   * The partner’s notes at submission.
+   */
+  notes?: string | null;
+  /**
+   * Decisions, notes and extension requests in order, with their attachments. The audit trail carries the status moves too.
+   */
+  thread?:
+    | {
+        kind: 'submitted' | 'decision' | 'note' | 'extension' | 'amendment' | 'system';
+        side: 'partner' | 'k7' | 'system';
+        byName?: string | null;
+        byEmail?: string | null;
+        at: string;
+        /**
+         * The status this entry moved the deal to, if any.
+         */
+        to?: string | null;
+        title?: string | null;
+        text?: string | null;
+        files?: (number | PartnerDealFile)[] | null;
+        id?: string | null;
+      }[]
+    | null;
+  submittedAt?: string | null;
+  decidedAt?: string | null;
+  /**
+   * From approval, the settings’ protection days; one extension (decision 15).
+   */
+  protectionEnds?: string | null;
+  /**
+   * When the protection-ending notice went out.
+   */
+  endingNoticeAt?: string | null;
+  /**
+   * The one extension a partner may ask for before the protection ends (FR-DEAL-07, decision 15).
+   */
+  extension?: {
+    requestedAt?: string | null;
+    requestedBy?: string | null;
+    reason?: string | null;
+    decidedAt?: string | null;
+    decidedBy?: string | null;
+    granted?: boolean | null;
+    note?: string | null;
+  };
+  /**
+   * Possible conflicts found at submission against the portal’s own deals (FR-DEAL-04): the other deal, its organisation, what matched. Shown to the approver only; the sheet runs the check again live.
+   */
+  conflicts?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Filled by the outbox when the opportunity job runs (03-dynamics-exploration.md §7); the snapshot arrives with M5.
+   */
+  crm?: {
+    opportunityId?: string | null;
+    /**
+     * alletec_opportunityno, OPP-YYMM-NNNNN.
+     */
+    opportunityNo?: string | null;
+    customerAccountId?: string | null;
+    customerContactId?: string | null;
+    /**
+     * The annotation that carries the registration; a retry does not write it twice.
+     */
+    noteId?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Quotes, RFPs and purchase intents up to 10 MB, written by the portal; served only through the deal.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-deal-files".
+ */
+export interface PartnerDealFile {
+  id: number;
+  /**
+   * The partner-deals row.
+   */
+  dealId?: string | null;
+  orgId?: string | null;
+  uploadedBy?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2830,12 +3194,36 @@ export interface PayloadLockedDocument {
         value: number | PartnerUser;
       } | null)
     | ({
+        relationTo: 'partner-applications';
+        value: number | PartnerApplication;
+      } | null)
+    | ({
         relationTo: 'partner-audit';
         value: number | PartnerAudit;
       } | null)
     | ({
         relationTo: 'partner-notifications';
         value: number | PartnerNotification;
+      } | null)
+    | ({
+        relationTo: 'partner-outbox';
+        value: number | PartnerOutbox;
+      } | null)
+    | ({
+        relationTo: 'partner-counters';
+        value: number | PartnerCounter;
+      } | null)
+    | ({
+        relationTo: 'partner-products';
+        value: number | PartnerProduct;
+      } | null)
+    | ({
+        relationTo: 'partner-deals';
+        value: number | PartnerDeal;
+      } | null)
+    | ({
+        relationTo: 'partner-deal-files';
+        value: number | PartnerDealFile;
       } | null)
     | ({
         relationTo: 'media';
@@ -4069,6 +4457,7 @@ export interface PartnerOrgsSelect<T extends boolean = true> {
       };
   waiverUntil?: T;
   suspendedAt?: T;
+  suspendedReason?: T;
   pendingLegalEdit?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -4087,6 +4476,68 @@ export interface PartnerUsersSelect<T extends boolean = true> {
   status?: T;
   invitedAt?: T;
   lastSignInAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-applications_select".
+ */
+export interface PartnerApplicationsSelect<T extends boolean = true> {
+  number?: T;
+  type?: T;
+  status?: T;
+  orgId?: T;
+  legalName?: T;
+  tradeName?: T;
+  address?: T;
+  city?: T;
+  state?: T;
+  country?: T;
+  pin?: T;
+  website?: T;
+  yearOfIncorporation?: T;
+  size?: T;
+  turnover?: T;
+  gstin?: T;
+  pan?: T;
+  regions?: T;
+  contact?:
+    | T
+    | {
+        name?: T;
+        designation?: T;
+        email?: T;
+        mobile?: T;
+        emailVerifiedAt?: T;
+        mobileVerifiedAt?: T;
+        mobileVerification?: T;
+      };
+  terms?:
+    | T
+    | {
+        version?: T;
+        acceptedAt?: T;
+      };
+  assignee?:
+    | T
+    | {
+        email?: T;
+        name?: T;
+      };
+  decisions?:
+    | T
+    | {
+        to?: T;
+        byName?: T;
+        byEmail?: T;
+        at?: T;
+        comment?: T;
+        id?: T;
+      };
+  resumeKey?: T;
+  submittedAt?: T;
+  decidedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -4130,6 +4581,163 @@ export interface PartnerNotificationsSelect<T extends boolean = true> {
   emailError?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-outbox_select".
+ */
+export interface PartnerOutboxSelect<T extends boolean = true> {
+  kind?: T;
+  state?: T;
+  attempts?: T;
+  orgId?: T;
+  object?: T;
+  objectId?: T;
+  objectLabel?: T;
+  payload?: T;
+  result?: T;
+  actor?: T;
+  lastError?: T;
+  doneAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-counters_select".
+ */
+export interface PartnerCountersSelect<T extends boolean = true> {
+  kind?: T;
+  value?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-products_select".
+ */
+export interface PartnerProductsSelect<T extends boolean = true> {
+  name?: T;
+  sku?: T;
+  family?: T;
+  active?: T;
+  order?: T;
+  crmProductId?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-deals_select".
+ */
+export interface PartnerDealsSelect<T extends boolean = true> {
+  dealId?: T;
+  status?: T;
+  org?: T;
+  orgPartnerId?: T;
+  orgName?: T;
+  orgType?: T;
+  registeredBy?:
+    | T
+    | {
+        userId?: T;
+        name?: T;
+        email?: T;
+      };
+  reseller?:
+    | T
+    | {
+        name?: T;
+        orgId?: T;
+        orgPartnerId?: T;
+      };
+  customerName?: T;
+  customerKey?: T;
+  customer?:
+    | T
+    | {
+        industry?: T;
+        city?: T;
+        state?: T;
+        contactName?: T;
+        designation?: T;
+        email?: T;
+        emailDomain?: T;
+        phone?: T;
+      };
+  products?:
+    | T
+    | {
+        product?: T;
+        sku?: T;
+        quantity?: T;
+        id?: T;
+      };
+  expectedValue?: T;
+  closeDate?: T;
+  source?: T;
+  competitor?: T;
+  notes?: T;
+  thread?:
+    | T
+    | {
+        kind?: T;
+        side?: T;
+        byName?: T;
+        byEmail?: T;
+        at?: T;
+        to?: T;
+        title?: T;
+        text?: T;
+        files?: T;
+        id?: T;
+      };
+  submittedAt?: T;
+  decidedAt?: T;
+  protectionEnds?: T;
+  endingNoticeAt?: T;
+  extension?:
+    | T
+    | {
+        requestedAt?: T;
+        requestedBy?: T;
+        reason?: T;
+        decidedAt?: T;
+        decidedBy?: T;
+        granted?: T;
+        note?: T;
+      };
+  conflicts?: T;
+  crm?:
+    | T
+    | {
+        opportunityId?: T;
+        opportunityNo?: T;
+        customerAccountId?: T;
+        customerContactId?: T;
+        noteId?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-deal-files_select".
+ */
+export interface PartnerDealFilesSelect<T extends boolean = true> {
+  dealId?: T;
+  orgId?: T;
+  uploadedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4957,6 +5565,10 @@ export interface PartnerSetting {
      */
     approvalSlaHours: number;
     /**
+     * Days before the protection ends at which the partner and the approvers are told (FR-NTF-01 "protection ending"; the sweep sends it once).
+     */
+    endingNoticeDays?: number | null;
+    /**
      * FR-DEAL-01: a deal needs a certified organisation. Off until the LMS exists (M11, decision 8).
      */
     requireCertificate?: boolean | null;
@@ -5291,6 +5903,7 @@ export interface PartnerSettingsSelect<T extends boolean = true> {
         protectionDays?: T;
         extensionDays?: T;
         approvalSlaHours?: T;
+        endingNoticeDays?: T;
         requireCertificate?: T;
         conflictCheckCrm?: T;
       };

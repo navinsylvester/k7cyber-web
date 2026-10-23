@@ -102,6 +102,7 @@ export const PartnerSettings: GlobalConfig = {
                     { name: 'approvalSlaHours', type: 'number', min: 1, defaultValue: 48, required: true, admin: { width: '34%', description: 'Working hours for a decision before the breach notice (M8).' } },
                   ],
                 },
+                { name: 'endingNoticeDays', type: 'number', min: 1, defaultValue: 14, admin: { description: 'Days before the protection ends at which the partner and the approvers are told (FR-NTF-01 "protection ending"; the sweep sends it once).' } },
                 {
                   type: 'row',
                   fields: [

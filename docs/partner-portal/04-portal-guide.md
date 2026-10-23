@@ -1,23 +1,32 @@
-# The partner portal as built (M1, 2026-10-22): routes, doors, rules, how to run it
+# The partner portal as built (M1–M4, 2026-10-22): routes, doors, rules, how to run it
 
-What exists in the repo after the skeleton milestone, how it fits the support portal it stands on, and what to check before
-trusting a page. `02-build-plan.md` is the plan and the cross-session state; this file is "what is built", like the support
-portal's `09-portal-guide.md`. Nothing here touches Dynamics yet: the CRM mirror arrives with M2 (account) and M4 (opportunity).
+What exists in the repo after the skeleton (M1), onboarding (M2), organisation (M3) and deal registration (M4) milestones, how it fits the
+support portal it stands on, and what to check before trusting a page. `02-build-plan.md` is the plan and the cross-session state; this file
+is "what is built", like the support portal's `09-portal-guide.md`. Dynamics is touched by two jobs: the partner account and its contact on
+approval, and the end customer, its contact and the opportunity on a deal's approval, both through the outbox (§5), only when the mirror is
+switched on. The read-back of the opportunity's stage and value (the dashboard) arrives with M5.
 
 ## 1. Run it
 ```
 docker compose up -d                                   # Postgres for Payload (the portal's system of record)
 pnpm dev                                               # site + admin + both portals on :3000
-pnpm partner:seed-dev you@example.com "Your Name"      # once: the PP-TEST organisation (K7P-00000) and you as its Partner Admin
+pnpm partner:seed-dev you@example.com "Your Name" [--crm]  # once: the PP-TEST organisation (K7P-00000), three PP-TEST products and you as its Partner Admin; --crm queues its account job (pending) for the drain route or a Run button
 ```
 `.env` needs the support portal's keys (`AUTH_SECRET`, Postgres, and for the K7 door the Entra app or `SUPPORT_DEV_AGENT=probe`)
 plus `PARTNER_PORTAL_ENABLED` (on in development unless `0`; production needs `1`, or every `/partners/portal` page is a 404).
 `SUPPORT_DEV_SHOW_CODE=1` shows the partner's one-time code on the verify page while no `SMTP_URL` is set, under the same
 localhost-or-allowlist rule as the support door. `SUPPORT_MAIL_ALLOWLIST` applies to partner codes and notifications too.
 
-Then open http://localhost:3000/partners/portal (partner users) or http://localhost:3000/partners/portal/sign-in?staff=1
-(K7 staff). Tests: `pnpm test:int` runs `tests/int/partner-session.int.spec.ts` (the organisation scope, the K7 role
-resolution, the settings normaliser, the two code doors) without a tenant.
+Then open http://localhost:3000/partners/join (apply), http://localhost:3000/partners/portal (partner users) or
+http://localhost:3000/partners/portal/sign-in?staff=1 (K7 staff). A K7 person opens the queues only when listed as Channel Manager
+in the settings (`/admin/globals/partner-settings` → Staff the first time; then `/partners/portal/k7/settings`), or through the probe
+door with `devStaffPass` on. `PARTNER_SMS_PROVIDER` is empty by default: the join step records the mobile and marks its verification
+skipped. Tests: `pnpm test:int` runs `partner-session` (scope, roles, settings, the code doors) and `partner-registration` (the
+application machine, validation, the CRM mapping), `partner-organisation` and `partner-deals` (the deal machine, the form and the gate,
+protection, the conflict matcher, the opportunity mapping) without a tenant; with `PARTNER_DB_TESTS=1` also `partner-notify`,
+`partner-onboarding`, `partner-scope` and `partner-deals-db` (register → request → resubmit → approve with changes → conflict for the other
+organisation → extension → sweep, against Postgres, rows removed again). The deal sweep runs from `POST /api/partners/deals/sweep` with
+`CRON_SECRET` (daily) or the button on the K7 deals page.
 
 ## 2. Sign-in: one Auth.js instance, a third kind of session (`src/auth.ts`)
 | door | who | how | session |
@@ -37,51 +46,115 @@ page (`requireK7Role`). The `partner` provider loads its Payload lookup lazily s
 
 ## 3. Routes (`src/app/(partner)/`, own root layout: site chrome, noindex, `force-dynamic`, `portal.css` + `partner.css`)
 ```
+/partners/join                       public (M2): step 1, the partner type; a draft row is created and its resume key set in an httpOnly cookie on /partners/join
+/partners/join/company · /verify · /terms   steps 2–4: company, contact and regions → the code to the contact email (and SMS when a gateway exists) → the summary, the terms (version + time stored), Submit
+/partners/join/submitted             the receipt with the number (K7A-00001)
+/partners/join/status?a=&k=          the applicant's view from the emailed link: state, K7's note, the record; "Edit and resubmit" after a clarification reopens the steps
 /partners/portal                     partner home: the status strip (type, status, roles, certificate), latest notifications, the organisation's facts and recent record
+/partners/portal/organisation        (M3) the organisation: the facts for every user; for the Partner Admin the details form (saves at once) and the legal-identity form (proposes; the waiting proposal as a diff, withdrawable)
+/partners/portal/organisation/users  (M3) Partner Admins: the people with roles, state and last sign-in; the form that invites one more (several roles at once)
+/partners/portal/organisation/users/[id]   (M3) one person: name, designation, mobile, roles; resend the invitation, disable / re-enable, remove behind a confirm; the record
+/partners/portal/deals               (M4) the organisation's deals (FR-DEAL-08): counters, views (all · live · approved · with K7 · needs your answer · closed), search, filters (product, registered from/to, value from/to), the ledger; Register for Partner Admins and Sales users
+/partners/portal/deals/new           (M4) the registration form (FR-DEAL-02, 03) behind the gate (decision 8); a refusal returns the form as typed with the errors
+/partners/portal/deals/[dealId]      (M4) the deal: strip, the protection line, the facts, the thread with the note-and-files form; in the side column the one extension request (while approved and protected), withdrawal behind a confirm, who registered it; "Edit and resubmit" while information is requested
+/partners/portal/deals/[dealId]/edit (M4) the same form with the filed values, K7's note above, a reply field; resubmission keeps the number
+/partners/portal/deals/[dealId]/file/[fileId]   (M4) a file of the deal, only to the owning scope
 /partners/portal/notifications       the bell's page, mark all as read
 /partners/portal/no-access           a partner user without the role a page needs
 /partners/portal/sign-in · /verify   the partner door and the K7 door on one page; `?staff=1` leads with the K7 side
 /partners/portal/k7                  the K7 desk: who you are, the roles you hold and what each opens, the settings summary
 /partners/portal/k7/notifications    the staff bell (rows sent to the roles you hold, shared by every holder)
 /partners/portal/k7/no-access        an agent without a partner-portal role
+/partners/portal/k7/applications     Channel Managers (M2): counters, views (open · new · under review · awaiting partner · decided · all), search, "assigned to me", the ledger; Run the waiting CRM jobs
+/partners/portal/k7/applications/[number]   the application sheet: the filed facts, Take it, the decision panel (approve · send back · reject, with the note), the record, the organisation and its CRM job (Run / Retry)
+/partners/portal/k7/partners         Channel Managers (M3): every organisation; counters (edits waiting · approved · suspended), views, search by partner ID, name, city, GSTIN or CRM account
+/partners/portal/k7/partners/[partnerId]   the organisation sheet: the legal-identity edit to decide (approve applies it; decline needs a note), the facts, the people, the record; suspend with a reason / reinstate, the certificate waiver, the CRM ids and the application
+/partners/portal/k7/deals            Deal Desk Approvers (M4): counters (new · extensions · awaiting partner · approved · ending soon · CRM jobs), views, search (deal ID, customer, partner, OPP number), the ledger with the conflict count per row; Run the sweep, Run the CRM jobs
+/partners/portal/k7/deals/[dealId]   the deal sheet: the conflicts box run live (FR-DEAL-04; the count at submission beside it), the facts, the protection line, the thread with K7's note form, the record; the decision panel (approve · approve with changes with the value, closure and customer fields · request more information · reject), the extension decision, the amendment form once approved (FR-DEAL-09), the CRM job with Run / Retry and its warnings
+/partners/portal/k7/deals/[dealId]/file/[fileId]   a file of the deal, to an approver or Channel Manager
+/partners/portal/k7/settings         Channel Managers: the whole `partner-settings` global as a form (staff and roles, programme, deals incl. the protection-ending notice, CRM mirror, notifications)
+/api/partners/deals/sweep            POST with `Authorization: Bearer <CRON_SECRET>`: expires approved deals past their protection end, sends the protection-ending notice once inside the configured window
+/api/partners/outbox                 POST with `Authorization: Bearer <CRON_SECRET>`: runs the pending, failed and skipped CRM jobs as the service identity
 ```
-Everything the plan lists for later milestones (join, organisation, deals, dashboard, collateral, schemes, the K7 queues) is
-not there yet; the nav shows only what exists.
+The desk strip (`K7Nav`) shows a tab only to a role that opens it. Everything the plan lists for later milestones (dashboard, collateral,
+schemes, reports) is not there yet. Products for the deal form are edited in the Payload admin (`/admin/collections/partner-products`,
+decision 19); only active ones are offered.
 
 ## 4. Library (`src/lib/partner/`)
 | file | what |
 |---|---|
 | `session.ts` | `requirePartner(next?)` → `PartnerContext { user, org, scope, roles, actor }`, re-reading the user and organisation from Payload on every request so a suspension or role change bites at once; `requirePartnerRole(roles)`; `requireK7(next?)` / `requireK7Role(roles)` → `K7Context { email, name, roles, dev, actor }`; `tryPartner`, `tryK7`, `partnerSideSession` for the header (never redirect) |
-| `scope.ts` | `orgWhere(scope, extra?, field)` puts the organisation into every Payload `Where` first and throws `ScopeError` on an empty scope; `inScope(scope, row)` for detail pages reached by id. **Rule:** every partner query takes `me.scope`; a review checklist item (FR-ROLE-01) |
+| `scope.ts` | `orgWhere(scope, extra?, field)` puts the organisation into every Payload `Where` first and throws `ScopeError` on an empty scope; `inScope(scope, row)` for detail pages reached by id; `orgRel(scope)` the organisation as a relationship value on a create (Postgres ids are numbers). **Rule:** every partner query takes `me.scope`; a review checklist item (FR-ROLE-01), pinned against the database by `tests/int/partner-scope.int.spec.ts` |
 | `settings-model.ts` / `settings.ts` | the typed settings with defaults and the normaliser; `getPartnerSettings()` (30 s memo), `savePartnerSettings()`, `partnerPortalEnabled()`; `staffRolesFor(email, settings, { dev })` with the two default-on fallbacks (Channel Manager → Deal Desk Approver, Marketing Admin → Scheme Admin); `staffWithRole(role)` for notifications, each person once |
-| `users.ts` | `findPartnerUserByEmail`, `loadPartnerUser`, `canSignIn(user, org)`, `touchSignIn`, `orgUsers(orgId, roles?)` |
+| `users.ts` | `findPartnerUserByEmail`, `loadPartnerUser`, `canSignIn(user, org)` (not disabled, organisation not suspended), `touchSignIn`, `orgUsers(orgId, roles?)`; `toOrg` reads the whole organisation row (identity, address, CRM ids, waiver, suspension, the pending legal edit) |
+| `organisation-model.ts` | (M3) pure: `validateDetails`, `validateLegal`, `normaliseLegal`, `legalChanges(current, proposed)` (the diff; an edit that changes nothing is refused), `toLegalEdit`; the user machine (`canMoveUser`, `reenabledStatus`: back to active, or invited if they never signed in), `validateMember`, `memberChangeError` / `memberRemoveError` (a standing Partner Admin always remains; nobody disables, demotes or removes themselves) |
+| `organisation.ts` | (M3) `loadOrg`, `scopedOrg`, `findOrgByPartnerId`, `listOrgs` / `orgCounts` (K7); `saveOrgDetails` (at once, one audit row naming the changed fields), `proposeLegalEdit` (one at a time → `pendingLegalEdit`, staff bell + mail), `withdrawLegalEdit`, `decideLegalEdit` (approve applies name/GSTIN/PAN; decline needs a note; the admins are told), `setOrgStatus` (suspend with a reason, every user mailed; reinstate), `setWaiver`. No Dataverse call: an approved legal-name change is for the CRM admin until an `account.update` job exists |
+| `members.ts` | (M3) `listMembers(scope)` (admins first), `loadMember(scope, id)` (another organisation's id is null), `addMember` (the address must be new to the portal; invited; the invitation mail), `updateMember` (roles under the rules; a roles change is audited from → to and the person told), `setMemberStatus` (disable / enable), `removeMember` (deletes the row; the trail keeps the email), `resendInvitation` |
 | `audit.ts` | `audit({ actor, object, objectId, objectLabel, action, from, to, orgId, comment, meta })` → one `partner-audit` row, failures logged not thrown; `orgAudit(scope)`, `objectAudit(object, id)` |
 | `notify.ts` | `notify({ event, subject, body, href, to, email? })` with recipients `user`, `org` (its active users, optionally by role) or `staff` (a role): one bell row per partner user, one shared row per staff role, and an email per address when `partner-settings.notify.emailEnabled` (through `sendMail`: `SMTP_URL`, allowlist, the partner sender from the settings); `unreadCount`, `listNotifications`, `markAllRead` over a `BellScope` |
 | `otp.ts` | the partner door's purpose and cookie names over the support primitives |
+| `status.ts` | (M2) the application machine of 01-requirements §3.2 plus `draft` (`canMoveApplication`, `decisionPath`: a decision on a Submitted application assigns it first), the decisions and their labels, the organisation toggle; pure |
+| `ids.ts` | (M2) `nextId('partner' \| 'application' \| 'deal')` → `K7P-00001` … from `partner-counters` by compare-and-swap; the unique index on the target column is the last line |
+| `registration-model.ts` | (M2) the application type, the size and turnover bands on the CRM's option values, `yearsInBusinessBand`, `validateCompany` / `validateContact` / `validateRegions` / `readyToSubmit`, `accountBody` and `contactBody` (03-dynamics-exploration.md §6); pure |
+| `registration.ts` | (M2) `createDraft`, `loadByKey`, `findByNumber`, `saveDetails` (a changed email needs verifying again), `markVerified`, `submitApplication` (number, terms, staff notification, applicant mail with the status link), `listApplications` / `applicationCounts`, `assignApplication`, `decideApplication`, `approveApplication` (organisation with the next partner ID, the primary contact as invited Partner Admin, the invitation through `notify`, the `account.create` job). Every move: one audit row, one applicant mail |
+| `mirror.ts` | (M2, M4) the outbox: `enqueueOutbox` (runs at once when `crm.enabled`), `runJob`, `drainOutbox`, `outboxOf`, `owedOutboxCount`. `account.create`: region, state, city and country looked up by name, the account (its id stored on the organisation at once, so a retry resumes rather than duplicates), the contact parented and set as primary, `alletec_accountid` read back, an audit row. `opportunity.create` (M4): fails with a clear code when the partner account is not in the CRM yet; the end-customer account (`alletec_accounttype` 1, state, city and region by name) and its contact, each id stored on the deal as it arrives; the opportunity on that account (`customerid_account`, `parentcontactid`, `alletec_endcustomername`) with the partner in `alletec_partnername`, a linked reseller in `alletec_referralaccount`, `alletec_State`, `alletec_zoneregion`, the competitor in `cit_CompetitorName` when it matches a competitor row, the owner from the settings' rule (navigation names read from UAT metadata 2026-10-22; the picklists found on the first live run 2026-10-23: the account's vertical mapped from the industry text by label, `alletec_competitoradded` 260760000 = Yes, `alletec_salesvertical` 1 = Enterprise, `alletec_casetypelicensetype` 0 = Fresh, which a UAT plugin insists on); product lines only for portal products with `crmProductId` (the product's default unit; a line that fails is a warning in the result, not a failed job); the note (stored as `crm.noteId`) and the attachments ≤ 4 MB as annotations; `alletec_opportunityno` read back; a thread entry and an audit row. The production guard and the writes switch give `skipped`; other failures `failed` with a code |
+| `sms.ts` | (M2) the mobile-code adapter: `PARTNER_SMS_PROVIDER` empty = none (verification `skipped`), `console` in development; a gateway is one more case |
+| `join.ts` | (M2) the join cookie names and `currentDraft()` |
+| `deals-model.ts` | (M4) pure: the deal and product types and `toDeal`; `validateDeal` (FR-DEAL-02; a Distributor names the reseller, FR-DEAL-03), `linesFrom`; the gate `registerBlocked` (approved organisation, active user with the admin or sales role; with `deals.requireCertificate` on, a valid certificate or a waiver); `protectionEnd`, `daysLeft`, `protectionShare`, `canRequestExtension`, `isProtected`, the edit rules of FR-DEAL-09 (`partnerMayEdit`, `mayAddNote`, `partnerMayWithdraw`, `k7MayAmend`); the conflict matcher (`customerKey` strips case, punctuation and legal suffixes, `emailDomain` is blank for public mail services, `conflictWith` / `conflictsAmong` keep live deals and say what matched); `opportunityBodies` (03-dynamics-exploration.md §7: the customer account, its contact, the opportunity's plain columns, the note) |
+| `deals.ts` | (M4) `listProducts`; `loadDeal(scope, number)` (another organisation's number is null), `findDealByNumber` / `loadDealById` (K7), `listDeals(scope, filter)` / `listDealsK7(filter)` (views, search, product, dates, value), `dealCounts(scope?)`; `filesFrom` (10 MB, the collection's types), `dealFileById`; `submitDeal` (the gate, the number from `ids.ts` at submission, the reseller linked to an organisation when its name matches, the conflicts stored, the files, the staff bell, the receipt), `resubmitDeal` (after a request; conflicts run again), `addDealNote` (either side, while live), `withdrawDeal`, `requestExtension` (one per deal, before the end); `decideDeal` (approve · approve with changes · request information · reject: the protection end from the settings, the `opportunity.create` job, the partner told), `amendDeal`, `decideExtension` (grant: the extension days from the current end; decline: the window runs on, or expires at once if it has run out); `sweepDeals` (expiry; the ending notice once, to the partner and the approvers); `findConflicts` reads other organisations' deals on purpose, for the approver |
+| `deal-files.ts` | (M4) `serveDealFile` for the two file routes (inline for images, PDF and text; download otherwise) |
 
 ## 5. Data (Payload, `src/collections/partner/`, admin group "Partner portal")
 | collection / global | holds | notes |
 |---|---|---|
-| `partner-orgs` | approved organisations: `partnerId` (unique), type, status approved/suspended, legal fields, regions, `crm.{accountId, accountCode, contactId}`, `certificate`, `waiverUntil`, `pendingLegalEdit` | created by approval (M2); `partner:seed-dev` creates the PP-TEST one |
-| `partner-users` | one person in one organisation: email (unique, lowercased), roles admin/sales/technical (several at once), status invited/active/disabled, `lastSignInAt` | the door's lookup |
+| `partner-orgs` | approved organisations: `partnerId` (unique), type, status approved/suspended, legal fields, regions, `crm.{accountId, accountCode, contactId}`, `certificate`, `waiverUntil`, `suspendedAt` + `suspendedReason` (M3), `pendingLegalEdit` (M3: name, gstin, pan, proposedAt, proposedBy, reason; null when none) | created by approval (M2); `partner:seed-dev` creates the PP-TEST one; the details, the legal identity (through K7), suspension and the waiver are edited by M3's pages |
+| `partner-users` | one person in one organisation: email (unique, lowercased), roles admin/sales/technical (several at once), status invited/active/disabled, `invitedAt`, `lastSignInAt` | the door's lookup; added, changed, disabled and removed by the Partner Admin (M3) |
 | `partner-audit` | the trail: actor, object, objectId, label, action, from → to, orgId, comment, meta | append-only; admin read |
 | `partner-notifications` | the bell: audience user (userId, orgId) or staff (staffRole), event, subject, body, href, readAt, emailedAt / emailTo / emailError | append-only except `readAt` |
-| global `partner-settings` | Staff (email → roles, the two fallback flags, `devStaffPass`), Programme (types, regions, terms version and URL), Deals (protection 90, extension 90, approval SLA 48 h, `requireCertificate` off, `conflictCheckCrm` off), CRM mirror (off; owner rule, enquiry source 1, product category 36, name pattern), Notifications (email on, sender, retention) | edited in `/admin` until the K7 settings page (M2) |
+| `partner-applications` | (M2) one per application: number, type, status (draft · submitted · underReview · clarification · approved · rejected), the company fields, `contact` (with `emailVerifiedAt`, `mobileVerifiedAt`, `mobileVerification` none/sms/skipped), regions, `terms` (version, acceptedAt), `assignee`, `decisions[]` (to, by, at, comment), `resumeKey` (never shown), `orgId`, submittedAt, decidedAt | written by `registration.ts` |
+| `partner-outbox` | (M2) the CRM jobs: kind (`account.create`, `opportunity.create`), state pending/done/failed/skipped, attempts, orgId, object/objectId/objectLabel, `payload` (the approver, the owner rule at the time), `result` (the ids; for an opportunity also the lines, the attachments and the warnings), lastError (the Dataverse code and message, 400 chars), doneAt | written by `mirror.ts` |
+| `partner-products` | (M4) the new product's catalogue: name, `sku` (unique), family, active, order, `crmProductId`, description | edited in `/admin` by the Marketing Admin (decision 9, 19); the dev seed makes three PP-TEST ones |
+| `partner-deals` | (M4) one per registration: `dealId` (unique, K7D-00001, given at submission), status (§7.2), `org` + `orgPartnerId` / `orgName` / `orgType` copied, `registeredBy`, `reseller` (name, linked orgId / orgPartnerId), `customerName` + `customerKey`, `customer` (industry, city, state, contact, designation, email + `emailDomain`, phone), `products[]` (product, sku, quantity), expectedValue, closeDate, source, competitor, notes, `thread[]` (kind submitted/decision/note/extension/amendment/system, side, by, at, to, title, text, files), submittedAt, decidedAt, `protectionEnds`, `endingNoticeAt`, `extension` (requested, decided, granted, note), `conflicts` (json, at submission), `crm` (opportunityId, opportunityNo, customerAccountId, customerContactId, noteId) | written by `deals.ts` and `mirror.ts`; the `crm.snapshot` group arrives with M5 |
+| `partner-deal-files` | (M4) uploads under `uploads/partner-deals` (git-ignored), 10 MB, PDF / images / Word / Excel / text / zip; `dealId` (the row), `orgId`, `uploadedBy` | served only through the deal's file routes |
+| `partner-counters` | (M2) one row per identifier kind with the last number given | advanced by `ids.ts` |
+| global `partner-settings` | Staff (email → roles, the two fallback flags, `devStaffPass`), Programme (types, regions, terms version and URL), Deals (protection 90, extension 90, approval SLA 48 h, ending notice 14 days, `requireCertificate` off, `conflictCheckCrm` off), CRM mirror (off; owner rule, enquiry source 1, product category 36, name pattern), Notifications (email on, sender, retention) | edited on the K7 settings page or raw in `/admin` |
 
 ## 6. Design system: section 10 · Partners
 `design-system/components/PartnerParts/README.md` and `src/app/(partner)/partner.css`, loaded over section 09's `portal.css`
 (chrome, forms, flashes, ledgers are shared). Parts P1–P6: the partner ID, the organisation state and type tags, the status
 strip, the bell and its rows, role tags, the partner home. The header is the support portal's `HeaderShell` with `home` and
-`name` props. No partner artboards yet.
+`name` props. M2 adds P7 the join steps, P8 the application state tag (and the mobile verification tag), P9 the application summary and P10 the decision panel, with the terms box, the desk strip's count and the settings page's staff table. M3 adds P11 the user state tag with the users ledger and the member sheet, and P12 the legal-identity edit as a filed box with the change as a diff. M4 adds P13 the deal state tag and the `K7D-` number, P14 the registration form (`DealForm.client.tsx`, the partner side's one client component: `useActionState` returns the input and the errors on a refusal), P15 the conflicts box, P16 the protection line, and the deal thread on section 09's message rows. No partner artboards yet.
 
 ## 7. Rules the code enforces
 - A partner page reads nothing without `me.scope` (`orgWhere`); an empty scope throws rather than widening.
 - Roles and status are re-read from Payload per request; the JWT's copy is a hint for the proxy only.
 - K7 roles come from `partner-settings`, never from Dynamics; development sign-ins hold every role unless `devStaffPass` is off, never in production.
 - Mail leaves only through `sendMail`: `SMTP_URL`, `SUPPORT_MAIL_ALLOWLIST`, the partner sender. No SMTP: the console, and the on-screen code on localhost or with the allowlist set.
-- Nothing is written to Dataverse by this milestone.
+- An application moves only along 01-requirements §3.2 (`status.ts`); every move writes an audit row and emails the applicant; a rejection or a clarification needs a note.
+- An application is submitted only with the contact email verified by code; the mobile is verified by SMS when a gateway exists and otherwise marked skipped where the Channel Manager sees it.
+- The status link is number + an unguessable key; a wrong key shows nothing. The join cookie carries the same key, httpOnly, scoped to `/partners/join`.
+- Approval refuses an email that is already a partner user somewhere; the organisation and the Partner Admin are created together, the partner ID from the counter.
+- A partner user is read through the scope even by id (`loadMember`); the Partner Admin's posts re-check the role and the rules on the server, so an organisation never loses its last standing admin and a person never disables or demotes themselves. The email is the sign-in identity and is not edited: remove and add instead.
+- The legal name, GSTIN and PAN change only through a proposal a Channel Manager approves; one proposal at a time; an empty change is refused; a decline needs a note. The details (trade name, address, website, regions) change at once and are audited field by field.
+- Suspension needs a reason, which every user of the organisation gets by email; the door refuses their codes and `requirePartner` re-reads the organisation on every request, so open sessions end at once. Reinstatement clears the reason.
+- Dataverse is written only by the outbox, as the service identity, only when `partner-settings.crm.enabled` is on, only to UAT (production refused in code); the job is recorded whatever happens and can be re-run.
+- A deal is registered only by an active Partner Admin or Sales user of an approved organisation (Technical users read the list); with the certificate switch on, only with a valid certificate or a waiver. A deal is read through the scope even by number (`loadDeal`); the files through the scope on the partner side and the approver role on the K7 side.
+- A deal moves only along 01-requirements §7.2 (`status.ts`); every move writes an audit row, a thread entry and a notification to the people concerned (the registering user and the organisation's admins; the Deal Desk Approvers). A rejection and a request for information need a note; approve with changes needs a changed value, closure or customer.
+- The conflict check runs at submission and again live on the K7 sheet, over the portal's live deals of every organisation (same normalised customer name, same work-email domain, same contact email); the partner is never shown whose they are. The CRM-side check is the settings switch of 03-dynamics-exploration.md §7, not built.
+- The partner edits the registration only after a request for information; after approval only K7 amends the value, the closure date or the customer, and either side adds notes and files while the deal is live. One extension per deal, asked for while approved and inside the window; the sweep expires approved deals past their end and leaves a waiting extension to the approver.
+- The `K7D-` number is given at submission so the queue, the bell and the thread can name the deal; approval makes it the protected registration ID of FR-DEAL-06.
 
-## 8. Not done (next: M2)
-The join flow, applications and their status machine, the approval that creates organisations and users, the CRM account
-outbox, the K7 queues and settings page, the SMS adapter, the editable mail templates (M8). The partner door was verified on
-localhost with the seeded user; the Microsoft door for the K7 side reuses the one verified for support on 2026-10-15.
+## 8. Not done (next: M5)
+The dashboard (M5: the read-back of the portal's opportunities into `partner-deals.crm.snapshot`); the CRM-side conflict check (a switch,
+off); an `account.update` CRM job for an approved legal-name change (the CRM admin renames the account by hand; the K7 sheet
+says so); the marketing Partners page and its "Join" link (the page is not written; the link is in the header seed, on the sign-in
+page and in the portal footer); the editable mail templates and the approval SLA notice (M8); an SMS gateway. Both sides were
+clicked end to end on 2026-10-22: M2 on localhost (K7A-00003 → K7P-00003, account ACC-2610-00154 with its contact on UAT) and M3
+on localhost (the Partner Admin) and the tunnel host (the Channel Manager through Microsoft): details, a legal edit proposed and
+approved, a user invited, disabled, re-enabled and removed, the organisation suspended (the partner session fell to the door at
+once), reinstated, a waiver set. Not clicked: an invited user's first sign-in through the partner door (verified in M1 with the
+seeded user). M4 was clicked on both sides on 2026-10-23 through the tunnel host (the partner as the seeded Partner Admin, K7 through the probe
+door): register with a file, request information, edit and resubmit, approve with changes, amend, extension requested and granted,
+withdraw, the sweep; the opportunity job ran on UAT after the PP-TEST organisation's account job (ACC-2610-00155): OPP-2610-00268 with
+the note and the attachment (02-build-plan.md §10, session 10). Not clicked: reject, decline an extension, the file download route,
+the deal pages on a phone width.

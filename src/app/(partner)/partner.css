@@ -39,3 +39,103 @@
 .phome h2 { margin: 0 0 16px; font-size: 22px; letter-spacing: -.02em; }
 .phome .ledger { margin: 0; }
 .phome .more { margin: 16px 0 0; }
+
+/* ---------- P7 The join steps: four cells on the track's bars, the current one on signal (M2) ---------- */
+.jsteps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; margin: 0 0 clamp(28px, 3cqw, 40px); padding: 0; list-style: none; }
+.jsteps li { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.jsteps i { display: block; height: 6px; background: var(--ln); }
+.jsteps li.is-done i { background: var(--fg); }
+.jsteps li.is-now i { background: var(--signal); }
+.jsteps .label { color: var(--mu); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jsteps li.is-now .label { color: var(--fg); font-weight: 500; }
+.jsteps .label a { color: inherit; text-decoration: none; }
+.jsteps .label a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.jsteps-n { color: var(--acc); }
+@container (max-width: 520px) { .jsteps .label { white-space: normal; } }
+
+/* ---------- The join form: the region checks in a row, the terms box ---------- */
+.checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 10px 24px; }
+.terms-box { padding: 20px 22px; box-shadow: inset 0 0 0 1px var(--fg); }
+.terms-box .check { font-size: 15px; line-height: 1.5; }
+
+/* ---------- P9 The application summary: two groups of filed facts, side by side from 900px ---------- */
+.app-summary { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(28px, 3cqw, 40px) clamp(32px, 4cqw, 56px); }
+.app-summary .sub-head { margin-bottom: 10px; }
+.app-summary .sub-head .link-u { font-weight: 400; }
+.app-summary .meta-rows dd .tag { margin-left: 8px; vertical-align: 1px; }
+@container (min-width: 900px) { .app-summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.phome > .app-summary { grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 1280px) { .phome > .app-summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+/* ---------- P10 The decision panel: the choice stacked, the note, one primary action; filed in the side column ---------- */
+.decide { padding: 20px 22px 24px; box-shadow: inset 0 0 0 1px var(--fg); }
+.decide h2 { margin: 0 0 8px; }
+.decide .choice label { padding: 12px 14px; }
+.decide .choice .t { font-size: 15px; }
+
+/* ---------- The desk strip's counts and the staff table on the settings page ---------- */
+.rtab-n { display: inline-block; min-width: 20px; padding: 1px 4px; text-align: center; background: var(--signal); color: var(--on-signal); font: 500 10px/1.5 var(--font-mono); letter-spacing: .04em; }
+.rtab[aria-current="page"] .rtab-n, .rtab:hover .rtab-n { background: var(--fg); color: var(--bg); }
+.staff-table input[type="email"], .staff-table input[type="text"], .staff-table input:not([type]) { width: 100%; min-width: 160px; font: 400 14px/1.3 var(--font-sans); background: transparent; color: inherit; border: 0; border-bottom: 1px solid var(--ln); padding: 6px 0; }
+.staff-table input:focus { outline: 0; border-bottom-color: var(--signal); }
+.staff-table td.tick input { width: 18px; height: 18px; appearance: none; -webkit-appearance: none; border: 1px solid var(--fg); cursor: pointer; }
+.staff-table td.tick input:checked { background: var(--signal); border-color: var(--signal); box-shadow: inset 0 0 0 4px var(--bg); }
+.staff-table th:nth-child(n+3), .staff-table td.tick { text-align: center; padding-right: 10px; }
+
+/* ---------- P11 User state, P12 the legal-identity edit (M3) ---------- */
+.ledit { display: grid; gap: 0; margin: 0; padding: 0; border-top: 1px solid var(--fg); }
+.ledit > div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 20px; padding: 12px 0; border-bottom: 1px solid var(--ln); }
+.ledit dt { color: var(--mu); }
+.ledit dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; font: 400 15px/1.4 var(--font-mono); overflow-wrap: anywhere; }
+.ledit .from { color: var(--mu); text-decoration: line-through; text-decoration-color: var(--ln); }
+.ledit .arrow { color: var(--acc); }
+.ledit .to { font-weight: 500; }
+@container (min-width: 760px) { .ledit > div { grid-template-columns: 140px minmax(0, 1fr); } }
+.pending { padding: 20px 22px 24px; box-shadow: inset 0 0 0 1px var(--fg); }
+.pending h2 { margin: 0 0 8px; display: flex; align-items: center; gap: 10px; }
+.pending .ledit { margin: 12px 0 16px; }
+.members { margin-top: 28px; }
+.members .roles .tag { font-size: 11px; }
+.members td.who { min-width: 200px; }
+.members td.who .muted { font-size: 13px; }
+.members tr.is-off td { color: var(--mu); }
+.org-forms { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(32px, 4cqw, 56px); }
+.org-forms h2 { margin: 0 0 6px; }
+.org-forms > section > .hint { margin: 0 0 20px; }
+
+/* ---------- P13 Deal state, P14 the registration form (M4) ---------- */
+.deal-form .lines-table td { padding-top: 6px; padding-bottom: 6px; vertical-align: middle; }
+.deal-form .lines-table .control { border-bottom-width: 1px; }
+.deal-form .lines-table td.num { width: 140px; }
+.deal-form .lines-table td.num input { text-align: right; }
+.deal-form .flash { margin: 0; }
+.lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.lines .muted { font: 400 12px/1.4 var(--font-mono); letter-spacing: .02em; }
+.deal-filters details { flex: 1 1 100%; }
+.deal-filters .filters-grid { margin-top: 14px; padding: 18px 20px 20px; box-shadow: inset 0 0 0 1px var(--ln); grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 16px 24px; align-items: end; }
+.deal-filters .filters-grid .form-actions { margin: 0; align-self: end; }
+
+/* ---------- P15 The conflicts box: the pending box in signal while there is something to read ---------- */
+.conflicts h2 .pixel { background: var(--signal); }
+.conflicts.is-clear { box-shadow: inset 0 0 0 1px var(--ln); }
+.conflicts.is-clear h2 { color: var(--mu); }
+.conflicts .ntf-when .pid { font-size: 13px; }
+
+/* ---------- P16 The protection line: one bar on the track's height, the window's dates beneath ---------- */
+.protect { margin: calc(-1 * clamp(28px, 3cqw, 44px) + 12px) 0 clamp(28px, 3cqw, 44px); }
+.protect-bar { height: 6px; background: var(--ln); }
+.protect-bar i { display: block; height: 100%; background: var(--fg); transition: width 240ms steps(6); }
+.protect-bar i.is-ending { background: var(--signal); }
+.protect-bar i.is-over { background: var(--mu); }
+.protect-line { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; margin-top: 8px; }
+.protect-line .label { color: var(--mu); }
+.protect-line .label strong { color: var(--fg); font-weight: 500; }
+.protect-line .is-ending, .dtable .is-ending { color: var(--acc); }
+
+/* ---------- The deal thread, on section 09's message rows ---------- */
+.dthread { border-top: 1px solid var(--fg); }
+.dthread .msg.is-system .avatar { background: none; color: var(--mu); box-shadow: inset 0 0 0 1px var(--ln); }
+.dthread .msg.is-system .msg-body { color: var(--mu); font-size: 15px; }
+.dthread .msg-title { font-weight: 400; color: var(--mu); }
+.dthread .msg-head .tag { vertical-align: 1px; font-size: 11px; }
+.dthread .msg-att .tag .muted { font: 400 11px/1 var(--font-mono); }

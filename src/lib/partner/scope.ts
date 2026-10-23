@@ -29,3 +29,6 @@ export const inScope = (scope: OrgScope, row: { org?: unknown; orgId?: unknown }
   const id = typeof org === 'object' && org !== null ? (org as { id?: unknown }).id : org
   return String(id ?? row.orgId ?? '') === scope.orgId && scope.orgId !== ''
 }
+
+/** The scope's organisation as a relationship value: Postgres ids are numbers, and Payload validates the type on a create. */
+export const orgRel = (scope: OrgScope): number | string => (/^\d+$/.test(scope.orgId) ? Number(scope.orgId) : scope.orgId)

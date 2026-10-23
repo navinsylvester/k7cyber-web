@@ -71,7 +71,13 @@ In UAT 62 of 110 rows have `actualvalue`, 67 an invoice amount. Currency ₹.
 **Channel and source.** `alletec_saleschannel`: 0 B2B · 1 B2C · 2 Distributor · 3 To be Decided ·
 4 MSP. `alletec_enquirysource` (17 values) includes 1 **Partner Referral** and 11 **Channel lead**,
 beside Direct Sales, Campaigns, Website, Inside Sales, Support, Event, …
-`alletec_salesvertical`: SOHO · Enterprise. `k7_industry` is free text.
+`alletec_salesvertical`: 0 SOHO · 1 Enterprise. `k7_industry` is free text.
+`alletec_casetypelicensetype` ("Case Type/ License Type"): 0 Fresh · 1 Renewals · 2 Additional Purchase; a plugin on UAT refuses
+an opportunity without it ("Opportunity : CaseType is missing", found 2026-10-23), so the portal always sends Fresh.
+On create the CRM rewrites the opportunity's `name` to `<customer>-<case type>-<product category label>` (OPP-2610-00268 came back as
+"PP-TEST Chrome Customer Pvt Ltd-Fresh-Others" although the portal sent the product's name), so the name pattern in the settings only
+matters until the row is saved. On the end customer's account `alletec_verticalbusiness` ("Sub Vertical") is a picklist, not text:
+the portal maps the partner's industry onto it by label (`accountVertical` in `deals-model.ts`) and leaves it out when nothing fits.
 
 **What is sold.** `alletec_productcategory` ("Subcategory", 38 values: EPS - OP / EPS - CL, EAVP,
 UTM, SDWAN, MDM, CP 360 variants, InfiniShield, EUS, VAPT, SOC, Consulting Services, ISAP, MSSP, …),
@@ -127,8 +133,10 @@ Networking, …), `alletec_itproductsdetails`, `alletec_dealerforotherav`, `alle
 → account exist but are unused in UAT (0 rows). **No GSTIN or PAN column** (the approval task only
 has a "GST No checked" boolean).
 
-Contacts: `new_customertype` has 696720002 Dealer/Reseller (production 8,110) and 100000002 Partner
-(1,618); `msa_managingpartnerid`; `jobtitle`, `mobilephone`; the `adx_identity_*` columns of the 2019
+Contacts: **no customer-type column of K7's own** (corrected 2026-10-22 when the M2 job ran: UAT refused both
+`new_customertype`, which is the incident's, and `k7_customertype`, the RFE's; the contact has only the stock
+`customertypecode` with one value). The Dealer/Reseller and Partner counts quoted earlier are the incident's;
+the partner relationship lives on the account's type and subtype; `msa_managingpartnerid`; `jobtitle`, `mobilephone`; the `adx_identity_*` columns of the 2019
 Dynamics 365 Portals local login (password hash, lockout, username) are present and belong to the old
 Event Portal, not to be reused.
 
@@ -153,7 +161,7 @@ Channel Manager at approval.
   `alletec_approxlyturnover` from the turnover band, `alletec_noofyearsinitbusiness` from the year of
   incorporation, `alletec_salesforcecount` from company size, `alletec_associatedwithk7on` = approval
   date. Primary contact → a `contact` (`firstname`/`lastname`, `jobtitle`, `emailaddress1`,
-  `mobilephone`, `parentcustomerid`, `new_customertype` 100000002) set as `primarycontactid`.
+  `mobilephone`, `parentcustomerid`; no customer-type column exists on the contact) set as `primarycontactid`.
 - GSTIN, PAN, trade name, company size, partner type detail, terms version and the portal's partner ID
   stay in the portal (no columns). Ask the CRM admin only if sales wants them in the CRM.
 - Back-reference: the portal stores `accountid` and `alletec_accountid`.
@@ -175,7 +183,7 @@ On approval (outbox job `opportunity.create`):
   `opportunityproducts` only for portal products that carry a `crmProductId` (the CRM catalogue
   predates the new product; `02-build-plan.md` decision 19), otherwise SKU and quantity in the note; competitor by
   name into `cit_competitorname` when it matches one of the competitor rows, else `alletec_competitoradded`
-  = Yes and the name in `description`; `alletec_zoneregion`/`alletec_state` from the customer's state.
+  = Yes (a picklist: 260760000 Yes, 260760001 No) and the name in `description`; `alletec_zoneregion`/`alletec_state` from the customer's state.
 - `ownerid`: the Channel Manager who approved, unless settings name a sales owner per region (ask).
 - `description` carries "Registered through the partner portal · K7D-xxxxx · protected until <date>";
   attachments become `annotations` on the opportunity. **No new columns**: the deal ID and the

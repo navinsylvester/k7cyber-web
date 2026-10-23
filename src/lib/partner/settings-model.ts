@@ -34,7 +34,7 @@ export type PartnerSettings = {
   partnerTypes: PartnerType[]
   regions: { code: string; name: string }[]
   terms: { version: string; url: string }
-  deals: { protectionDays: number; extensionDays: number; approvalSlaHours: number; requireCertificate: boolean; conflictCheckCrm: boolean }
+  deals: { protectionDays: number; extensionDays: number; approvalSlaHours: number; endingNoticeDays: number; requireCertificate: boolean; conflictCheckCrm: boolean }
   crm: { enabled: boolean; ownerRule: 'approver' | 'fixed'; ownerId: string; enquirySource: number; productCategory: number; accountNamePattern: string }
   notify: { emailEnabled: boolean; mailFrom: string; bellRetentionDays: number }
 }
@@ -47,7 +47,7 @@ export const DEFAULT_PARTNER_SETTINGS: PartnerSettings = {
   partnerTypes: ['distributor', 'integrationPartner', 'var'],
   regions: [],
   terms: { version: '2026-10', url: '' },
-  deals: { protectionDays: 90, extensionDays: 90, approvalSlaHours: 48, requireCertificate: false, conflictCheckCrm: false },
+  deals: { protectionDays: 90, extensionDays: 90, approvalSlaHours: 48, endingNoticeDays: 14, requireCertificate: false, conflictCheckCrm: false },
   crm: { enabled: false, ownerRule: 'approver', ownerId: '', enquirySource: 1, productCategory: 36, accountNamePattern: '{customer}-Fresh-{product}' },
   notify: { emailEnabled: true, mailFrom: 'K7 Partner Programme <partners@k7computing.com>', bellRetentionDays: 180 },
 }
@@ -86,6 +86,7 @@ export const normalisePartnerSettings = (g: Raw | null | undefined): PartnerSett
       protectionDays: num(deals.protectionDays, D.deals.protectionDays, 1),
       extensionDays: num(deals.extensionDays, D.deals.extensionDays, 1),
       approvalSlaHours: num(deals.approvalSlaHours, D.deals.approvalSlaHours, 1),
+      endingNoticeDays: num(deals.endingNoticeDays, D.deals.endingNoticeDays, 1),
       requireCertificate: bool(deals.requireCertificate, D.deals.requireCertificate),
       conflictCheckCrm: bool(deals.conflictCheckCrm, D.deals.conflictCheckCrm),
     },

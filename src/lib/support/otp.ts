@@ -7,7 +7,7 @@ import { createHmac, randomInt, timingSafeEqual } from 'node:crypto'
    store replaces the map when the portal runs on several. The purpose is part of the signed payload, so a code issued for
    one door never opens another. */
 
-export type OtpPurpose = 'sign-in' | 'register' | 'partner-sign-in'
+export type OtpPurpose = 'sign-in' | 'register' | 'partner-sign-in' | 'partner-join'
 export type OtpPayload = { email: string; purpose: OtpPurpose; exp: number; firstName?: string; lastName?: string; mobile?: string; organisation?: string; next?: string }
 
 export const OTP_TTL_SECONDS = 600

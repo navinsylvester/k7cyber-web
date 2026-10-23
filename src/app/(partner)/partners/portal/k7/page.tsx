@@ -2,15 +2,20 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
 
+import { K7Nav } from '@/components/partner/K7Nav'
 import { StaffRoleTags, Strip } from '@/components/partner/Parts'
+import { dealCounts } from '@/lib/partner/deals'
+import { owedOutboxCount } from '@/lib/partner/mirror'
 import { unreadCount } from '@/lib/partner/notify'
+import { orgCounts } from '@/lib/partner/organisation'
+import { applicationCounts } from '@/lib/partner/registration'
 import { requireK7 } from '@/lib/partner/session'
 import { STAFF_ROLE_LABEL, getPartnerSettings, type StaffRole } from '@/lib/partner/settings'
 
 export const metadata: Metadata = { title: 'Partner desk' }
 
 /* The K7 side's home (02-build-plan.md §4, /partners/portal/k7): who you are here, the roles you hold and what each opens. The
-   queues arrive with their milestones (applications M2, deals M4, partners M3, schemes M7, reports M8, settings M2). */
+   queues arrive with their milestones (applications and settings M2, partners M3, deals M4, schemes M7, reports M8). */
 const OPENS: Record<StaffRole, string> = {
   channelManager: 'applications, every partner organisation, waivers and suspensions',
   dealDeskApprover: 'registered deals, conflicts, decisions and extensions',
@@ -22,8 +27,12 @@ const OPENS: Record<StaffRole, string> = {
 export default async function K7HomePage() {
   const me = await requireK7('/partners/portal/k7')
   const settings = await getPartnerSettings()
-  const unread = await unreadCount({ kind: 'staff', roles: me.roles })
+  const cm = me.roles.includes('channelManager')
+  const dda = me.roles.includes('dealDeskApprover')
+  const [unread, counts, owed, orgs, deals] = await Promise.all([unreadCount({ kind: 'staff', roles: me.roles }), cm ? applicationCounts() : null, cm || dda ? owedOutboxCount() : 0, cm ? orgCounts() : null, dda ? dealCounts() : null])
   return (
+    <>
+    <K7Nav active="home" roles={me.roles} counts={{ applications: counts?.submitted, partners: orgs?.edits, deals: deals?.open }} />
     <section className="sheet ws g-paper">
       <div className="ws-head">
         <div className="ws-head-main">
@@ -37,7 +46,9 @@ export default async function K7HomePage() {
           { label: 'Signed in as', value: me.email || '—' },
           { label: 'Roles', value: <StaffRoleTags roles={me.roles} /> },
           { label: 'Unread', value: <Link href="/partners/portal/k7/notifications">{String(unread).padStart(2, '0')} notifications</Link> },
-          { label: 'Staff listed', value: String(settings.staff.length).padStart(2, '0') },
+          ...(counts ? [{ label: 'Applications', value: <Link href="/partners/portal/k7/applications">{String(counts.submitted + counts.underReview).padStart(2, '0')} open · {String(counts.submitted).padStart(2, '0')} new</Link> }] : [{ label: 'Staff listed', value: String(settings.staff.length).padStart(2, '0') }]),
+          ...(orgs ? [{ label: 'Partners', value: <Link href="/partners/portal/k7/partners">{String(orgs.approved).padStart(2, '0')} approved{orgs.edits ? ` · ${String(orgs.edits).padStart(2, '0')} edits waiting` : ''}</Link> }] : []),
+          ...(deals ? [{ label: 'Deals', value: <Link href="/partners/portal/k7/deals">{String(deals.submitted).padStart(2, '0')} new · {String(deals.extensionRequested).padStart(2, '0')} extensions · {String(deals.approved).padStart(2, '0')} protected</Link> }] : []),
         ]}
       />
       <div className="phome">
@@ -65,16 +76,24 @@ export default async function K7HomePage() {
           <div>
             <h2>Settings</h2>
             <p className="muted" style={{ margin: 0, fontSize: 15 }}>
-              Protection {settings.deals.protectionDays} days · extension {settings.deals.extensionDays} days · decision within {settings.deals.approvalSlaHours} working hours · certificate gate {settings.deals.requireCertificate ? 'on' : 'off'} · CRM mirror {settings.crm.enabled ? 'on' : 'off'}.
+              Protection {settings.deals.protectionDays} days · extension {settings.deals.extensionDays} days · decision within {settings.deals.approvalSlaHours} working hours · certificate gate {settings.deals.requireCertificate ? 'on' : 'off'} · CRM mirror {settings.crm.enabled ? 'on' : 'off'}
+              {owed ? ` · ${owed} CRM job${owed === 1 ? '' : 's'} waiting` : ''} · {settings.staff.length} staff listed.
             </p>
             <p className="more">
-              <Link className="link-u" href="/admin/globals/partner-settings">
-                Edit in the Payload admin
-              </Link>
+              {cm ? (
+                <Link className="link-u" href="/partners/portal/k7/settings">
+                  Edit the settings
+                </Link>
+              ) : (
+                <Link className="link-u" href="/admin/globals/partner-settings">
+                  Edit in the Payload admin
+                </Link>
+              )}
             </p>
           </div>
         </aside>
       </div>
     </section>
+    </>
   )
 }
