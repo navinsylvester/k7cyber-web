@@ -171,6 +171,14 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
               </div>
             </div>
             <div>
+              <h2 className="sub-head">Schemes</h2>
+              <div className="form-grid">
+                <Field id="schemes_disputeDays" label="Dispute window (days)" hint="FR-ELG-05: after the results are published, how long a partner may raise a dispute. A scheme may set its own in the admin. 0 closes the window at once.">
+                  <input id="schemes_disputeDays" name="schemes_disputeDays" inputMode="numeric" defaultValue={s.schemes.disputeDays} />
+                </Field>
+              </div>
+            </div>
+            <div>
               <h2 className="sub-head">Notifications</h2>
               <div className="form-grid">
                 <div className="span-2">{check('notify_emailEnabled', 'Email beside the bell', s.notify.emailEnabled, 'mail still goes only through SMTP_URL and the allowlist')}</div>

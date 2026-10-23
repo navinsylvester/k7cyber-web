@@ -39,6 +39,8 @@ export type PartnerSettings = {
   notify: { emailEnabled: boolean; mailFrom: string; bellRetentionDays: number }
   /** FR-MKT-02: the collateral file cap in MB, at most the server's 200. */
   collateral: { maxMb: number }
+  /** FR-ELG-05: the days after publication in which a partner may dispute a result (a scheme may override). */
+  schemes: { disputeDays: number }
 }
 
 export const COLLATERAL_MAX_MB_CEILING = 200
@@ -55,6 +57,7 @@ export const DEFAULT_PARTNER_SETTINGS: PartnerSettings = {
   crm: { enabled: false, ownerRule: 'approver', ownerId: '', enquirySource: 1, productCategory: 36, accountNamePattern: '{customer}-Fresh-{product}', syncMinutes: 60 },
   notify: { emailEnabled: true, mailFrom: 'K7 Partner Programme <partners@k7computing.com>', bellRetentionDays: 180 },
   collateral: { maxMb: 200 },
+  schemes: { disputeDays: 14 },
 }
 
 type Raw = Record<string, unknown>
@@ -110,6 +113,7 @@ export const normalisePartnerSettings = (g: Raw | null | undefined): PartnerSett
       bellRetentionDays: num(notify.bellRetentionDays, D.notify.bellRetentionDays, 7),
     },
     collateral: { maxMb: Math.min(num(obj(r.collateral).maxMb, D.collateral.maxMb, 1), COLLATERAL_MAX_MB_CEILING) },
+    schemes: { disputeDays: num(obj(r.schemes).disputeDays, D.schemes.disputeDays, 0) },
   }
 }
 
