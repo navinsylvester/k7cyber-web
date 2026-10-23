@@ -104,6 +104,13 @@ export interface Config {
     'partner-eligibility': PartnerEligibility;
     'partner-mail-templates': PartnerMailTemplate;
     'partner-job-runs': PartnerJobRun;
+    'partner-tracks': PartnerTrack;
+    'partner-courses': PartnerCourse;
+    'partner-modules': PartnerModule;
+    'partner-questions': PartnerQuestion;
+    'partner-training-files': PartnerTrainingFile;
+    'partner-progress': PartnerProgress;
+    'partner-attempts': PartnerAttempt;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -119,6 +126,10 @@ export interface Config {
   collectionsJoins: {
     'partner-collateral': {
       files: 'partner-collateral-files';
+    };
+    'partner-courses': {
+      modules: 'partner-modules';
+      questions: 'partner-questions';
     };
     'payload-folders': {
       documentsAndFolders: 'payload-folders' | 'media';
@@ -162,6 +173,13 @@ export interface Config {
     'partner-eligibility': PartnerEligibilitySelect<false> | PartnerEligibilitySelect<true>;
     'partner-mail-templates': PartnerMailTemplatesSelect<false> | PartnerMailTemplatesSelect<true>;
     'partner-job-runs': PartnerJobRunsSelect<false> | PartnerJobRunsSelect<true>;
+    'partner-tracks': PartnerTracksSelect<false> | PartnerTracksSelect<true>;
+    'partner-courses': PartnerCoursesSelect<false> | PartnerCoursesSelect<true>;
+    'partner-modules': PartnerModulesSelect<false> | PartnerModulesSelect<true>;
+    'partner-questions': PartnerQuestionsSelect<false> | PartnerQuestionsSelect<true>;
+    'partner-training-files': PartnerTrainingFilesSelect<false> | PartnerTrainingFilesSelect<true>;
+    'partner-progress': PartnerProgressSelect<false> | PartnerProgressSelect<true>;
+    'partner-attempts': PartnerAttemptsSelect<false> | PartnerAttemptsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -3421,6 +3439,8 @@ export interface PartnerMailTemplate {
     | 'scheme.dispute.raised'
     | 'scheme.dispute.resolved'
     | 'scheme.payout'
+    | 'training.course.passed'
+    | 'training.bank.empty'
     | 'sla.breached';
   /**
    * Off: the code’s own text is sent.
@@ -3478,6 +3498,306 @@ export interface PartnerJobRun {
   createdAt: string;
 }
 /**
+ * The learning tracks (Sales, Technical). A published track shows to partner users who hold one of its roles; a track with no role shows to everyone. Courses are filed under a track.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-tracks".
+ */
+export interface PartnerTrack {
+  id: number;
+  name: string;
+  /**
+   * sales, technical …; in the portal’s URLs.
+   */
+  key: string;
+  status: 'draft' | 'published' | 'retired';
+  order?: number | null;
+  /**
+   * The partner roles this track is for (FR-TRN-01, §2). Empty: every partner user.
+   */
+  roles?: ('sales' | 'technical' | 'admin')[] | null;
+  /**
+   * One or two lines under the name.
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * A course is modules (video and reading) and one test drawn from its question bank. Publish it when its modules and bank are ready. Bump the version when the material changes (FR-TRN-14): passes on earlier versions stay valid and say which version they were on.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-courses".
+ */
+export interface PartnerCourse {
+  id: number;
+  title: string;
+  track: number | PartnerTrack;
+  status: 'draft' | 'published' | 'retired';
+  /**
+   * What the course covers and who it is for; on the course list and the course page.
+   */
+  description?: string | null;
+  /**
+   * Within its track; lower first.
+   */
+  order?: number | null;
+  /**
+   * FR-TRN-14: raise it when the material changes.
+   */
+  version: number;
+  /**
+   * Set when first published.
+   */
+  publishedAt?: string | null;
+  retiredAt?: string | null;
+  /**
+   * FR-TRN-05: pass mark in %.
+   */
+  passMark?: number | null;
+  /**
+   * FR-TRN-05: minutes.
+   */
+  timeLimitMinutes?: number | null;
+  /**
+   * FR-TRN-04: drawn per attempt.
+   */
+  questionsPerTest?: number | null;
+  /**
+   * FR-TRN-03: the share of each video (0.9 = 90%).
+   */
+  requiredShare?: number | null;
+  /**
+   * FR-TRN-06: whether the result page shows the correct answers.
+   */
+  showAnswers?: ('default' | 'yes' | 'no') | null;
+  /**
+   * The modules in order. Add one under Modules.
+   */
+  modules?: {
+    docs?: (number | PartnerModule)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * The question bank. Add rows here or import a CSV on the partner desk (Training → the course → Import).
+   */
+  questions?: {
+    docs?: (number | PartnerQuestion)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * One video with optional reading material and files. The video is a Vimeo URL or id (vimeo.com/123456789, with its hash when unlisted), a direct .mp4 link, or a file uploaded under Training files. The duration is learnt from the player when blank.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-modules".
+ */
+export interface PartnerModule {
+  id: number;
+  title: string;
+  course: number | PartnerCourse;
+  /**
+   * Only Published shows and counts.
+   */
+  status: 'draft' | 'published';
+  /**
+   * One line under the title on the module list.
+   */
+  description?: string | null;
+  /**
+   * Vimeo URL or id, or a direct media link. Ignored when a file is chosen.
+   */
+  video?: string | null;
+  /**
+   * An uploaded MP4 (served only through the portal).
+   */
+  videoFile?: (number | null) | PartnerTrainingFile;
+  /**
+   * Within its course; lower first.
+   */
+  order?: number | null;
+  /**
+   * Seconds; blank until the player reports it.
+   */
+  durationSeconds?: number | null;
+  /**
+   * FR-TRN-03 for this module alone (0.9 = 90%). Blank: the course’s or the portal’s.
+   */
+  requiredShare?: number | null;
+  /**
+   * Reading material shown under the video; paragraphs separated by a blank line.
+   */
+  reading?: string | null;
+  /**
+   * Documents the module hands out (PDF, slides); served through the portal to the users who may take the course.
+   */
+  attachments?: (number | PartnerTrainingFile)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Videos (MP4) and documents a module uses, up to 200 MB; served only through the portal to the users who may take the course.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-training-files".
+ */
+export interface PartnerTrainingFile {
+  id: number;
+  uploadedBy?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+}
+/**
+ * The bank a course’s test is drawn from. Single choice: exactly one correct option; multiple choice: one or more correct and at least one wrong; true/false: two options, one correct. Inactive questions are never drawn. Bulk import from a CSV on the partner desk.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-questions".
+ */
+export interface PartnerQuestion {
+  id: number;
+  course: number | PartnerCourse;
+  type: 'single' | 'multiple' | 'trueFalse';
+  active?: boolean | null;
+  /**
+   * Free word, for the ledger.
+   */
+  topic?: string | null;
+  /**
+   * The question.
+   */
+  text: string;
+  options?:
+    | {
+        text: string;
+        correct?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Shown with the correct answer on the result page when the course allows it (FR-TRN-06).
+   */
+  explanation?: string | null;
+  /**
+   * Set when the row came from a CSV import.
+   */
+  importedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * One row per user and module: the union of the watched ranges, the share and the completion. Written by the portal’s player; do not edit.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-progress".
+ */
+export interface PartnerProgress {
+  id: number;
+  user: number | PartnerUser;
+  org: number | PartnerOrg;
+  module: number | PartnerModule;
+  course: number | PartnerCourse;
+  courseVersion?: number | null;
+  completedAt?: string | null;
+  /**
+   * Seconds.
+   */
+  duration?: number | null;
+  /**
+   * Seconds covered.
+   */
+  watched?: number | null;
+  share?: number | null;
+  /**
+   * Where to resume.
+   */
+  lastPosition?: number | null;
+  /**
+   * The watched ranges, merged: [[start, end], …] in seconds.
+   */
+  ranges?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Every test attempt with the paper as drawn and the answers given (FR-TRN-06). Written by the portal; do not edit.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-attempts".
+ */
+export interface PartnerAttempt {
+  id: number;
+  user: number | PartnerUser;
+  userName?: string | null;
+  org: number | PartnerOrg;
+  course: number | PartnerCourse;
+  status: 'open' | 'submitted' | 'expired';
+  courseVersion?: number | null;
+  startedAt: string;
+  expiresAt?: string | null;
+  submittedAt?: string | null;
+  /**
+   * %
+   */
+  score?: number | null;
+  correct?: number | null;
+  total?: number | null;
+  passMark?: number | null;
+  passed?: boolean | null;
+  /**
+   * The draw can be repeated from it.
+   */
+  seed?: string | null;
+  /**
+   * The course’s rule at the time.
+   */
+  showAnswers?: boolean | null;
+  /**
+   * The questions as drawn, with the shuffled options under letter keys and the correct keys.
+   */
+  paper?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * The keys chosen per question.
+   */
+  answers?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -3485,9 +3805,9 @@ export interface User {
   id: number;
   name?: string | null;
   /**
-   * Labs editors publish posts, CVEs and threats; marketing editors own threat reports.
+   * Labs editors publish posts, CVEs and threats; marketing editors own threat reports and the partner collateral and schemes; training editors own the partner training content.
    */
-  roles: ('admin' | 'labsEditor' | 'marketingEditor')[];
+  roles: ('admin' | 'labsEditor' | 'marketingEditor' | 'trainingEditor')[];
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -3814,6 +4134,34 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'partner-job-runs';
         value: number | PartnerJobRun;
+      } | null)
+    | ({
+        relationTo: 'partner-tracks';
+        value: number | PartnerTrack;
+      } | null)
+    | ({
+        relationTo: 'partner-courses';
+        value: number | PartnerCourse;
+      } | null)
+    | ({
+        relationTo: 'partner-modules';
+        value: number | PartnerModule;
+      } | null)
+    | ({
+        relationTo: 'partner-questions';
+        value: number | PartnerQuestion;
+      } | null)
+    | ({
+        relationTo: 'partner-training-files';
+        value: number | PartnerTrainingFile;
+      } | null)
+    | ({
+        relationTo: 'partner-progress';
+        value: number | PartnerProgress;
+      } | null)
+    | ({
+        relationTo: 'partner-attempts';
+        value: number | PartnerAttempt;
       } | null)
     | ({
         relationTo: 'media';
@@ -5588,6 +5936,145 @@ export interface PartnerJobRunsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-tracks_select".
+ */
+export interface PartnerTracksSelect<T extends boolean = true> {
+  name?: T;
+  key?: T;
+  status?: T;
+  order?: T;
+  roles?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-courses_select".
+ */
+export interface PartnerCoursesSelect<T extends boolean = true> {
+  title?: T;
+  track?: T;
+  status?: T;
+  description?: T;
+  order?: T;
+  version?: T;
+  publishedAt?: T;
+  retiredAt?: T;
+  passMark?: T;
+  timeLimitMinutes?: T;
+  questionsPerTest?: T;
+  requiredShare?: T;
+  showAnswers?: T;
+  modules?: T;
+  questions?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-modules_select".
+ */
+export interface PartnerModulesSelect<T extends boolean = true> {
+  title?: T;
+  course?: T;
+  status?: T;
+  description?: T;
+  video?: T;
+  videoFile?: T;
+  order?: T;
+  durationSeconds?: T;
+  requiredShare?: T;
+  reading?: T;
+  attachments?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-questions_select".
+ */
+export interface PartnerQuestionsSelect<T extends boolean = true> {
+  course?: T;
+  type?: T;
+  active?: T;
+  topic?: T;
+  text?: T;
+  options?:
+    | T
+    | {
+        text?: T;
+        correct?: T;
+        id?: T;
+      };
+  explanation?: T;
+  importedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-training-files_select".
+ */
+export interface PartnerTrainingFilesSelect<T extends boolean = true> {
+  uploadedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-progress_select".
+ */
+export interface PartnerProgressSelect<T extends boolean = true> {
+  user?: T;
+  org?: T;
+  module?: T;
+  course?: T;
+  courseVersion?: T;
+  completedAt?: T;
+  duration?: T;
+  watched?: T;
+  share?: T;
+  lastPosition?: T;
+  ranges?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-attempts_select".
+ */
+export interface PartnerAttemptsSelect<T extends boolean = true> {
+  user?: T;
+  userName?: T;
+  org?: T;
+  course?: T;
+  status?: T;
+  courseVersion?: T;
+  startedAt?: T;
+  expiresAt?: T;
+  submittedAt?: T;
+  score?: T;
+  correct?: T;
+  total?: T;
+  passMark?: T;
+  passed?: T;
+  seed?: T;
+  showAnswers?: T;
+  paper?: T;
+  answers?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -6447,6 +6934,31 @@ export interface PartnerSetting {
     disputeDays?: number | null;
   };
   /**
+   * Training (01-requirements.md §4, M10). Tracks, courses, modules and question banks are edited in Partner portal → Training …; these are the programme-wide rules a course may override.
+   */
+  training?: {
+    /**
+     * FR-TRN-03: the share of a video that completes a module (0.9 = 90%).
+     */
+    watchShare?: number | null;
+    /**
+     * FR-TRN-05: the pass mark in %.
+     */
+    passMark?: number | null;
+    /**
+     * FR-TRN-05: minutes for a test.
+     */
+    timeLimitMinutes?: number | null;
+    /**
+     * FR-TRN-04: questions drawn from the bank per attempt.
+     */
+    questionsPerTest?: number | null;
+    /**
+     * FR-TRN-06: show the correct answers on the result page.
+     */
+    showAnswers?: boolean | null;
+  };
+  /**
    * What the outbox writes to Dynamics on approval (decisions 2, 10, 19). Off: the jobs queue as pending and nothing reaches the CRM. UAT only; production is read-only in code.
    */
   crm?: {
@@ -6834,6 +7346,15 @@ export interface PartnerSettingsSelect<T extends boolean = true> {
     | T
     | {
         disputeDays?: T;
+      };
+  training?:
+    | T
+    | {
+        watchShare?: T;
+        passMark?: T;
+        timeLimitMinutes?: T;
+        questionsPerTest?: T;
+        showAnswers?: T;
       };
   crm?:
     | T

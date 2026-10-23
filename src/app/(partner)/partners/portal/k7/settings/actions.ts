@@ -83,6 +83,16 @@ export async function savePartnerSettingsAction(form: FormData): Promise<void> {
     },
     collateral: { maxMb: Math.min(n(form, 'collateral_maxMb', cur.collateral.maxMb, 1), COLLATERAL_MAX_MB_CEILING) },
     schemes: { disputeDays: n(form, 'schemes_disputeDays', cur.schemes.disputeDays, 0) },
+    training: {
+      watchShare: (() => {
+        const v = Number(s(form, 'training_watchPercent'))
+        return Number.isFinite(v) && v >= 10 && v <= 100 ? v / 100 : cur.training.watchShare
+      })(),
+      passMark: Math.min(100, n(form, 'training_passMark', cur.training.passMark, 1)),
+      timeLimitMinutes: n(form, 'training_timeLimitMinutes', cur.training.timeLimitMinutes, 1),
+      questionsPerTest: n(form, 'training_questionsPerTest', cur.training.questionsPerTest, 1),
+      showAnswers: on(form, 'training_showAnswers'),
+    },
   }
   try {
     await savePartnerSettings(next)

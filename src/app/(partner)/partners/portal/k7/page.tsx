@@ -13,16 +13,17 @@ import { applicationCounts } from '@/lib/partner/registration'
 import { schemeCounts } from '@/lib/partner/schemes'
 import { requireK7 } from '@/lib/partner/session'
 import { slaCounts } from '@/lib/partner/sla'
+import { trainingCounts } from '@/lib/partner/training'
 import { STAFF_ROLE_LABEL, getPartnerSettings, type StaffRole } from '@/lib/partner/settings'
 
 export const metadata: Metadata = { title: 'Partner desk' }
 
 /* The K7 side's home (02-build-plan.md §4, /partners/portal/k7): who you are here, the roles you hold and what each opens. The
-   queues arrive with their milestones (applications and settings M2, partners M3, deals M4, collateral M6, schemes M7, reports M8). */
+   queues arrive with their milestones (applications and settings M2, partners M3, deals M4, collateral M6, schemes M7, reports M8, training M10). */
 const OPENS: Record<StaffRole, string> = {
   channelManager: 'applications, every partner organisation, waivers and suspensions, the reports, the settings and the notification templates',
   dealDeskApprover: 'registered deals, conflicts, decisions and extensions, the pipeline and SLA reports',
-  trainingAdmin: 'courses, tests and question banks (last phase)',
+  trainingAdmin: 'the training ledger: tracks, courses, modules and question banks (edited in the Payload admin, read here), the CSV import, the learners and their passes',
   marketingAdmin: 'the collateral library (edited in the Payload admin, read here) and schemes',
   schemeAdmin: 'scheme registrations, the eligibility run, adjustments and publication, disputes, payouts and the Finance export',
 }
@@ -34,12 +35,13 @@ export default async function K7HomePage() {
   const dda = me.roles.includes('dealDeskApprover')
   const mkt = me.roles.includes('marketingAdmin')
   const sch = me.roles.includes('schemeAdmin')
-  const [unread, counts, owed, orgs, deals, library, schemes, sla] = await Promise.all([unreadCount({ kind: 'staff', roles: me.roles }), cm ? applicationCounts() : null, cm || dda ? owedOutboxCount() : 0, cm ? orgCounts() : null, dda ? dealCounts() : null, mkt ? collateralCounts() : null, sch ? schemeCounts() : null, cm || dda ? slaCounts(settings) : null])
+  const trn = me.roles.includes('trainingAdmin')
+  const [unread, counts, owed, orgs, deals, library, schemes, sla, training] = await Promise.all([unreadCount({ kind: 'staff', roles: me.roles }), cm ? applicationCounts() : null, cm || dda ? owedOutboxCount() : 0, cm ? orgCounts() : null, dda ? dealCounts() : null, mkt ? collateralCounts() : null, sch ? schemeCounts() : null, cm || dda ? slaCounts(settings) : null, trn ? trainingCounts() : null])
   const breached = sla ? (cm ? sla.applications.breached : 0) + (dda ? sla.deals.breached : 0) : 0
   const onClock = sla ? (cm ? sla.applications.open : 0) + (dda ? sla.deals.open : 0) : 0
   return (
     <>
-    <K7Nav active="home" roles={me.roles} counts={{ applications: counts?.submitted, partners: orgs?.edits, deals: deals?.open, collateral: library?.withoutFile, schemes: schemes ? schemes.pending + schemes.due + schemes.disputes : undefined, reports: breached || undefined }} />
+    <K7Nav active="home" roles={me.roles} counts={{ applications: counts?.submitted, partners: orgs?.edits, deals: deals?.open, collateral: library?.withoutFile, schemes: schemes ? schemes.pending + schemes.due + schemes.disputes : undefined, training: training?.banksEmpty, reports: breached || undefined }} />
     <section className="sheet ws g-paper">
       <div className="ws-head">
         <div className="ws-head-main">
@@ -58,6 +60,7 @@ export default async function K7HomePage() {
           ...(deals ? [{ label: 'Deals', value: <Link href="/partners/portal/k7/deals">{String(deals.submitted).padStart(2, '0')} new · {String(deals.extensionRequested).padStart(2, '0')} extensions · {String(deals.approved).padStart(2, '0')} protected</Link> }] : []),
           ...(library ? [{ label: 'Collateral', value: <Link href="/partners/portal/k7/collateral">{String(library.published).padStart(2, '0')} published{library.withoutFile ? ` · ${String(library.withoutFile).padStart(2, '0')} without a file` : ''} · {String(library.downloads30).padStart(2, '0')} downloads in 30 days</Link> }] : []),
           ...(sla ? [{ label: 'Approval SLA', value: <Link href="/partners/portal/k7/reports">{String(onClock).padStart(2, '0')} on the clock{breached ? ` · ${String(breached).padStart(2, '0')} past the target` : ''}</Link> }] : []),
+          ...(training ? [{ label: 'Training', value: <Link href="/partners/portal/k7/training">{String(training.published).padStart(2, '0')} courses live{training.banksEmpty ? ` · ${String(training.banksEmpty).padStart(2, '0')} without a bank` : ''} · {String(training.passes30).padStart(2, '0')} passes in 30 days</Link> }] : []),
           ...(schemes ? [{ label: 'Schemes', value: <Link href="/partners/portal/k7/schemes">{String(schemes.open + schemes.running).padStart(2, '0')} live{schemes.pending ? ` · ${String(schemes.pending).padStart(2, '0')} registrations waiting` : ''}{schemes.due ? ` · ${String(schemes.due).padStart(2, '0')} results due` : ''}{schemes.disputes ? ` · ${String(schemes.disputes).padStart(2, '0')} disputes` : ''}</Link> }] : []),
         ]}
       />

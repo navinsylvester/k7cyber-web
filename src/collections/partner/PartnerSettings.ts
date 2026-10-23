@@ -138,6 +138,28 @@ export const PartnerSettings: GlobalConfig = {
           ],
         },
         {
+          label: 'Training',
+          fields: [
+            {
+              name: 'training',
+              type: 'group',
+              admin: { description: 'Training (01-requirements.md §4, M10). Tracks, courses, modules and question banks are edited in Partner portal → Training …; these are the programme-wide rules a course may override.' },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'watchShare', type: 'number', min: 0.1, max: 1, defaultValue: 0.9, admin: { width: '25%', description: 'FR-TRN-03: the share of a video that completes a module (0.9 = 90%).' } },
+                    { name: 'passMark', type: 'number', min: 1, max: 100, defaultValue: 70, admin: { width: '25%', description: 'FR-TRN-05: the pass mark in %.' } },
+                    { name: 'timeLimitMinutes', type: 'number', min: 1, defaultValue: 20, admin: { width: '25%', description: 'FR-TRN-05: minutes for a test.' } },
+                    { name: 'questionsPerTest', type: 'number', min: 1, defaultValue: 10, admin: { width: '25%', description: 'FR-TRN-04: questions drawn from the bank per attempt.' } },
+                  ],
+                },
+                { name: 'showAnswers', type: 'checkbox', defaultValue: true, admin: { description: 'FR-TRN-06: show the correct answers on the result page.' } },
+              ],
+            },
+          ],
+        },
+        {
           label: 'CRM mirror',
           fields: [
             {

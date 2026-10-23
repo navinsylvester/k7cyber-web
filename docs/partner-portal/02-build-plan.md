@@ -47,7 +47,7 @@ not for its history.
 | M7 | Schemes and eligibility (§9) | **built 2026-10-23** (session 13): the four collections, the partner pages (listing, scheme, Check eligibility), the K7 ledger, sheet and result sheet, the run, the Finance CSV; tests pass; both sides clicked end to end on localhost and the tunnel host, including a phone width |
 | M8 | Notifications, bell, editable templates, approval SLA, reporting, exports (§10 and the gaps) | **built 2026-10-23** (session 14): the event catalogue and the templates page with a delivery rule per event (at once · daily digest · bell only), the digest and retention pass, the approval SLA in working hours with the breach notice to approvers, managers and escalation addresses, the SLA reading on the K7 queues and sheets, the four reports with CSV; tests pass; the K7 side clicked end to end on localhost, the partner side's rendered row too; the non-functional requirements proposed in §11, to confirm with the author |
 | M9 | Hardening and staging: non-functional requirements, tests, go-live gate → **launch 1 (no LMS)** | **built 2026-10-23** (session 15): `05-staging-and-go-live.md` (the runbook: host needs, environment per stage, the scheduler, operations, the gate, backup); the shared cron guard, the per-client code limit, the portal headers, the per-feature CRM switches, the job-run log with the Operations page and the health route, housekeeping, backup and restore scripts rehearsed; the matrix, scope, fixture and route-door tests; the items earlier sessions left unclicked are clicked. Hosting itself is still undecided, so staging is specified, not stood up |
-| M10 | Training (§4): tracks, courses, modules, video progress, tests, attempts, results, admin | not started (last phase) |
+| M10 | Training (§4): tracks, courses, modules, video progress, tests, attempts, results, admin | **built 2026-10-23** (session 16): the six collections and the training files in the Payload admin for the Training editor, the video adapter (Vimeo · direct link · uploaded file) with the player posting watched ranges and the server deciding completion, the test engine (unlock, seeded draw from the bank, time limit, all-or-nothing grading, attempts stored with the paper and the answers), the learner's pages, the Partner Admin's organisation view, the Training Admin's desk with the CSV import, the Training settings; certificates wait for M11 |
 | M11 | Certificates (§4 FR-TRN-07–10, §5): PDF + QR, public verification, expiry, org certificate, revoke; then the deal gate switch | not started (last phase) |
 
 The notification spine (one `notify()` and the bell) is built in M1–M2 because every later
@@ -146,6 +146,32 @@ portal is imported. The CRM has no partner-programme tables of its own
     reports watched ranges every 10 s and on pause/leave; completion is computed server-side from the
     union of watched ranges (FR-TRN-03). *Confirm* the host when M10 starts (Vimeo with domain
     restriction is the default assumption; Mux/Cloudflare Stream for signed URLs).
+    **Built 2026-10-23 as decided:** `video.ts` reads a Vimeo URL or id (with the unlisted hash), a
+    direct media link, or a file uploaded to `partner-training-files` (served through the portal's
+    own route after the session check); the player (`Player.client.tsx`) keeps the ranges as the
+    video ticks (a jump of more than two seconds starts a new range), posts them every ten seconds
+    and on pause, end, hide and leave, and resumes from the last position; the host itself is still
+    the author's call (Vimeo needs no credential in the code, only the domain restriction on Vimeo).
+20. **Course versioning (FR-TRN-14) is an integer the Training Admin raises** when the material
+    changes; every progress row and attempt records the version it was made on, a pass on an earlier
+    version stays valid and the course page says *passed on v1* and offers the new version. No
+    copy-on-publish of modules and banks: the admin edits in place, the version number is the record.
+21. **The test** draws `questionsPerTest` from the askable bank (active, well formed) in a seeded
+    shuffle whose seed is kept on the attempt, shuffles the options under letter keys (true/false
+    keeps True before False) and records the correct keys with the paper, so a later edit of the bank
+    never changes a stored result; one mark per question, a multiple-choice question all-or-nothing;
+    a submission up to 45 s after the limit counts, later it is recorded as *expired* and graded on
+    what was answered; an open attempt is resumed, never re-drawn. No cooldown between attempts and
+    no attempt cap: the requirements name none, every attempt is stored.
+22. **A track opens to the partner roles it names** (Sales → `sales`, Technical → `technical`); a user
+    learns a track when they hold one of its roles, a track that names none opens to everyone, and a
+    Partner Admin without a learning role reads the organisation's progress (FR-TRN-11) but takes no
+    course. The Training Admin is a Payload user with the new `trainingEditor` role for `/admin`
+    (the training collections, read-only on progress and attempts) and the portal role by work email
+    for the desk, like the Marketing Admin (decision 9).
+23. **The training rules live in `partner-settings.training`** (watch share 90%, pass mark 70%, time
+    limit 20 min, 10 questions, answers shown) and a course or a module may override each in the
+    admin; the K7 settings page edits the programme's values.
 
 ## 4. Where it lives
 ```
@@ -262,11 +288,11 @@ Tick as done; dates in the session log.
 - [x] Staging specified in `05-staging-and-go-live.md` §1–2 (what the host must provide, the environment per stage); the code side done: the shared constant-time cron guard (`src/lib/cron-auth.ts`), the per-client code limit beside the per-address one, the portal headers in `next.config.ts`, every scheduled run recorded (`partner-job-runs`) and read on `/partners/portal/k7/operations` with the readiness checks, `GET /api/partners/health` for a monitor, `POST /api/partners/housekeeping`, `scripts/backup.sh` / `restore.sh` rehearsed locally (NFR 9). Object storage deferred (a persistent disk is enough for launch 1); SMTP and the service application user are the host's lines in §2, not code
 - [x] Go-live gate written (`05-staging-and-go-live.md` §5) on `07-production-safety.md` §7 with the switches it needs: `crm.features` (account, opportunity, read-back) under the master `crm.enabled`, a job whose feature is off waiting as pending with no attempt, the read-back refusing when its switch is off; the gate itself is run at launch, not now
 
-### M10 — training (§4), last phase
-- [ ] Collections and Payload admin for tracks, courses (versioned), modules, question banks (bulk CSV import); Training Admin role
-- [ ] Player page on the video adapter; progress API; completion from watched ranges at the configured share
-- [ ] Test engine: unlock rule, shuffled draw from the bank, time limit, scoring, stored attempts, results page with optional answers
-- [ ] Progress dashboard for the user and, for the Partner Admin, the organisation (FR-TRN-11)
+### M10 — training (§4), built 2026-10-23
+- [x] Collections and Payload admin for tracks, courses (versioned), modules, question banks (bulk CSV import); Training Admin role: `partner-tracks`, `-courses` (version, the test rules as overrides, joins to modules and questions), `-modules` (a Vimeo reference, a direct link or an uploaded file, reading, attachments), `-questions`, `-training-files`, and the portal's own `-progress` and `-attempts` (read-only in the admin), under the group *Partner training* for the new Payload role `trainingEditor` (`pnpm partner:seed-dev … --trainer`); the CSV import on the desk's course sheet with the template route
+- [x] Player page on the video adapter; progress API; completion from watched ranges at the configured share: `video.ts`, `Player.client.tsx`, `POST /partners/portal/training/progress` (same-origin, the user's own module), `applyWatched` merging the union and deciding completion at the module's, the course's or the programme's share; the duration learnt onto the module; resume from the last position
+- [x] Test engine: unlock rule, shuffled draw from the bank, time limit, scoring, stored attempts, results page with optional answers: `testUnlocked`, `drawPaper` (seeded), `gradePaper`, the attempt row with the paper and the answers, `TestPaper.client.tsx` with the clock that submits at zero, the result page with the review; the pass tells the participant and the Partner Admins (`training.course.passed`); a course whose bank cannot make a paper tells the Training Admins once per learner who completes it (`training.bank.empty`)
+- [x] Progress dashboard for the user and, for the Partner Admin, the organisation (FR-TRN-11): `/partners/portal/training` (the ledger per track with the standing), `/training/organisation` (one ledger per user), the home page's Training card; the K7 ledger and course sheet with the learners
 
 ### M11 — certificates (§4 FR-TRN-07–10, §5), last phase
 - [ ] PDF generator (individual, organisation) with QR; private upload collection; download in profile; emailed on issue
@@ -310,7 +336,7 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
 | ELG-01 … 07 | M7 | built 2026-10-23 (ELG-01: won in the CRM, closed inside the dates, on a named product, at the order value; ELG-02: adjust with reason, publish; ELG-03/04: the page with the slab, the benefit, the gap, the deals; ELG-05: window = setting or the scheme's days; ELG-06: pending · processed · paid with reference; ELG-07: CSV) |
 | NTF-01 | M1 (spine), M8 (templates, SLA) | M1 done (`notify()`, the bell, email through the allowlist); M2 sends the application events (staff bell + mail, applicant mail, the invitation); M4 the deal events (submitted, resubmitted, decided, amended, extension asked and decided, withdrawn, expired, protection ending); M7 the scheme events; **M8 built 2026-10-23**: templates K7 edits per event with a delivery rule and the daily digest, the approval SLA breach to the approvers and their managers (the training and certificate rows of the table arrive with M10–M11) |
 | non-functional (none written) | M8, M9 | proposed 2026-10-23 (§11), to confirm with the author; M9 carries out 7 (the guard, the limiter, the headers, the route-door test), 8 (every run a row), 9 (backup rehearsed) and the retention lines of 4 (drafts, job runs) in code and the rest as the runbook `05-staging-and-go-live.md` |
-| TRN-01 … 06, 11, 12, 13, 14 | M10 | — (last phase) |
+| TRN-01 … 06, 11, 12, 13, 14 | M10 | built 2026-10-23 (TRN-01: two tracks by role, courses of ordered modules with video and reading; TRN-02: Vimeo or the browser player through the portal, resume from the last position, download removed; TRN-03: completion from the union of watched ranges at the configured share, gaps do not count; TRN-04: the test unlocks when every module is complete, three question types, shuffled draw per attempt; TRN-05: pass mark and time limit per course or programme-wide; TRN-06: the score and, by setting, the answers; attempts and answers stored; TRN-11: the learner's and the Partner Admin's views; TRN-12, 13: the admin collections and the CSV import with the template; TRN-14: the integer version on every progress row and attempt, earlier passes kept) |
 | TRN-07, 08, 09, 10 | M11 | — (last phase) |
 | CRT-01 … 07 | M11 | — (last phase) |
 
@@ -700,3 +726,37 @@ change a line rather than write from nothing; each is either already true of the
   host where `AUTH_URL` is the host's own URL. Test data left: K7D-00074 (rejected), K7D-00030 with its one extension used (declined),
   pp-test-join active. Nothing committed (Navin commits). **Next:** the LMS (M10 training, M11 certificates); §7's author questions and §11's
   defaults still to confirm; at launch, the gate in `05-staging-and-go-live.md` §5 and the backup rehearsal on staging (§6).
+
+- **Session 16 (2026-10-23, Claude Code): M10 built, training.** Model `training-model.ts` (ranges, completion, rules, unlock, the seeded
+  draw, grading, standing, the CSV), the adapter `video.ts` (Vimeo · direct link · uploaded file), the library `training.ts`, the shared
+  file server `files.ts` (collateral now uses it); collections `partner-tracks`, `-courses`, `-modules`, `-questions`, `-training-files`,
+  `-progress`, `-attempts` (group *Partner training*, Payload role `trainingEditor`); `partner-settings.training` with the K7 settings
+  section; the partner pages under `/partners/portal/training` (list, course, module with `Player.client.tsx`, the paper with
+  `TestPaper.client.tsx`, the result, the organisation view), the progress and file routes, the K7 desk `/k7/training` (ledger, course
+  sheet with learners, the CSV import, the template route); the Training link, tab and home lines; events `training.course.passed` and
+  `training.bank.empty`; `pnpm partner:seed-dev … --training --trainer`. Section 10 P29–P32 (`partner.css`, `PartnerParts` README,
+  CHANGELOG, `design-system.json`). Decisions 20–23 written. Verified: `pnpm generate:types`, `npx tsc --noEmit` clean, `pnpm lint`
+  0 errors (14 pre-existing warnings), `partner-training` (19 pure) and `partner-training-db` (5 against Postgres: gaps do not complete,
+  enough does and learns the duration, the unlock after the second module, the paper by the course's rule, the resume, the grading,
+  the pass in the standing and the bell, the organisation view, the K7 ledger, scope B, the CSV import); the whole suite with
+  `PARTNER_DB_TESTS=1`: 300 tests, 2 failed only because the seed ran during the run and the test assumed no other Sales course
+  (fixed to read its own course; green alone). **Clicked in Chrome on localhost** as pp-test@k7computing.com: the training list
+  (two tracks, the modules bars, Locked tags), the course sheet (strip, module list, the locked test box with its reason), both Sales modules
+  played muted through the browser player (the live watched line moved, *Module complete · 96% / 97% watched · Progress saved*, the next-module
+  button appeared), the test started (five questions drawn, the clock, 05/05 answered), submitted wrong (*20% · not passed*, the review with the
+  correct options outlined and the explanations), taken again right (*Passed with 100%*), the attempts ledger, the organisation view (two
+  users, the Sales user's pass, the Technical user's locked rows), the bell row *PP-TEST Selling the new product passed · 100%*; the empty
+  state for an admin without a learning role (pp-test-join); the K7 side through the probe door (`SUPPORT_DEV_AGENT=probe` set and put back,
+  the dev server restarted both times): the home's Training line, the Training tab with its count, the courses ledger (views, counters),
+  the course sheet (modules, the learner with the pass in signal, the recent attempts, the bank by type), a CSV with four rows imported on
+  the Technical course (*3 questions imported; 1 row refused* with the line in the pending box, the bank 3 askable of 3); the admin as the
+  seeded Training editor (the *Partner training* group, the course with its rules and joins, the imported questions, the attempts read-only,
+  the deals collection refused); then the Technical course end to end at 390px in a same-origin frame (the module complete, the paper
+  resumed, *67% · not passed* with the review), and the training list, course, module, organisation, K7 ledger and course sheet at 390px.
+  Four things the browser caught, fixed: the paper's option rows collapsed to the key column (the list item was a grid too); a ledger
+  tab sat on the *Modules* heading of the K7 course sheet; the ledgers in the `library` grid grew to their table's width on a phone
+  (a grid item's `min-width: auto`; now 0, which also fixes the collateral and scheme ledgers); and the browser player's `loadedmetadata`
+  fired before hydration in the frame, so the duration was never learnt and the share stayed at zero (the player now reads the duration
+  whenever it ticks or flushes). Also the seed's second clip (Google's Big Buck Bunny sample) did not load in Chrome; swapped for MDN's
+  CC0 *friday* clip. Test data left: the PP-TEST tracks, courses and banks; pp-test's progress, four attempts (two per course); the
+  pp-test-trainer admin user. Nothing committed (Navin commits). **Next:** M11 (certificates), then the certificate gate switch.

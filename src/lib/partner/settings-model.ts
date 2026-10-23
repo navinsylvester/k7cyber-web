@@ -1,4 +1,5 @@
 import { DEFAULT_SLA_SETTINGS, type SlaSettings } from './sla-model'
+import { DEFAULT_TRAINING_SETTINGS, normaliseTrainingSettings, type TrainingSettings } from './training-model'
 
 /* The partner portal's settings as the code reads them (02-build-plan.md §5, global `partner-settings`): a pure model with
    defaults and a normaliser over the raw Payload document, so pages never see a half-saved global. Tested without a tenant. */
@@ -56,6 +57,9 @@ export type PartnerSettings = {
   collateral: { maxMb: number }
   /** FR-ELG-05: the days after publication in which a partner may dispute a result (a scheme may override). */
   schemes: { disputeDays: number }
+  /** M10 (FR-TRN-03, 05, 06): the share of a video that completes a module, the pass mark, the time limit, the draw and
+      whether the answers show after a test; a course may override each in the admin. */
+  training: TrainingSettings
 }
 
 export const CRM_FEATURES = ['accountCreate', 'opportunityCreate', 'sync'] as const
@@ -87,6 +91,7 @@ export const DEFAULT_PARTNER_SETTINGS: PartnerSettings = {
   sla: DEFAULT_SLA_SETTINGS,
   collateral: { maxMb: 200 },
   schemes: { disputeDays: 14 },
+  training: { ...DEFAULT_TRAINING_SETTINGS },
 }
 
 type Raw = Record<string, unknown>
@@ -146,6 +151,7 @@ export const normalisePartnerSettings = (g: Raw | null | undefined): PartnerSett
     sla: normaliseSla(obj(r.sla)),
     collateral: { maxMb: Math.min(num(obj(r.collateral).maxMb, D.collateral.maxMb, 1), COLLATERAL_MAX_MB_CEILING) },
     schemes: { disputeDays: num(obj(r.schemes).disputeDays, D.schemes.disputeDays, 0) },
+    training: normaliseTrainingSettings(obj(r.training)),
   }
 }
 

@@ -189,6 +189,24 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
               </div>
             </div>
             <div>
+              <h2 className="sub-head">Training</h2>
+              <div className="form-grid">
+                <Field id="training_watchPercent" label="Video watched to complete a module, %" hint="FR-TRN-03: the share of a video the union of watched ranges must cover; skipping ahead leaves gaps. Default 90. A module or a course may set its own in the admin.">
+                  <input id="training_watchPercent" name="training_watchPercent" inputMode="numeric" defaultValue={Math.round(s.training.watchShare * 100)} />
+                </Field>
+                <Field id="training_passMark" label="Pass mark, %" hint="FR-TRN-05: default 70; a course may set its own.">
+                  <input id="training_passMark" name="training_passMark" inputMode="numeric" defaultValue={s.training.passMark} />
+                </Field>
+                <Field id="training_timeLimitMinutes" label="Time limit, minutes" hint="FR-TRN-05: a test submitted after the limit is recorded as expired and graded on what was answered.">
+                  <input id="training_timeLimitMinutes" name="training_timeLimitMinutes" inputMode="numeric" defaultValue={s.training.timeLimitMinutes} />
+                </Field>
+                <Field id="training_questionsPerTest" label="Questions per test" hint="FR-TRN-04: drawn and shuffled from the course's bank for each attempt; a smaller bank gives all of it.">
+                  <input id="training_questionsPerTest" name="training_questionsPerTest" inputMode="numeric" defaultValue={s.training.questionsPerTest} />
+                </Field>
+                <div className="span-2">{check('training_showAnswers', 'Show the correct answers on the result page', s.training.showAnswers, 'FR-TRN-06; a course may override')}</div>
+              </div>
+            </div>
+            <div>
               <h2 className="sub-head">Notifications</h2>
               <div className="form-grid">
                 <div className="span-2">{check('notify_emailEnabled', 'Email beside the bell', s.notify.emailEnabled, 'mail still goes only through SMTP_URL and the allowlist')}</div>

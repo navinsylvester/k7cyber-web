@@ -205,7 +205,21 @@ strip, the bell and its rows, role tags, the partner home. The header is the sup
 - (M8) The approval clock runs in the programme's working hours from the latest submission of a deal or application (or the extension request), never while the item waits on the partner; the breach notice goes once per clock start to the queue's role, the holders' managers and the escalation addresses, and the queue rows, the sheets and the reports read the same clock. Reports are computed from the portal's rows and the CRM snapshots, never live, and each CSV is the same rows for the same period to the same roles.
 - A scheme reaches a partner only when published and applying to the organisation's type and regions; the registration and the result are read through the scope; the result is null until the scheme's results are published, and reads "Under review" while a dispute is open. Only a Partner Admin registers (terms accepted, name and time stored) or disputes (inside the window: the scheme's days, else the setting). Results are computed only for a published scheme after its end date, from the deals' CRM snapshots (won, actual close date inside the dates, a named product when any, at the order value), recomputed in place until published with adjustments kept, never after; an adjustment needs its reason; a decline needs a note; a processed or paid payout needs a reference; only an eligible, published result has a payout.
 
-## 8. Not done (next: the LMS, M10–M11)
+## 7b. M10 training (built 2026-10-23, session 16 of `02-build-plan.md` §10)
+Partner side under `/partners/portal/training`: the list (tracks open to the user's roles, `trainingFor`), `[courseId]` (modules, the test box, attempts),
+`[courseId]/[moduleId]` (the player posting watched ranges to `POST /training/progress`, same-origin, the user's own module; files through
+`/training/file/[id]`), `[courseId]/test/[attemptId]` (the paper, one submission, the clock submits at zero) and `…/result`, `organisation`
+(Partner Admin, FR-TRN-11). K7 side `/partners/portal/k7/training` (Training Admin: the ledger, the course sheet with learners and the CSV
+import, `template.csv`). Content is edited in `/admin` by a Payload user with the `trainingEditor` role (`pnpm partner:seed-dev … --training
+--trainer`). Rules: a track opens to the roles it names; a module completes at the union of watched ranges ≥ the module's, the course's or the
+programme's share (default 90%), gaps do not count; the test unlocks when every published module is complete and the bank can ask something;
+the paper is drawn with a seed kept on the attempt and the correct keys recorded; graded all-or-nothing; late by more than 45 s = expired;
+the pass tells the participant and the Partner Admins. Tests: `partner-training` (pure), `partner-training-db` (`PARTNER_DB_TESTS=1`).
+
+## 8. Not done (next: M11)
+M10 was clicked end to end on both sides, in the admin and at a phone width (02-build-plan.md §10, session 16). Not done by decision:
+certificates (M11), a Vimeo-hosted video (the seed and the checks used direct MP4 links; a Vimeo embed is wired through the player's
+postMessage API but no account exists to click it), an attempt cap or cooldown (none required), copy-on-publish versioning (decision 20).
 M9 left by decision (`05-staging-and-go-live.md` §7): object storage, a shared store for the in-memory limits, the production guard's exception
 for the partner jobs (step 4 of the gate), the same headers and limiter on `/support`. The CRM-side conflict check (a switch,
 off); an `account.update` CRM job for an approved legal-name change (the CRM admin renames the account by hand; the K7 sheet
