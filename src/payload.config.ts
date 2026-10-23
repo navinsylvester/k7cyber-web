@@ -12,9 +12,12 @@ import { Users } from './collections/Users'
 import { PartnerApplications } from './collections/partner/PartnerApplications'
 import { PartnerAudit } from './collections/partner/PartnerAudit'
 import { PartnerCounters } from './collections/partner/PartnerCounters'
+import { PartnerDealFiles } from './collections/partner/PartnerDealFiles'
+import { PartnerDeals } from './collections/partner/PartnerDeals'
 import { PartnerNotifications } from './collections/partner/PartnerNotifications'
 import { PartnerOrgs } from './collections/partner/PartnerOrgs'
 import { PartnerOutbox } from './collections/partner/PartnerOutbox'
+import { PartnerProducts } from './collections/partner/PartnerProducts'
 import { PartnerSettings } from './collections/partner/PartnerSettings'
 import { PartnerUsers } from './collections/partner/PartnerUsers'
 import { Authors } from './collections/research/Authors'
@@ -87,7 +90,7 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, PartnerOrgs, PartnerUsers, PartnerApplications, PartnerAudit, PartnerNotifications, PartnerOutbox, PartnerCounters, Media, Users],
+  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, PartnerOrgs, PartnerUsers, PartnerApplications, PartnerAudit, PartnerNotifications, PartnerOutbox, PartnerCounters, PartnerProducts, PartnerDeals, PartnerDealFiles, Media, Users],
   upload: { limits: { fileSize: 30 * 1024 * 1024 } },
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, SupportSettings, ProductSettings, PartnerSettings],

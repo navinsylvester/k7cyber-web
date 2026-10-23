@@ -120,6 +120,9 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                 <Field id="deals_approvalSlaHours" label="Decision within (working hours)" hint="Applications and deals; the breach notice arrives with M8.">
                   <input id="deals_approvalSlaHours" name="deals_approvalSlaHours" inputMode="numeric" defaultValue={s.deals.approvalSlaHours} />
                 </Field>
+                <Field id="deals_endingNoticeDays" label="Protection-ending notice (days before)" hint="The sweep tells the partner and the approvers once.">
+                  <input id="deals_endingNoticeDays" name="deals_endingNoticeDays" inputMode="numeric" defaultValue={s.deals.endingNoticeDays} />
+                </Field>
                 <div className="span-2" style={{ display: 'grid', gap: 12 }}>
                   {check('deals_requireCertificate', 'A deal needs a certified organisation', s.deals.requireCertificate, 'off until the LMS exists; waivers per organisation')}
                   {check('deals_conflictCheckCrm', 'Also look for the end customer in the CRM when checking conflicts', s.deals.conflictCheckCrm)}
@@ -132,7 +135,7 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
             <div>
               <h2 className="sub-head">CRM mirror</h2>
               <p className="hint" style={{ marginBottom: 16 }}>
-                What the outbox writes to Dynamics on approval: the partner account and its primary contact. Off: jobs queue and nothing reaches the CRM. {serviceConfigured() ? 'The service identity is configured.' : probe ? 'Development: the probe token stands in for the service identity on UAT.' : 'No service identity is configured yet; jobs will fail until it is.'}
+                What the outbox writes to Dynamics: the partner account and its primary contact when an application is approved; the end customer, its contact and the opportunity when a deal is approved. Off: jobs queue and nothing reaches the CRM. {serviceConfigured() ? 'The service identity is configured.' : probe ? 'Development: the probe token stands in for the service identity on UAT.' : 'No service identity is configured yet; jobs will fail until it is.'}
               </p>
               <div className="form-grid">
                 <div className="span-2">{check('crm_enabled', 'Write to Dynamics', s.crm.enabled)}</div>
@@ -145,13 +148,13 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                 <Field id="crm_ownerId" label="Fixed owner (systemuserid)">
                   <input id="crm_ownerId" name="crm_ownerId" defaultValue={s.crm.ownerId} placeholder="00000000-0000-0000-0000-000000000000" />
                 </Field>
-                <Field id="crm_enquirySource" label="Enquiry source (M4)" hint="alletec_enquirysource; 1 = Partner Referral.">
+                <Field id="crm_enquirySource" label="Enquiry source" hint="alletec_enquirysource on the opportunity; 1 = Partner Referral.">
                   <input id="crm_enquirySource" name="crm_enquirySource" inputMode="numeric" defaultValue={s.crm.enquirySource} />
                 </Field>
-                <Field id="crm_productCategory" label="Product category (M4)" hint="alletec_productcategory until the product has its own value; 36 = Others.">
+                <Field id="crm_productCategory" label="Product category" hint="alletec_productcategory on the opportunity until the product has its own value; 36 = Others.">
                   <input id="crm_productCategory" name="crm_productCategory" inputMode="numeric" defaultValue={s.crm.productCategory} />
                 </Field>
-                <Field id="crm_accountNamePattern" label="Opportunity name (M4)" span hint="{customer} and {product} are replaced.">
+                <Field id="crm_accountNamePattern" label="Opportunity name" span hint="{customer} and {product} are replaced; the sales convention is customer-Fresh-product.">
                   <input id="crm_accountNamePattern" name="crm_accountNamePattern" defaultValue={s.crm.accountNamePattern} />
                 </Field>
               </div>

@@ -81,7 +81,7 @@ describe('settings normaliser', () => {
     })
     expect(s.partnerTypes).toEqual(['var'])
     expect(s.regions).toEqual([{ code: 'S', name: 'South' }])
-    expect(s.deals).toEqual({ protectionDays: 120, extensionDays: 90, approvalSlaHours: 48, requireCertificate: true, conflictCheckCrm: false })
+    expect(s.deals).toEqual({ protectionDays: 120, extensionDays: 90, approvalSlaHours: 48, endingNoticeDays: 14, requireCertificate: true, conflictCheckCrm: false })
     expect(s.crm.ownerRule).toBe('fixed')
     expect(s.crm.accountNamePattern).toBe('{customer}-Fresh-{product}')
     expect(s.notify.emailEnabled).toBe(false)

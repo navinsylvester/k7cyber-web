@@ -48,6 +48,7 @@ export async function savePartnerSettingsAction(form: FormData): Promise<void> {
       protectionDays: n(form, 'deals_protectionDays', cur.deals.protectionDays),
       extensionDays: n(form, 'deals_extensionDays', cur.deals.extensionDays),
       approvalSlaHours: n(form, 'deals_approvalSlaHours', cur.deals.approvalSlaHours),
+      endingNoticeDays: n(form, 'deals_endingNoticeDays', cur.deals.endingNoticeDays),
       requireCertificate: on(form, 'deals_requireCertificate'),
       conflictCheckCrm: on(form, 'deals_conflictCheckCrm'),
     },

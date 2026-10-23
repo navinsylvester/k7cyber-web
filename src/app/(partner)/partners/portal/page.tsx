@@ -4,6 +4,7 @@ import React from 'react'
 
 import { NotificationList, OrgStateTag, Pid, RoleTags, Strip, TypeTag } from '@/components/partner/Parts'
 import { orgAudit } from '@/lib/partner/audit'
+import { dealCounts, PARTNER_DEALS, registerGate } from '@/lib/partner/deals'
 import { listNotifications } from '@/lib/partner/notify'
 import { requirePartner } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
@@ -16,7 +17,7 @@ export const metadata: Metadata = { title: 'Home' }
    carries `me.scope`. */
 export default async function PartnerHomePage() {
   const me = await requirePartner('/partners/portal')
-  const [settings, notifications, trail] = await Promise.all([getPartnerSettings(), listNotifications({ kind: 'user', userId: me.user.id, scope: me.scope }, 5), orgAudit(me.scope, 5)])
+  const [settings, notifications, trail, deals, blocked] = await Promise.all([getPartnerSettings(), listNotifications({ kind: 'user', userId: me.user.id, scope: me.scope }, 5), orgAudit(me.scope, 5), dealCounts(me.scope), registerGate(me)])
   const regions = settings.regions.filter((r) => me.org.regions.includes(r.code)).map((r) => r.name)
   const unread = notifications.filter((n) => !n.readAt).length
   return (
@@ -35,6 +36,7 @@ export default async function PartnerHomePage() {
           { label: 'Partner type', value: <TypeTag type={me.org.type} /> },
           { label: 'Status', value: <OrgStateTag status={me.org.status} /> },
           { label: 'Your roles', value: <RoleTags roles={me.roles} /> },
+          { label: 'Deals', value: <Link href={PARTNER_DEALS}>{String(deals.approved).padStart(2, '0')} protected · {String(deals.submitted + deals.extensionRequested).padStart(2, '0')} with K7{deals.infoRequested ? ` · ${String(deals.infoRequested).padStart(2, '0')} need you` : ''}</Link> },
           { label: 'Certificate', value: me.org.certificate.status === 'valid' ? `Valid${me.org.certificate.until ? ` to ${dmy(me.org.certificate.until)}` : ''}` : 'Not yet required' },
         ]}
       />
@@ -59,6 +61,30 @@ export default async function PartnerHomePage() {
           )}
         </div>
         <aside className="ws-side">
+          <div>
+            <h2>Deals</h2>
+            <p className="muted" style={{ margin: 0, fontSize: 15 }}>
+              {deals.approved + deals.submitted + deals.infoRequested + deals.extensionRequested + deals.rejected + deals.expired + deals.withdrawn === 0 ? 'No deal registered yet.' : `${deals.approved} approved and protected, ${deals.submitted + deals.extensionRequested} with K7, ${deals.infoRequested} waiting on you, ${deals.rejected + deals.expired + deals.withdrawn} closed.`}
+              {deals.endingSoon ? ` ${deals.endingSoon} end${deals.endingSoon === 1 ? 's' : ''} protection within ${settings.deals.endingNoticeDays} days.` : ''}
+            </p>
+            <p className="more">
+              {blocked ? (
+                <Link className="link-u" href={PARTNER_DEALS}>
+                  Your deals →
+                </Link>
+              ) : (
+                <>
+                  <Link className="link-u" href={`${PARTNER_DEALS}/new`}>
+                    Register a deal →
+                  </Link>
+                  {' · '}
+                  <Link className="link-u" href={PARTNER_DEALS}>
+                    All deals
+                  </Link>
+                </>
+              )}
+            </p>
+          </div>
           <div>
             <h2>Your organisation</h2>
             <dl className="meta-rows">

@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 import { bind, buildQuery, create, entity, list, ProductionWriteRefused, retrieve, str, update, WritesDisabled, type DataverseAuth, type Row } from '@/lib/dataverse'
 
 import { audit, SYSTEM } from './audit'
+import { opportunityBodies, toDeal } from './deals-model'
 import { accountBody, contactBody, type SizeBand, type TurnoverBand } from './registration-model'
 import { getPartnerSettings } from './settings'
 import type { PartnerType } from './settings-model'
@@ -12,8 +13,11 @@ import type { PartnerType } from './settings-model'
 /* The CRM mirror's outbox (02-build-plan.md decision 2, 03-dynamics-exploration.md §6): every write the portal owes Dynamics is a
    row in `partner-outbox`, queued by the portal action and run as the service identity, never in the request path's critical
    section. `account.create` makes the partner account and its primary contact on approval and stores the ids on the
-   organisation. Jobs run only when `partner-settings.crm.enabled` is on; the client's guard turns a production write into
-   `skipped`; another failure is `failed` with its code, retried by the next drain. */
+   organisation. `opportunity.create` (M4, §7 of the exploration) makes the end-customer account and contact, the opportunity on
+   that account with the partner in `alletec_partnername`, the product lines that have a CRM product, the note and the
+   attachments, and reads the `OPP-` number back. Jobs run only when `partner-settings.crm.enabled` is on; the client's guard
+   turns a production write into `skipped`; another failure is `failed` with its code, retried by the next drain. Each job
+   stores every id the moment the CRM gives it, so a retry resumes rather than duplicates. */
 
 const db = () => getPayload({ config: configPromise })
 type Doc = Record<string, unknown>
@@ -60,7 +64,9 @@ export const enqueueOutbox = async (i: EnqueueInput): Promise<OutboxJob | null> 
 
 const errorCode = (e: unknown): string => {
   const x = e as { code?: string; status?: number; message?: string }
-  return (x.code ?? (x.status ? `HTTP ${x.status}` : (x.message ?? 'error'))).slice(0, 120)
+  const code = x.code ?? (x.status ? `HTTP ${x.status}` : '')
+  const message = (x.message ?? '').replace(/\s+/g, ' ').trim()
+  return (code && message ? `${code}: ${message}` : code || message || 'error').slice(0, 400)
 }
 
 /* ---------- account.create ---------- */
@@ -151,6 +157,130 @@ const createAccountJob = async (auth: DataverseAuth, job: OutboxJob): Promise<Re
   return { accountId, accountCode, contactId, lookups: { regionId, stateId, cityId, countryId } }
 }
 
+/* ---------- opportunity.create (03-dynamics-exploration.md §7) ---------- */
+
+const ANNOTATION_MAX = 4 * 1024 * 1024
+
+const createOpportunityJob = async (auth: DataverseAuth, job: OutboxJob): Promise<Record<string, unknown>> => {
+  const payload = await db()
+  const deal = toDeal((await payload.findByID({ collection: 'partner-deals', id: job.objectId, depth: 1, overrideAccess: true })) as unknown as Doc)
+  if (deal.crm.opportunityId && deal.crm.opportunityNo) return { ...deal.crm, note: 'already mirrored' }
+  const org = orgDoc((await payload.findByID({ collection: 'partner-orgs', id: deal.orgId, depth: 0, overrideAccess: true })) as unknown as Doc)
+  if (!org.crm.accountId) throw Object.assign(new Error('partner account not mirrored yet'), { code: 'partner account not in CRM: run its account job first' })
+  const settings = await getPartnerSettings()
+  const bodies = opportunityBodies(deal, { partnerName: org.name, namePattern: settings.crm.accountNamePattern, enquirySource: settings.crm.enquirySource, productCategory: settings.crm.productCategory, partnerType: deal.orgType || org.type })
+  const SUPPRESS = { 'MSCRM.SuppressDuplicateDetection': 'true' }
+  const saveCrm = async (crm: Partial<typeof deal.crm>): Promise<void> => {
+    Object.assign(deal.crm, crm)
+    await payload.update({ collection: 'partner-deals', id: deal.id, overrideAccess: true, depth: 0, data: { crm: { ...deal.crm } } as never })
+  }
+  const [stateId, cityId, regionId] = await Promise.all([byName(auth, 'k7_states', 'k7_stateid', 'k7_state', deal.customer.state), byName(auth, 'alletec_cities', 'alletec_cityid', 'alletec_name', deal.customer.city), (async () => {
+    const regionName = settings.regions.find((r) => org.regions.includes(r.code))?.name ?? ''
+    return byName(auth, 'k7_regions', 'k7_regionid', 'k7_name', regionName)
+  })()])
+  // 1. The end customer's account (fresh start: created, never matched).
+  let customerAccountId = deal.crm.customerAccountId
+  if (!customerAccountId) {
+    const account: Row = { ...bodies.customerAccount }
+    if (stateId) account['k7_State@odata.bind'] = bind('k7_states', stateId)
+    if (cityId) account['alletec_City@odata.bind'] = bind('alletec_cities', cityId)
+    if (regionId) account['k7_Region@odata.bind'] = bind('k7_regions', regionId)
+    customerAccountId = await create(auth, 'accounts', account, SUPPRESS)
+    await saveCrm({ customerAccountId })
+  }
+  // 2. The named person there, as its primary contact.
+  let customerContactId = deal.crm.customerContactId
+  if (!customerContactId) {
+    const c: Row = { ...bodies.customerContact, 'parentcustomerid_account@odata.bind': bind('accounts', customerAccountId) }
+    customerContactId = await create(auth, 'contacts', c, SUPPRESS)
+    await update(auth, entity('accounts', customerAccountId), { 'primarycontactid@odata.bind': bind('contacts', customerContactId) })
+    await saveCrm({ customerContactId })
+  }
+  // 3. The opportunity on the customer's account, the partner in alletec_partnername (navigation names read from UAT's metadata on 2026-10-22).
+  let opportunityId = deal.crm.opportunityId
+  const warnings: string[] = []
+  if (!opportunityId) {
+    const opp: Row = {
+      ...bodies.opportunity,
+      'customerid_account@odata.bind': bind('accounts', customerAccountId),
+      'parentcontactid@odata.bind': bind('contacts', customerContactId),
+      'alletec_endcustomername@odata.bind': bind('accounts', customerAccountId),
+      'alletec_partnername@odata.bind': bind('accounts', org.crm.accountId),
+    }
+    if (deal.reseller.orgId) {
+      const reseller = (await payload.findByID({ collection: 'partner-orgs', id: deal.reseller.orgId, depth: 0, overrideAccess: true }).catch(() => null)) as unknown as Doc | null
+      const rid = s((reseller?.crm as Doc | undefined)?.accountId)
+      if (rid) opp['alletec_referralaccount@odata.bind'] = bind('accounts', rid)
+    }
+    if (stateId) opp['alletec_State@odata.bind'] = bind('k7_states', stateId)
+    if (regionId) opp['alletec_zoneregion@odata.bind'] = bind('k7_regions', regionId)
+    if (deal.competitor) {
+      const competitorId = await byName(auth, 'competitors', 'competitorid', 'name', deal.competitor)
+      if (competitorId) opp['cit_CompetitorName@odata.bind'] = bind('competitors', competitorId)
+    }
+    const ownerRule = s(job.payload.ownerRule) === 'fixed' ? 'fixed' : 'approver'
+    const ownerId = ownerRule === 'fixed' ? s(job.payload.ownerId) : s(job.payload.approverUserId)
+    if (/^[0-9a-f-]{36}$/i.test(ownerId)) opp['ownerid@odata.bind'] = bind('systemusers', ownerId)
+    opportunityId = await create(auth, 'opportunities', opp, SUPPRESS)
+    await saveCrm({ opportunityId })
+  }
+  // 4. Product lines for portal products that have a CRM product (decision 19); a line that fails is a warning, not a failed job.
+  const lineIds: string[] = []
+  for (const l of deal.products) {
+    const product = (await payload.findByID({ collection: 'partner-products', id: l.productId, depth: 0, overrideAccess: true }).catch(() => null)) as unknown as Doc | null
+    const crmProductId = s(product?.crmProductId)
+    if (!crmProductId) continue
+    try {
+      const p = await retrieve<Row>(auth, `${entity('products', crmProductId)}?$select=_defaultuomid_value`)
+      const uom = s(p._defaultuomid_value)
+      const line: Row = { 'opportunityid@odata.bind': bind('opportunities', opportunityId), 'productid@odata.bind': bind('products', crmProductId), quantity: l.quantity }
+      if (uom) line['uomid@odata.bind'] = bind('uoms', uom)
+      lineIds.push(await create(auth, 'opportunityproducts', line))
+    } catch (e) {
+      warnings.push(`line ${l.sku}: ${errorCode(e)}`)
+    }
+  }
+  // 5. The note, then the attachments as notes (up to the annotation limit each; larger files stay in the portal).
+  let noteId = deal.crm.noteId
+  if (!noteId) {
+    noteId = await create(auth, 'annotations', { subject: bodies.noteSubject, notetext: bodies.noteText, 'objectid_opportunity@odata.bind': bind('opportunities', opportunityId) })
+    await saveCrm({ noteId })
+  }
+  const attached: string[] = []
+  const files = deal.thread.flatMap((t) => t.files)
+  if (files.length) {
+    const { readFile } = await import('node:fs/promises')
+    const path = await import('node:path')
+    const dir = path.resolve(process.cwd(), 'uploads/partner-deals')
+    for (const f of files) {
+      if (f.size > ANNOTATION_MAX) {
+        warnings.push(`${f.name}: over the note limit, left in the portal`)
+        continue
+      }
+      try {
+        const full = path.join(dir, f.name)
+        if (!full.startsWith(dir)) continue
+        const bytes = await readFile(full)
+        attached.push(await create(auth, 'annotations', { subject: `Partner portal attachment · ${deal.dealId}`, filename: f.name, mimetype: f.mime || 'application/octet-stream', documentbody: bytes.toString('base64'), 'objectid_opportunity@odata.bind': bind('opportunities', opportunityId) }))
+      } catch (e) {
+        warnings.push(`${f.name}: ${errorCode(e)}`)
+      }
+    }
+  }
+  // 6. The CRM's own number back onto the deal.
+  let opportunityNo = deal.crm.opportunityNo
+  if (!opportunityNo) try {
+    const row = await retrieve<Row>(auth, `${entity('opportunities', opportunityId)}?$select=alletec_opportunityno`)
+    opportunityNo = s(row.alletec_opportunityno)
+  } catch {
+    /* the number is a convenience; the id is what matters */
+  }
+  await saveCrm({ opportunityNo })
+  await payload.update({ collection: 'partner-deals', id: deal.id, overrideAccess: true, depth: 0, data: { thread: [...deal.thread.map((t) => ({ kind: t.kind, side: t.side, byName: t.byName, byEmail: t.byEmail, at: t.at, to: t.to || '', title: t.title, text: t.text, files: t.files.length ? t.files.map((f) => Number(f.id)) : undefined })), { kind: 'system', side: 'system', byName: 'Portal', byEmail: '', at: new Date().toISOString(), to: '', title: 'Created in the CRM', text: `Opportunity ${opportunityNo || opportunityId} on the end customer's account${warnings.length ? `. ${warnings.join('; ')}` : ''}` }] } as never })
+  await audit({ actor: SYSTEM, object: 'partner-deals', objectId: deal.id, objectLabel: deal.dealId, action: 'deal.crm-mirrored', orgId: deal.orgId, comment: `Opportunity ${opportunityNo || opportunityId} created in Dynamics${warnings.length ? ` (${warnings.join('; ')})` : ''}`, meta: { opportunityId, customerAccountId, customerContactId, lineIds, attached, warnings } })
+  return { opportunityId, opportunityNo, customerAccountId, customerContactId, noteId, lineIds, attached, warnings, name: bodies.name }
+}
+
 /* ---------- Running ---------- */
 
 const record = async (job: OutboxJob, state: OutboxState, extra: Record<string, unknown>): Promise<OutboxJob> => {
@@ -169,7 +299,8 @@ export const runJob = async (job: OutboxJob, auth: DataverseAuth = { kind: 'serv
         result = await createAccountJob(auth, job)
         break
       case 'opportunity.create':
-        return record(job, 'pending', { lastError: 'opportunity.create arrives with M4' })
+        result = await createOpportunityJob(auth, job)
+        break
     }
     return await record(job, 'done', { result, lastError: '', doneAt: new Date().toISOString() })
   } catch (e) {

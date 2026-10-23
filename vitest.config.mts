@@ -12,5 +12,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     include: ['tests/int/**/*.int.spec.ts'],
+    // Five database files each boot Payload and push the schema at once; the boot alone can take longer than the default 10 s.
+    hookTimeout: 60_000,
   },
 })

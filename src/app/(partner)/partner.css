@@ -102,3 +102,40 @@
 .org-forms { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(32px, 4cqw, 56px); }
 .org-forms h2 { margin: 0 0 6px; }
 .org-forms > section > .hint { margin: 0 0 20px; }
+
+/* ---------- P13 Deal state, P14 the registration form (M4) ---------- */
+.deal-form .lines-table td { padding-top: 6px; padding-bottom: 6px; vertical-align: middle; }
+.deal-form .lines-table .control { border-bottom-width: 1px; }
+.deal-form .lines-table td.num { width: 140px; }
+.deal-form .lines-table td.num input { text-align: right; }
+.deal-form .flash { margin: 0; }
+.lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.lines .muted { font: 400 12px/1.4 var(--font-mono); letter-spacing: .02em; }
+.deal-filters details { flex: 1 1 100%; }
+.deal-filters .filters-grid { margin-top: 14px; padding: 18px 20px 20px; box-shadow: inset 0 0 0 1px var(--ln); grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 16px 24px; align-items: end; }
+.deal-filters .filters-grid .form-actions { margin: 0; align-self: end; }
+
+/* ---------- P15 The conflicts box: the pending box in signal while there is something to read ---------- */
+.conflicts h2 .pixel { background: var(--signal); }
+.conflicts.is-clear { box-shadow: inset 0 0 0 1px var(--ln); }
+.conflicts.is-clear h2 { color: var(--mu); }
+.conflicts .ntf-when .pid { font-size: 13px; }
+
+/* ---------- P16 The protection line: one bar on the track's height, the window's dates beneath ---------- */
+.protect { margin: calc(-1 * clamp(28px, 3cqw, 44px) + 12px) 0 clamp(28px, 3cqw, 44px); }
+.protect-bar { height: 6px; background: var(--ln); }
+.protect-bar i { display: block; height: 100%; background: var(--fg); transition: width 240ms steps(6); }
+.protect-bar i.is-ending { background: var(--signal); }
+.protect-bar i.is-over { background: var(--mu); }
+.protect-line { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; margin-top: 8px; }
+.protect-line .label { color: var(--mu); }
+.protect-line .label strong { color: var(--fg); font-weight: 500; }
+.protect-line .is-ending, .dtable .is-ending { color: var(--acc); }
+
+/* ---------- The deal thread, on section 09's message rows ---------- */
+.dthread { border-top: 1px solid var(--fg); }
+.dthread .msg.is-system .avatar { background: none; color: var(--mu); box-shadow: inset 0 0 0 1px var(--ln); }
+.dthread .msg.is-system .msg-body { color: var(--mu); font-size: 15px; }
+.dthread .msg-title { font-weight: 400; color: var(--mu); }
+.dthread .msg-head .tag { vertical-align: 1px; font-size: 11px; }
+.dthread .msg-att .tag .muted { font: 400 11px/1 var(--font-mono); }
