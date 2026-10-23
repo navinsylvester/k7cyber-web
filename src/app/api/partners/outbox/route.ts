@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
+import { cronAuthorised } from '@/lib/cron-auth'
 import { drainOutbox } from '@/lib/partner/mirror'
+import { recordJobRun } from '@/lib/partner/ops'
 
 /* The CRM outbox drain (02-build-plan.md decision 2, §4): a scheduler calls it with `Authorization: Bearer <CRON_SECRET>` and the
    pending, failed and skipped jobs run as the service identity, when the partner settings have the mirror on. The same drain
@@ -9,8 +11,7 @@ import { drainOutbox } from '@/lib/partner/mirror'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request): Promise<Response> {
-  const secret = process.env.CRON_SECRET
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!cronAuthorised(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   let limit = 25
   try {
     const body = (await req.json().catch(() => ({}))) as { limit?: number }
@@ -19,7 +20,7 @@ export async function POST(req: Request): Promise<Response> {
     /* no body */
   }
   try {
-    return NextResponse.json({ ...(await drainOutbox(limit)), at: new Date().toISOString() })
+    return NextResponse.json({ ...(await recordJobRun('outbox', () => drainOutbox(limit))), at: new Date().toISOString() })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }

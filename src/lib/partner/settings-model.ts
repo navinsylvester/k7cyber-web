@@ -37,7 +37,18 @@ export type PartnerSettings = {
   regions: { code: string; name: string }[]
   terms: { version: string; url: string }
   deals: { protectionDays: number; extensionDays: number; approvalSlaHours: number; endingNoticeDays: number; requireCertificate: boolean; conflictCheckCrm: boolean }
-  crm: { enabled: boolean; ownerRule: 'approver' | 'fixed'; ownerId: string; enquirySource: number; productCategory: number; accountNamePattern: string; syncMinutes: number }
+  crm: {
+    enabled: boolean
+    ownerRule: 'approver' | 'fixed'
+    ownerId: string
+    enquirySource: number
+    productCategory: number
+    accountNamePattern: string
+    syncMinutes: number
+    /** M9, the go-live gate (docs/partner-portal/05-staging-and-go-live.md §5): each CRM feature behind its own switch under the
+        master `enabled`, so writes are turned on one at a time and turned off again without touching the others. */
+    features: CrmFeatures
+  }
   notify: { emailEnabled: boolean; mailFrom: string; bellRetentionDays: number; /** The closing line of every email. */ signature: string }
   /** M8: the approval SLA's working hours, the warning share and the extra addresses told on a breach. */
   sla: SlaSettings
@@ -46,6 +57,19 @@ export type PartnerSettings = {
   /** FR-ELG-05: the days after publication in which a partner may dispute a result (a scheme may override). */
   schemes: { disputeDays: number }
 }
+
+export const CRM_FEATURES = ['accountCreate', 'opportunityCreate', 'sync'] as const
+export type CrmFeature = (typeof CRM_FEATURES)[number]
+export type CrmFeatures = Record<CrmFeature, boolean>
+export const CRM_FEATURE_LABEL: Record<CrmFeature, string> = {
+  accountCreate: 'Partner account and contact on approval',
+  opportunityCreate: 'End customer and opportunity on deal approval',
+  sync: 'Dashboard read-back of the opportunities',
+}
+export const DEFAULT_CRM_FEATURES: CrmFeatures = { accountCreate: true, opportunityCreate: true, sync: true }
+
+/** Whether a CRM feature may run: the master switch and the feature's own. */
+export const crmFeatureOn = (s: Pick<PartnerSettings, 'crm'>, f: CrmFeature): boolean => s.crm.enabled && s.crm.features[f]
 
 export const COLLATERAL_MAX_MB_CEILING = 200
 
@@ -58,7 +82,7 @@ export const DEFAULT_PARTNER_SETTINGS: PartnerSettings = {
   regions: [],
   terms: { version: '2026-10', url: '' },
   deals: { protectionDays: 90, extensionDays: 90, approvalSlaHours: 48, endingNoticeDays: 14, requireCertificate: false, conflictCheckCrm: false },
-  crm: { enabled: false, ownerRule: 'approver', ownerId: '', enquirySource: 1, productCategory: 36, accountNamePattern: '{customer}-Fresh-{product}', syncMinutes: 60 },
+  crm: { enabled: false, ownerRule: 'approver', ownerId: '', enquirySource: 1, productCategory: 36, accountNamePattern: '{customer}-Fresh-{product}', syncMinutes: 60, features: { ...DEFAULT_CRM_FEATURES } },
   notify: { emailEnabled: true, mailFrom: 'K7 Partner Programme <partners@k7computing.com>', bellRetentionDays: 180, signature: 'K7 Partner Programme\nK7 Computing Pvt Ltd' },
   sla: DEFAULT_SLA_SETTINGS,
   collateral: { maxMb: 200 },
@@ -111,6 +135,7 @@ export const normalisePartnerSettings = (g: Raw | null | undefined): PartnerSett
       productCategory: num(crm.productCategory, D.crm.productCategory),
       accountNamePattern: str(crm.accountNamePattern, D.crm.accountNamePattern) || D.crm.accountNamePattern,
       syncMinutes: num(crm.syncMinutes, D.crm.syncMinutes, 5),
+      features: Object.fromEntries(CRM_FEATURES.map((f) => [f, bool(obj(crm.features)[f], DEFAULT_CRM_FEATURES[f])])) as CrmFeatures,
     },
     notify: {
       emailEnabled: bool(notify.emailEnabled, D.notify.emailEnabled),

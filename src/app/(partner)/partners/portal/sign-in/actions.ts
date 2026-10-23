@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 
 import { signIn } from '@/auth'
 import { devAgentDoorEnabled } from '@/lib/dataverse/auth'
-import { OTP_TTL_SECONDS, PARTNER_DEVCODE_COOKIE, PARTNER_OTP_COOKIE, PARTNER_OTP_PURPOSE, canSend, isEmail, issueOtp, normaliseEmail, verifyOtp } from '@/lib/partner/otp'
+import { OTP_TTL_SECONDS, PARTNER_DEVCODE_COOKIE, PARTNER_OTP_COOKIE, PARTNER_OTP_PURPOSE, canSend, canSendFrom, clientKey, isEmail, issueOtp, normaliseEmail, verifyOtp } from '@/lib/partner/otp'
 import { getPartnerSettings } from '@/lib/partner/settings'
 import { canSignIn, findPartnerUserByEmail } from '@/lib/partner/users'
 import { mailAllowed, mailAllowlist, mailConfigured, sendMail } from '@/lib/support/mail'
@@ -65,7 +65,7 @@ export async function requestPartnerCode(form: FormData): Promise<void> {
   const next = safeNext(form.get('next'))
   if (!isEmail(email)) back('email', '', next)
   if (!mailAllowed(email)) back('allowlist', email, next)
-  if (!canSend(email)) back('rate', email, next)
+  if (!canSend(email) || !canSendFrom(clientKey(await headers()))) back('rate', email, next)
   const found = await findPartnerUserByEmail(email).catch(() => null)
   if (!found) return back('unknown', email, next)
   const ok = canSignIn(found.user, found.org)
@@ -97,7 +97,7 @@ export async function resendPartnerCode(form: FormData): Promise<void> {
   const email = normaliseEmail(String(form.get('email') ?? ''))
   const next = safeNext(form.get('next'))
   if (!isEmail(email) || !mailAllowed(email)) redirect(verifyUrl(email, next, { error: 'allowlist' }))
-  if (!canSend(email)) redirect(verifyUrl(email, next, { error: 'rate' }))
+  if (!canSend(email) || !canSendFrom(clientKey(await headers()))) redirect(verifyUrl(email, next, { error: 'rate' }))
   const found = await findPartnerUserByEmail(email).catch(() => null)
   if (!found || !canSignIn(found.user, found.org).ok) return back('unknown', email, next)
   await sendCode(email, found.user.name, next)

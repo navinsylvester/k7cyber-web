@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { cronAuthorised } from '@/lib/cron-auth'
+import { recordJobRun } from '@/lib/partner/ops'
 import { sweepSla } from '@/lib/partner/sla'
 
 /* The approval SLA pass (FR-NTF-01 "Approval SLA breached", M8): a scheduler calls it hourly with
@@ -10,10 +12,9 @@ import { sweepSla } from '@/lib/partner/sla'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request): Promise<Response> {
-  const secret = process.env.CRON_SECRET
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!cronAuthorised(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
-    return NextResponse.json({ ...(await sweepSla()), at: new Date().toISOString() })
+    return NextResponse.json({ ...(await recordJobRun('slaSweep', () => sweepSla())), at: new Date().toISOString() })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }

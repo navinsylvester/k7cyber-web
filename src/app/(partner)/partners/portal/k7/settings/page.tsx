@@ -5,7 +5,7 @@ import React from 'react'
 import { K7Nav } from '@/components/partner/K7Nav'
 import { Field, Flash } from '@/components/partner/Parts'
 import { requireK7Role } from '@/lib/partner/session'
-import { getPartnerSettings, PARTNER_TYPE_LABEL, PARTNER_TYPES, STAFF_ROLE_LABEL, STAFF_ROLES } from '@/lib/partner/settings'
+import { CRM_FEATURE_LABEL, CRM_FEATURES, getPartnerSettings, PARTNER_TYPE_LABEL, PARTNER_TYPES, STAFF_ROLE_LABEL, STAFF_ROLES } from '@/lib/partner/settings'
 import { WEEKDAYS } from '@/lib/partner/sla-model'
 import { serviceConfigured } from '@/lib/dataverse/auth'
 
@@ -144,7 +144,11 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                 What the outbox writes to Dynamics: the partner account and its primary contact when an application is approved; the end customer, its contact and the opportunity when a deal is approved. Off: jobs queue and nothing reaches the CRM. {serviceConfigured() ? 'The service identity is configured.' : probe ? 'Development: the probe token stands in for the service identity on UAT.' : 'No service identity is configured yet; jobs will fail until it is.'}
               </p>
               <div className="form-grid">
-                <div className="span-2">{check('crm_enabled', 'Write to Dynamics', s.crm.enabled)}</div>
+                <div className="span-2">{check('crm_enabled', 'Write to Dynamics', s.crm.enabled, 'the master switch; off, every job waits and the read-back does not run')}</div>
+                <div className="span-2 crm-features">
+                  <span className="label muted">Features, one switch each (the go-live gate)</span>
+                  {CRM_FEATURES.map((f) => check(`crm_feature_${f}`, CRM_FEATURE_LABEL[f], s.crm.features[f], f === 'sync' ? 'reads only' : 'writes'))}
+                </div>
                 <Field id="crm_ownerRule" label="Account owner" select>
                   <select id="crm_ownerRule" name="crm_ownerRule" defaultValue={s.crm.ownerRule}>
                     <option value="approver">The approving Channel Manager</option>

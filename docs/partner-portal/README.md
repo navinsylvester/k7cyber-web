@@ -1,6 +1,6 @@
 # Partner portal — planning handoff
 
-Status 2026-10-23: **M1–M7 are built and clicked** (`04-portal-guide.md`); M8 (notifications, templates, SLA, reporting) is next. Earlier that day: requirements captured and the CRM explored. The source document
+Status 2026-10-23: **M1–M9 are built and clicked** (`04-portal-guide.md`; `05-staging-and-go-live.md` is the runbook for staging, operations, backup and the go-live gate); the learning side (M10–M11) is next and last. Earlier that day: requirements captured and the CRM explored. The source document
 (Vijaichristopher, 2026-10-06) was copied into this folder and converted; the gaps it leaves are listed;
 the sales side of Dynamics was explored on UAT and the field mappings written; the build is planned in
 milestones so that work can continue across many sessions. **The learning side (training, certificates)
@@ -15,6 +15,7 @@ creates. What remains of M0 (`02-build-plan.md` §7) does not block M1.
 | `01-requirements.md` | the requirements, verbatim from the source, with an appendix of what the document leaves open | any "what did the document say" question |
 | `03-dynamics-exploration.md` | **the CRM as it is** (UAT, 2026-10-22): the opportunity's columns, states and process, the partner lookups in use, the account's partner columns, what does not exist, the field mappings for onboarding, deals, the dashboard and schemes, the production checks | any field, mapping or sync question |
 | `04-portal-guide.md` | **what is built** (from M1 on, kept current like `docs/support-portal/09-portal-guide.md`): routes, the doors, the library, the data, the rules the code enforces | before touching code |
+| `05-staging-and-go-live.md` | **how it runs** (M9): what a host must provide, the environment per stage, the scheduler, the Operations page and the health route, the go-live gate with the per-feature CRM switches, backup and restore | before a deploy, a cron change or the gate |
 | `source/K7 Partner Portal Requirements Document.docx` | the original | never; `01-requirements.md` is the copy to read |
 
 ## What it reuses

@@ -4,7 +4,7 @@ import 'server-only'
    purpose and cookie, so a code issued at one door never opens the other (decision 3). Mobile OTP (FR-REG-03) arrives in M2
    behind the SMS adapter. */
 
-export { OTP_TTL_SECONDS, canSend, isEmail, issueOtp, normaliseEmail, verifyOtp, type OtpPayload, type OtpResult } from '@/lib/support/otp'
+export { OTP_TTL_SECONDS, canSend, canSendFrom, clientKey, isEmail, issueOtp, normaliseEmail, verifyOtp, type OtpPayload, type OtpResult } from '@/lib/support/otp'
 
 export const PARTNER_OTP_COOKIE = 'k7-partner-otp'
 export const PARTNER_DEVCODE_COOKIE = 'k7-partner-devcode'

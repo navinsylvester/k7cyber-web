@@ -145,7 +145,17 @@ export const PartnerSettings: GlobalConfig = {
               type: 'group',
               admin: { description: 'What the outbox writes to Dynamics on approval (decisions 2, 10, 19). Off: the jobs queue as pending and nothing reaches the CRM. UAT only; production is read-only in code.' },
               fields: [
-                { name: 'enabled', type: 'checkbox', defaultValue: false },
+                { name: 'enabled', type: 'checkbox', defaultValue: false, admin: { description: 'The master switch. Off: every job waits as pending and the read-back does not run.' } },
+                {
+                  name: 'features',
+                  type: 'group',
+                  admin: { description: 'The go-live gate (05-staging-and-go-live.md §5): each CRM feature under its own switch, turned on one at a time. A job whose feature is off waits as pending until it is on.' },
+                  fields: [
+                    { name: 'accountCreate', type: 'checkbox', defaultValue: true, label: 'Partner account and contact on approval' },
+                    { name: 'opportunityCreate', type: 'checkbox', defaultValue: true, label: 'End customer and opportunity on deal approval' },
+                    { name: 'sync', type: 'checkbox', defaultValue: true, label: 'Dashboard read-back of the opportunities' },
+                  ],
+                },
                 {
                   type: 'row',
                   fields: [

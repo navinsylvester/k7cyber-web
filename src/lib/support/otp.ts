@@ -72,16 +72,35 @@ export const verifyOtp = (token: string | undefined | null, code: string, opts: 
   return { ok: true, payload }
 }
 
-/** Sends per email address per 15 minutes. */
-const sends = new Map<string, number[]>()
-export const canSend = (email: string, max = 5): boolean => {
-  const now = Date.now()
-  const arr = (sends.get(email) ?? []).filter((t) => now - t < 15 * 60 * 1000)
+/** A sliding window of sends per key per 15 minutes, in memory (one server; a shared store replaces the map on several). */
+const WINDOW_MS = 15 * 60 * 1000
+const windows = new Map<string, number[]>()
+const underLimit = (key: string, max: number, now = Date.now()): boolean => {
+  if (windows.size > 5000) for (const [k, v] of windows) if (!v.some((t) => now - t < WINDOW_MS)) windows.delete(k)
+  const arr = (windows.get(key) ?? []).filter((t) => now - t < WINDOW_MS)
   if (arr.length >= max) {
-    sends.set(email, arr)
+    windows.set(key, arr)
     return false
   }
   arr.push(now)
-  sends.set(email, arr)
+  windows.set(key, arr)
   return true
+}
+
+/** Sends per email address per 15 minutes. */
+export const canSend = (email: string, max = 5, now?: number): boolean => underLimit(`email:${email}`, max, now)
+
+/** Sends per client (the address the request came from) per 15 minutes, whatever the addresses asked for: a flood from one
+    host is stopped even when every address is new (M9). The limit is higher than the per-address one so an office behind one
+    NAT address is not locked out by a handful of colleagues signing in. */
+export const canSendFrom = (clientKey: string, max = 30, now?: number): boolean => underLimit(`client:${clientKey}`, max, now)
+
+/** The key for `canSendFrom`: the first hop of `x-forwarded-for` (the host's proxy sets it), else `x-real-ip`, else "direct".
+    Spoofable without a trusted proxy, which only lets an attacker spread their own flood across keys; the per-address limit
+    still holds. */
+export const clientKey = (h: { get(name: string): string | null }): string => {
+  const fwd = (h.get('x-forwarded-for') ?? '').split(',')[0]?.trim() ?? ''
+  const real = (h.get('x-real-ip') ?? '').trim()
+  const ip = fwd || real
+  return ip ? ip.toLowerCase().replace(/[^a-z0-9.:]/g, '').slice(0, 64) || 'direct' : 'direct'
 }

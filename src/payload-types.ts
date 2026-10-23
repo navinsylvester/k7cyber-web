@@ -103,6 +103,7 @@ export interface Config {
     'partner-scheme-registrations': PartnerSchemeRegistration;
     'partner-eligibility': PartnerEligibility;
     'partner-mail-templates': PartnerMailTemplate;
+    'partner-job-runs': PartnerJobRun;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -160,6 +161,7 @@ export interface Config {
     'partner-scheme-registrations': PartnerSchemeRegistrationsSelect<false> | PartnerSchemeRegistrationsSelect<true>;
     'partner-eligibility': PartnerEligibilitySelect<false> | PartnerEligibilitySelect<true>;
     'partner-mail-templates': PartnerMailTemplatesSelect<false> | PartnerMailTemplatesSelect<true>;
+    'partner-job-runs': PartnerJobRunsSelect<false> | PartnerJobRunsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -3438,6 +3440,44 @@ export interface PartnerMailTemplate {
   createdAt: string;
 }
 /**
+ * Every run of a scheduled job (the outbox drain, the CRM read-back, the sweeps, the digest, housekeeping), newest first.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-job-runs".
+ */
+export interface PartnerJobRun {
+  id: number;
+  job: 'outbox' | 'sync' | 'dealsSweep' | 'digest' | 'slaSweep' | 'schemesRun' | 'housekeeping';
+  trigger: 'cron' | 'manual';
+  /**
+   * Off when the run threw.
+   */
+  ok?: boolean | null;
+  durationMs?: number | null;
+  /**
+   * Who pressed Run; blank for the scheduler.
+   */
+  actor?: string | null;
+  /**
+   * One line: what the run did, or the error.
+   */
+  summary?: string | null;
+  /**
+   * The result the job returned, trimmed.
+   */
+  detail?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -3770,6 +3810,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'partner-mail-templates';
         value: number | PartnerMailTemplate;
+      } | null)
+    | ({
+        relationTo: 'partner-job-runs';
+        value: number | PartnerJobRun;
       } | null)
     | ({
         relationTo: 'media';
@@ -5529,6 +5573,21 @@ export interface PartnerMailTemplatesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-job-runs_select".
+ */
+export interface PartnerJobRunsSelect<T extends boolean = true> {
+  job?: T;
+  trigger?: T;
+  ok?: T;
+  durationMs?: T;
+  actor?: T;
+  summary?: T;
+  detail?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -6391,7 +6450,18 @@ export interface PartnerSetting {
    * What the outbox writes to Dynamics on approval (decisions 2, 10, 19). Off: the jobs queue as pending and nothing reaches the CRM. UAT only; production is read-only in code.
    */
   crm?: {
+    /**
+     * The master switch. Off: every job waits as pending and the read-back does not run.
+     */
     enabled?: boolean | null;
+    /**
+     * The go-live gate (05-staging-and-go-live.md §5): each CRM feature under its own switch, turned on one at a time. A job whose feature is off waits as pending until it is on.
+     */
+    features?: {
+      accountCreate?: boolean | null;
+      opportunityCreate?: boolean | null;
+      sync?: boolean | null;
+    };
     ownerRule?: ('approver' | 'fixed') | null;
     /**
      * systemuserid for the fixed owner.
@@ -6769,6 +6839,13 @@ export interface PartnerSettingsSelect<T extends boolean = true> {
     | T
     | {
         enabled?: T;
+        features?:
+          | T
+          | {
+              accountCreate?: T;
+              opportunityCreate?: T;
+              sync?: T;
+            };
         ownerRule?: T;
         ownerId?: T;
         enquirySource?: T;

@@ -273,3 +273,9 @@ tbody + tbody .lib-band th { padding-top: 26px; }
 .rep-table td.num.is-won { color: var(--signal); font-weight: 500; }
 .rep-table td.num.is-hot { color: var(--acc); font-weight: 500; }
 .rep-table td.title .muted { font-size: 13px; }
+
+/* ---------- P28 Operations (M9): the readiness and jobs ledgers on the reports' shape; the feature switches on the settings page ---------- */
+.ops-table td.text { white-space: normal; max-width: 52ch; line-height: 1.5; }
+.ops-table td.title .muted { font: 400 11px/1.4 var(--font-mono); letter-spacing: .02em; }
+.crm-features { display: grid; gap: 10px; padding: 14px 0 4px; border-top: 1px solid var(--line); }
+.crm-features > .label { margin-bottom: 2px; }

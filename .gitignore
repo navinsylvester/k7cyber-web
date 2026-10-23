@@ -33,3 +33,6 @@ spec/
 # Dataverse UAT working files (local only)
 migration/dataverse-seed.log
 scripts/__pycache__/
+
+# scripts/backup.sh output
+backups/
