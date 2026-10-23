@@ -38,6 +38,29 @@ export const EMPTY_EXTENSION: Extension = { requestedAt: null, requestedBy: '', 
 /** A possible conflict with another portal deal: what matched, and whose it is (shown to the approver only, FR-DEAL-04). */
 export type Conflict = { dealId: string; rowId: string; orgPartnerId: string; orgName: string; status: DealStatus; customerName: string; protectionEnds: string | null; matchedOn: ('name' | 'domain' | 'email')[] }
 
+/** What Dynamics said about the opportunity the last time the sync read it (03-dynamics-exploration.md §8, FR-DASH-05). Nulls
+    and blanks until the first read-back; `error` says why the last read could not fill the row. */
+export type Snapshot = {
+  syncedAt: string | null
+  modifiedOn: string | null
+  name: string
+  statecode: number | null
+  statuscode: number | null
+  statusLabel: string
+  stage: number | null
+  stageLabel: string
+  stepName: string
+  estimatedValue: number | null
+  actualValue: number | null
+  invoiceAmount: number | null
+  estimatedCloseDate: string | null
+  actualCloseDate: string | null
+  error: string
+}
+export const EMPTY_SNAPSHOT: Snapshot = { syncedAt: null, modifiedOn: null, name: '', statecode: null, statuscode: null, statusLabel: '', stage: null, stageLabel: '', stepName: '', estimatedValue: null, actualValue: null, invoiceAmount: null, estimatedCloseDate: null, actualCloseDate: null, error: '' }
+
+export type DealCrm = { opportunityId: string; opportunityNo: string; customerAccountId: string; customerContactId: string; noteId: string; snapshot: Snapshot }
+
 export type Deal = {
   id: string
   dealId: string
@@ -64,7 +87,7 @@ export type Deal = {
   endingNoticeAt: string | null
   extension: Extension
   conflicts: Conflict[]
-  crm: { opportunityId: string; opportunityNo: string; customerAccountId: string; customerContactId: string; noteId: string }
+  crm: DealCrm
   createdAt: string
   updatedAt: string
 }
@@ -404,6 +427,31 @@ export const toProduct = (x: Raw): Product => ({ id: s(x.id), name: s(x.name), s
 
 export const toDealFile = (x: Raw): DealFile => ({ id: s(x.id), name: s(x.filename), mime: s(x.mimeType), size: n(x.filesize) })
 
+const numOrNull = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
+/** A date-only column read back from Postgres carries a time; the snapshot keeps the day, so two reads of the same day compare equal. */
+const dayOrNull = (v: unknown): string | null => (typeof v === 'string' && v ? v.slice(0, 10) : null)
+
+export const toSnapshot = (v: unknown): Snapshot => {
+  const r = (v && typeof v === 'object' ? v : {}) as Raw
+  return {
+    syncedAt: d(r.syncedAt),
+    modifiedOn: d(r.modifiedOn),
+    name: s(r.name),
+    statecode: numOrNull(r.statecode),
+    statuscode: numOrNull(r.statuscode),
+    statusLabel: s(r.statusLabel),
+    stage: numOrNull(r.stage),
+    stageLabel: s(r.stageLabel),
+    stepName: s(r.stepName),
+    estimatedValue: numOrNull(r.estimatedValue),
+    actualValue: numOrNull(r.actualValue),
+    invoiceAmount: numOrNull(r.invoiceAmount),
+    estimatedCloseDate: dayOrNull(r.estimatedCloseDate),
+    actualCloseDate: dayOrNull(r.actualCloseDate),
+    error: s(r.error),
+  }
+}
+
 export const toConflict = (v: unknown): Conflict | null => {
   if (!v || typeof v !== 'object') return null
   const r = v as Raw
@@ -455,7 +503,7 @@ export const toDeal = (x: Raw): Deal => {
     endingNoticeAt: d(x.endingNoticeAt),
     extension: { requestedAt: d(ex.requestedAt), requestedBy: s(ex.requestedBy), reason: s(ex.reason), decidedAt: d(ex.decidedAt), decidedBy: s(ex.decidedBy), granted: ex.granted === true, note: s(ex.note) },
     conflicts: Array.isArray(x.conflicts) ? x.conflicts.map(toConflict).filter((v): v is Conflict => v !== null) : [],
-    crm: { opportunityId: s(crm.opportunityId), opportunityNo: s(crm.opportunityNo), customerAccountId: s(crm.customerAccountId), customerContactId: s(crm.customerContactId), noteId: s(crm.noteId) },
+    crm: { opportunityId: s(crm.opportunityId), opportunityNo: s(crm.opportunityNo), customerAccountId: s(crm.customerAccountId), customerContactId: s(crm.customerContactId), noteId: s(crm.noteId), snapshot: toSnapshot(crm.snapshot) },
     createdAt: s(x.createdAt),
     updatedAt: s(x.updatedAt),
   }

@@ -21,6 +21,7 @@ export const PartnerHeader: React.FC = async () => {
     ? [
         { href: '/partners/portal', label: 'Home' },
         { href: '/partners/portal/deals', label: 'Deals' },
+        { href: '/partners/portal/dashboard', label: 'Dashboard' },
         { href: '/partners/portal/organisation', label: 'Organisation' },
         { href: '/partners/portal/notifications', label: 'Notifications' },
       ]

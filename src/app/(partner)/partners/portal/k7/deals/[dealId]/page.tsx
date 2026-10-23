@@ -10,13 +10,14 @@ import { Crumbs } from '@/components/support/Parts'
 import { objectAudit } from '@/lib/partner/audit'
 import { findConflicts, findDealByNumber, K7_DEALS } from '@/lib/partner/deals'
 import { formatInr, k7MayAmend, mayAddNote } from '@/lib/partner/deals-model'
+import { CrmFacts } from '@/components/partner/Dashboard'
 import { outboxOf } from '@/lib/partner/mirror'
 import { requireK7Role } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
 import { canDecideDeal, DEAL_DECISION_LABEL, type DealDecision } from '@/lib/partner/status'
 import { dmy, dmyHm, relative } from '@/lib/support/format'
 
-import { amendDealAction, decideDealAction, decideExtensionAction, k7NoteAction, runDealOutboxAction } from '../actions'
+import { amendDealAction, decideDealAction, decideExtensionAction, k7NoteAction, runDealOutboxAction, syncNowAction } from '../actions'
 
 export const metadata: Metadata = { title: 'Deal' }
 
@@ -250,6 +251,15 @@ export default async function K7DealPage({ params, searchParams }: { params: Pro
                   </>
                 )}
               </dl>
+              <CrmFacts deal={deal} />
+              {deal.crm.opportunityId && (
+                <form action={syncNowAction} style={{ marginTop: 10 }}>
+                  <input type="hidden" name="dealId" value={deal.dealId} />
+                  <button className="btn btn-line btn-sm" type="submit" title="Read every portal opportunity back from Dynamics now">
+                    {deal.crm.snapshot.syncedAt ? 'Read back again' : 'Read back now'}
+                  </button>
+                </form>
+              )}
               <p className="more">
                 <Link className="link-u" href={`/admin/collections/partner-deals/${deal.id}`}>
                   The raw row in the admin

@@ -139,3 +139,33 @@
 .dthread .msg-title { font-weight: 400; color: var(--mu); }
 .dthread .msg-head .tag { vertical-align: 1px; font-size: 11px; }
 .dthread .msg-att .tag .muted { font: 400 11px/1 var(--font-mono); }
+
+/* ---------- P17 The dashboard: the synced line, the period switch, the cards in money (M5) ---------- */
+.synced { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; margin: calc(-1 * clamp(28px, 3cqw, 44px) + 22px) 0 clamp(24px, 3cqw, 36px); font: 400 12px/1.5 var(--font-mono); letter-spacing: .02em; color: var(--mu); }
+.synced .pixel { align-self: center; }
+.synced .pixel.is-off { background: var(--ln); }
+.synced time { color: var(--fg); }
+.dash-period { align-items: center; }
+.dash-period .seg-choice { flex-wrap: wrap; }
+.dash-period-note { flex: 1 1 auto; text-align: right; }
+.dash-cards { margin-bottom: clamp(32px, 4cqw, 48px); }
+.kpi .n.is-money { font-size: clamp(22px, 2.4cqw, 36px); letter-spacing: -.03em; font-stretch: 72%; font-variation-settings: 'wdth' 72; }
+.seg-choice a { display: inline-block; padding: 9px 14px; font: 400 12px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: inherit; text-decoration: none; transition: background .24s var(--ease), color .24s; }
+.seg-choice a:hover, .seg-choice a.is-on { background: var(--fg); color: var(--bg); }
+
+/* ---------- P18 The outcome tag, P19 the money charts on section 09's S9 grid ---------- */
+.dash-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: clamp(28px, 3.4cqw, 48px) clamp(32px, 4cqw, 56px); margin-bottom: clamp(36px, 4.4cqw, 56px); }
+.dash-charts .cols { height: 150px; gap: 3px; }
+.dash-charts .cols .v { white-space: nowrap; font-size: 10px; overflow: visible; }
+.dash-charts .cols .l { overflow: visible; }
+.dash-charts .cols .l.is-quiet { visibility: hidden; }
+.dash-charts .bars .v { white-space: nowrap; }
+.dash-table td.id .muted { font: 400 11px/1.4 var(--font-mono); letter-spacing: .02em; }
+.crm-facts dd .tag { vertical-align: 1px; }
+.sync-runs tr.is-failed td { color: var(--acc); }
+.sync-runs details summary { cursor: pointer; list-style: none; }
+.sync-runs details summary::-webkit-details-marker { display: none; }
+.sync-runs details summary::after { content: " +"; }
+.sync-runs details[open] summary::after { content: " −"; }
+.sync-lines { margin: 8px 0 0; padding: 0 0 0 14px; font-size: 13px; display: grid; gap: 4px; max-width: 60ch; }
+.crm-facts .is-ending { color: var(--acc); }

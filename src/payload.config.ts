@@ -19,6 +19,7 @@ import { PartnerOrgs } from './collections/partner/PartnerOrgs'
 import { PartnerOutbox } from './collections/partner/PartnerOutbox'
 import { PartnerProducts } from './collections/partner/PartnerProducts'
 import { PartnerSettings } from './collections/partner/PartnerSettings'
+import { PartnerSyncRuns } from './collections/partner/PartnerSyncRuns'
 import { PartnerUsers } from './collections/partner/PartnerUsers'
 import { Authors } from './collections/research/Authors'
 import { Products } from './collections/research/Products'
@@ -90,7 +91,7 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, PartnerOrgs, PartnerUsers, PartnerApplications, PartnerAudit, PartnerNotifications, PartnerOutbox, PartnerCounters, PartnerProducts, PartnerDeals, PartnerDealFiles, Media, Users],
+  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, PartnerOrgs, PartnerUsers, PartnerApplications, PartnerAudit, PartnerNotifications, PartnerOutbox, PartnerCounters, PartnerProducts, PartnerDeals, PartnerDealFiles, PartnerSyncRuns, Media, Users],
   upload: { limits: { fileSize: 30 * 1024 * 1024 } },
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, SupportSettings, ProductSettings, PartnerSettings],

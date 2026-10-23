@@ -27,6 +27,7 @@ type Doc = Record<string, unknown>
 const s = (v: unknown): string => (v === null || v === undefined ? '' : String(v))
 
 export const PARTNER_DEALS = '/partners/portal/deals'
+export const PARTNER_DASHBOARD = '/partners/portal/dashboard'
 export const K7_DEALS = '/partners/portal/k7/deals'
 
 /* ---------- Products (decision 19) ---------- */

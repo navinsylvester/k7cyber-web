@@ -138,6 +138,7 @@ export const PartnerSettings: GlobalConfig = {
                     { name: 'accountNamePattern', type: 'text', defaultValue: '{customer}-Fresh-{product}', admin: { width: '34%', description: 'Opportunity name; {customer} and {product} are replaced.' } },
                   ],
                 },
+                { name: 'syncMinutes', type: 'number', min: 5, defaultValue: 60, admin: { description: 'The dashboard read-back (FR-DASH-05): POST /api/partners/sync runs at most this often unless forced; the scheduler may call it more frequently. Default 60.' } },
               ],
             },
           ],

@@ -7,7 +7,7 @@ import { roleAccess } from '../../access/roles'
    state (§7.2), the thread of notes and decisions with attachments, the protection window and its one extension, the conflicts
    found at submission, and the CRM ids once the opportunity job has run. Written by src/lib/partner/deals.ts and mirror.ts
    through the local API with access overridden; admins read the raw rows here. The deal's status after approval (won, lost,
-   open) comes from Dynamics in M5, into the `crm.snapshot` group. */
+   open, on hold) comes from Dynamics through the `crm.snapshot` group that sync.ts fills (M5). */
 
 export const DEAL_STATUS_OPTIONS = [
   { label: 'Submitted', value: 'submitted' },
@@ -138,10 +138,22 @@ export const PartnerDeals: CollectionConfig = {
     {
       name: 'crm',
       type: 'group',
-      admin: { description: 'Filled by the outbox when the opportunity job runs (03-dynamics-exploration.md §7); the snapshot arrives with M5.' },
+      admin: { description: 'Filled by the outbox when the opportunity job runs (03-dynamics-exploration.md §7); the snapshot by the sync (§8, M5).' },
       fields: [
-        { type: 'row', fields: [{ name: 'opportunityId', type: 'text', admin: { width: '40%' } }, { name: 'opportunityNo', type: 'text', index: true, admin: { width: '20%', description: 'alletec_opportunityno, OPP-YYMM-NNNNN.' } }, { name: 'customerAccountId', type: 'text', admin: { width: '20%' } }, { name: 'customerContactId', type: 'text', admin: { width: '20%' } }] },
+        { type: 'row', fields: [{ name: 'opportunityId', type: 'text', index: true, admin: { width: '40%' } }, { name: 'opportunityNo', type: 'text', index: true, admin: { width: '20%', description: 'alletec_opportunityno, OPP-YYMM-NNNNN.' } }, { name: 'customerAccountId', type: 'text', admin: { width: '20%' } }, { name: 'customerContactId', type: 'text', admin: { width: '20%' } }] },
         { name: 'noteId', type: 'text', admin: { description: 'The annotation that carries the registration; a retry does not write it twice.' } },
+        {
+          name: 'snapshot',
+          type: 'group',
+          admin: { description: 'What Dynamics says about the opportunity, read back by src/lib/partner/sync.ts on the schedule (FR-DASH-05; 03-dynamics-exploration.md §8). The dashboard reads this and nothing live; on stage or value the CRM wins (FR-DASH-11) and the difference is in the audit.' },
+          fields: [
+            { type: 'row', fields: [{ name: 'syncedAt', type: 'date', index: true, admin: { width: '34%', date: { pickerAppearance: 'dayAndTime' } } }, { name: 'modifiedOn', type: 'date', admin: { width: '33%', date: { pickerAppearance: 'dayAndTime' } } }, { name: 'name', type: 'text', admin: { width: '33%', description: 'The opportunity’s topic as the CRM names it.' } }] },
+            { type: 'row', fields: [{ name: 'statecode', type: 'number', index: true, admin: { width: '25%', description: '0 Open · 1 Won · 2 Lost.' } }, { name: 'statuscode', type: 'number', admin: { width: '25%', description: 'The status reason; 2 = On Hold while open.' } }, { name: 'statusLabel', type: 'text', admin: { width: '50%' } }] },
+            { type: 'row', fields: [{ name: 'stage', type: 'number', admin: { width: '25%', description: 'alletec_stage, 260760000 Pre Sales … 260760005 Closure.' } }, { name: 'stageLabel', type: 'text', admin: { width: '35%' } }, { name: 'stepName', type: 'text', admin: { width: '40%', description: 'The business process flow’s step.' } }] },
+            { type: 'row', fields: [{ name: 'estimatedValue', type: 'number', admin: { width: '34%' } }, { name: 'actualValue', type: 'number', admin: { width: '33%', description: 'Set on win.' } }, { name: 'invoiceAmount', type: 'number', admin: { width: '33%', description: 'alletec_nvoiceamount.' } }] },
+            { type: 'row', fields: [{ name: 'estimatedCloseDate', type: 'date', admin: { width: '34%' } }, { name: 'actualCloseDate', type: 'date', index: true, admin: { width: '33%' } }, { name: 'error', type: 'text', admin: { width: '33%', description: 'Why the last read-back could not fill this row (not found, refused); blank when it could.' } }] },
+          ],
+        },
       ],
     },
   ],
