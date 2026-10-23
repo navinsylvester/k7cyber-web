@@ -8,6 +8,7 @@ import { dealOutcome, formatInrPlain, isOpenOutcome, isPeriodKey, periodBounds, 
 import { listDeals, PARTNER_DASHBOARD, PARTNER_DEALS } from '@/lib/partner/deals'
 import { requirePartner } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
+import { crmFeatureOn } from '@/lib/partner/settings-model'
 import { lastUpdatedFor } from '@/lib/partner/sync'
 
 export const metadata: Metadata = { title: 'Dashboard' }
@@ -54,7 +55,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
       </div>
 
-      <Synced at={updatedAt} minutes={settings.crm.syncMinutes} mirrorOn={settings.crm.enabled} />
+      <Synced at={updatedAt} minutes={settings.crm.syncMinutes} mirrorOn={crmFeatureOn(settings, 'sync')} />
 
       <form className="views dash-period" action={PARTNER_DASHBOARD} method="get" aria-label="Period">
         {view !== 'all' && <input type="hidden" name="view" value={view} />}

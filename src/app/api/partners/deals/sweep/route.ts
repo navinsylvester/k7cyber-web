@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
+import { cronAuthorised } from '@/lib/cron-auth'
 import { sweepDeals } from '@/lib/partner/deals'
+import { recordJobRun } from '@/lib/partner/ops'
 
 /* The deal sweep (01-requirements.md §7.2 Expired, FR-NTF-01 "protection ending"): a scheduler calls it daily with
    `Authorization: Bearer <CRON_SECRET>`; approved deals past their protection end expire, and those inside the notice window are
@@ -9,10 +11,9 @@ import { sweepDeals } from '@/lib/partner/deals'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request): Promise<Response> {
-  const secret = process.env.CRON_SECRET
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!cronAuthorised(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
-    return NextResponse.json({ ...(await sweepDeals()), at: new Date().toISOString() })
+    return NextResponse.json({ ...(await recordJobRun('dealsSweep', () => sweepDeals())), at: new Date().toISOString() })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }

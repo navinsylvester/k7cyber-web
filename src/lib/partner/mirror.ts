@@ -8,7 +8,7 @@ import { audit, SYSTEM } from './audit'
 import { opportunityBodies, toDeal } from './deals-model'
 import { accountBody, contactBody, type SizeBand, type TurnoverBand } from './registration-model'
 import { getPartnerSettings } from './settings'
-import type { PartnerType } from './settings-model'
+import { crmFeatureOn, type CrmFeature, type PartnerType } from './settings-model'
 
 /* The CRM mirror's outbox (02-build-plan.md decision 2, 03-dynamics-exploration.md §6): every write the portal owes Dynamics is a
    row in `partner-outbox`, queued by the portal action and run as the service identity, never in the request path's critical
@@ -45,6 +45,9 @@ const toJob = (x: Doc): OutboxJob => ({
   updatedAt: s(x.updatedAt),
 })
 
+/** Which go-live feature switch each job kind sits behind (M9). */
+export const FEATURE_OF: Record<OutboxKind, CrmFeature> = { 'account.create': 'accountCreate', 'opportunity.create': 'opportunityCreate' }
+
 export type EnqueueInput = { kind: OutboxKind; orgId: string; object: string; objectId: string; objectLabel: string; payload?: Record<string, unknown>; actor: string }
 
 /** Records the job; runs it at once when the mirror is on (the service identity must exist), else it waits for the drain. */
@@ -54,7 +57,7 @@ export const enqueueOutbox = async (i: EnqueueInput): Promise<OutboxJob | null> 
     const doc = await payload.create({ collection: 'partner-outbox', overrideAccess: true, depth: 0, data: { kind: i.kind, state: 'pending', attempts: 0, orgId: i.orgId, object: i.object, objectId: i.objectId, objectLabel: i.objectLabel, payload: i.payload ?? {}, actor: i.actor } as never })
     const job = toJob(doc as unknown as Doc)
     const settings = await getPartnerSettings()
-    if (!settings.crm.enabled) return job
+    if (!crmFeatureOn(settings, FEATURE_OF[i.kind])) return job
     return await runJob(job)
   } catch (e) {
     console.error(`[partner outbox] enqueue ${i.kind} for ${i.objectLabel}: ${(e as Error).message}`)
@@ -292,6 +295,8 @@ const record = async (job: OutboxJob, state: OutboxState, extra: Record<string, 
 /** Runs one job as the service identity. The production guard and the writes switch give `skipped`; anything else `failed`. */
 export const runJob = async (job: OutboxJob, auth: DataverseAuth = { kind: 'service' }): Promise<OutboxJob> => {
   if (job.state === 'done') return job
+  // The go-live gate (M9): a job whose feature is off is left exactly as it is, no attempt counted, until the switch turns.
+  if (!crmFeatureOn(await getPartnerSettings(), FEATURE_OF[job.kind])) return { ...job, lastError: job.lastError || `waiting: the ${FEATURE_OF[job.kind]} feature is off in the partner settings` }
   try {
     let result: Record<string, unknown>
     switch (job.kind) {
@@ -324,7 +329,13 @@ export const drainOutbox = async (limit = 25, auth: DataverseAuth = { kind: 'ser
   const payload = await db()
   const q = await payload.find({ collection: 'partner-outbox', where: { state: { in: ['pending', 'failed', 'skipped'] } }, sort: 'createdAt', limit, depth: 0, overrideAccess: true })
   for (const doc of q.docs) {
-    const job = await runJob(toJob(doc as unknown as Doc), auth)
+    const before = toJob(doc as unknown as Doc)
+    if (!crmFeatureOn(settings, FEATURE_OF[before.kind])) {
+      r.pending += 1
+      r.lines.push(`${before.kind} ${before.objectLabel}: waiting, the ${FEATURE_OF[before.kind]} feature is off`)
+      continue
+    }
+    const job = await runJob(before, auth)
     r.ran += 1
     r[job.state] += 1
     r.lines.push(`${job.kind} ${job.objectLabel}: ${job.state}${job.lastError ? ` (${job.lastError})` : ''}`)

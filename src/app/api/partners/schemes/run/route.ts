@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { cronAuthorised } from '@/lib/cron-auth'
+import { recordJobRun } from '@/lib/partner/ops'
 import { runDueSchemes } from '@/lib/partner/schemes'
 
 /* The eligibility pass (01-requirements.md FR-ELG-01 "after a scheme closes"): a scheduler calls it daily with
@@ -10,10 +12,9 @@ import { runDueSchemes } from '@/lib/partner/schemes'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request): Promise<Response> {
-  const secret = process.env.CRON_SECRET
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!cronAuthorised(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
-    const r = await runDueSchemes()
+    const r = await recordJobRun('schemesRun', () => runDueSchemes())
     return NextResponse.json(r, { status: 200 })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })

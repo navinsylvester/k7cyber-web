@@ -10,6 +10,7 @@ import { toDeal, type Deal, type Snapshot } from './deals-model'
 import type { OrgScope } from './scope'
 import { orgWhere } from './scope'
 import { getPartnerSettings } from './settings'
+import { crmFeatureOn } from './settings-model'
 
 /* The dashboard's read-back (01-requirements.md FR-DASH-04, 05, 11; 02-build-plan.md decision 14; 03-dynamics-exploration.md §8):
    the portal's own opportunities, by the ids stored on the deals and never by a CRM-wide filter, read in batches as the service
@@ -68,6 +69,11 @@ export const syncDeals = async (o: SyncOptions = {}): Promise<SyncResult> => {
   const trigger = o.trigger ?? 'cron'
   const r: SyncResult = { ran: false, skipped: '', at, scanned: 0, fetched: 0, changed: 0, unchanged: 0, missing: 0, errors: [], lines: [], durationMs: 0, runId: '' }
   const settings = await getPartnerSettings()
+  if (!crmFeatureOn(settings, 'sync')) {
+    r.skipped = settings.crm.enabled ? 'The dashboard read-back is off in the partner settings (CRM features → sync).' : 'The CRM mirror is off in the partner settings; nothing is read back.'
+    r.durationMs = Date.now() - started
+    return r
+  }
   if (!o.force) {
     const last = await lastSyncRun()
     if (last && !syncDue(last.at, settings.crm.syncMinutes, now)) {

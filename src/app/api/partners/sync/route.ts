@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { cronAuthorised } from '@/lib/cron-auth'
+import { recordJobRun } from '@/lib/partner/ops'
 import { syncDeals } from '@/lib/partner/sync'
 
 /* The dashboard read-back (01-requirements.md FR-DASH-05, 02-build-plan.md decision 14): a scheduler calls it with
@@ -10,8 +12,7 @@ import { syncDeals } from '@/lib/partner/sync'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request): Promise<Response> {
-  const secret = process.env.CRON_SECRET
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!cronAuthorised(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   let force = false
   try {
     const body = (await req.json().catch(() => ({}))) as { force?: boolean }
@@ -20,7 +21,7 @@ export async function POST(req: Request): Promise<Response> {
     /* no body */
   }
   try {
-    const r = await syncDeals({ trigger: 'cron', force })
+    const r = await recordJobRun('sync', () => syncDeals({ trigger: 'cron', force }))
     return NextResponse.json(r, { status: r.ran || r.skipped ? 200 : 500 })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })

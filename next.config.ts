@@ -54,6 +54,28 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins: ['*.trycloudflare.com'],
   redirects,
+  // The partner portal's pages and files (docs/partner-portal/05-staging-and-go-live.md §4): framed only by the site itself (a
+  // same-origin frame is how a phone width is checked in development), never sniffed, the
+  // referrer cut to the origin, no device access. TLS and Strict-Transport-Security belong to the host in front of the app.
+  // `/support` can take the same lines when its own hardening pass comes.
+  headers: async () => [
+    {
+      source: '/partners/:path*',
+      headers: [
+        { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+      ],
+    },
+    {
+      source: '/api/partners/:path*',
+      headers: [
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'Cache-Control', value: 'no-store' },
+      ],
+    },
+  ],
   turbopack: {
     root: path.resolve(dirname),
   },

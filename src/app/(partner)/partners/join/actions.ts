@@ -4,7 +4,7 @@ import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import { currentDraft, JOIN_COOKIE, JOIN_DEVCODE_COOKIE, JOIN_OTP_COOKIE, JOIN_PATH } from '@/lib/partner/join'
-import { OTP_TTL_SECONDS, canSend, issueOtp, normaliseEmail, verifyOtp } from '@/lib/partner/otp'
+import { OTP_TTL_SECONDS, canSend, canSendFrom, clientKey, issueOtp, normaliseEmail, verifyOtp } from '@/lib/partner/otp'
 import { createDraft, editable, findByNumber, JOIN, markVerified, saveDetails, saveType, submitApplication } from '@/lib/partner/registration'
 import { EMPTY_COMPANY, isMobile, isPartnerType, normaliseMobile, validateCompany, validateContact, validateRegions, type Company, type SizeBand, type TurnoverBand } from '@/lib/partner/registration-model'
 import { getPartnerSettings } from '@/lib/partner/settings'
@@ -101,7 +101,7 @@ const showCodeHere = async (): Promise<boolean> => {
 }
 
 const sendCodes = async (email: string, mobile: string): Promise<void> => {
-  if (!canSend(email)) redirect(`${JOIN}/verify?error=rate`)
+  if (!canSend(email) || !canSendFrom(clientKey(await headers()))) redirect(`${JOIN}/verify?error=rate`)
   const { code, token } = issueOtp({ email, purpose: 'partner-join', mobile })
   const jar = await cookies()
   jar.set(OTP_COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: secure(), path: PATH, maxAge: OTP_TTL_SECONDS })

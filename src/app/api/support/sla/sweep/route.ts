@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { cronAuthorised } from '@/lib/cron-auth'
 import { getSettings } from '@/lib/support/kpi-config'
 import { runSweep } from '@/lib/support/prevention'
 
@@ -9,8 +10,7 @@ import { runSweep } from '@/lib/support/prevention'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request): Promise<Response> {
-  const secret = process.env.CRON_SECRET
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!cronAuthorised(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const settings = await getSettings()
   if (!settings.sweep.enabled) return NextResponse.json({ skipped: true, reason: 'sweep disabled in settings' })
   let live = false

@@ -76,7 +76,7 @@ Local dev uses Payload's push mode (schema synced on start). Credentials in `.en
 - `scripts/dataverse-probe.py` queries Dataverse from the shell (`DV_*` in `.env`); its
   token cache `scripts/.token_cache.json` and any `spec/` output are git-ignored.
 
-## Partner portal (M1–M4 built 2026-10-22, M5–M6 on 2026-10-23; M7 schemes next)
+## Partner portal (M1–M4 built 2026-10-22, M5–M9 on 2026-10-23; the LMS, M10–M11, last)
 - Start at `docs/partner-portal/README.md`. `02-build-plan.md` is the plan and the cross-session state: status table,
   decisions, milestones M0–M11 with tick-boxes, traceability and a session log to update at the end of every session.
   `01-requirements.md` is the source document (Vijaichristopher, 2026-10-06) converted verbatim, with an appendix of gaps;
@@ -93,4 +93,8 @@ Local dev uses Payload's push mode (schema synced on start). Credentials in `.en
 - Built since: the join flow and the applications queue (M2), the organisation and its users (M3), deal registration with the opportunity
   through the outbox (M4), the dashboard read back from the CRM (M5), the collateral library edited in `/admin` and read at
   `/partners/portal/collateral` with a 200 MB cap (M6; Payload's one upload limit is now 200 MB, the other upload collections capped by
-  `src/collections/uploadLimit.ts`). Next: schemes and eligibility (M7); `/partners/verify/[id]` and the LMS last.
+  `src/collections/uploadLimit.ts`), schemes and eligibility (M7), notifications, templates, the approval SLA and reports (M8),
+  hardening (M9: `docs/partner-portal/05-staging-and-go-live.md` is the runbook; the scheduled routes share `src/lib/cron-auth.ts`,
+  every run is a `partner-job-runs` row read by `/partners/portal/k7/operations` and `GET /api/partners/health`; the CRM mirror has
+  per-feature switches under `crm.enabled` for the go-live gate; `scripts/backup.sh` / `restore.sh`; `tests/int/partner-routes`
+  scans every route and action for its door). Next: the LMS (M10–M11) and `/partners/verify/[id]`.

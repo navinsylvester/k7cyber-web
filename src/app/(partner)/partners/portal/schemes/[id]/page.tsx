@@ -11,6 +11,7 @@ import { loadSchemeFor, PARTNER_SCHEMES, progressOf } from '@/lib/partner/scheme
 import { applicabilityText, hasStarted, isOpenForRegistration, registerBlocked, schemePhase } from '@/lib/partner/schemes-model'
 import { requirePartner } from '@/lib/partner/session'
 import { getPartnerSettings, PARTNER_TYPE_LABEL } from '@/lib/partner/settings'
+import { crmFeatureOn } from '@/lib/partner/settings-model'
 import { lastUpdatedFor } from '@/lib/partner/sync'
 import { dmy, dmyHm } from '@/lib/support/format'
 
@@ -82,7 +83,7 @@ export default async function SchemePage({ params, searchParams }: { params: Pro
       />
       {showProgress && progress ? (
         <>
-          <Synced at={synced} minutes={settings.crm.syncMinutes} mirrorOn={settings.crm.enabled} />
+          <Synced at={synced} minutes={settings.crm.syncMinutes} mirrorOn={crmFeatureOn(settings, 'sync')} />
           <ProgressLine slabs={sc.slabs} value={progress.achieved} provisional={progress.provisional} label="Your progress" />
         </>
       ) : null}

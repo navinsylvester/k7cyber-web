@@ -1,4 +1,4 @@
-# Partner portal: the build plan (written 2026-10-22; M1 to M4 built the same day, M5 to M8 on 2026-10-23)
+# Partner portal: the build plan (written 2026-10-22; M1 to M4 built the same day, M5 to M9 on 2026-10-23)
 
 What has to be done to deliver `01-requirements.md`, in the order it should be done, with the
 decisions taken so far and a status that any session can pick up. Read `CLAUDE.md`,
@@ -46,7 +46,7 @@ not for its history.
 | M6 | Collateral library (§6) | **built 2026-10-23** (session 12): the two collections, the library and item pages, the download route with the rule and Range support, the K7 ledger, the cap as a setting; tests pass, both sides clicked on localhost |
 | M7 | Schemes and eligibility (§9) | **built 2026-10-23** (session 13): the four collections, the partner pages (listing, scheme, Check eligibility), the K7 ledger, sheet and result sheet, the run, the Finance CSV; tests pass; both sides clicked end to end on localhost and the tunnel host, including a phone width |
 | M8 | Notifications, bell, editable templates, approval SLA, reporting, exports (§10 and the gaps) | **built 2026-10-23** (session 14): the event catalogue and the templates page with a delivery rule per event (at once · daily digest · bell only), the digest and retention pass, the approval SLA in working hours with the breach notice to approvers, managers and escalation addresses, the SLA reading on the K7 queues and sheets, the four reports with CSV; tests pass; the K7 side clicked end to end on localhost, the partner side's rendered row too; the non-functional requirements proposed in §11, to confirm with the author |
-| M9 | Hardening and staging: non-functional requirements, tests, go-live gate → **launch 1 (no LMS)** | not started |
+| M9 | Hardening and staging: non-functional requirements, tests, go-live gate → **launch 1 (no LMS)** | **built 2026-10-23** (session 15): `05-staging-and-go-live.md` (the runbook: host needs, environment per stage, the scheduler, operations, the gate, backup); the shared cron guard, the per-client code limit, the portal headers, the per-feature CRM switches, the job-run log with the Operations page and the health route, housekeeping, backup and restore scripts rehearsed; the matrix, scope, fixture and route-door tests; the items earlier sessions left unclicked are clicked. Hosting itself is still undecided, so staging is specified, not stood up |
 | M10 | Training (§4): tracks, courses, modules, video progress, tests, attempts, results, admin | not started (last phase) |
 | M11 | Certificates (§4 FR-TRN-07–10, §5): PDF + QR, public verification, expiry, org certificate, revoke; then the deal gate switch | not started (last phase) |
 
@@ -257,10 +257,10 @@ Tick as done; dates in the session log.
 - [x] Reports for K7 (`/partners/portal/k7/reports`): pipeline by partner, applications by state, scheme results, the approval SLA; one CSV each for the period
 - [x] Non-functional requirements proposed in §11 as defaults to confirm with the author (appendix 1); not yet confirmed
 
-### M9 — hardening and staging → launch 1
-- [ ] Tests for every status machine, scope rule, eligibility maths and the conflict matcher (mock fixtures, anonymised)
-- [ ] Staging on the same host as the support portal; object storage; SMTP; the service application user for the CRM writes
-- [ ] Go-live gate like `docs/support-portal/07-production-safety.md` §7: read-only week against production, writes switched on per feature
+### M9 — hardening and staging → launch 1 (built 2026-10-23)
+- [x] Tests for every status machine, scope rule, eligibility maths and the conflict matcher (mock fixtures, anonymised): `partner-m9` (the four machines as full matrices, the scope corners, the cron guard, the limiter, the feature switches, the readiness checks, ten anonymised deals across four organisations against the conflict matcher, a slab fixture against the eligibility maths), `partner-routes` (every route and server action under the portal read from the source for its door), `partner-m9-db` (the switches, the job-run log and housekeeping against Postgres)
+- [x] Staging specified in `05-staging-and-go-live.md` §1–2 (what the host must provide, the environment per stage); the code side done: the shared constant-time cron guard (`src/lib/cron-auth.ts`), the per-client code limit beside the per-address one, the portal headers in `next.config.ts`, every scheduled run recorded (`partner-job-runs`) and read on `/partners/portal/k7/operations` with the readiness checks, `GET /api/partners/health` for a monitor, `POST /api/partners/housekeeping`, `scripts/backup.sh` / `restore.sh` rehearsed locally (NFR 9). Object storage deferred (a persistent disk is enough for launch 1); SMTP and the service application user are the host's lines in §2, not code
+- [x] Go-live gate written (`05-staging-and-go-live.md` §5) on `07-production-safety.md` §7 with the switches it needs: `crm.features` (account, opportunity, read-back) under the master `crm.enabled`, a job whose feature is off waiting as pending with no attempt, the read-back refusing when its switch is off; the gate itself is run at launch, not now
 
 ### M10 — training (§4), last phase
 - [ ] Collections and Payload admin for tracks, courses (versioned), modules, question banks (bulk CSV import); Training Admin role
@@ -309,7 +309,7 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
 | SCH-01 … 05 | M7 | built 2026-10-23 (SCH-01: the admin collection with slabs and the PDF; SCH-02: three groups, type and region, published only; SCH-03: the Partner Admin accepts the terms, name and time stored; SCH-04: per-scheme switch; SCH-05: provisional progress from the snapshots) |
 | ELG-01 … 07 | M7 | built 2026-10-23 (ELG-01: won in the CRM, closed inside the dates, on a named product, at the order value; ELG-02: adjust with reason, publish; ELG-03/04: the page with the slab, the benefit, the gap, the deals; ELG-05: window = setting or the scheme's days; ELG-06: pending · processed · paid with reference; ELG-07: CSV) |
 | NTF-01 | M1 (spine), M8 (templates, SLA) | M1 done (`notify()`, the bell, email through the allowlist); M2 sends the application events (staff bell + mail, applicant mail, the invitation); M4 the deal events (submitted, resubmitted, decided, amended, extension asked and decided, withdrawn, expired, protection ending); M7 the scheme events; **M8 built 2026-10-23**: templates K7 edits per event with a delivery rule and the daily digest, the approval SLA breach to the approvers and their managers (the training and certificate rows of the table arrive with M10–M11) |
-| non-functional (none written) | M8 | proposed 2026-10-23 (§11), to confirm with the author |
+| non-functional (none written) | M8, M9 | proposed 2026-10-23 (§11), to confirm with the author; M9 carries out 7 (the guard, the limiter, the headers, the route-door test), 8 (every run a row), 9 (backup rehearsed) and the retention lines of 4 (drafts, job runs) in code and the rest as the runbook `05-staging-and-go-live.md` |
 | TRN-01 … 06, 11, 12, 13, 14 | M10 | — (last phase) |
 | TRN-07, 08, 09, 10 | M11 | — (last phase) |
 | CRT-01 … 07 | M11 | — (last phase) |
@@ -326,7 +326,8 @@ change a line rather than write from nothing; each is either already true of the
    region assumed). Dynamics is written only by the outbox, as the service identity, to UAT until the go-live gate of M9, never to
    production without the per-feature switch (`07-production-safety.md` §7).
 4. **Retention.** Applications, organisations, deals, scheme results and the audit trail are kept for the life of the programme;
-   read bell rows for `notify.bellRetentionDays` (180 by default, M8); one-time codes for ten minutes; sessions for the Auth.js default.
+   read bell rows for `notify.bellRetentionDays` (180 by default, M8); one-time codes for ten minutes; sessions for the Auth.js default;
+   join drafts nobody touched for 30 days and job-run rows older than 90 days are removed by housekeeping (M9).
    Uploads (deal files, collateral, scheme PDFs) live with their rows. A partner's data is removed on request by an admin in `/admin`,
    with the audit rows kept under the partner ID alone.
 5. **Accessibility.** WCAG 2.2 AA as the site: every control labelled, the state tags read as text not colour alone, keyboard order
@@ -338,7 +339,8 @@ change a line rather than write from nothing; each is either already true of the
    rule; no secrets in the repository; the CRM client refuses production writes in code.
 8. **Audit and reporting.** Every status change writes an append-only row (decision 17); every notification is a row with its delivery
    and email result (M8); the reports and CSVs read the portal's rows and the CRM snapshots, never live.
-9. **Backup.** Nightly Postgres backups and the upload directories, retained 30 days, restored once before launch 1 (M9).
+9. **Backup.** Nightly Postgres backups and the upload directories, retained 30 days (`scripts/backup.sh`), restored once before launch 1
+   (`scripts/restore.sh`; rehearsed on the development database 2026-10-23, `05-staging-and-go-live.md` §6).
 10. **Email.** All mail through `SMTP_URL` with the allowlist on any host other people can reach; digests once a day; the breach notice
     hourly; sending failures recorded on the row, never thrown at the user.
 11. **Volumes assumed.** Up to 500 partner organisations, 5,000 users and 20,000 deals in the first two years; the counters, the
@@ -658,3 +660,43 @@ change a line rather than write from nothing; each is either already true of the
   placeholders, not Lexical: the mail helper sends text with a plain HTML layout and the bell row is text, so a rich-text body would need a renderer for no gain;
   reopen if HTML mail is wanted. Nothing committed (Navin commits). **Next:** M9 (hardening, staging, the go-live gate); §7's author questions and §11's defaults
   still to confirm; the LMS last.
+
+- **Session 15 (2026-10-23, Claude Code): M9 built, hardening and the runbook.** `05-staging-and-go-live.md` written (what a host must provide,
+  the environment per stage, the scheduler with its seven routes, watching it, the go-live gate on `07-production-safety.md` §7, backup and restore,
+  what is left by decision); hosting is still undecided, so staging is specified, not stood up. Code: `src/lib/cron-auth.ts` (one constant-time
+  guard for the seven partner routes and the support sweep; an unset or short `CRON_SECRET` opens nothing), `canSendFrom` / `clientKey` beside
+  `canSend` in the OTP module and on the join page and the partner door (thirty codes per client address per fifteen minutes), the portal
+  headers in `next.config.ts` (`X-Frame-Options: SAMEORIGIN`, `nosniff`, the referrer policy, `Permissions-Policy`; the API routes `no-store`),
+  `crm.features` (account · opportunity · read-back) under the master switch in the model, the global, the K7 settings page and the action, with
+  `FEATURE_OF` gating `enqueueOutbox`, `runJob` and the drain (a job whose feature is off waits as pending, no attempt counted) and `syncDeals`
+  refusing when `sync` is off, forced or not; the collection `partner-job-runs` with `recordJobRun` around every scheduled route; `ops-model.ts`
+  / `ops.ts` (the jobs catalogue, the standing, the readiness checks, health, housekeeping); `/partners/portal/k7/operations` (Channel Manager;
+  the Operations tab and the home link), `GET /api/partners/health`, `POST /api/partners/housekeeping`; `scripts/backup.sh` and `restore.sh`
+  (`pnpm backup`; `backups/` ignored); `vitest` `testTimeout` 30 s for the database flows. Section 10 P28 (`partner.css`, `PartnerParts`
+  README, CHANGELOG, `design-system.json`). Tests: `partner-m9` (29 pure: the four machines as full matrices, the scope corners, the cron door,
+  the limiter, the switches, the jobs and readiness, ten anonymised deals against the conflict matcher, a slab fixture against the eligibility
+  maths), `partner-routes` (4: every route and server action under the portal read from the source for its door; the shared bell action and
+  sign-out are the exceptions), `partner-m9-db` (4 against Postgres). Verified: `pnpm generate:types`, `npx tsc --noEmit` clean, `pnpm lint`
+  0 errors (14 pre-existing warnings), `pnpm test:int` with `PARTNER_DB_TESTS=1` 28 files / 276 tests (275 passing, one skipped). Two suite-level flakes fixed on the way:
+  the onboarding flow timed out once at the 5 s default while every database file booted, as in session 14, and left organisation 154
+  behind, removed by hand (`testTimeout` is now 30 s); and with ten files booting Payload at once, each with its own pool, Postgres refused
+  connections ("sorry, too many clients already", 203 times in one run) so two whole files failed at boot (`maxWorkers: 4` in
+  `vitest.config.mts`; the suite takes the same 31 s). Asked to test the onboarding flow again: alone and in two full runs, green. **Backup rehearsed:** the development database dumped (6.2 MB) and the uploads tarred into the
+  scratchpad, restored into a scratch database with `restore.sh`, the row counts of `partner_orgs`, `partner_deals`, `partner_applications`,
+  `partner_audit` and `pages` equal, the upload tree back, the scratch database dropped. **From the shell:** health 200 `{ok:true}`, housekeeping
+  401 with a wrong secret and 200 with the right one, the SLA pass 200, the headers on the door and the API. **Clicked in Chrome on localhost**
+  (`SUPPORT_DEV_AGENT=probe` set for the K7 side and put back): the partner side as pp-test@k7computing.com: the dashboard's Open · Won · Lost
+  views (Lost empty with its line), the partner sheet's CRM facts on K7D-00030 (Won · Pre Sales · the CRM's ₹12,00,000 and order ₹7,00,000 ·
+  closed 24-08-2026), the deal file served inline through the partner route, an extension requested on K7D-00030, a deal registered for the
+  purpose (K7D-00074), the deals list and the deal sheet at 390px in a same-origin frame (the ledger scrolls in its wrap, the facts stack);
+  the K7 side through the probe door: the Operations page (0 failing, 5 notes right for a laptop, the two routes the shell had called as
+  Running and five Never run, the recent runs), *Run housekeeping* (0 · 0), the opportunity switch turned off on the settings page and read on
+  Operations as "On: accountCreate, sync. The others wait as pending", then on again, K7D-00074 rejected with its note, the extension on
+  K7D-00030 declined (back to Approved, the window running on to 21-01-2027), Operations and the settings' switches at 390px; then the invited
+  user's first sign-in (pp-test-join@k7computing.com: the code on the verify page, the row active with its sign-in time, the K7P-00003 home).
+  Two things the browser taught: `X-Frame-Options: DENY` blocked the 390px frame, so the header is `SAMEORIGIN` (the site may frame its own
+  pages, nobody else may); and with `AUTH_URL` still pointing at the 2026-10-22 tunnel host, Auth.js sent the signed-in partner to that origin
+  (where an old agent session answered) although the session was set on localhost: a development-configuration artefact, right on a staging
+  host where `AUTH_URL` is the host's own URL. Test data left: K7D-00074 (rejected), K7D-00030 with its one extension used (declined),
+  pp-test-join active. Nothing committed (Navin commits). **Next:** the LMS (M10 training, M11 certificates); §7's author questions and §11's
+  defaults still to confirm; at launch, the gate in `05-staging-and-go-live.md` §5 and the backup rehearsal on staging (§6).

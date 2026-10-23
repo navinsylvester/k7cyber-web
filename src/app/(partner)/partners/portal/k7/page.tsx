@@ -99,6 +99,10 @@ export default async function K7HomePage() {
                   <Link className="link-u" href="/partners/portal/k7/notifications/templates">
                     Notification templates
                   </Link>
+                  {' · '}
+                  <Link className="link-u" href="/partners/portal/k7/operations">
+                    Operations
+                  </Link>
                 </>
               ) : (
                 <Link className="link-u" href="/admin/globals/partner-settings">

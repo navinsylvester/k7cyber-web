@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
+import { cronAuthorised } from '@/lib/cron-auth'
 import { digestPass } from '@/lib/partner/notify'
+import { recordJobRun } from '@/lib/partner/ops'
 
 /* The daily digest and the bell's retention (FR-NTF-01, M8): a scheduler calls it once a day with
    `Authorization: Bearer <CRON_SECRET>`; every bell row whose template says "digest" goes out in one email per person, and
@@ -10,10 +12,9 @@ import { digestPass } from '@/lib/partner/notify'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request): Promise<Response> {
-  const secret = process.env.CRON_SECRET
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!cronAuthorised(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
-    return NextResponse.json({ ...(await digestPass()), at: new Date().toISOString() })
+    return NextResponse.json({ ...(await recordJobRun('digest', () => digestPass())), at: new Date().toISOString() })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }
