@@ -10,16 +10,17 @@ import { listNotifications } from '@/lib/partner/notify'
 import { PARTNER_SCHEMES, schemeCountFor } from '@/lib/partner/schemes'
 import { requirePartner } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
+import { PARTNER_TRAINING, trainingCountFor } from '@/lib/partner/training'
 import { dmy } from '@/lib/support/format'
 
 export const metadata: Metadata = { title: 'Home' }
 
 /* The partner's home (02-build-plan.md §4): the status strip first (who you are here, the organisation's state), then the latest
-   notifications and the organisation's facts. Deals, the dashboard, the collateral library and the schemes are here. Every read
+   notifications and the organisation's facts. Deals, the dashboard, the collateral library, the schemes and the training are here. Every read
    carries `me.scope`. */
 export default async function PartnerHomePage() {
   const me = await requirePartner('/partners/portal')
-  const [settings, notifications, trail, deals, blocked, collateral, schemes] = await Promise.all([getPartnerSettings(), listNotifications({ kind: 'user', userId: me.user.id, scope: me.scope }, 5), orgAudit(me.scope, 5), dealCounts(me.scope), registerGate(me), collateralCountFor(me), schemeCountFor(me)])
+  const [settings, notifications, trail, deals, blocked, collateral, schemes, training] = await Promise.all([getPartnerSettings(), listNotifications({ kind: 'user', userId: me.user.id, scope: me.scope }, 5), orgAudit(me.scope, 5), dealCounts(me.scope), registerGate(me), collateralCountFor(me), schemeCountFor(me), trainingCountFor(me)])
   const regions = settings.regions.filter((r) => me.org.regions.includes(r.code)).map((r) => r.name)
   const unread = notifications.filter((n) => !n.readAt).length
   return (
@@ -111,6 +112,25 @@ export default async function PartnerHomePage() {
               <Link className="link-u" href={PARTNER_SCHEMES}>
                 {schemes.open ? 'Register for a scheme →' : 'The schemes →'}
               </Link>
+            </p>
+          </div>
+          <div>
+            <h2>Training</h2>
+            <p className="muted" style={{ margin: 0, fontSize: 15 }}>
+              {training.courses === 0 ? (me.roles.some((r) => r === 'sales' || r === 'technical') ? 'No course is published for your roles yet.' : 'Training is for the Sales and Technical roles; as Partner Admin you read the organisation’s progress.') : `${training.courses} course${training.courses === 1 ? '' : 's'} for your roles: ${training.passed} passed${training.ready ? `, ${training.ready} with a test to take` : ''}${training.inProgress ? `, ${training.inProgress} in progress` : ''}.`}
+            </p>
+            <p className="more">
+              <Link className="link-u" href={PARTNER_TRAINING}>
+                {training.ready ? 'Take a test →' : training.courses ? 'Your training →' : 'Training →'}
+              </Link>
+              {me.roles.includes('admin') ? (
+                <>
+                  {' · '}
+                  <Link className="link-u" href={`${PARTNER_TRAINING}/organisation`}>
+                    The organisation’s progress
+                  </Link>
+                </>
+              ) : null}
             </p>
           </div>
           <div>

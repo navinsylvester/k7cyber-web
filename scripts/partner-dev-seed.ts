@@ -1,5 +1,5 @@
 /* A test partner organisation and one Partner Admin for development of the partner portal (docs/partner-portal/04-portal-guide.md §1):
-     pnpm partner:seed-dev you@example.com ["Your Name"] [--crm] [--collateral] [--editor] [--schemes]
+     pnpm partner:seed-dev you@example.com ["Your Name"] [--crm] [--collateral] [--editor] [--schemes] [--training] [--trainer]
    Idempotent: the organisation PP-TEST (partner ID K7P-00000) is created once, three PP-TEST products once (M4), and the user is created or moved into it. Test rows carry the
    PP-TEST prefix the build plan asks for (02-build-plan.md §0) and never reach the CRM. `--editor` makes (or resets) a Payload admin user with the
    Marketing editor role, pp-test-editor@k7computing.com, whose password is PARTNER_DEV_EDITOR_PASSWORD in .env, for clicking the /admin side of the library. */
@@ -138,6 +138,81 @@ if (process.argv.includes('--schemes')) {
       data: { scheme: row.id, org: org.id, orgPartnerId: org.partnerId, orgName: org.tradeName || org.name, orgType: org.type, status: 'approved', acceptedBy: { userId: '', name: 'PP-TEST seed', email }, acceptedAt: new Date().toISOString() } as never,
     })
     console.log(`  ${org.partnerId} registered for "${sc.name}"`)
+  }
+}
+// `--training` files the two tracks (M10): a Sales course of two modules on two short MDN CC0 clips (flower, friday;
+// direct links so no video account is needed in development; production uses Vimeo) with a
+// twelve-question bank, and a Technical course with one module and an empty bank, so the desk's "without a bank" view and
+// the learner's locked test have something to show. Idempotent by track key and course title.
+if (process.argv.includes('--training')) {
+  const tracks: Record<string, { name: string; roles: string[]; description: string }> = {
+    sales: { name: 'Sales', roles: ['sales'], description: 'Positioning, licensing and deal registration for the new product.' },
+    technical: { name: 'Technical', roles: ['technical'], description: 'Deployment, policies and troubleshooting for engineers.' },
+  }
+  const trackIds: Record<string, number> = {}
+  for (const [key, t] of Object.entries(tracks)) {
+    const found = await payload.find({ collection: 'partner-tracks', where: { key: { equals: key } }, limit: 1, depth: 0 })
+    const row = found.docs[0] ?? (await payload.create({ collection: 'partner-tracks', data: { key, name: t.name, roles: t.roles, description: t.description, status: 'published', order: key === 'sales' ? 10 : 20 } as never }))
+    trackIds[key] = Number(row.id)
+    console.log(`track ${key} ${found.docs[0] ? 'exists' : 'created'} (${row.id})`)
+  }
+  const course = async (title: string, track: string, data: Record<string, unknown>) => {
+    const found = await payload.find({ collection: 'partner-courses', where: { title: { equals: title } }, limit: 1, depth: 0 })
+    if (found.docs[0]) {
+      console.log(`course "${title}" exists (${found.docs[0].id})`)
+      return { id: Number(found.docs[0].id), fresh: false }
+    }
+    const row = await payload.create({ collection: 'partner-courses', data: { title, track: trackIds[track], status: 'published', version: 1, ...data } as never })
+    console.log(`course "${title}" created (${row.id})`)
+    return { id: Number(row.id), fresh: true }
+  }
+  const sales = await course('PP-TEST Selling the new product', 'sales', { description: 'What it is, who buys it, how to register and protect a deal.', order: 10, questionsPerTest: 5, timeLimitMinutes: 10 })
+  if (sales.fresh) {
+    const mods = [
+      { title: 'The product in three minutes', description: 'Positioning and the three families.', video: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', order: 10, reading: 'The new product is sold per endpoint, per year, in three families: Endpoint Security, Endpoint Detection and Response, and Managed Detection and Response.\n\nRegister every deal before you quote: protection runs from K7’s approval.' },
+      { title: 'Registering and protecting a deal', description: 'The form, the conflict check, the window and the one extension.', video: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4', order: 20, reading: 'A registered deal is protected for the configured window from approval. One extension of the same length may be asked for before it ends.' },
+    ]
+    for (const m of mods) await payload.create({ collection: 'partner-modules', data: { ...m, course: sales.id, status: 'published' } as never })
+    const q = (type: string, text: string, options: [string, boolean][], explanation = '', topic = 'Deals') => ({ course: sales.id, type, text, options: options.map(([t, c]) => ({ text: t, correct: c })), explanation, topic, active: true })
+    const bank = [
+      q('single', 'When does deal protection start?', [['When K7 approves the registration', true], ['When the quote is sent', false], ['When the order is invoiced', false], ['When the partner applies', false]], 'Protection runs from approval.'),
+      q('single', 'How many extensions may a deal have?', [['One', true], ['Two', false], ['As many as needed', false], ['None', false]], 'One extension, the same length as the protection period.'),
+      q('single', 'Which family is sold per endpoint per month?', [['Managed Detection and Response', true], ['Endpoint Security', false], ['Endpoint Detection and Response', false]], '', 'Products'),
+      q('single', 'Who approves a registered deal?', [['The Deal Desk Approver', true], ['The Partner Admin', false], ['The end customer', false], ['Finance', false]]),
+      q('multiple', 'Which of these are checked for conflicts? (choose all that apply)', [['The customer name', true], ['The contact email domain', true], ['The partner’s PAN', false], ['The deal value', false]], 'The conflict matcher looks at the customer and the contact.'),
+      q('multiple', 'Which roles can register a deal? (choose all that apply)', [['Partner Admin', true], ['Sales', true], ['Technical', false]]),
+      q('trueFalse', 'A deal must be registered before the quote is sent.', [['True', true], ['False', false]], 'Registration comes first.'),
+      q('trueFalse', 'A Distributor registers deals on a reseller’s behalf.', [['True', true], ['False', false]]),
+      q('trueFalse', 'The partner dashboard shows deals registered outside the portal.', [['True', false], ['False', true]], 'Only the portal’s own opportunities are read back.'),
+      q('single', 'What does the dashboard read from the CRM?', [['The stage, state and value of the portal’s opportunities', true], ['Every opportunity in Dynamics', false], ['The partner’s invoices', false]], '', 'Dashboard'),
+      q('single', 'What is the default protection period?', [['90 days', true], ['30 days', false], ['180 days', false], ['One year', false]]),
+      q('trueFalse', 'An expired deal can be extended.', [['True', false], ['False', true]], 'The extension must be asked for before the window ends.'),
+    ]
+    for (const row of bank) await payload.create({ collection: 'partner-questions', data: row as never })
+    console.log(`  2 modules and ${bank.length} questions filed on "PP-TEST Selling the new product"`)
+  }
+  const tech = await course('PP-TEST Deploying the agent', 'technical', { description: 'Installation, policies and the first week. The bank is empty on purpose: the desk shows it and the test stays locked.', order: 10 })
+  if (tech.fresh) {
+    await payload.create({ collection: 'partner-modules', data: { course: tech.id, title: 'Installing the agent', description: 'Silent install, the console enrolment and the first policy.', video: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', order: 10, status: 'published', reading: 'Enrol the console first; the agent needs the tenant key at install.' } as never })
+    console.log('  1 module filed on "PP-TEST Deploying the agent" (no questions)')
+  }
+}
+// `--trainer` makes (or resets) pp-test-trainer@k7computing.com, a Payload user with the Training editor role, for the /admin side of
+// the training collections; the password is PARTNER_DEV_EDITOR_PASSWORD, like the Marketing editor's.
+if (process.argv.includes('--trainer')) {
+  const password = process.env.PARTNER_DEV_EDITOR_PASSWORD ?? ''
+  if (password.length < 12) {
+    console.error('--trainer needs PARTNER_DEV_EDITOR_PASSWORD (12 characters or more) in .env')
+    process.exit(1)
+  }
+  const trainerEmail = 'pp-test-trainer@k7computing.com'
+  const found = await payload.find({ collection: 'users', where: { email: { equals: trainerEmail } }, limit: 1 })
+  if (found.docs[0]) {
+    await payload.update({ collection: 'users', id: found.docs[0].id, data: { password, roles: ['trainingEditor'] }, overrideAccess: true })
+    console.log(`trainer ${trainerEmail} exists: password reset, Training editor`)
+  } else {
+    await payload.create({ collection: 'users', data: { email: trainerEmail, name: 'PP-TEST Training editor', roles: ['trainingEditor'], password }, overrideAccess: true })
+    console.log(`trainer ${trainerEmail} created (Training editor): sign in at /admin/login`)
   }
 }
 await payload.create({

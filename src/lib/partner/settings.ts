@@ -43,6 +43,7 @@ export const savePartnerSettings = async (s: PartnerSettings): Promise<void> => 
       notify: { ...s.notify },
       collateral: { ...s.collateral },
       schemes: { ...s.schemes },
+      training: { ...s.training },
       // The global's `days` is a select of strings ('1' … '6', '0'); the model holds numbers.
       sla: { ...s.sla.hours, days: s.sla.hours.days.map(String), warnShare: s.sla.warnShare, escalateTo: s.sla.escalateTo.map((email) => ({ email })) },
     } as never,

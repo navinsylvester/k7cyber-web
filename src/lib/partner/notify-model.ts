@@ -11,9 +11,9 @@ export const DELIVERY_HINT: Record<Delivery, string> = {
   bell: 'the bell row only; nothing by email',
 }
 
-export type EventGroup = 'applications' | 'organisation' | 'users' | 'deals' | 'schemes' | 'sla'
-export const EVENT_GROUP_LABEL: Record<EventGroup, string> = { applications: 'Applications', organisation: 'Organisation', users: 'People', deals: 'Deals', schemes: 'Schemes', sla: 'Approval SLA' }
-export const EVENT_GROUPS: readonly EventGroup[] = ['applications', 'organisation', 'users', 'deals', 'schemes', 'sla']
+export type EventGroup = 'applications' | 'organisation' | 'users' | 'deals' | 'schemes' | 'training' | 'sla'
+export const EVENT_GROUP_LABEL: Record<EventGroup, string> = { applications: 'Applications', organisation: 'Organisation', users: 'People', deals: 'Deals', schemes: 'Schemes', training: 'Training', sla: 'Approval SLA' }
+export const EVENT_GROUPS: readonly EventGroup[] = ['applications', 'organisation', 'users', 'deals', 'schemes', 'training', 'sla']
 
 export type Audience = 'partner' | 'k7' | 'applicant'
 
@@ -26,6 +26,7 @@ const APP = ['application', 'company', 'type', 'contact']
 const SCHEME = ['scheme', 'partner', 'partnerId', 'startDate', 'endDate']
 const ORG = ['partner', 'partnerId']
 const USER = ['partner', 'partnerId', 'user', 'roles']
+const TRAINING = ['course', 'track', 'user', 'score', 'partner', 'partnerId']
 
 const ev = (key: string, group: EventGroup, label: string, audience: Audience, delivery: Delivery, vars: string[], hint: string): EventDef => ({ key, group, label, audience, delivery, vars, hint })
 
@@ -67,6 +68,8 @@ export const EVENTS: readonly EventDef[] = [
   ev('scheme.dispute.raised', 'schemes', 'Dispute raised', 'k7', 'immediate', SCHEME, 'To the Scheme Admins when a partner disputes its result.'),
   ev('scheme.dispute.resolved', 'schemes', 'Dispute answered', 'partner', 'immediate', SCHEME, 'To the Partner Admins with K7’s answer.'),
   ev('scheme.payout', 'schemes', 'Payout state changed', 'partner', 'immediate', SCHEME, 'To the Partner Admins when the payout moves to processed or paid.'),
+  ev('training.course.passed', 'training', 'Training course passed', 'partner', 'immediate', TRAINING, 'To the participant and the Partner Admins when a test is passed (FR-NTF-01); the certificate arrives with M11.'),
+  ev('training.bank.empty', 'training', 'Question bank empty', 'k7', 'immediate', ['course', 'track'], 'To the Training Admins when a learner completes every module of a published course whose bank has no askable question.'),
   ev('sla.breached', 'sla', 'Approval SLA breached', 'k7', 'immediate', ['item', 'kind', 'partner', 'waitingSince', 'hours', 'overdueBy'], 'To the approvers of the queue and their managers when a deal or an application has waited past the target.'),
 ]
 
@@ -154,6 +157,9 @@ export const SAMPLE_VARS: Record<string, string> = {
   endDate: '30-06-2026',
   user: 'Ravi Kumar',
   roles: 'Sales, Technical',
+  course: 'Selling K7 Endpoint Security',
+  track: 'Sales',
+  score: '85%',
   item: 'K7D-00130',
   kind: 'deal',
   waitingSince: '21-10-2026 10:15',
@@ -183,6 +189,8 @@ export const dealVars = (d: { dealId: string; orgName: string; orgPartnerId: str
 export const appVars = (a: { number: string; company: { legalName: string }; contact: { name: string } }, typeLabel: string): Record<string, string> => ({ application: a.number, company: a.company.legalName, type: typeLabel, contact: a.contact.name })
 
 export const orgVars = (o: { name: string; tradeName?: string; partnerId: string }): Record<string, string> => ({ partner: o.tradeName || o.name, partnerId: o.partnerId })
+
+export const trainingVars = (c: { title: string; trackName: string }, u: { name: string; email: string }, score: number | null, o?: { name: string; tradeName?: string; partnerId: string }): Record<string, string> => ({ course: c.title, track: c.trackName, user: u.name || u.email, score: score === null ? '' : `${score}%`, ...(o ? orgVars(o) : {}) })
 
 export const schemeVars = (sc: { name: string; startDate: string; endDate: string }, o?: { name: string; tradeName?: string; partnerId: string }): Record<string, string> => ({ scheme: sc.name, startDate: dmyOf(sc.startDate), endDate: dmyOf(sc.endDate), ...(o ? orgVars(o) : {}) })
 

@@ -2,7 +2,7 @@ import type { Access, FieldAccess } from 'payload'
 
 import type { User } from '@/payload-types'
 
-export type Role = 'admin' | 'labsEditor' | 'marketingEditor'
+export type Role = 'admin' | 'labsEditor' | 'marketingEditor' | 'trainingEditor'
 
 export const hasRole = (user: User | null | undefined, roles: Role[]): boolean => {
   const mine = (user?.roles ?? []) as Role[]

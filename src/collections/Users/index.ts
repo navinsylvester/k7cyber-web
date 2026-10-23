@@ -29,11 +29,12 @@ export const Users: CollectionConfig = {
       defaultValue: ['admin'],
       required: true,
       access: { update: adminOnlyField },
-      admin: { description: 'Labs editors publish posts, CVEs and threats; marketing editors own threat reports.' },
+      admin: { description: 'Labs editors publish posts, CVEs and threats; marketing editors own threat reports and the partner collateral and schemes; training editors own the partner training content.' },
       options: [
         { label: 'Admin', value: 'admin' },
         { label: 'Labs editor', value: 'labsEditor' },
         { label: 'Marketing editor', value: 'marketingEditor' },
+        { label: 'Training editor', value: 'trainingEditor' },
       ],
     },
   ],

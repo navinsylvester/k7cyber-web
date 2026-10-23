@@ -173,6 +173,8 @@
 /* ---------- P20 The library: one filed ledger per product, the categories as bands, the download on the row (M6) ---------- */
 .library { display: grid; gap: clamp(28px, 3.4cqw, 44px); }
 .library .ledger { margin: 0; }
+/* A grid item's min-width is auto, so a wide table made the whole ledger wider than a phone; the wrap scrolls instead. */
+.library > .ledger { min-width: 0; }
 .lib-band th { padding: 14px 12px 8px 0; font: 500 12px/1.4 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; text-align: left; color: var(--fg); border-bottom: 1px solid var(--fg); background: none; }
 .lib-band th .pixel { margin-right: 6px; vertical-align: 1px; }
 .lib-band th .muted { font-weight: 400; letter-spacing: .04em; }
@@ -279,3 +281,108 @@ tbody + tbody .lib-band th { padding-top: 26px; }
 .ops-table td.title .muted { font: 400 11px/1.4 var(--font-mono); letter-spacing: .02em; }
 .crm-features { display: grid; gap: 10px; padding: 14px 0 4px; border-top: 1px solid var(--line); }
 .crm-features > .label { margin-bottom: 2px; }
+
+/* ---------- P29 Training (M10): the test state tag, the course ledger per track, the modules bar on the track's cells ---------- */
+.trn-list { margin-top: 30px; }
+.trn-table td.title { min-width: 240px; }
+.mono-note { margin-top: 4px; font: 400 11px/1.5 var(--font-mono); letter-spacing: .02em; }
+.mbar { display: inline-flex; align-items: center; gap: 10px; }
+.mbar-cells { display: inline-grid; grid-auto-flow: column; grid-auto-columns: minmax(10px, 1fr); gap: 2px; width: 140px; }
+.mbar.is-compact .mbar-cells { width: 96px; }
+.mbar-cells i { display: block; height: 6px; background: var(--ln); }
+.mbar-cells i.is-done { background: var(--fg); }
+.mbar-cells i.is-now { background: var(--signal); }
+.mbar-n { font: 400 12px/1.5 var(--font-mono); letter-spacing: .02em; color: var(--mu); white-space: nowrap; }
+.pstrip dd .mbar { vertical-align: middle; }
+.test-box.is-ready { box-shadow: inset 0 0 0 1px var(--signal); }
+
+/* ---------- P30 The module list, the watched line and the player frame ---------- */
+.mods { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--fg); }
+.mods li { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 6px 16px; padding: 18px 0; border-bottom: 1px solid var(--ln); }
+.mods li.is-current { box-shadow: inset 3px 0 0 var(--signal); padding-left: 14px; }
+.mods-n { font: 400 12px/1.8 var(--font-mono); letter-spacing: .04em; color: var(--mu); }
+.mods li.is-done .mods-n { color: var(--fg); }
+.mods-body { min-width: 0; }
+.mods-body strong { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.mods-body strong .pixel { background: var(--signal); flex: none; }
+.mods-body strong a { text-decoration: none; }
+.mods-body strong a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.mods-body p { margin: 4px 0 0; font-size: 15px; color: var(--mu); max-width: 60ch; }
+.mods-body .wline { margin: 10px 0 0; max-width: 420px; }
+.mods-len { font: 400 12px/1.8 var(--font-mono); letter-spacing: .02em; color: var(--mu); white-space: nowrap; }
+.ws-side .mods li { grid-template-columns: 30px minmax(0, 1fr); padding: 12px 0; }
+.ws-side .mods li.is-current { padding-left: 10px; }
+.ws-side .mods-body strong { font-size: 15px; }
+.ws-side .mods-body p, .ws-side .mods-len { display: none; }
+.ws-side .mods-body .wline { margin-top: 8px; }
+.ws-side .mods-body .wline-words { display: none; }
+.wline-bar { position: relative; height: 6px; background: var(--ln); }
+.wline-bar i { display: block; height: 100%; background: var(--fg); transition: width 240ms steps(6); }
+.wline-bar i.is-done { background: var(--signal); }
+.wline-bar b { position: absolute; top: -4px; width: 2px; height: 14px; margin-left: -1px; background: var(--mu); }
+.wline-words { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; margin-top: 8px; }
+.wline-words .label { color: var(--mu); }
+.wline.is-live .wline-words .label:first-child { color: var(--fg); }
+.wline.is-complete .wline-words .label:first-child { color: var(--signal); }
+.player { margin: 0 0 clamp(28px, 3cqw, 40px); }
+.player-frame { position: relative; aspect-ratio: 16 / 9; background: #0a0a09; box-shadow: inset 0 0 0 1px var(--fg); }
+.player-frame iframe, .player-frame video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #0a0a09; }
+.player .wline { margin-top: 14px; }
+.player .more { margin-top: 20px; }
+.mod-layout h2 { margin: 0 0 12px; font-size: 22px; letter-spacing: -.02em; }
+.mod-reading { margin-top: clamp(24px, 3cqw, 36px); }
+.mod-reading p { margin: 0 0 1em; font-size: 17px; line-height: 1.6; max-width: 66ch; }
+.mod-files { margin-top: clamp(24px, 3cqw, 36px); }
+.mod-files .msg-att { list-style: none; margin: 0; padding: 0; }
+.mod-files .msg-att a { display: inline-flex; align-items: center; gap: 10px; padding: 8px 12px; }
+@container (min-width: 1080px) { .mod-layout .ws-side { position: static; } }
+
+/* ---------- P31 The paper: the clock on a strip, one card per question, the options as keyed rows that invert when chosen ---------- */
+.paper-sheet .ws-head { margin-bottom: 20px; }
+.timer { position: sticky; top: var(--header-h); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding: 12px 0; margin: 0 0 24px; background: var(--bg); border-top: 1px solid var(--fg); border-bottom: 1px solid var(--ln); }
+.timer .pixel { background: var(--signal); margin-right: 4px; vertical-align: 1px; }
+.timer-n { font: 500 22px/1 var(--font-mono); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.timer.is-low .timer-n, .timer.is-low .label:first-child { color: var(--acc); }
+.timer.is-low .pixel { background: var(--acc); }
+.timer.is-over .timer-n { color: var(--mu); }
+.timer .label:last-child { margin-left: auto; }
+.paper { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+.qcard { padding: 20px 22px 22px; box-shadow: inset 0 0 0 1px var(--ln); }
+.qcard-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.qcard-n { font: 400 12px/1.5 var(--font-mono); letter-spacing: .08em; color: var(--acc); }
+.qcard-text { margin: 0 0 14px; font-size: 19px; line-height: 1.45; letter-spacing: -.01em; max-width: 66ch; text-wrap: pretty; }
+.qcard-opts { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.qcard-opts li, .qcard-opts.is-input label { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; font-size: 16px; line-height: 1.4; }
+.qcard-opts.is-input li { display: block; padding: 0; }
+.qcard-opts.is-input label { box-shadow: inset 0 0 0 1px var(--ln); cursor: pointer; transition: background .24s var(--ease), color .24s; }
+.qcard-opts.is-input label:hover { box-shadow: inset 0 0 0 1px var(--fg); }
+.qcard-opts.is-input label:has(input:checked) { background: var(--fg); color: var(--bg); box-shadow: inset 0 0 0 1px var(--fg); }
+.qcard-opts.is-input input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.qcard-opts.is-input label:has(input:focus-visible) { outline: 2px solid var(--signal); outline-offset: 2px; }
+.qcard-key { display: inline-grid; place-items: center; width: 24px; height: 24px; font: 500 11px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; box-shadow: inset 0 0 0 1px currentColor; }
+.qcard-opts.is-input label:has(input:checked) .qcard-key { box-shadow: inset 0 0 0 1px var(--bg); }
+.qcard-opts.is-input label:has(input:checked)::after { content: ""; width: 8px; height: 8px; background: var(--signal); justify-self: end; }
+.paper-actions { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--fg); }
+
+/* ---------- P32 The result: filed facts, the review with the learner's answer and the correct one, the K7 training ledgers ---------- */
+.review .qcard.is-wrong { box-shadow: inset 3px 0 0 var(--acc), inset 0 0 0 1px var(--ln); }
+.review .qcard.is-right { box-shadow: inset 3px 0 0 var(--signal), inset 0 0 0 1px var(--ln); }
+.review .qcard-opts li { box-shadow: inset 0 0 0 1px var(--ln); color: var(--mu); }
+.review .qcard-opts li.is-chosen { color: var(--fg); font-weight: 500; }
+.review .qcard-opts li.is-correct { box-shadow: inset 0 0 0 1px var(--signal); color: var(--fg); }
+.review .qcard-opts li.is-correct .qcard-key { background: var(--signal); color: var(--contrast-ink, #0a0a09); box-shadow: none; }
+.qcard-mark { color: var(--mu); white-space: nowrap; }
+.qcard-note { margin: 12px 0 0; font-size: 15px; color: var(--mu); max-width: 66ch; }
+.phome h2 + .filed.ledger, .phome h2 + .mods { margin-top: 30px; }
+.phome h2 + .mods { margin-top: 0; }
+.trn-k7 td.title { min-width: 220px; }
+.trn-k7 tr.is-off td { color: var(--mu); }
+.trn-k7 td.num.is-hot { color: var(--acc); font-weight: 500; }
+.trn-k7 td.is-won { color: var(--signal); font-weight: 500; }
+.org-trn td.title { min-width: 260px; }
+.attempts td.title a { text-decoration: none; }
+.import-lines { padding: 16px 20px 18px; box-shadow: inset 0 0 0 1px var(--fg); margin-bottom: 24px; }
+.import-lines h2 { margin: 0 0 8px; font-size: 17px; display: flex; align-items: center; gap: 10px; }
+.import-lines h2 .pixel { background: var(--acc); }
+.import-lines ul { margin: 0; padding: 0 0 0 16px; font-size: 14px; color: var(--mu); display: grid; gap: 4px; }
+.bank-bad { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
