@@ -110,6 +110,12 @@ export const PartnerApplications: CollectionConfig = {
       ],
     },
     { type: 'row', fields: [{ name: 'resumeKey', type: 'text', index: true, admin: { width: '50%', description: 'The secret in the applicant’s link; never shown on a page.' } }, { name: 'submittedAt', type: 'date', index: true, admin: { width: '25%' } }, { name: 'decidedAt', type: 'date', admin: { width: '25%' } }] },
+    {
+      name: 'sla',
+      type: 'group',
+      admin: { description: 'The approval SLA notice (M8): sent once per clock; the clock restarts on resubmission.' },
+      fields: [{ type: 'row', fields: [{ name: 'noticedAt', type: 'date', admin: { width: '50%' } }, { name: 'noticedFor', type: 'text', admin: { width: '50%', description: 'The clock start the notice was for.' } }] }],
+    },
   ],
   timestamps: true,
 }

@@ -44,8 +44,9 @@ export const PartnerSettings: GlobalConfig = {
                   type: 'row',
                   fields: [
                     { name: 'email', type: 'email', required: true, admin: { width: '40%' } },
-                    { name: 'name', type: 'text', admin: { width: '25%' } },
-                    { name: 'roles', type: 'select', hasMany: true, options: STAFF_ROLE_OPTIONS, required: true, admin: { width: '35%' } },
+                    { name: 'name', type: 'text', admin: { width: '20%' } },
+                    { name: 'roles', type: 'select', hasMany: true, options: STAFF_ROLE_OPTIONS, required: true, admin: { width: '25%' } },
+                    { name: 'manager', type: 'email', admin: { width: '15%', description: 'Told when an approval SLA is breached (M8).' } },
                   ],
                 },
               ],
@@ -99,7 +100,7 @@ export const PartnerSettings: GlobalConfig = {
                   fields: [
                     { name: 'protectionDays', type: 'number', min: 1, defaultValue: 90, required: true, admin: { width: '33%', description: 'Deal protection from approval.' } },
                     { name: 'extensionDays', type: 'number', min: 1, defaultValue: 90, required: true, admin: { width: '33%', description: 'One extension per deal (decision 15).' } },
-                    { name: 'approvalSlaHours', type: 'number', min: 1, defaultValue: 48, required: true, admin: { width: '34%', description: 'Working hours for a decision before the breach notice (M8).' } },
+                    { name: 'approvalSlaHours', type: 'number', min: 1, defaultValue: 48, required: true, admin: { width: '34%', description: 'Working hours for a decision on a deal, an extension or an application before the breach notice (M8; the hours are on the SLA tab).' } },
                   ],
                 },
                 { name: 'endingNoticeDays', type: 'number', min: 1, defaultValue: 14, admin: { description: 'Days before the protection ends at which the partner and the approvers are told (FR-NTF-01 "protection ending"; the sweep sends it once).' } },
@@ -179,7 +180,32 @@ export const PartnerSettings: GlobalConfig = {
                     { name: 'mailFrom', type: 'text', defaultValue: 'K7 Partner Programme <partners@k7computing.com>', admin: { width: '70%' } },
                   ],
                 },
-                { name: 'bellRetentionDays', type: 'number', min: 7, defaultValue: 180, admin: { description: 'Read notifications older than this are swept (M8).' } },
+                { name: 'bellRetentionDays', type: 'number', min: 7, defaultValue: 180, admin: { description: 'Read notifications older than this are removed by the daily digest pass (M8).' } },
+                { name: 'signature', type: 'textarea', defaultValue: 'K7 Partner Programme\nK7 Computing Pvt Ltd', admin: { description: 'The closing lines of every email.' } },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'SLA',
+          fields: [
+            {
+              name: 'sla',
+              type: 'group',
+              admin: { description: 'The approval SLA (FR-NTF-01, M8): the working hours the decision target counts in, when a queue row is at risk, and who else is told on a breach. The target itself is Deals → approvalSlaHours.' },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'mode', type: 'select', options: [{ label: 'Working hours', value: 'business' }, { label: 'Around the clock', value: 'always' }], defaultValue: 'business', admin: { width: '25%' } },
+                    { name: 'start', type: 'text', defaultValue: '09:00', admin: { width: '20%', description: 'HH:MM' } },
+                    { name: 'end', type: 'text', defaultValue: '18:00', admin: { width: '20%', description: 'HH:MM' } },
+                    { name: 'timeZone', type: 'text', defaultValue: 'Asia/Kolkata', admin: { width: '35%' } },
+                  ],
+                },
+                { name: 'days', type: 'select', hasMany: true, options: [{ label: 'Monday', value: '1' }, { label: 'Tuesday', value: '2' }, { label: 'Wednesday', value: '3' }, { label: 'Thursday', value: '4' }, { label: 'Friday', value: '5' }, { label: 'Saturday', value: '6' }, { label: 'Sunday', value: '0' }], defaultValue: ['1', '2', '3', '4', '5', '6'] },
+                { name: 'warnShare', type: 'number', min: 0.1, max: 0.95, defaultValue: 0.75, admin: { description: 'The share of the target after which a queue row reads “at risk” (0.75 = three quarters).' } },
+                { name: 'escalateTo', type: 'array', labels: { singular: 'Address', plural: 'Addresses' }, admin: { description: 'Told by email on every breach, beside the approvers and their managers.' }, fields: [{ name: 'email', type: 'email', required: true }] },
               ],
             },
           ],

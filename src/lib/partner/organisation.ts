@@ -4,6 +4,7 @@ import { getPayload, type Where } from 'payload'
 
 import { audit } from './audit'
 import { notify } from './notify'
+import { orgVars } from './notify-model'
 import { legalChanges, normaliseLegal, validateDetails, validateLegal, type LegalEdit, type LegalIdentity, type OrgDetails } from './organisation-model'
 import { normaliseWebsite, type FieldErrors } from './registration-model'
 import type { OrgScope } from './scope'
@@ -118,6 +119,7 @@ export const proposeLegalEdit = async (me: PartnerContext, l: LegalIdentity, rea
   await audit({ actor: me.actor, object: 'partner-orgs', objectId: org.id, objectLabel: org.partnerId, action: 'org.legal-edit-proposed', orgId: org.id, comment: `${summary}. Reason: ${edit.reason}` })
   await notify({
     event: 'org.legal-edit-proposed',
+    vars: orgVars(org),
     subject: `${org.partnerId} asks to change its legal identity`,
     body: `${org.name}: ${summary}. Reason: ${edit.reason}. Approve or decline it on the partner's sheet.`,
     href: `${K7_PARTNERS}/${org.partnerId}`,
@@ -153,6 +155,7 @@ export const decideLegalEdit = async (o: PartnerOrg, decision: LegalDecision, no
   await audit({ actor: me.actor, object: 'partner-orgs', objectId: saved.id, objectLabel: saved.partnerId, action: decision === 'approve' ? 'org.legal-edit-approved' : 'org.legal-edit-declined', orgId: saved.id, comment: `${summary}${comment ? `. ${comment}` : ''}`, meta: { edit } })
   await notify({
     event: decision === 'approve' ? 'org.legal-edit-approved' : 'org.legal-edit-declined',
+    vars: orgVars(saved),
     subject: decision === 'approve' ? `Your legal identity change is approved` : `Your legal identity change was not accepted`,
     body: decision === 'approve' ? `K7 has approved the change: ${summary}.${comment ? ` ${comment}` : ''}${changes.some((c) => c.field === 'name') ? ' Your partner ID is unchanged.' : ''}` : `K7 did not accept the change (${summary}). Reason: ${comment}. Your organisation keeps its current identity; you may propose another edit.`,
     href: PARTNER_ORG,
@@ -172,6 +175,7 @@ export const setOrgStatus = async (o: PartnerOrg, to: OrgStatus, reason: string,
   await audit({ actor: me.actor, object: 'partner-orgs', objectId: saved.id, objectLabel: saved.partnerId, action: to === 'suspended' ? 'org.suspended' : 'org.reinstated', from: org.status, to, orgId: saved.id, comment })
   await notify({
     event: to === 'suspended' ? 'org.suspended' : 'org.reinstated',
+    vars: orgVars(saved),
     subject: to === 'suspended' ? `${saved.name}: access to the K7 Partner Portal is suspended` : `${saved.name}: access to the K7 Partner Portal is restored`,
     body: to === 'suspended' ? `K7 has suspended your organisation's access. Reason: ${comment}. No one from ${saved.name} can sign in until a Channel Manager reinstates it.` : `Your organisation's access is restored. You can sign in again.${comment ? ` ${comment}` : ''}`,
     href: '/partners/portal',

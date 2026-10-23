@@ -8,6 +8,7 @@ import { Readable } from 'stream'
 import { audit, SYSTEM, type Actor } from './audit'
 import { toDeal, type Deal } from './deals-model'
 import { notify } from './notify'
+import { schemeVars } from './notify-model'
 import { loadOrg } from './organisation'
 import { orgRel, orgWhere, type OrgScope } from './scope'
 import {
@@ -166,10 +167,10 @@ export const registerForScheme = async (me: PartnerContext, sc: Scheme, accepted
   const reg = toRegistration(doc)
   await audit({ actor: me.actor, object: 'partner-scheme-registrations', objectId: reg.id, objectLabel: sc.name, action: 'scheme.register', to: status, orgId: me.scope.orgId, comment: `Terms accepted by ${me.user.name || me.user.email}` })
   if (status === 'pending') {
-    await notify({ event: 'scheme.registration.pending', subject: `${me.org.tradeName || me.org.name} asks to join ${sc.name}`, body: `${me.user.name || me.user.email} accepted the scheme terms. The scheme needs K7's approval of each registration.`, href: `${K7_SCHEMES}/${sc.id}`, to: { kind: 'staff', role: 'schemeAdmin' } })
-    await notify({ event: 'scheme.registration.sent', subject: `Registration for ${sc.name} sent to K7`, body: `K7 approves each registration for this scheme; you are told when it is decided.`, href: `${PARTNER_SCHEMES}/${sc.id}`, to: { kind: 'org', orgId: me.scope.orgId, roles: ['admin'] } })
+    await notify({ event: 'scheme.registration.pending', vars: schemeVars(sc, me.org), subject: `${me.org.tradeName || me.org.name} asks to join ${sc.name}`, body: `${me.user.name || me.user.email} accepted the scheme terms. The scheme needs K7's approval of each registration.`, href: `${K7_SCHEMES}/${sc.id}`, to: { kind: 'staff', role: 'schemeAdmin' } })
+    await notify({ event: 'scheme.registration.sent', vars: schemeVars(sc, me.org), subject: `Registration for ${sc.name} sent to K7`, body: `K7 approves each registration for this scheme; you are told when it is decided.`, href: `${PARTNER_SCHEMES}/${sc.id}`, to: { kind: 'org', orgId: me.scope.orgId, roles: ['admin'] } })
   } else {
-    await notify({ event: 'scheme.registered', subject: `Registered for ${sc.name}`, body: `Your organisation is in. The scheme runs ${sc.startDate} to ${sc.endDate}; your progress shows on the scheme page as deals are won.`, href: `${PARTNER_SCHEMES}/${sc.id}`, to: { kind: 'org', orgId: me.scope.orgId, roles: ['admin'] } })
+    await notify({ event: 'scheme.registered', vars: schemeVars(sc, me.org), subject: `Registered for ${sc.name}`, body: `Your organisation is in. The scheme runs ${sc.startDate} to ${sc.endDate}; your progress shows on the scheme page as deals are won.`, href: `${PARTNER_SCHEMES}/${sc.id}`, to: { kind: 'org', orgId: me.scope.orgId, roles: ['admin'] } })
   }
   return { ok: true, value: reg }
 }
@@ -202,6 +203,7 @@ export const decideRegistration = async (sc: Scheme, reg: Registration, approve:
   await audit({ actor: me.actor, object: 'partner-scheme-registrations', objectId: reg.id, objectLabel: sc.name, action: 'scheme.registration.decide', from: reg.status, to: status, orgId: reg.orgId, comment: note.trim() })
   await notify({
     event: `scheme.registration.${status}`,
+    vars: schemeVars(sc, { name: reg.orgName, partnerId: reg.orgPartnerId }),
     subject: approve ? `Registered for ${sc.name}` : `Registration for ${sc.name} declined`,
     body: approve ? `K7 approved your registration.${note.trim() ? ` ${note.trim()}` : ''} The scheme runs ${sc.startDate} to ${sc.endDate}.` : `K7 declined it: ${note.trim()}`,
     href: `${PARTNER_SCHEMES}/${sc.id}`,
@@ -297,7 +299,7 @@ export const adjustResult = async (sc: Scheme, r: EligibilityResult, amount: num
   const doc = (await payload.update({ collection: 'partner-eligibility', id: Number(r.id), overrideAccess: true, depth: 0, data: { adjustment: { amount, reason: reason.trim(), by: who(me.actor), at: now() }, final: st.final, eligible: st.eligible, slabIndex: st.slabIndex, target: st.target, gap: st.gap } })) as unknown as Doc
   const next = toResult(doc)
   await audit({ actor: me.actor, object: 'partner-eligibility', objectId: r.id, objectLabel: sc.name, action: 'scheme.result.adjusted', from: `${r.final} · ${r.eligible ? 'eligible' : 'not eligible'}`, to: `${next.final} · ${next.eligible ? `eligible, slab ${next.slabIndex + 1}` : 'not eligible'}`, orgId: r.orgId, comment: `${amount >= 0 ? '+' : ''}${amount}: ${reason.trim()}` })
-  if (sc.results.publishedAt) await notify({ event: 'scheme.result.adjusted', subject: `Your result on ${sc.name} was adjusted`, body: `K7 adjusted it by ₹${amount.toLocaleString('en-IN')}: ${reason.trim()}. The scheme page shows the result as it now stands.`, href: `${PARTNER_SCHEMES}/${sc.id}/eligibility`, to: { kind: 'org', orgId: r.orgId, roles: ['admin'] } })
+  if (sc.results.publishedAt) await notify({ event: 'scheme.result.adjusted', vars: schemeVars(sc, { name: r.orgName, partnerId: r.orgPartnerId }), subject: `Your result on ${sc.name} was adjusted`, body: `K7 adjusted it by ₹${amount.toLocaleString('en-IN')}: ${reason.trim()}. The scheme page shows the result as it now stands.`, href: `${PARTNER_SCHEMES}/${sc.id}/eligibility`, to: { kind: 'org', orgId: r.orgId, roles: ['admin'] } })
   return { ok: true, value: next }
 }
 
@@ -314,6 +316,7 @@ export const publishResults = async (sc: Scheme, me: K7Context): Promise<SchemeM
   for (const r of await listResults(sc.id)) {
     await notify({
       event: 'scheme.results.published',
+      vars: schemeVars(sc, { name: r.orgName, partnerId: r.orgPartnerId }),
       subject: `Results for ${sc.name}: ${r.eligible ? 'eligible' : 'not eligible'}`,
       body: r.eligible ? `Your organisation reached slab ${r.slabIndex + 1} with ₹${r.final.toLocaleString('en-IN')} won in the window. The scheme page shows the benefit and the deals counted.${days ? ` You have ${days} days to raise a query.` : ''}` : `Your organisation won ₹${r.final.toLocaleString('en-IN')} in the window against a target of ₹${r.target.toLocaleString('en-IN')}. The scheme page shows the gap and the deals counted.${days ? ` You have ${days} days to raise a query.` : ''}`,
       href: `${PARTNER_SCHEMES}/${sc.id}/eligibility`,
@@ -334,7 +337,7 @@ export const raiseDispute = async (me: PartnerContext, sc: Scheme, r: Eligibilit
   const doc = (await payload.update({ collection: 'partner-eligibility', id: Number(r.id), overrideAccess: true, depth: 0, data: { dispute: { status: 'open', text: text.trim(), raisedBy: me.user.name || me.user.email, raisedAt: now(), resolution: '', resolvedBy: '', resolvedAt: null } } })) as unknown as Doc
   const next = toResult(doc)
   await audit({ actor: me.actor, object: 'partner-eligibility', objectId: r.id, objectLabel: sc.name, action: 'scheme.dispute.raised', to: 'open', orgId: me.scope.orgId, comment: text.trim().slice(0, 400) })
-  await notify({ event: 'scheme.dispute.raised', subject: `${me.org.tradeName || me.org.name} disputes its result on ${sc.name}`, body: text.trim().slice(0, 400), href: `${K7_SCHEMES}/${sc.id}/results/${me.org.partnerId}`, to: { kind: 'staff', role: 'schemeAdmin' } })
+  await notify({ event: 'scheme.dispute.raised', vars: schemeVars(sc, me.org), subject: `${me.org.tradeName || me.org.name} disputes its result on ${sc.name}`, body: text.trim().slice(0, 400), href: `${K7_SCHEMES}/${sc.id}/results/${me.org.partnerId}`, to: { kind: 'staff', role: 'schemeAdmin' } })
   return { ok: true, value: next }
 }
 
@@ -345,7 +348,7 @@ export const resolveDispute = async (sc: Scheme, r: EligibilityResult, resolutio
   const doc = (await payload.update({ collection: 'partner-eligibility', id: Number(r.id), overrideAccess: true, depth: 0, data: { dispute: { ...r.dispute, status: 'resolved', resolution: resolution.trim(), resolvedBy: who(me.actor), resolvedAt: now() } } })) as unknown as Doc
   const next = toResult(doc)
   await audit({ actor: me.actor, object: 'partner-eligibility', objectId: r.id, objectLabel: sc.name, action: 'scheme.dispute.resolved', from: 'open', to: 'resolved', orgId: r.orgId, comment: resolution.trim().slice(0, 400) })
-  await notify({ event: 'scheme.dispute.resolved', subject: `Your query on ${sc.name} was answered`, body: resolution.trim(), href: `${PARTNER_SCHEMES}/${sc.id}/eligibility`, to: { kind: 'org', orgId: r.orgId, roles: ['admin'] } })
+  await notify({ event: 'scheme.dispute.resolved', vars: schemeVars(sc, { name: r.orgName, partnerId: r.orgPartnerId }), subject: `Your query on ${sc.name} was answered`, body: resolution.trim(), href: `${PARTNER_SCHEMES}/${sc.id}/eligibility`, to: { kind: 'org', orgId: r.orgId, roles: ['admin'] } })
   return { ok: true, value: next }
 }
 
@@ -357,7 +360,7 @@ export const setPayout = async (sc: Scheme, r: EligibilityResult, status: Payout
   const doc = (await payload.update({ collection: 'partner-eligibility', id: Number(r.id), overrideAccess: true, depth: 0, data: { payout: { status, reference: reference.trim(), note: note.trim(), by: who(me.actor), at: now() } } })) as unknown as Doc
   const next = toResult(doc)
   await audit({ actor: me.actor, object: 'partner-eligibility', objectId: r.id, objectLabel: sc.name, action: 'scheme.payout', from: r.payout.status, to: status, orgId: r.orgId, comment: [reference.trim(), note.trim()].filter(Boolean).join(' · ') })
-  if (status !== r.payout.status) await notify({ event: 'scheme.payout', subject: `Payout for ${sc.name}: ${status}`, body: `${status === 'paid' ? 'Paid' : status === 'processed' ? 'Processed' : 'Pending'}${reference.trim() ? ` · reference ${reference.trim()}` : ''}${note.trim() ? ` · ${note.trim()}` : ''}`, href: `${PARTNER_SCHEMES}/${sc.id}/eligibility`, to: { kind: 'org', orgId: r.orgId, roles: ['admin'] } })
+  if (status !== r.payout.status) await notify({ event: 'scheme.payout', vars: schemeVars(sc, { name: r.orgName, partnerId: r.orgPartnerId }), subject: `Payout for ${sc.name}: ${status}`, body: `${status === 'paid' ? 'Paid' : status === 'processed' ? 'Processed' : 'Pending'}${reference.trim() ? ` · reference ${reference.trim()}` : ''}${note.trim() ? ` · ${note.trim()}` : ''}`, href: `${PARTNER_SCHEMES}/${sc.id}/eligibility`, to: { kind: 'org', orgId: r.orgId, roles: ['admin'] } })
   return { ok: true, value: next }
 }
 

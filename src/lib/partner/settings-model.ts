@@ -1,3 +1,5 @@
+import { DEFAULT_SLA_SETTINGS, type SlaSettings } from './sla-model'
+
 /* The partner portal's settings as the code reads them (02-build-plan.md §5, global `partner-settings`): a pure model with
    defaults and a normaliser over the raw Payload document, so pages never see a half-saved global. Tested without a tenant. */
 
@@ -24,7 +26,7 @@ export const PARTNER_ROLES = ['admin', 'sales', 'technical'] as const
 export type PartnerRole = (typeof PARTNER_ROLES)[number]
 export const PARTNER_ROLE_LABEL: Record<PartnerRole, string> = { admin: 'Partner Admin', sales: 'Sales', technical: 'Technical' }
 
-export type StaffEntry = { email: string; name: string; roles: StaffRole[] }
+export type StaffEntry = { email: string; name: string; roles: StaffRole[]; /** Their manager's work email, told when an approval SLA is breached (FR-NTF-01). */ manager: string }
 
 export type PartnerSettings = {
   staff: StaffEntry[]
@@ -36,7 +38,9 @@ export type PartnerSettings = {
   terms: { version: string; url: string }
   deals: { protectionDays: number; extensionDays: number; approvalSlaHours: number; endingNoticeDays: number; requireCertificate: boolean; conflictCheckCrm: boolean }
   crm: { enabled: boolean; ownerRule: 'approver' | 'fixed'; ownerId: string; enquirySource: number; productCategory: number; accountNamePattern: string; syncMinutes: number }
-  notify: { emailEnabled: boolean; mailFrom: string; bellRetentionDays: number }
+  notify: { emailEnabled: boolean; mailFrom: string; bellRetentionDays: number; /** The closing line of every email. */ signature: string }
+  /** M8: the approval SLA's working hours, the warning share and the extra addresses told on a breach. */
+  sla: SlaSettings
   /** FR-MKT-02: the collateral file cap in MB, at most the server's 200. */
   collateral: { maxMb: number }
   /** FR-ELG-05: the days after publication in which a partner may dispute a result (a scheme may override). */
@@ -55,7 +59,8 @@ export const DEFAULT_PARTNER_SETTINGS: PartnerSettings = {
   terms: { version: '2026-10', url: '' },
   deals: { protectionDays: 90, extensionDays: 90, approvalSlaHours: 48, endingNoticeDays: 14, requireCertificate: false, conflictCheckCrm: false },
   crm: { enabled: false, ownerRule: 'approver', ownerId: '', enquirySource: 1, productCategory: 36, accountNamePattern: '{customer}-Fresh-{product}', syncMinutes: 60 },
-  notify: { emailEnabled: true, mailFrom: 'K7 Partner Programme <partners@k7computing.com>', bellRetentionDays: 180 },
+  notify: { emailEnabled: true, mailFrom: 'K7 Partner Programme <partners@k7computing.com>', bellRetentionDays: 180, signature: 'K7 Partner Programme\nK7 Computing Pvt Ltd' },
+  sla: DEFAULT_SLA_SETTINGS,
   collateral: { maxMb: 200 },
   schemes: { disputeDays: 14 },
 }
@@ -77,7 +82,7 @@ export const normalisePartnerSettings = (g: Raw | null | undefined): PartnerSett
   const notify = obj(r.notify)
   const terms = obj(r.terms)
   const staff = arr(r.staff)
-    .map((s) => ({ email: email(s.email), name: str(s.name, ''), roles: pick(s.roles, STAFF_ROLES) }))
+    .map((s) => ({ email: email(s.email), name: str(s.name, ''), roles: pick(s.roles, STAFF_ROLES), manager: email(s.manager) }))
     .filter((s) => s.email.includes('@') && s.roles.length)
   const types = pick(r.partnerTypes, PARTNER_TYPES)
   return {
@@ -111,9 +116,28 @@ export const normalisePartnerSettings = (g: Raw | null | undefined): PartnerSett
       emailEnabled: bool(notify.emailEnabled, D.notify.emailEnabled),
       mailFrom: str(notify.mailFrom, D.notify.mailFrom) || D.notify.mailFrom,
       bellRetentionDays: num(notify.bellRetentionDays, D.notify.bellRetentionDays, 7),
+      signature: str(notify.signature, D.notify.signature) || D.notify.signature,
     },
+    sla: normaliseSla(obj(r.sla)),
     collateral: { maxMb: Math.min(num(obj(r.collateral).maxMb, D.collateral.maxMb, 1), COLLATERAL_MAX_MB_CEILING) },
     schemes: { disputeDays: num(obj(r.schemes).disputeDays, D.schemes.disputeDays, 0) },
+  }
+}
+
+const HM = /^\d{1,2}:\d{2}$/
+const normaliseSla = (r: Raw): SlaSettings => {
+  const D = DEFAULT_SLA_SETTINGS
+  const days = Array.isArray(r.days) ? r.days.map((d) => Number(d)).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6) : D.hours.days
+  return {
+    hours: {
+      mode: r.mode === 'always' ? 'always' : 'business',
+      start: HM.test(str(r.start, '')) ? str(r.start, '') : D.hours.start,
+      end: HM.test(str(r.end, '')) ? str(r.end, '') : D.hours.end,
+      days: days.length ? [...new Set(days)].sort() : D.hours.days,
+      timeZone: str(r.timeZone, '').trim() || D.hours.timeZone,
+    },
+    warnShare: typeof r.warnShare === 'number' && r.warnShare > 0 && r.warnShare < 1 ? r.warnShare : D.warnShare,
+    escalateTo: Array.isArray(r.escalateTo) ? r.escalateTo.map((x) => (typeof x === 'string' ? x : email(obj(x).email))).map((x) => x.trim().toLowerCase()).filter((x) => x.includes('@')) : [],
   }
 }
 
@@ -136,7 +160,7 @@ export const staffWithRole = (role: StaffRole, s: PartnerSettings): StaffEntry[]
   for (const p of s.staff) {
     const roles = staffRolesFor(p.email, s)
     if (!roles.includes(role) || seen.has(p.email)) continue
-    seen.set(p.email, { email: p.email, name: p.name, roles })
+    seen.set(p.email, { email: p.email, name: p.name, roles, manager: p.manager })
   }
   return [...seen.values()]
 }

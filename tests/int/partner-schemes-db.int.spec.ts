@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { orgRel } from '@/lib/partner/scope'
 import { adjustResult, decideRegistration, financeRows, listRegistrations, listResults, loadResultK7, loadSchemeFor, progressOf, publishResults, raiseDispute, registerForScheme, resultFor, runDueSchemes, runEligibility, schemeCountFor, schemesFor, setPayout } from '@/lib/partner/schemes'
-import { financeCsv, toScheme } from '@/lib/partner/schemes-model'
+import { financeCsv, schemePhase, toScheme } from '@/lib/partner/schemes-model'
 import type { K7Context, PartnerContext } from '@/lib/partner/session'
 import { toOrg, toUser } from '@/lib/partner/users'
 
@@ -104,9 +104,11 @@ describe.skipIf(!enabled)('schemes and eligibility (database)', () => {
     const b = await schemesFor(B)
     expect(b.map((r) => r.scheme.id)).not.toContain(openId) // VARs only
     expect(await loadSchemeFor(B, openId)).toBeNull()
+    // The development database may hold other open schemes that apply (the dev seed's), so the count is measured against the listing.
     const counts = await schemeCountFor(A)
-    expect(counts.open).toBe(1)
-    expect(counts.registered).toBe(0)
+    expect(counts.open).toBe(a.filter((r) => schemePhase(r.scheme) === 'open').length)
+    expect(counts.open).toBeGreaterThanOrEqual(1)
+    expect(counts.registered).toBe(a.filter((r) => r.registration?.status === 'approved' && schemePhase(r.scheme) !== 'closed').length)
   })
 
   it('registers with K7’s approval, the admin decides, and progress is provisional from the won deals', async () => {

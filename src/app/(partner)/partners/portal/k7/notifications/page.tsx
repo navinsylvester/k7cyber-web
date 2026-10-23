@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import React from 'react'
 
 import { Empty, NotificationList, StaffRoleTags } from '@/components/partner/Parts'
@@ -24,13 +25,20 @@ export default async function K7NotificationsPage() {
             What the portal has sent to your roles: <StaffRoleTags roles={me.roles} />
           </p>
         </div>
-        {unread > 0 && (
-          <form action={markAllReadAction} className="ws-actions">
-            <button className="btn btn-line btn-sm" type="submit">
-              Mark all as read
-            </button>
-          </form>
-        )}
+        <div className="ws-actions">
+          {me.roles.includes('channelManager') && (
+            <Link className="btn btn-line btn-sm" href="/partners/portal/k7/notifications/templates">
+              Templates
+            </Link>
+          )}
+          {unread > 0 && (
+            <form action={markAllReadAction}>
+              <button className="btn btn-line btn-sm" type="submit">
+                Mark all as read
+              </button>
+            </form>
+          )}
+        </div>
       </div>
       {rows.length ? (
         <NotificationList rows={rows} />

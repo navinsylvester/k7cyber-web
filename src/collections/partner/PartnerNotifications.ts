@@ -23,6 +23,13 @@ export const PartnerNotifications: CollectionConfig = {
       ],
     },
     { type: 'row', fields: [{ name: 'event', type: 'text', required: true, index: true, admin: { width: '40%', description: 'application.submitted, deal.decided …' } }, { name: 'href', type: 'text', admin: { width: '60%', description: 'Where the row leads inside the portal.' } }] },
+    {
+      type: 'row',
+      fields: [
+        { name: 'delivery', type: 'select', options: [{ label: 'Email at once', value: 'immediate' }, { label: 'In the daily digest', value: 'digest' }, { label: 'Bell only', value: 'bell' }], defaultValue: 'immediate', index: true, admin: { width: '50%', description: 'The template’s rule at the time (M8).' } },
+        { name: 'digestAt', type: 'date', index: true, admin: { width: '50%', description: 'When the digest that carried this row went out.' } },
+      ],
+    },
     { name: 'subject', type: 'text', required: true },
     { name: 'body', type: 'textarea' },
     {

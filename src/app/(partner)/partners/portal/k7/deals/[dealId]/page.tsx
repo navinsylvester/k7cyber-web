@@ -6,6 +6,7 @@ import React from 'react'
 import { ConflictBox, DealFacts, DealStateTag, DealThread, Did, Protection } from '@/components/partner/Deals'
 import { K7Nav } from '@/components/partner/K7Nav'
 import { Field, Flash, Pid, Strip } from '@/components/partner/Parts'
+import { SlaValue } from '@/components/partner/Sla'
 import { Crumbs } from '@/components/support/Parts'
 import { objectAudit } from '@/lib/partner/audit'
 import { findConflicts, findDealByNumber, K7_DEALS } from '@/lib/partner/deals'
@@ -14,6 +15,8 @@ import { CrmFacts } from '@/components/partner/Dashboard'
 import { outboxOf } from '@/lib/partner/mirror'
 import { requireK7Role } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
+import { readingFor } from '@/lib/partner/sla'
+import { dealClock } from '@/lib/partner/sla-model'
 import { canDecideDeal, DEAL_DECISION_LABEL, type DealDecision } from '@/lib/partner/status'
 import { dmy, dmyHm, relative } from '@/lib/support/format'
 
@@ -32,6 +35,7 @@ export default async function K7DealPage({ params, searchParams }: { params: Pro
   const [settings, conflicts, trail, jobs] = await Promise.all([getPartnerSettings(), findConflicts({ id: deal.id, customerKey: deal.customerKey, emailDomain: deal.emailDomain, customer: { email: deal.customer.email } }), objectAudit('partner-deals', deal.id), outboxOf('partner-deals', deal.id)])
   const decisions = (['approve', 'approveWithChanges', 'requestInfo', 'reject'] as DealDecision[]).filter((d) => canDecideDeal(deal.status, d))
   const job = jobs[0]
+  const clock = dealClock(deal)
   const base = `${K7_DEALS}/${deal.dealId}`
   const changeFields = (prefix: string) => (
     <>
@@ -68,7 +72,8 @@ export default async function K7DealPage({ params, searchParams }: { params: Pro
             { label: 'Status', value: <DealStateTag status={deal.status} /> },
             { label: 'Partner', value: <Pid id={deal.orgPartnerId} href={`/partners/portal/k7/partners/${deal.orgPartnerId}`} /> },
             { label: 'Conflicts', value: conflicts.length ? <span className="tag tag-signal">{conflicts.length} possible</span> : 'None found' },
-            { label: 'Waiting', value: deal.status === 'submitted' ? relative(deal.thread[deal.thread.length - 1]?.at ?? deal.submittedAt ?? deal.createdAt) : deal.status === 'extensionRequested' && deal.extension.requestedAt ? relative(deal.extension.requestedAt) : deal.status === 'infoRequested' ? 'On the partner' : deal.decidedAt ? `Decided ${dmy(deal.decidedAt)}` : '—' },
+            { label: 'Waiting', value: clock ? relative(clock.startedAt) : deal.status === 'infoRequested' ? 'On the partner' : deal.decidedAt ? `Decided ${dmy(deal.decidedAt)}` : '—' },
+            ...(clock ? [{ label: 'Decision due', value: <SlaValue reading={readingFor(clock, settings)} sla={settings.sla} hours={settings.deals.approvalSlaHours} /> }] : []),
             { label: 'Protected until', value: deal.protectionEnds ? dmy(deal.protectionEnds) : '—' },
             { label: 'CRM', value: deal.crm.opportunityNo || (job ? job.state : '—') },
           ]}

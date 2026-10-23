@@ -125,6 +125,12 @@ export const PartnerDeals: CollectionConfig = {
       ],
     },
     {
+      name: 'sla',
+      type: 'group',
+      admin: { description: 'The approval SLA notice (M8): sent once per clock; the clock restarts on resubmission.' },
+      fields: [{ type: 'row', fields: [{ name: 'noticedAt', type: 'date', admin: { width: '50%' } }, { name: 'noticedFor', type: 'text', admin: { width: '50%', description: 'The clock start the notice was for.' } }] }],
+    },
+    {
       name: 'extension',
       type: 'group',
       admin: { description: 'The one extension a partner may ask for before the protection ends (FR-DEAL-07, decision 15).' },

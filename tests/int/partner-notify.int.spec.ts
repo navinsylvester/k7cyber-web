@@ -47,7 +47,7 @@ describe.skipIf(!enabled)('partner notify and audit (database)', () => {
     expect(await unreadCount(scope)).toBe(0)
     const r = await notify({ event: 'test.event', subject: tag, body: 'A test notification.', href: '/partners/portal', to: [{ kind: 'user', user }, { kind: 'org', orgId, roles: ['sales'] }], email: false })
     // The user once; the org recipient asked for sales users and the only user is an admin.
-    expect(r).toEqual({ bell: 1, emailed: 0, suppressed: [] })
+    expect(r).toEqual({ bell: 1, emailed: 0, queued: 0, suppressed: [] })
     expect(await unreadCount(scope)).toBe(1)
     const rows = await listNotifications(scope)
     expect(rows.map((x) => x.subject)).toEqual([tag])

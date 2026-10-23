@@ -6,6 +6,7 @@ import { getServerSideURL } from '@/utilities/getURL'
 
 import { audit } from './audit'
 import { notify } from './notify'
+import { orgVars } from './notify-model'
 import { canMoveUser, memberChangeError, memberRemoveError, reenabledStatus, validateMember, type MemberInput } from './organisation-model'
 import { normaliseMobile, type FieldErrors } from './registration-model'
 import { orgRel, orgWhere, type OrgScope } from './scope'
@@ -43,8 +44,11 @@ export const loadMember = async (scope: OrgScope, id: string): Promise<PartnerUs
 
 export type MemberResult = { ok: true; user: PartnerUser } | { ok: false; errors: FieldErrors }
 
+const userVars = (org: PartnerOrg, user: PartnerUser): Record<string, string> => ({ ...orgVars(org), user: user.name || user.email, roles: user.roles.map((r) => PARTNER_ROLE_LABEL[r]).join(', ') })
+
 const invitation = (org: PartnerOrg, user: PartnerUser, by: string) => ({
   event: 'user.invited',
+  vars: userVars(org, user),
   subject: `You are invited to the K7 Partner Portal for ${org.tradeName || org.name}`,
   body: `${by} added you to ${org.name} (${org.partnerId}) as ${user.roles.map((r) => PARTNER_ROLE_LABEL[r]).join(', ')}. Sign in with this email address at ${getServerSideURL()}/partners/portal/sign-in: we send a one-time code, no password.`,
   href: '/partners/portal',
@@ -85,7 +89,7 @@ export const updateMember = async (me: PartnerContext, target: PartnerUser, inpu
   const rolesChanged = [...target.roles].sort().join(',') !== [...user.roles].sort().join(',')
   await audit({ actor: me.actor, object: 'partner-users', objectId: user.id, objectLabel: user.email, action: rolesChanged ? 'user.roles-changed' : 'user.updated', orgId: me.scope.orgId, from: rolesChanged ? target.roles.map((r) => PARTNER_ROLE_LABEL[r]).join(', ') : undefined, to: rolesChanged ? user.roles.map((r) => PARTNER_ROLE_LABEL[r]).join(', ') : undefined })
   if (rolesChanged && user.status !== 'disabled') {
-    await notify({ event: 'user.roles-changed', subject: `Your roles at ${me.org.tradeName || me.org.name} changed`, body: `${me.user.name || me.user.email} set your roles to ${user.roles.map((r) => PARTNER_ROLE_LABEL[r]).join(', ')}.`, href: '/partners/portal', to: { kind: 'user', user } })
+    await notify({ event: 'user.roles-changed', vars: userVars(me.org, user), subject: `Your roles at ${me.org.tradeName || me.org.name} changed`, body: `${me.user.name || me.user.email} set your roles to ${user.roles.map((r) => PARTNER_ROLE_LABEL[r]).join(', ')}.`, href: '/partners/portal', to: { kind: 'user', user } })
   }
   return { ok: true, user }
 }
@@ -103,6 +107,7 @@ export const setMemberStatus = async (me: PartnerContext, target: PartnerUser, a
   await audit({ actor: me.actor, object: 'partner-users', objectId: user.id, objectLabel: user.email, action: action === 'disable' ? 'user.disabled' : 'user.enabled', from: target.status, to, orgId: me.scope.orgId })
   await notify({
     event: action === 'disable' ? 'user.disabled' : 'user.enabled',
+    vars: userVars(me.org, user),
     subject: action === 'disable' ? `Your access to the K7 Partner Portal is disabled` : `Your access to the K7 Partner Portal is restored`,
     body: action === 'disable' ? `${me.user.name || me.user.email} disabled your user at ${me.org.name}. You can no longer sign in; ask your Partner Admin if that is wrong.` : `${me.user.name || me.user.email} re-enabled your user at ${me.org.name}. Sign in with this email address.`,
     href: '/partners/portal',

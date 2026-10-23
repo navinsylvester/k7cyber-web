@@ -5,12 +5,15 @@ import React from 'react'
 import { DealStateTag, Did } from '@/components/partner/Deals'
 import { K7Nav } from '@/components/partner/K7Nav'
 import { Empty, Flash, Pid } from '@/components/partner/Parts'
+import { SlaTag } from '@/components/partner/Sla'
 import { Pager, qs } from '@/components/support/Parts'
 import { dealCounts, K7_DEALS, listDealsK7, type DealView } from '@/lib/partner/deals'
 import { daysLeft, formatInr } from '@/lib/partner/deals-model'
 import { owedOutboxCount } from '@/lib/partner/mirror'
 import { requireK7Role } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
+import { readingFor } from '@/lib/partner/sla'
+import { dealClock } from '@/lib/partner/sla-model'
 import { dmy, relative } from '@/lib/support/format'
 
 import { runDealOutboxAction, sweepDealsAction, syncNowAction } from './actions'
@@ -126,12 +129,14 @@ export default async function K7DealsPage({ searchParams }: { searchParams: Prom
                     <th scope="col">Conflicts</th>
                     <th scope="col">Protection</th>
                     <th scope="col">{view === 'submitted' || view === 'extensionRequested' ? 'Waiting' : 'Updated'}</th>
+                    {(view === 'submitted' || view === 'extensionRequested') && <th scope="col">Decision due</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {list.rows.map((d) => {
                     const left = d.status === 'approved' || d.status === 'extensionRequested' ? daysLeft(d.protectionEnds) : null
                     const waiting = d.status === 'extensionRequested' ? d.extension.requestedAt : d.submittedAt
+                    const clock = view === 'submitted' || view === 'extensionRequested' ? dealClock(d) : null
                     return (
                       <tr className="row" key={d.id}>
                         <td className="id">
@@ -158,6 +163,11 @@ export default async function K7DealsPage({ searchParams }: { searchParams: Prom
                         <td className="num" title={waiting ?? d.updatedAt}>
                           {view === 'submitted' || view === 'extensionRequested' ? (waiting ? relative(waiting) : '—') : relative(d.updatedAt)}
                         </td>
+                        {(view === 'submitted' || view === 'extensionRequested') && (
+                          <td className="status">
+                            <SlaTag reading={clock ? readingFor(clock, settings) : null} sla={settings.sla} />
+                          </td>
+                        )}
                       </tr>
                     )
                   })}

@@ -1,4 +1,4 @@
-# Partner portal: the build plan (written 2026-10-22; M1 to M4 built the same day, M5 and M6 on 2026-10-23)
+# Partner portal: the build plan (written 2026-10-22; M1 to M4 built the same day, M5 to M8 on 2026-10-23)
 
 What has to be done to deliver `01-requirements.md`, in the order it should be done, with the
 decisions taken so far and a status that any session can pick up. Read `CLAUDE.md`,
@@ -45,13 +45,13 @@ not for its history.
 | M5 | Deal dashboard (§8): hourly CRM sync into a read model, cards, list, charts, reconciliation log | **built 2026-10-23** (session 11): tests pass, the read-back ran against UAT (OPP-2610-00268 read into K7D-00030), both sides clicked on localhost |
 | M6 | Collateral library (§6) | **built 2026-10-23** (session 12): the two collections, the library and item pages, the download route with the rule and Range support, the K7 ledger, the cap as a setting; tests pass, both sides clicked on localhost |
 | M7 | Schemes and eligibility (§9) | **built 2026-10-23** (session 13): the four collections, the partner pages (listing, scheme, Check eligibility), the K7 ledger, sheet and result sheet, the run, the Finance CSV; tests pass; both sides clicked end to end on localhost and the tunnel host, including a phone width |
-| M8 | Notifications, bell, editable templates, approval SLA, reporting, exports (§10 and the gaps) | not started |
+| M8 | Notifications, bell, editable templates, approval SLA, reporting, exports (§10 and the gaps) | **built 2026-10-23** (session 14): the event catalogue and the templates page with a delivery rule per event (at once · daily digest · bell only), the digest and retention pass, the approval SLA in working hours with the breach notice to approvers, managers and escalation addresses, the SLA reading on the K7 queues and sheets, the four reports with CSV; tests pass; the K7 side clicked end to end on localhost, the partner side's rendered row too; the non-functional requirements proposed in §11, to confirm with the author |
 | M9 | Hardening and staging: non-functional requirements, tests, go-live gate → **launch 1 (no LMS)** | not started |
 | M10 | Training (§4): tracks, courses, modules, video progress, tests, attempts, results, admin | not started (last phase) |
 | M11 | Certificates (§4 FR-TRN-07–10, §5): PDF + QR, public verification, expiry, org certificate, revoke; then the deal gate switch | not started (last phase) |
 
 The notification spine (one `notify()` and the bell) is built in M1–M2 because every later
-milestone emits events; M8 adds the editable templates and the SLA.
+milestone emits events; M8 added the editable templates, the delivery rules and the SLA.
 
 ## 2. What it is, in one paragraph
 A second signed-in area of the enterprise site, beside the support portal, for the channel of a
@@ -252,10 +252,10 @@ Tick as done; dates in the session log.
 - [x] `partner-eligibility`: the run (`runEligibility`, the desk button and `POST /api/partners/schemes/run` with `CRON_SECRET` for closed schemes without results), the Scheme Admin's adjustment with a reason, publish (partners told, the dispute window from the settings or the scheme), the partner's Check eligibility page with the gap and the deals counted, the dispute and its resolution, the payout state with reference, the Finance CSV
 - [x] Clicked in Chrome on both sides (session 13): register, progress, compute, adjust twice, publish, the partner's result, dispute and resolution, payout, the CSV through the route, both sides at 390px
 
-### M8 — notifications, templates, SLA, reporting (§10 and the gaps)
-- [ ] Editable templates per event, bell page, digest rules; approval SLA hours in settings and breach notices to approver and manager
-- [ ] Reports for K7: pipeline by partner, scheme results, applications by state; CSV exports
-- [ ] Non-functional requirements written with the author (appendix 1) and recorded here
+### M8 — notifications, templates, SLA, reporting (§10 and the gaps) (built 2026-10-23)
+- [x] Editable templates per event (`partner-mail-templates`, the catalogue in `notify-model.ts`, the Channel Manager's page `/partners/portal/k7/notifications/templates` with placeholders, preview and a test to their own address), the bell page unchanged, digest rules as a delivery per event (at once · daily digest · bell only; `POST /api/partners/notifications/digest` daily, which also sweeps read rows past `notify.bellRetentionDays`); approval SLA hours in the settings with the working hours, the warning share, each staff person's manager and the escalation addresses; breach notices once per clock to the queue's role, the managers and the addresses (`POST /api/partners/sla/sweep` hourly); the reading on the K7 queues, sheets, home and reports
+- [x] Reports for K7 (`/partners/portal/k7/reports`): pipeline by partner, applications by state, scheme results, the approval SLA; one CSV each for the period
+- [x] Non-functional requirements proposed in §11 as defaults to confirm with the author (appendix 1); not yet confirmed
 
 ### M9 — hardening and staging → launch 1
 - [ ] Tests for every status machine, scope rule, eligibility maths and the conflict matcher (mock fixtures, anonymised)
@@ -308,11 +308,41 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
 | MKT-01 … 04 | M6 | built 2026-10-23 (MKT-01: product → category; MKT-02: the eight types, the cap a setting ≤ 200 MB, Payload refuses malformed PDFs and scripted SVGs; MKT-03: type, certification, country, region, ANDed; MKT-04: upload, replace as a new version, tag, retire in `/admin`) |
 | SCH-01 … 05 | M7 | built 2026-10-23 (SCH-01: the admin collection with slabs and the PDF; SCH-02: three groups, type and region, published only; SCH-03: the Partner Admin accepts the terms, name and time stored; SCH-04: per-scheme switch; SCH-05: provisional progress from the snapshots) |
 | ELG-01 … 07 | M7 | built 2026-10-23 (ELG-01: won in the CRM, closed inside the dates, on a named product, at the order value; ELG-02: adjust with reason, publish; ELG-03/04: the page with the slab, the benefit, the gap, the deals; ELG-05: window = setting or the scheme's days; ELG-06: pending · processed · paid with reference; ELG-07: CSV) |
-| NTF-01 | M1 (spine), M8 (templates, SLA) | M1 done (`notify()`, the bell, email through the allowlist); M2 sends the application events (staff bell + mail, applicant mail, the invitation); M4 the deal events (submitted, resubmitted, decided, amended, extension asked and decided, withdrawn, expired, protection ending) |
-| non-functional (none written) | M8 | — |
+| NTF-01 | M1 (spine), M8 (templates, SLA) | M1 done (`notify()`, the bell, email through the allowlist); M2 sends the application events (staff bell + mail, applicant mail, the invitation); M4 the deal events (submitted, resubmitted, decided, amended, extension asked and decided, withdrawn, expired, protection ending); M7 the scheme events; **M8 built 2026-10-23**: templates K7 edits per event with a delivery rule and the daily digest, the approval SLA breach to the approvers and their managers (the training and certificate rows of the table arrive with M10–M11) |
+| non-functional (none written) | M8 | proposed 2026-10-23 (§11), to confirm with the author |
 | TRN-01 … 06, 11, 12, 13, 14 | M10 | — (last phase) |
 | TRN-07, 08, 09, 10 | M11 | — (last phase) |
 | CRT-01 … 07 | M11 | — (last phase) |
+
+## 11. Non-functional requirements (proposed 2026-10-23, to confirm with the author)
+The source document promises these and gives none (appendix 1). Defaults the build assumes, written so the author can strike or
+change a line rather than write from nothing; each is either already true of the code or a staging (M9) item.
+1. **Availability and hosting.** The portal is part of the website's deployable (decision 1), so it inherits the site's hosting and
+   uptime target once hosting is decided; the portal is never a separate outage. Target to confirm: 99.5 % monthly, business hours
+   IST counted twice.
+2. **Response time.** A signed-in page in under 2 s at the 95th percentile on a 4G connection; the CRM is never read in a request
+   (decisions 2, 11, 14), so the CRM's latency cannot slow a page. Reports read up to 2,000 rows in one pass; past that they are paged.
+3. **Data residency and the CRM.** Payload's Postgres holds the system of record; where it runs follows the hosting decision (India
+   region assumed). Dynamics is written only by the outbox, as the service identity, to UAT until the go-live gate of M9, never to
+   production without the per-feature switch (`07-production-safety.md` §7).
+4. **Retention.** Applications, organisations, deals, scheme results and the audit trail are kept for the life of the programme;
+   read bell rows for `notify.bellRetentionDays` (180 by default, M8); one-time codes for ten minutes; sessions for the Auth.js default.
+   Uploads (deal files, collateral, scheme PDFs) live with their rows. A partner's data is removed on request by an admin in `/admin`,
+   with the audit rows kept under the partner ID alone.
+5. **Accessibility.** WCAG 2.2 AA as the site: every control labelled, the state tags read as text not colour alone, keyboard order
+   follows the sheet, a phone width (390 px) checked for every page before it ships (the session logs record each check).
+6. **Browser support.** The current and previous major versions of Chrome, Edge, Safari and Firefox on desktop; Safari and Chrome on
+   iOS and Android. No Internet Explorer.
+7. **Security.** Partner identity by one-time email code (decision 3) with the allowlist on shared hosts; K7 staff by Microsoft Entra;
+   every partner query scoped to the organisation (FR-ROLE-01, pinned by a test); files served only through routes that re-check the
+   rule; no secrets in the repository; the CRM client refuses production writes in code.
+8. **Audit and reporting.** Every status change writes an append-only row (decision 17); every notification is a row with its delivery
+   and email result (M8); the reports and CSVs read the portal's rows and the CRM snapshots, never live.
+9. **Backup.** Nightly Postgres backups and the upload directories, retained 30 days, restored once before launch 1 (M9).
+10. **Email.** All mail through `SMTP_URL` with the allowlist on any host other people can reach; digests once a day; the breach notice
+    hourly; sending failures recorded on the row, never thrown at the user.
+11. **Volumes assumed.** Up to 500 partner organisations, 5,000 users and 20,000 deals in the first two years; the counters, the
+    sync batches of 25 and the report pass are sized for this.
 
 ## 10. Session log
 - **2026-10-22 (1)** — Document copied from `~/office_docs/website/requirements/`, converted to
@@ -593,3 +623,38 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
   401 without the secret, `{"schemes":[],"errors":[]}` with it). A phone width through 390px frames on both sides: the partner listing's ledgers scroll in their wrap, the
   progress and the result stack, the K7 counters, views and ledgers stack and scroll. Not clicked: the attachment routes with a real PDF (none seeded; the collateral test
   proves the upload path). Nothing committed (Navin commits). **Next:** M8 (notifications, templates, SLA, reporting); §7's author questions still open.
+
+- **Session 14 (2026-10-23, Claude Code): M8 built, notifications, templates, the approval SLA and the reports.** The event catalogue (`notify-model.ts`: 37
+  events, group, audience, default delivery, the placeholders each fills; a test reads the library's `event:` lines and refuses one missing from the catalogue) and the
+  templates (`partner-mail-templates`, one row per event: enabled, delivery at once · daily digest · bell only, subject, body in plain text with `{{placeholders}}`),
+  rendered in `notify()` per recipient (`{{recipient}}`), the delivery recorded on the bell row; `notify()` gains `vars` at every call site and an `email` recipient
+  kind (mail only, for managers). The daily digest (`digestPass`: rows older than two minutes grouped per address, one mail each, every row marked whether mailed or not,
+  then the retention of read rows; `POST /api/partners/notifications/digest`). The approval SLA (`sla-model.ts` on the support engine's business-hours maths: the clock
+  from the latest submission of a deal or application, or the extension request, never while the item waits on the partner; `readClock` → due, used, left, ok · at risk ·
+  breached; `sla.ts`: `openClocks`, `slaCounts`, `sweepSla` once per clock start to the queue's role, the holders' managers and the escalation addresses;
+  `POST /api/partners/sla/sweep`). Settings: the staff row's `manager`, `notify.signature`, the SLA tab (hours, days, zone, warning share, escalation), all on the K7
+  settings page. Pages: the templates page under Notifications (the catalogue as filed ledgers by group, the chosen event's form, placeholders, preview on sample
+  values, *Send me a test*, *Back to the code's text*, *Run the digest*), the reports page with its four ledgers and CSV routes, the *Decision due* column on both K7
+  queues, the SLA value on both K7 sheets, the Approval SLA line on the K7 home, the Reports tab. Section 10 P25–P27 (`partner.css`, `PartnerParts` README, CHANGELOG,
+  `design-system.json`). Tests: `partner-notify-model` (9), `partner-sla` (9), `partner-reports` (6) pure; `partner-m8-db` (3 against Postgres: a template on the bell
+  row with the digest rule, the digest and the retention, the SLA sweep noticing a deal and an application once). Verified: `pnpm generate:types`, `npx tsc --noEmit`
+  clean, `pnpm lint` 0 errors (14 pre-existing warnings), `pnpm test:int` with `PARTNER_DB_TESTS=1` 26 files / 235 tests passing (one run under load timed the onboarding
+  test out and left organisation 137 behind, removed by hand; `partner-schemes-db` counted open schemes against a fixed 1 and failed once the dev seed's Festive
+  Push applied to its organisation, so it now measures the counters against the listing). **Clicked in Chrome on localhost**, the K7 side through the probe door
+  (`SUPPORT_DEV_AGENT=probe` set for the check and put back): two PP-TEST deals seeded by a throwaway script, one four days old (K7D-90801, K7D-90802; removed after);
+  the deals queue's *Decision due* column (*due in 1 d 3 h · at risk* on the old one against the 48-hour target, the clock counting Saturday and skipping Sunday), the
+  deal sheet's strip, the reports page (the counters, the four ledgers with their sums, the SLA queue), the templates page: a template written for `deal.note` (subject
+  and body with placeholders, *Email at once*), saved and read back as *Edited* with the preview on sample values, *Send me a test* refused with the reason (no
+  SMTP_URL) and the rendered subject, *Run the digest* (0 emails for 2 rows); a K7 note on K7D-90801 → the partner's bell row carried the template's subject; the
+  settings round trip (target 24 h, a manager and an escalation address saved → the queue read *overdue by 1 d 3 h*, the Reports tab counted 01, *Run the SLA pass* sent
+  one notice, the staff bell showed *Approval SLA breached: K7D-90801* with the overrun → target back to 48). Four things the browser caught, fixed: the templates page's
+  first tab sat on the lede (`tpl-layout` margin); the chosen delivery's hint vanished on the inverted label; the side panel was sticky and taller than a laptop
+  viewport, so *Save* could not be reached (no longer sticky); `savePartnerSettings` wrote the SLA days as numbers into a select of strings, so the save failed
+  ("SLA > Sla > Days is invalid"; now strings, a test reads them back). Also fixed: the deal sheet's *Waiting* counted from the last note rather than the clock start.
+  Known from the dev data: the K7 staff bell had three `sla.breached` rows left by the database test's sweep (the sweep notices every open clock, the test's deals
+  among them); the test now removes them by subject and the three stray rows were deleted. Phone width (390px frames): the templates page's ledgers scroll in their
+  wrap and the form stacks under them, the reports' counters and ledgers stack and scroll (two things fixed there: a ledger's foot line was clipped and the next
+  ledger's tab sat on it, so the foot wraps and the stack's gap clears the tab; the scheme dates no longer break per word), the queue scrolls. **Deviation from §5:** the template body is plain text with
+  placeholders, not Lexical: the mail helper sends text with a plain HTML layout and the bell row is text, so a rich-text body would need a renderer for no gain;
+  reopen if HTML mail is wanted. Nothing committed (Navin commits). **Next:** M9 (hardening, staging, the go-live gate); §7's author questions and §11's defaults
+  still to confirm; the LMS last.

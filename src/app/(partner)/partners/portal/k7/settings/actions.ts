@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 
 import { requireK7Role } from '@/lib/partner/session'
+import { WEEKDAYS } from '@/lib/partner/sla-model'
 import { COLLATERAL_MAX_MB_CEILING, getPartnerSettings, PARTNER_TYPES, savePartnerSettings, STAFF_ROLES, type PartnerSettings, type PartnerType, type StaffRole } from '@/lib/partner/settings'
 
 /* Saves the partner portal's settings from the desk's page in one post (02-build-plan.md decision 5, §5). The staff list comes as
@@ -25,7 +26,7 @@ export async function savePartnerSettingsAction(form: FormData): Promise<void> {
     const email = s(form, `staff_${i}_email`).toLowerCase()
     if (!email && !form.has(`staff_${i}_email`)) break
     const roles = STAFF_ROLES.filter((r) => form.get(`staff_${i}_role_${r}`) === '1') as StaffRole[]
-    if (email.includes('@') && roles.length) staff.push({ email, name: s(form, `staff_${i}_name`), roles })
+    if (email.includes('@') && roles.length) staff.push({ email, name: s(form, `staff_${i}_name`), roles, manager: s(form, `staff_${i}_manager`).toLowerCase() })
   }
   const partnerTypes = PARTNER_TYPES.filter((t) => form.get(`type_${t}`) === '1') as PartnerType[]
   const regions = s(form, 'regions')
@@ -61,7 +62,24 @@ export async function savePartnerSettingsAction(form: FormData): Promise<void> {
       accountNamePattern: s(form, 'crm_accountNamePattern') || cur.crm.accountNamePattern,
       syncMinutes: n(form, 'crm_syncMinutes', cur.crm.syncMinutes, 5),
     },
-    notify: { emailEnabled: on(form, 'notify_emailEnabled'), mailFrom: s(form, 'notify_mailFrom') || cur.notify.mailFrom, bellRetentionDays: n(form, 'notify_bellRetentionDays', cur.notify.bellRetentionDays, 7) },
+    notify: { emailEnabled: on(form, 'notify_emailEnabled'), mailFrom: s(form, 'notify_mailFrom') || cur.notify.mailFrom, bellRetentionDays: n(form, 'notify_bellRetentionDays', cur.notify.bellRetentionDays, 7), signature: s(form, 'notify_signature') || cur.notify.signature },
+    sla: {
+      hours: {
+        mode: s(form, 'sla_mode') === 'always' ? 'always' : 'business',
+        start: /^\d{1,2}:\d{2}$/.test(s(form, 'sla_start')) ? s(form, 'sla_start') : cur.sla.hours.start,
+        end: /^\d{1,2}:\d{2}$/.test(s(form, 'sla_end')) ? s(form, 'sla_end') : cur.sla.hours.end,
+        days: WEEKDAYS.map((w) => w.n).filter((d) => form.get(`sla_day_${d}`) === '1'),
+        timeZone: s(form, 'sla_timeZone') || cur.sla.hours.timeZone,
+      },
+      warnShare: (() => {
+        const v = Number(s(form, 'sla_warnPercent'))
+        return Number.isFinite(v) && v >= 10 && v <= 95 ? v / 100 : cur.sla.warnShare
+      })(),
+      escalateTo: s(form, 'sla_escalateTo')
+        .split(/[\s,;]+/)
+        .map((x) => x.trim().toLowerCase())
+        .filter((x) => x.includes('@')),
+    },
     collateral: { maxMb: Math.min(n(form, 'collateral_maxMb', cur.collateral.maxMb, 1), COLLATERAL_MAX_MB_CEILING) },
     schemes: { disputeDays: n(form, 'schemes_disputeDays', cur.schemes.disputeDays, 0) },
   }

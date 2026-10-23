@@ -102,6 +102,7 @@ export interface Config {
     'partner-scheme-files': PartnerSchemeFile;
     'partner-scheme-registrations': PartnerSchemeRegistration;
     'partner-eligibility': PartnerEligibility;
+    'partner-mail-templates': PartnerMailTemplate;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -158,6 +159,7 @@ export interface Config {
     'partner-scheme-files': PartnerSchemeFilesSelect<false> | PartnerSchemeFilesSelect<true>;
     'partner-scheme-registrations': PartnerSchemeRegistrationsSelect<false> | PartnerSchemeRegistrationsSelect<true>;
     'partner-eligibility': PartnerEligibilitySelect<false> | PartnerEligibilitySelect<true>;
+    'partner-mail-templates': PartnerMailTemplatesSelect<false> | PartnerMailTemplatesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -2604,6 +2606,16 @@ export interface PartnerApplication {
   resumeKey?: string | null;
   submittedAt?: string | null;
   decidedAt?: string | null;
+  /**
+   * The approval SLA notice (M8): sent once per clock; the clock restarts on resubmission.
+   */
+  sla?: {
+    noticedAt?: string | null;
+    /**
+     * The clock start the notice was for.
+     */
+    noticedFor?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -2664,6 +2676,14 @@ export interface PartnerNotification {
    * Where the row leads inside the portal.
    */
   href?: string | null;
+  /**
+   * The template’s rule at the time (M8).
+   */
+  delivery?: ('immediate' | 'digest' | 'bell') | null;
+  /**
+   * When the digest that carried this row went out.
+   */
+  digestAt?: string | null;
   subject: string;
   body?: string | null;
   readAt?: string | null;
@@ -2873,6 +2893,16 @@ export interface PartnerDeal {
    * When the protection-ending notice went out.
    */
   endingNoticeAt?: string | null;
+  /**
+   * The approval SLA notice (M8): sent once per clock; the clock restarts on resubmission.
+   */
+  sla?: {
+    noticedAt?: string | null;
+    /**
+     * The clock start the notice was for.
+     */
+    noticedFor?: string | null;
+  };
   /**
    * The one extension a partner may ask for before the protection ends (FR-DEAL-07, decision 15).
    */
@@ -3345,6 +3375,69 @@ export interface PartnerEligibility {
   createdAt: string;
 }
 /**
+ * Edited on the partner desk (Notifications → Templates); this is the raw form.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-mail-templates".
+ */
+export interface PartnerMailTemplate {
+  id: number;
+  event:
+    | 'application.submitted'
+    | 'application.resubmitted'
+    | 'application.approved'
+    | 'org.legal-edit-proposed'
+    | 'org.legal-edit-approved'
+    | 'org.legal-edit-declined'
+    | 'org.suspended'
+    | 'org.reinstated'
+    | 'user.invited'
+    | 'user.roles-changed'
+    | 'user.disabled'
+    | 'user.enabled'
+    | 'deal.submitted'
+    | 'deal.received'
+    | 'deal.resubmitted'
+    | 'deal.approved'
+    | 'deal.rejected'
+    | 'deal.info-requested'
+    | 'deal.amended'
+    | 'deal.note'
+    | 'deal.extension-requested'
+    | 'deal.extension-granted'
+    | 'deal.extension-declined'
+    | 'deal.withdrawn'
+    | 'deal.protection-ending'
+    | 'deal.expired'
+    | 'scheme.registration.pending'
+    | 'scheme.registration.sent'
+    | 'scheme.registered'
+    | 'scheme.registration.approved'
+    | 'scheme.registration.declined'
+    | 'scheme.results.published'
+    | 'scheme.result.adjusted'
+    | 'scheme.dispute.raised'
+    | 'scheme.dispute.resolved'
+    | 'scheme.payout'
+    | 'sla.breached';
+  /**
+   * Off: the code’s own text is sent.
+   */
+  enabled?: boolean | null;
+  delivery: 'immediate' | 'digest' | 'bell';
+  /**
+   * Blank keeps the code’s subject. {{subject}} is the code’s own.
+   */
+  subject?: string | null;
+  /**
+   * Blank keeps the code’s body. {{body}} is the code’s own; {{link}} where the row leads; {{recipient}} the reader’s name.
+   */
+  body?: string | null;
+  updatedBy?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -3673,6 +3766,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'partner-eligibility';
         value: number | PartnerEligibility;
+      } | null)
+    | ({
+        relationTo: 'partner-mail-templates';
+        value: number | PartnerMailTemplate;
       } | null)
     | ({
         relationTo: 'media';
@@ -4987,6 +5084,12 @@ export interface PartnerApplicationsSelect<T extends boolean = true> {
   resumeKey?: T;
   submittedAt?: T;
   decidedAt?: T;
+  sla?:
+    | T
+    | {
+        noticedAt?: T;
+        noticedFor?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -5022,6 +5125,8 @@ export interface PartnerNotificationsSelect<T extends boolean = true> {
   staffRole?: T;
   event?: T;
   href?: T;
+  delivery?: T;
+  digestAt?: T;
   subject?: T;
   body?: T;
   readAt?: T;
@@ -5146,6 +5251,12 @@ export interface PartnerDealsSelect<T extends boolean = true> {
   decidedAt?: T;
   protectionEnds?: T;
   endingNoticeAt?: T;
+  sla?:
+    | T
+    | {
+        noticedAt?: T;
+        noticedFor?: T;
+      };
   extension?:
     | T
     | {
@@ -5399,6 +5510,20 @@ export interface PartnerEligibilitySelect<T extends boolean = true> {
         at?: T;
         note?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-mail-templates_select".
+ */
+export interface PartnerMailTemplatesSelect<T extends boolean = true> {
+  event?: T;
+  enabled?: T;
+  delivery?: T;
+  subject?: T;
+  body?: T;
+  updatedBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -6175,6 +6300,10 @@ export interface PartnerSetting {
         email: string;
         name?: string | null;
         roles: ('channelManager' | 'dealDeskApprover' | 'trainingAdmin' | 'marketingAdmin' | 'schemeAdmin')[];
+        /**
+         * Told when an approval SLA is breached (M8).
+         */
+        manager?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -6224,7 +6353,7 @@ export interface PartnerSetting {
      */
     extensionDays: number;
     /**
-     * Working hours for a decision before the breach notice (M8).
+     * Working hours for a decision on a deal, an extension or an application before the breach notice (M8; the hours are on the SLA tab).
      */
     approvalSlaHours: number;
     /**
@@ -6292,9 +6421,42 @@ export interface PartnerSetting {
     emailEnabled?: boolean | null;
     mailFrom?: string | null;
     /**
-     * Read notifications older than this are swept (M8).
+     * Read notifications older than this are removed by the daily digest pass (M8).
      */
     bellRetentionDays?: number | null;
+    /**
+     * The closing lines of every email.
+     */
+    signature?: string | null;
+  };
+  /**
+   * The approval SLA (FR-NTF-01, M8): the working hours the decision target counts in, when a queue row is at risk, and who else is told on a breach. The target itself is Deals → approvalSlaHours.
+   */
+  sla?: {
+    mode?: ('business' | 'always') | null;
+    /**
+     * HH:MM
+     */
+    start?: string | null;
+    /**
+     * HH:MM
+     */
+    end?: string | null;
+    timeZone?: string | null;
+    days?: ('1' | '2' | '3' | '4' | '5' | '6' | '0')[] | null;
+    /**
+     * The share of the target after which a queue row reads “at risk” (0.75 = three quarters).
+     */
+    warnShare?: number | null;
+    /**
+     * Told by email on every breach, beside the approvers and their managers.
+     */
+    escalateTo?:
+      | {
+          email: string;
+          id?: string | null;
+        }[]
+      | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -6563,6 +6725,7 @@ export interface PartnerSettingsSelect<T extends boolean = true> {
         email?: T;
         name?: T;
         roles?: T;
+        manager?: T;
         id?: T;
       };
   channelManagersApproveDeals?: T;
@@ -6619,6 +6782,23 @@ export interface PartnerSettingsSelect<T extends boolean = true> {
         emailEnabled?: T;
         mailFrom?: T;
         bellRetentionDays?: T;
+        signature?: T;
+      };
+  sla?:
+    | T
+    | {
+        mode?: T;
+        start?: T;
+        end?: T;
+        timeZone?: T;
+        days?: T;
+        warnShare?: T;
+        escalateTo?:
+          | T
+          | {
+              email?: T;
+              id?: T;
+            };
       };
   updatedAt?: T;
   createdAt?: T;
