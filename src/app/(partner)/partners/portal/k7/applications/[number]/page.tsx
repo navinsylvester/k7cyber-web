@@ -6,12 +6,15 @@ import React from 'react'
 import { ApplicationSummary } from '@/components/partner/Join'
 import { K7Nav } from '@/components/partner/K7Nav'
 import { Aid, AppStateTag, Field, Flash, Pid, Strip, TypeTag } from '@/components/partner/Parts'
+import { SlaValue } from '@/components/partner/Sla'
 import { Crumbs } from '@/components/support/Parts'
 import { objectAudit } from '@/lib/partner/audit'
 import { outboxOf } from '@/lib/partner/mirror'
 import { findByNumber, K7_APPLICATIONS, orgOfApplication } from '@/lib/partner/registration'
 import { requireK7Role } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
+import { readingFor } from '@/lib/partner/sla'
+import { applicationClock } from '@/lib/partner/sla-model'
 import { DECISION_LABEL, decisionPath, type Decision } from '@/lib/partner/status'
 import { dmy, dmyHm, relative } from '@/lib/support/format'
 
@@ -31,6 +34,7 @@ export default async function K7ApplicationPage({ params, searchParams }: { para
   const decisions = (['approve', 'clarify', 'reject'] as Decision[]).filter((d) => decisionPath(app.status, d).length)
   const mineToTake = app.status === 'submitted' || (app.status === 'underReview' && app.assignee.email !== me.email)
   const job = jobs[0]
+  const clock = applicationClock(app)
   return (
     <>
       <K7Nav active="applications" roles={me.roles} />
@@ -64,6 +68,7 @@ export default async function K7ApplicationPage({ params, searchParams }: { para
             { label: 'Type', value: <TypeTag type={app.type} /> },
             { label: 'Assigned to', value: app.assignee.name || app.assignee.email || '—' },
             { label: 'Waiting', value: app.status === 'submitted' || app.status === 'underReview' ? relative(app.decisions[app.decisions.length - 1]?.at ?? app.submittedAt ?? app.createdAt) : app.status === 'clarification' ? 'On the partner' : app.decidedAt ? `Decided ${dmy(app.decidedAt)}` : '—' },
+            ...(clock ? [{ label: 'Decision due', value: <SlaValue reading={readingFor(clock, settings)} sla={settings.sla} hours={settings.deals.approvalSlaHours} /> }] : []),
             ...(org ? [{ label: 'Organisation', value: <Pid id={org.partnerId} /> }] : []),
           ]}
         />

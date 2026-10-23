@@ -11,6 +11,7 @@ import { audit, type Actor } from './audit'
 import { nextId } from './ids'
 import { enqueueOutbox } from './mirror'
 import { notify } from './notify'
+import { appVars } from './notify-model'
 import { clarificationNote, EMPTY_COMPANY, normaliseWebsite, readyToSubmit, type Application, type Company, type Contact, type DecisionRow } from './registration-model'
 import type { K7Context } from './session'
 import { getPartnerSettings, PARTNER_TYPE_LABEL, PARTNER_TYPES, type PartnerType } from './settings'
@@ -196,6 +197,7 @@ export const submitApplication = async (a: Application, termsVersion: string): P
   await audit({ actor, object: 'partner-applications', objectId: app.id, objectLabel: app.number, action: resubmit ? 'application.resubmitted' : 'application.submitted', from: a.status, to: 'submitted', comment: `Terms ${termsVersion} accepted` })
   await notify({
     event: resubmit ? 'application.resubmitted' : 'application.submitted',
+    vars: appVars(app, PARTNER_TYPE_LABEL[app.type]),
     subject: `${resubmit ? 'Resubmitted' : 'New'} application ${app.number}: ${app.company.legalName}`,
     body: `${describe(app)}. ${resubmit ? 'The applicant answered the clarification.' : 'Waiting for a Channel Manager to review it.'}`,
     href: `${K7_APPLICATIONS}/${app.number}`,
@@ -326,6 +328,7 @@ export const approveApplication = async (a: Application, comment: string, me: K7
   await audit({ actor, object: 'partner-users', objectId: user.id, objectLabel: user.email, action: 'user.invited', to: 'invited', orgId, comment: 'Partner Admin, from the application’s primary contact' })
   await notify({
     event: 'application.approved',
+    vars: { ...appVars(app, PARTNER_TYPE_LABEL[a.type]), partner: a.company.legalName, partnerId },
     subject: `Welcome to the K7 Partner Programme: ${partnerId}`,
     body: `${a.company.legalName} is approved as a ${PARTNER_TYPE_LABEL[a.type]}. Your partner ID is ${partnerId}. Sign in with this email address at ${getServerSideURL()}/partners/portal/sign-in: we send a one-time code, no password.${comment ? `\n\nFrom your Channel Manager: ${comment}` : ''}`,
     href: '/partners/portal',

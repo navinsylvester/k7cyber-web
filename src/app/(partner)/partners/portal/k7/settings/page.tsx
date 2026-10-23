@@ -6,6 +6,7 @@ import { K7Nav } from '@/components/partner/K7Nav'
 import { Field, Flash } from '@/components/partner/Parts'
 import { requireK7Role } from '@/lib/partner/session'
 import { getPartnerSettings, PARTNER_TYPE_LABEL, PARTNER_TYPES, STAFF_ROLE_LABEL, STAFF_ROLES } from '@/lib/partner/settings'
+import { WEEKDAYS } from '@/lib/partner/sla-model'
 import { serviceConfigured } from '@/lib/dataverse/auth'
 
 import { savePartnerSettingsAction } from './actions'
@@ -18,7 +19,8 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
   const sp = await searchParams
   const me = await requireK7Role(['channelManager'], '/partners/portal/k7/settings')
   const s = await getPartnerSettings()
-  const rows = [...s.staff, { email: '', name: '', roles: [] as (typeof STAFF_ROLES)[number][] }, { email: '', name: '', roles: [] as (typeof STAFF_ROLES)[number][] }]
+  const blank = () => ({ email: '', name: '', roles: [] as (typeof STAFF_ROLES)[number][], manager: '' })
+  const rows = [...s.staff, blank(), blank()]
   const check = (name: string, label: string, checked: boolean, hint?: string) => (
     <label className="check" key={name}>
       <input type="checkbox" name={name} value="1" defaultChecked={checked} />
@@ -46,7 +48,7 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
           <div className="span-2">
             <h2 className="sub-head">K7 staff</h2>
             <p className="hint" style={{ marginBottom: 16 }}>
-              By work email, as they sign in with Microsoft. One person may hold several roles; a row without an email or a role is dropped. Two blank rows are there to add people.
+              By work email, as they sign in with Microsoft. One person may hold several roles; a row without an email or a role is dropped. Two blank rows are there to add people. The manager is told, with the approver, when an approval SLA is breached.
             </p>
             <div className="table-wrap">
               <table className="dtable staff-table">
@@ -54,6 +56,7 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                   <tr>
                     <th scope="col">Work email</th>
                     <th scope="col">Name</th>
+                    <th scope="col">Manager</th>
                     {STAFF_ROLES.map((r) => (
                       <th scope="col" key={r}>
                         {STAFF_ROLE_LABEL[r]}
@@ -69,6 +72,9 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                       </td>
                       <td>
                         <input name={`staff_${i}_name`} defaultValue={p.name} placeholder="Name" aria-label={`Row ${i + 1} name`} />
+                      </td>
+                      <td>
+                        <input name={`staff_${i}_manager`} type="email" defaultValue={p.manager} placeholder="manager@k7computing.com" aria-label={`Row ${i + 1} manager`} title="Told when an approval SLA is breached" />
                       </td>
                       {STAFF_ROLES.map((r) => (
                         <td className="tick" key={r}>
@@ -117,7 +123,7 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                 <Field id="deals_extensionDays" label="Extension (days)">
                   <input id="deals_extensionDays" name="deals_extensionDays" inputMode="numeric" defaultValue={s.deals.extensionDays} />
                 </Field>
-                <Field id="deals_approvalSlaHours" label="Decision within (working hours)" hint="Applications and deals; the breach notice arrives with M8.">
+                <Field id="deals_approvalSlaHours" label="Decision within (working hours)" hint="Deals, extensions and applications; the working hours and who else is told are under Approval SLA below.">
                   <input id="deals_approvalSlaHours" name="deals_approvalSlaHours" inputMode="numeric" defaultValue={s.deals.approvalSlaHours} />
                 </Field>
                 <Field id="deals_endingNoticeDays" label="Protection-ending notice (days before)" hint="The sweep tells the partner and the approvers once.">
@@ -185,8 +191,48 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                 <Field id="notify_mailFrom" label="Sender" span>
                   <input id="notify_mailFrom" name="notify_mailFrom" defaultValue={s.notify.mailFrom} />
                 </Field>
-                <Field id="notify_bellRetentionDays" label="Keep read notifications (days)">
+                <Field id="notify_bellRetentionDays" label="Keep read notifications (days)" hint="The daily digest pass removes read rows older than this.">
                   <input id="notify_bellRetentionDays" name="notify_bellRetentionDays" inputMode="numeric" defaultValue={s.notify.bellRetentionDays} />
+                </Field>
+                <Field id="notify_signature" label="Signature" span hint="The closing lines of every email.">
+                  <textarea id="notify_signature" name="notify_signature" rows={2} defaultValue={s.notify.signature} />
+                </Field>
+                <p className="hint span-2" style={{ margin: 0 }}>
+                  <Link className="link-u" href="/partners/portal/k7/notifications/templates">
+                    The templates per event and the digest
+                  </Link>
+                </p>
+              </div>
+            </div>
+            <div>
+              <h2 className="sub-head">Approval SLA</h2>
+              <div className="form-grid">
+                <Field id="sla_mode" label="The clock runs" select>
+                  <select id="sla_mode" name="sla_mode" defaultValue={s.sla.hours.mode}>
+                    <option value="business">In working hours</option>
+                    <option value="always">Around the clock</option>
+                  </select>
+                </Field>
+                <Field id="sla_timeZone" label="Time zone">
+                  <input id="sla_timeZone" name="sla_timeZone" defaultValue={s.sla.hours.timeZone} />
+                </Field>
+                <Field id="sla_start" label="Working day from" hint="HH:MM">
+                  <input id="sla_start" name="sla_start" defaultValue={s.sla.hours.start} placeholder="09:00" />
+                </Field>
+                <Field id="sla_end" label="to" hint="HH:MM">
+                  <input id="sla_end" name="sla_end" defaultValue={s.sla.hours.end} placeholder="18:00" />
+                </Field>
+                <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
+                  <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+                    Working days
+                  </legend>
+                  <div className="checks">{WEEKDAYS.map((w) => check(`sla_day_${w.n}`, w.label, s.sla.hours.days.includes(w.n)))}</div>
+                </fieldset>
+                <Field id="sla_warnPercent" label="At risk from (% of the target)" hint="A queue row reads “at risk” once this share of the target has run.">
+                  <input id="sla_warnPercent" name="sla_warnPercent" inputMode="numeric" defaultValue={Math.round(s.sla.warnShare * 100)} />
+                </Field>
+                <Field id="sla_escalateTo" label="Also tell on a breach" hint="Addresses, one per line or comma-separated, beside the approvers and their managers.">
+                  <textarea id="sla_escalateTo" name="sla_escalateTo" rows={2} defaultValue={s.sla.escalateTo.join('\n')} placeholder="head.of.channel@k7computing.com" />
                 </Field>
               </div>
             </div>

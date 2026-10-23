@@ -4,11 +4,14 @@ import React from 'react'
 
 import { K7, K7Nav } from '@/components/partner/K7Nav'
 import { Aid, AppStateTag, Empty, Flash, TypeTag } from '@/components/partner/Parts'
+import { SlaTag } from '@/components/partner/Sla'
 import { Pager, qs } from '@/components/support/Parts'
 import { owedOutboxCount } from '@/lib/partner/mirror'
 import { applicationCounts, K7_APPLICATIONS, listApplications, type ApplicationFilter } from '@/lib/partner/registration'
 import { requireK7Role } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
+import { readingFor } from '@/lib/partner/sla'
+import { applicationClock } from '@/lib/partner/sla-model'
 import { APPLICATION_STATUS_LABEL, type ApplicationStatus } from '@/lib/partner/status'
 import { dmy, relative } from '@/lib/support/format'
 
@@ -114,6 +117,7 @@ export default async function K7ApplicationsPage({ searchParams }: { searchParam
                     <th scope="col">Status</th>
                     <th scope="col">Assigned</th>
                     <th scope="col">{status === 'decided' ? 'Decided' : 'Submitted'}</th>
+                    {status !== 'decided' && <th scope="col">Decision due</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -145,6 +149,14 @@ export default async function K7ApplicationsPage({ searchParams }: { searchParam
                       <td className="num" title={status === 'decided' ? (a.decidedAt ?? '') : (a.submittedAt ?? '')}>
                         {status === 'decided' ? (a.decidedAt ? dmy(a.decidedAt) : '—') : a.submittedAt ? relative(a.submittedAt) : '—'}
                       </td>
+                      {status !== 'decided' && (
+                        <td className="status">
+                          {(() => {
+                            const clock = applicationClock(a)
+                            return clock ? <SlaTag reading={readingFor(clock, settings)} sla={settings.sla} /> : <span className="muted">{a.status === 'clarification' ? 'on the partner' : '—'}</span>
+                          })()}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

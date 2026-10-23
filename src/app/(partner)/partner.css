@@ -229,3 +229,47 @@ tbody + tbody .lib-band th { padding-top: 26px; }
 .dispute h2 { margin: 0 0 8px; display: flex; align-items: center; gap: 10px; }
 .dispute.is-open h2 .pixel { background: var(--signal); }
 .dispute blockquote { margin: 10px 0 0; padding-left: 14px; border-left: 2px solid var(--ln); font-size: 15px; color: var(--mu); }
+
+/* ---------- P25 The templates: the catalogue as filed ledgers by group, the chosen event's form and preview beside (M8) ---------- */
+.tpl-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(32px, 4cqw, 56px); align-items: start; margin-top: 52px; }
+@container (min-width: 1080px) { .tpl-layout { grid-template-columns: minmax(0, 1fr) 420px; } }
+.tpl-groups { display: grid; gap: 28px; }
+.tpl-groups .ledger { margin: 0; }
+.tpl-table td.title { min-width: 220px; }
+.tpl-table td.title a[aria-current] { font-weight: 600; }
+.tpl-table tr.is-on td { box-shadow: inset 3px 0 0 var(--signal); }
+.tpl-table .muted.mono { font: 400 11px/1.5 var(--font-mono); letter-spacing: .02em; }
+.tpl-side { display: grid; gap: 24px; align-self: start; }
+.tpl-side .decide h2 { font-size: 22px; letter-spacing: -.02em; }
+.tpl-form .choice { grid-template-columns: minmax(0, 1fr); }
+.tpl-form .choice label { padding: 10px 14px; }
+.tpl-form .choice .t { font-size: 15px; }
+.tpl-form .choice .hint { font-size: 13px; }
+.tpl-form .choice label:has(input:checked) .hint, .tpl-form .choice label:hover .hint { color: inherit; opacity: .75; }
+.tpl-vars { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.tpl-vars code { font: 400 12px/1.6 var(--font-mono); letter-spacing: .02em; padding: 1px 7px; box-shadow: inset 0 0 0 1px var(--ln); color: var(--acc); }
+.tpl-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--ln); }
+.tpl-preview .pending-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.tpl-preview strong { display: block; font-size: 17px; font-weight: 600; letter-spacing: -.01em; margin-bottom: 10px; }
+.tpl-preview pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 400 14px/1.6 var(--font-sans); color: var(--mu); }
+
+/* ---------- P26 The SLA reading: a tag that is quiet, then state, then signal; the due instant in mono beside it on a strip ---------- */
+.sla-tag { white-space: nowrap; }
+.tag-quiet { background: transparent; color: var(--mu); box-shadow: inset 0 0 0 1px var(--ln); }
+.sla-value { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.sla-due { font: 400 12px/1.5 var(--font-mono); letter-spacing: .02em; color: var(--mu); white-space: nowrap; }
+.dtable tr.is-breached td.title a { color: var(--acc); }
+
+/* ---------- P27 The reports: counters, then one filed ledger per report that sums, the CSV on its tab ---------- */
+.rep-cards { margin-bottom: clamp(32px, 4cqw, 48px); }
+.rep-stack { display: grid; gap: clamp(48px, 5cqw, 60px); }
+.rep .ledger-foot .label { white-space: normal; line-height: 1.6; }
+.rep-table td.text.dates { white-space: nowrap; }
+.rep-stack .ledger { margin: 0; }
+.rep-tab { display: inline-flex; align-items: center; gap: 14px; }
+.rep-tab .btn { margin: -6px 0; }
+.rep-table tfoot .sum td { padding-top: 12px; border-top: 3px double var(--fg); font-weight: 500; }
+.rep-table tfoot .sum td:first-child { text-align: left; }
+.rep-table td.num.is-won { color: var(--signal); font-weight: 500; }
+.rep-table td.num.is-hot { color: var(--acc); font-weight: 500; }
+.rep-table td.title .muted { font-size: 13px; }

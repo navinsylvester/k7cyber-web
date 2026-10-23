@@ -9,6 +9,7 @@ import { canRequestExtension, conflictsAmong, customerKey, emailDomain, formatIn
 import { nextId } from './ids'
 import { enqueueOutbox } from './mirror'
 import { notify, type Recipient } from './notify'
+import { dealVars } from './notify-model'
 import { normaliseMobile, type FieldErrors } from './registration-model'
 import { orgRel, orgWhere, type OrgScope } from './scope'
 import type { K7Context, PartnerContext } from './session'
@@ -314,14 +315,14 @@ export const submitDeal = async (me: PartnerContext, input: DealInput, files: De
   }
   await audit({ actor: me.actor, object: 'partner-deals', objectId: deal.id, objectLabel: deal.dealId, action: 'deal.submitted', to: 'submitted', orgId: me.scope.orgId, comment: summary(deal), meta: { conflicts: conflicts.length } })
   await notify({
-    event: 'deal.submitted',
+    event: 'deal.submitted', vars: dealVars(deal),
     subject: `New deal ${deal.dealId}: ${deal.customer.name} (${me.org.partnerId})`,
     body: `${me.org.name} registered ${summary(deal)}, closing ${deal.closeDate.slice(0, 10)}.${conflicts.length ? ` ${conflicts.length} possible conflict${conflicts.length === 1 ? '' : 's'} with other registrations.` : ' No conflict found among portal deals.'}`,
     href: `${K7_DEALS}/${deal.dealId}`,
     to: { kind: 'staff', role: 'dealDeskApprover' },
   })
   await notify({
-    event: 'deal.received',
+    event: 'deal.received', vars: dealVars(deal),
     subject: `Deal ${deal.dealId} registered: ${deal.customer.name}`,
     body: `We have your registration for ${deal.customer.name} (${formatInr(deal.expectedValue)}, closing ${deal.closeDate.slice(0, 10)}). A Deal Desk Approver will review it; you are told at every step.`,
     href: `${PARTNER_DEALS}/${deal.dealId}`,
@@ -351,7 +352,7 @@ export const resubmitDeal = async (me: PartnerContext, dl: Deal, input: DealInpu
   })
   await audit({ actor: me.actor, object: 'partner-deals', objectId: deal.id, objectLabel: deal.dealId, action: 'deal.resubmitted', from: dl.status, to: 'submitted', orgId: me.scope.orgId, comment: reply.trim() || summary(deal) })
   await notify({
-    event: 'deal.resubmitted',
+    event: 'deal.resubmitted', vars: dealVars(deal),
     subject: `Deal ${deal.dealId} resubmitted: ${deal.customer.name} (${me.org.partnerId})`,
     body: `${me.org.name} answered your request.${reply.trim() ? ` "${reply.trim().slice(0, 300)}"` : ''} ${summary(deal)}.`,
     href: `${K7_DEALS}/${deal.dealId}`,
@@ -370,9 +371,9 @@ export const addDealNote = async (who: { side: 'partner' | 'k7'; actor: Actor; n
   const deal = await update(dl.id, { thread: [...threadData(dl), entryData({ kind: 'note', side: who.side, byName: who.name, byEmail: who.email, at: now, to: '', title: '', text: t, fileIds })] })
   await audit({ actor: who.actor, object: 'partner-deals', objectId: deal.id, objectLabel: deal.dealId, action: 'deal.note', orgId: deal.orgId, comment: `${t.slice(0, 200)}${fileIds.length ? ` (+${fileIds.length} file${fileIds.length === 1 ? '' : 's'})` : ''}` })
   if (who.side === 'partner') {
-    await notify({ event: 'deal.note', subject: `Note on deal ${deal.dealId} from ${deal.orgName}`, body: t.slice(0, 500) || `${fileIds.length} file(s) attached.`, href: `${K7_DEALS}/${deal.dealId}`, to: { kind: 'staff', role: 'dealDeskApprover' } })
+    await notify({ event: 'deal.note', vars: dealVars(deal), subject: `Note on deal ${deal.dealId} from ${deal.orgName}`, body: t.slice(0, 500) || `${fileIds.length} file(s) attached.`, href: `${K7_DEALS}/${deal.dealId}`, to: { kind: 'staff', role: 'dealDeskApprover' } })
   } else {
-    await notify({ event: 'deal.note', subject: `K7 added a note on deal ${deal.dealId}`, body: t.slice(0, 500) || `${fileIds.length} file(s) attached.`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: await partnerRecipients(deal) })
+    await notify({ event: 'deal.note', vars: dealVars(deal), subject: `K7 added a note on deal ${deal.dealId}`, body: t.slice(0, 500) || `${fileIds.length} file(s) attached.`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: await partnerRecipients(deal) })
   }
   return { ok: true, deal }
 }
@@ -385,7 +386,7 @@ export const withdrawDeal = async (me: PartnerContext, dl: Deal, reason: string)
   const deal = await update(dl.id, { status: 'withdrawn', decidedAt: now, thread: [...threadData(dl), entryData({ kind: 'decision', side: 'partner', byName: me.user.name, byEmail: me.user.email, at: now, to: 'withdrawn', title: 'Withdrawn', text: reason.trim() })] })
   await audit({ actor: me.actor, object: 'partner-deals', objectId: deal.id, objectLabel: deal.dealId, action: 'deal.withdrawn', from: dl.status, to: 'withdrawn', orgId: deal.orgId, comment: reason.trim() })
   await notify({
-    event: 'deal.withdrawn',
+    event: 'deal.withdrawn', vars: dealVars(deal),
     subject: `Deal ${deal.dealId} withdrawn by ${deal.orgName}`,
     body: `${deal.customer.name}: ${reason.trim() || 'no reason given'}.${wasProtected ? ' The protection is released; the opportunity in the CRM is for sales to close.' : ''}`,
     href: `${K7_DEALS}/${deal.dealId}`,
@@ -406,7 +407,7 @@ export const requestExtension = async (me: PartnerContext, dl: Deal, reason: str
   })
   await audit({ actor: me.actor, object: 'partner-deals', objectId: deal.id, objectLabel: deal.dealId, action: 'deal.extension-requested', from: 'approved', to: 'extensionRequested', orgId: deal.orgId, comment: reason.trim() })
   await notify({
-    event: 'deal.extension-requested',
+    event: 'deal.extension-requested', vars: dealVars(deal),
     subject: `Extension asked on deal ${deal.dealId} (${deal.orgPartnerId})`,
     body: `${deal.orgName} asks to extend the protection on ${deal.customer.name}, which ends ${deal.protectionEnds ? deal.protectionEnds.slice(0, 10) : '—'}. Reason: ${reason.trim()}`,
     href: `${K7_DEALS}/${deal.dealId}`,
@@ -456,7 +457,7 @@ export const decideDeal = async (dl: Deal, decision: DealDecision, note: string,
   const to_ = await partnerRecipients(deal)
   if (approving) {
     await notify({
-      event: 'deal.approved',
+      event: 'deal.approved', vars: dealVars(deal),
       subject: `Deal ${deal.dealId} approved: ${deal.customer.name}`,
       body: `Your registration for ${deal.customer.name} is approved${lines.length ? ' with changes' : ''} and protected until ${protectionEnds!.slice(0, 10)} (${settings.deals.protectionDays} days).${changed ? ` Changed by K7: ${changed}.` : ''}${text ? ` ${text}` : ''} The deal is being created in K7's CRM; its sales stage will show on your dashboard.`,
       href: `${PARTNER_DEALS}/${deal.dealId}`,
@@ -465,9 +466,9 @@ export const decideDeal = async (dl: Deal, decision: DealDecision, note: string,
     const job = await enqueueOutbox({ kind: 'opportunity.create', orgId: deal.orgId, object: 'partner-deals', objectId: deal.id, objectLabel: deal.dealId, payload: { approverUserId: me.userId, approverEmail: me.email, approvedAt: now, ownerRule: settings.crm.ownerRule, ownerId: settings.crm.ownerId }, actor: me.email || me.name })
     if (!job) console.error(`[partner deals] the CRM job for ${deal.dealId} could not be queued`)
   } else if (to === 'rejected') {
-    await notify({ event: 'deal.rejected', subject: `Deal ${deal.dealId} not accepted: ${deal.customer.name}`, body: `K7 did not accept the registration for ${deal.customer.name}. Reason: ${text}`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: to_ })
+    await notify({ event: 'deal.rejected', vars: dealVars(deal), subject: `Deal ${deal.dealId} not accepted: ${deal.customer.name}`, body: `K7 did not accept the registration for ${deal.customer.name}. Reason: ${text}`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: to_ })
   } else {
-    await notify({ event: 'deal.info-requested', subject: `Deal ${deal.dealId}: K7 needs something from you`, body: `About ${deal.customer.name}: ${text}\n\nOpen the deal, edit the registration and resubmit it.`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: to_ })
+    await notify({ event: 'deal.info-requested', vars: dealVars(deal), subject: `Deal ${deal.dealId}: K7 needs something from you`, body: `About ${deal.customer.name}: ${text}\n\nOpen the deal, edit the registration and resubmit it.`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: to_ })
   }
   return { ok: true, deal }
 }
@@ -484,7 +485,7 @@ export const amendDeal = async (dl: Deal, changes: DealChanges, note: string, me
   for (const l of lines) Object.assign(data, l.data)
   const deal = await update(dl.id, data)
   await audit({ actor: me.actor, object: 'partner-deals', objectId: deal.id, objectLabel: deal.dealId, action: 'deal.amended', orgId: deal.orgId, comment: text, meta: { changes: lines.map(({ data: _d, ...rest }) => rest) } })
-  await notify({ event: 'deal.amended', subject: `Deal ${deal.dealId} amended by K7`, body: `${changed}.${note.trim() ? ` ${note.trim()}` : ''} The CRM keeps its own figures; the dashboard shows them.`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: await partnerRecipients(deal) })
+  await notify({ event: 'deal.amended', vars: dealVars(deal), subject: `Deal ${deal.dealId} amended by K7`, body: `${changed}.${note.trim() ? ` ${note.trim()}` : ''} The CRM keeps its own figures; the dashboard shows them.`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: await partnerRecipients(deal) })
   return { ok: true, deal }
 }
 
@@ -508,7 +509,7 @@ export const decideExtension = async (dl: Deal, grant: boolean, note: string, me
   })
   await audit({ actor: me.actor, object: 'partner-deals', objectId: deal.id, objectLabel: deal.dealId, action: grant ? 'deal.extension-granted' : 'deal.extension-declined', from: 'extensionRequested', to, orgId: deal.orgId, comment: grant ? `Until ${protectionEnds!.slice(0, 10)}${text ? `. ${text}` : ''}` : text })
   await notify({
-    event: grant ? 'deal.extension-granted' : 'deal.extension-declined',
+    event: grant ? 'deal.extension-granted' : 'deal.extension-declined', vars: dealVars(deal),
     subject: grant ? `Deal ${deal.dealId}: protection extended` : `Deal ${deal.dealId}: extension not granted`,
     body: grant ? `${deal.customer.name} is now protected until ${protectionEnds!.slice(0, 10)}.${text ? ` ${text}` : ''}` : `K7 did not extend the protection on ${deal.customer.name}. Reason: ${text}${expiredAlready ? ' The protection period has ended.' : ` It ends ${deal.protectionEnds ? deal.protectionEnds.slice(0, 10) : '—'}.`}`,
     href: `${PARTNER_DEALS}/${deal.dealId}`,
@@ -534,7 +535,7 @@ export const sweepDeals = async (now = new Date()): Promise<SweepResult> => {
     try {
       const deal = await update(dl.id, { status: 'expired', thread: [...threadData(dl), entryData({ kind: 'system', side: 'system', byName: 'Portal', byEmail: '', at: iso, to: 'expired', title: 'Protection ended', text: `The protection period ended on ${dl.protectionEnds!.slice(0, 10)} without an extension.` })] })
       await audit({ actor: SYSTEM, object: 'partner-deals', objectId: deal.id, objectLabel: deal.dealId, action: 'deal.expired', from: 'approved', to: 'expired', orgId: deal.orgId })
-      await notify({ event: 'deal.expired', subject: `Deal ${deal.dealId}: protection ended`, body: `The protection on ${deal.customer.name} ended on ${dl.protectionEnds!.slice(0, 10)}. If the deal is still live, register it again.`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: await partnerRecipients(deal) })
+      await notify({ event: 'deal.expired', vars: dealVars(deal), subject: `Deal ${deal.dealId}: protection ended`, body: `The protection on ${deal.customer.name} ended on ${dl.protectionEnds!.slice(0, 10)}. If the deal is still live, register it again.`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: await partnerRecipients(deal) })
       r.expired.push(deal.dealId)
     } catch (e) {
       r.errors.push(`${dl.dealId}: ${(e as Error).message}`)
@@ -547,8 +548,8 @@ export const sweepDeals = async (now = new Date()): Promise<SweepResult> => {
     try {
       const deal = await update(dl.id, { endingNoticeAt: iso })
       const when = dl.protectionEnds!.slice(0, 10)
-      await notify({ event: 'deal.protection-ending', subject: `Deal ${deal.dealId}: protection ends ${when}`, body: `The protection on ${deal.customer.name} ends on ${when}.${dl.extension.requestedAt ? '' : ' You may ask for one extension before then.'}`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: await partnerRecipients(deal) })
-      await notify({ event: 'deal.protection-ending', subject: `Deal ${deal.dealId} (${deal.orgPartnerId}): protection ends ${when}`, body: `${deal.orgName}'s registration for ${deal.customer.name} ends its protection on ${when}.`, href: `${K7_DEALS}/${deal.dealId}`, to: { kind: 'staff', role: 'dealDeskApprover' } })
+      await notify({ event: 'deal.protection-ending', vars: dealVars(deal), subject: `Deal ${deal.dealId}: protection ends ${when}`, body: `The protection on ${deal.customer.name} ends on ${when}.${dl.extension.requestedAt ? '' : ' You may ask for one extension before then.'}`, href: `${PARTNER_DEALS}/${deal.dealId}`, to: await partnerRecipients(deal) })
+      await notify({ event: 'deal.protection-ending', vars: dealVars(deal), subject: `Deal ${deal.dealId} (${deal.orgPartnerId}): protection ends ${when}`, body: `${deal.orgName}'s registration for ${deal.customer.name} ends its protection on ${when}.`, href: `${K7_DEALS}/${deal.dealId}`, to: { kind: 'staff', role: 'dealDeskApprover' } })
       r.noticed.push(deal.dealId)
     } catch (e) {
       r.errors.push(`${dl.dealId}: ${(e as Error).message}`)
