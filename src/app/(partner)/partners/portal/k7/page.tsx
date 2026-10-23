@@ -4,6 +4,7 @@ import React from 'react'
 
 import { K7Nav } from '@/components/partner/K7Nav'
 import { StaffRoleTags, Strip } from '@/components/partner/Parts'
+import { collateralCounts } from '@/lib/partner/collateral'
 import { dealCounts } from '@/lib/partner/deals'
 import { owedOutboxCount } from '@/lib/partner/mirror'
 import { unreadCount } from '@/lib/partner/notify'
@@ -20,7 +21,7 @@ const OPENS: Record<StaffRole, string> = {
   channelManager: 'applications, every partner organisation, waivers and suspensions',
   dealDeskApprover: 'registered deals, conflicts, decisions and extensions',
   trainingAdmin: 'courses, tests and question banks (last phase)',
-  marketingAdmin: 'collateral and schemes in the Payload admin',
+  marketingAdmin: 'the collateral library (edited in the Payload admin, read here) and schemes',
   schemeAdmin: 'scheme registrations, eligibility runs and payouts',
 }
 
@@ -29,16 +30,17 @@ export default async function K7HomePage() {
   const settings = await getPartnerSettings()
   const cm = me.roles.includes('channelManager')
   const dda = me.roles.includes('dealDeskApprover')
-  const [unread, counts, owed, orgs, deals] = await Promise.all([unreadCount({ kind: 'staff', roles: me.roles }), cm ? applicationCounts() : null, cm || dda ? owedOutboxCount() : 0, cm ? orgCounts() : null, dda ? dealCounts() : null])
+  const mkt = me.roles.includes('marketingAdmin')
+  const [unread, counts, owed, orgs, deals, library] = await Promise.all([unreadCount({ kind: 'staff', roles: me.roles }), cm ? applicationCounts() : null, cm || dda ? owedOutboxCount() : 0, cm ? orgCounts() : null, dda ? dealCounts() : null, mkt ? collateralCounts() : null])
   return (
     <>
-    <K7Nav active="home" roles={me.roles} counts={{ applications: counts?.submitted, partners: orgs?.edits, deals: deals?.open }} />
+    <K7Nav active="home" roles={me.roles} counts={{ applications: counts?.submitted, partners: orgs?.edits, deals: deals?.open, collateral: library?.withoutFile }} />
     <section className="sheet ws g-paper">
       <div className="ws-head">
         <div className="ws-head-main">
           <span className="label muted">Partner desk · K7 staff</span>
           <h1 className="h-util">{me.name || me.email}.</h1>
-          <p className="lede">The channel programme’s back office: applications, deals, partners and schemes, each behind its role.</p>
+          <p className="lede">The channel programme’s back office: applications, deals, partners, collateral and schemes, each behind its role.</p>
         </div>
       </div>
       <Strip
@@ -49,6 +51,7 @@ export default async function K7HomePage() {
           ...(counts ? [{ label: 'Applications', value: <Link href="/partners/portal/k7/applications">{String(counts.submitted + counts.underReview).padStart(2, '0')} open · {String(counts.submitted).padStart(2, '0')} new</Link> }] : [{ label: 'Staff listed', value: String(settings.staff.length).padStart(2, '0') }]),
           ...(orgs ? [{ label: 'Partners', value: <Link href="/partners/portal/k7/partners">{String(orgs.approved).padStart(2, '0')} approved{orgs.edits ? ` · ${String(orgs.edits).padStart(2, '0')} edits waiting` : ''}</Link> }] : []),
           ...(deals ? [{ label: 'Deals', value: <Link href="/partners/portal/k7/deals">{String(deals.submitted).padStart(2, '0')} new · {String(deals.extensionRequested).padStart(2, '0')} extensions · {String(deals.approved).padStart(2, '0')} protected</Link> }] : []),
+          ...(library ? [{ label: 'Collateral', value: <Link href="/partners/portal/k7/collateral">{String(library.published).padStart(2, '0')} published{library.withoutFile ? ` · ${String(library.withoutFile).padStart(2, '0')} without a file` : ''} · {String(library.downloads30).padStart(2, '0')} downloads in 30 days</Link> }] : []),
         ]}
       />
       <div className="phome">

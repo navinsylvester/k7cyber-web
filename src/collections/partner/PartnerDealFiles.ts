@@ -3,6 +3,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 import { roleAccess } from '../../access/roles'
+import { maxUpload } from '../uploadLimit'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -28,6 +29,7 @@ export const PartnerDealFiles: CollectionConfig = {
       ],
     },
   ],
+  hooks: { beforeValidate: [maxUpload(DEAL_FILE_MAX)] },
   upload: {
     staticDir: path.resolve(dirname, '../../../uploads/partner-deals'),
     mimeTypes: DEAL_FILE_MIME,

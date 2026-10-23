@@ -9,7 +9,8 @@ import { roleAccess } from '../../access/roles'
 export const PartnerProducts: CollectionConfig = {
   slug: 'partner-products',
   labels: { singular: 'Partner product', plural: 'Partner products' },
-  access: { create: roleAccess('admin'), delete: roleAccess('admin'), read: roleAccess('admin'), update: roleAccess('admin') },
+  // Marketing editors read the catalogue so a collateral item can be filed under a product (M6); only admins change it (decision 19).
+  access: { create: roleAccess('admin'), delete: roleAccess('admin'), read: roleAccess('marketingEditor'), update: roleAccess('admin') },
   admin: { useAsTitle: 'name', defaultColumns: ['name', 'sku', 'family', 'active', 'crmProductId', 'updatedAt'], group: 'Partner portal', description: 'What a partner can register a deal for. Only active products are offered on the form; the order is the form’s order.' },
   fields: [
     {

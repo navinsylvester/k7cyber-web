@@ -37,7 +37,11 @@ export type PartnerSettings = {
   deals: { protectionDays: number; extensionDays: number; approvalSlaHours: number; endingNoticeDays: number; requireCertificate: boolean; conflictCheckCrm: boolean }
   crm: { enabled: boolean; ownerRule: 'approver' | 'fixed'; ownerId: string; enquirySource: number; productCategory: number; accountNamePattern: string; syncMinutes: number }
   notify: { emailEnabled: boolean; mailFrom: string; bellRetentionDays: number }
+  /** FR-MKT-02: the collateral file cap in MB, at most the server's 200. */
+  collateral: { maxMb: number }
 }
+
+export const COLLATERAL_MAX_MB_CEILING = 200
 
 export const DEFAULT_PARTNER_SETTINGS: PartnerSettings = {
   staff: [],
@@ -50,6 +54,7 @@ export const DEFAULT_PARTNER_SETTINGS: PartnerSettings = {
   deals: { protectionDays: 90, extensionDays: 90, approvalSlaHours: 48, endingNoticeDays: 14, requireCertificate: false, conflictCheckCrm: false },
   crm: { enabled: false, ownerRule: 'approver', ownerId: '', enquirySource: 1, productCategory: 36, accountNamePattern: '{customer}-Fresh-{product}', syncMinutes: 60 },
   notify: { emailEnabled: true, mailFrom: 'K7 Partner Programme <partners@k7computing.com>', bellRetentionDays: 180 },
+  collateral: { maxMb: 200 },
 }
 
 type Raw = Record<string, unknown>
@@ -104,6 +109,7 @@ export const normalisePartnerSettings = (g: Raw | null | undefined): PartnerSett
       mailFrom: str(notify.mailFrom, D.notify.mailFrom) || D.notify.mailFrom,
       bellRetentionDays: num(notify.bellRetentionDays, D.notify.bellRetentionDays, 7),
     },
+    collateral: { maxMb: Math.min(num(obj(r.collateral).maxMb, D.collateral.maxMb, 1), COLLATERAL_MAX_MB_CEILING) },
   }
 }
 

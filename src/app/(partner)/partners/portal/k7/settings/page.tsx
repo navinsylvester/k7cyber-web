@@ -163,6 +163,14 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
               </div>
             </div>
             <div>
+              <h2 className="sub-head">Collateral</h2>
+              <div className="form-grid">
+                <Field id="collateral_maxMb" label="Largest file, MB" hint="FR-MKT-02: what a Marketing Admin can upload to the library. The server accepts 200 at most; items and files are edited in the Payload admin.">
+                  <input id="collateral_maxMb" name="collateral_maxMb" inputMode="numeric" defaultValue={s.collateral.maxMb} />
+                </Field>
+              </div>
+            </div>
+            <div>
               <h2 className="sub-head">Notifications</h2>
               <div className="form-grid">
                 <div className="span-2">{check('notify_emailEnabled', 'Email beside the bell', s.notify.emailEnabled, 'mail still goes only through SMTP_URL and the allowlist')}</div>

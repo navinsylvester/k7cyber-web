@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 
 import { requireK7Role } from '@/lib/partner/session'
-import { getPartnerSettings, PARTNER_TYPES, savePartnerSettings, STAFF_ROLES, type PartnerSettings, type PartnerType, type StaffRole } from '@/lib/partner/settings'
+import { COLLATERAL_MAX_MB_CEILING, getPartnerSettings, PARTNER_TYPES, savePartnerSettings, STAFF_ROLES, type PartnerSettings, type PartnerType, type StaffRole } from '@/lib/partner/settings'
 
 /* Saves the partner portal's settings from the desk's page in one post (02-build-plan.md decision 5, §5). The staff list comes as
    indexed rows; a row without an email or a role is dropped, the way the normaliser drops it. Numbers that are blank keep the
@@ -62,6 +62,7 @@ export async function savePartnerSettingsAction(form: FormData): Promise<void> {
       syncMinutes: n(form, 'crm_syncMinutes', cur.crm.syncMinutes, 5),
     },
     notify: { emailEnabled: on(form, 'notify_emailEnabled'), mailFrom: s(form, 'notify_mailFrom') || cur.notify.mailFrom, bellRetentionDays: n(form, 'notify_bellRetentionDays', cur.notify.bellRetentionDays, 7) },
+    collateral: { maxMb: Math.min(n(form, 'collateral_maxMb', cur.collateral.maxMb, 1), COLLATERAL_MAX_MB_CEILING) },
   }
   try {
     await savePartnerSettings(next)

@@ -3,6 +3,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 import { roleAccess } from '../../access/roles'
+import { maxUpload, MB } from '../uploadLimit'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -18,6 +19,7 @@ export const ReportFiles: CollectionConfig = {
   },
   admin: { group: 'K7 Labs', description: 'PDF only, up to 30 MB.' },
   fields: [{ name: 'title', type: 'text' }],
+  hooks: { beforeValidate: [maxUpload(30 * MB)] },
   upload: {
     staticDir: path.resolve(dirname, '../../../uploads/reports'),
     mimeTypes: ['application/pdf'],

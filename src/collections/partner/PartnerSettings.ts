@@ -115,6 +115,17 @@ export const PartnerSettings: GlobalConfig = {
           ],
         },
         {
+          label: 'Collateral',
+          fields: [
+            {
+              name: 'collateral',
+              type: 'group',
+              admin: { description: 'The collateral library (01-requirements.md §6). Items and files are edited in Partner portal → Collateral; this is the rule.' },
+              fields: [{ name: 'maxMb', type: 'number', min: 1, max: 200, defaultValue: 200, admin: { description: 'FR-MKT-02: the largest file a Marketing Admin can upload, in MB. The server accepts 200 at most.' } }],
+            },
+          ],
+        },
+        {
           label: 'CRM mirror',
           fields: [
             {

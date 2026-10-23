@@ -1,4 +1,4 @@
-# Partner portal: the build plan (written 2026-10-22; M1 to M4 built the same day, M5 on 2026-10-23)
+# Partner portal: the build plan (written 2026-10-22; M1 to M4 built the same day, M5 and M6 on 2026-10-23)
 
 What has to be done to deliver `01-requirements.md`, in the order it should be done, with the
 decisions taken so far and a status that any session can pick up. Read `CLAUDE.md`,
@@ -43,8 +43,8 @@ not for its history.
 | M3 | Partner sign-in, organisation profile, users and roles (§2, FR-REG-07) | **done 2026-10-22**, clicked end to end on both sides on localhost (`04-portal-guide.md` §3–5, §7) |
 | M4 | Deal registration (§7): form, routing, CRM conflict check, approval desk, protection, extension, CRM push | **built 2026-10-22** (sessions 8–9), **clicked on both sides and the opportunity landed on UAT 2026-10-23** (session 10: OPP-2610-00268) |
 | M5 | Deal dashboard (§8): hourly CRM sync into a read model, cards, list, charts, reconciliation log | **built 2026-10-23** (session 11): tests pass, the read-back ran against UAT (OPP-2610-00268 read into K7D-00030), both sides clicked on localhost |
-| M6 | Collateral library (§6) | **next** |
-| M7 | Schemes and eligibility (§9) | not started |
+| M6 | Collateral library (§6) | **built 2026-10-23** (session 12): the two collections, the library and item pages, the download route with the rule and Range support, the K7 ledger, the cap as a setting; tests pass, both sides clicked on localhost |
+| M7 | Schemes and eligibility (§9) | **next** |
 | M8 | Notifications, bell, editable templates, approval SLA, reporting, exports (§10 and the gaps) | not started |
 | M9 | Hardening and staging: non-functional requirements, tests, go-live gate → **launch 1 (no LMS)** | not started |
 | M10 | Training (§4): tracks, courses, modules, video progress, tests, attempts, results, admin | not started (last phase) |
@@ -242,8 +242,9 @@ Tick as done; dates in the session log.
 - Not in M5: CRM-only deals (FR-DASH-10, deferred by decision 2); the opportunity's product lines are not read back (the snapshot is the opportunity's own columns)
 
 ### M6 — collateral (§6)
-- [ ] Collection with product, category, versioning, tags, visibility rules; Marketing Admin edits in `/admin`
-- [ ] Library pages with search and filters; signed-in download route; limit raised to 200 MB for this collection; storage path
+- [x] Collection with product, category, versioning, tags, visibility rules; Marketing Admin edits in `/admin`: `partner-collateral` (the item: title, product or the programme, category, description, tags, state draft · published · retired, the FR-MKT-03 rule as types · certified · countries · regions, order) and `partner-collateral-files` (one row per version, joined onto the item; a blank version is the previous one bumped; the uploader recorded). Marketing editors (Payload role) create and update, and read `partner-products` to file an item under one; admins delete
+- [x] Library pages with search and filters; signed-in download route; limit raised to 200 MB for this collection; storage path: `/partners/portal/collateral` (by product, then category; search, product, category, file type), the item sheet, `…/[id]/download` (the rule again, one audit row per download, Range requests honoured, `?inline=1`), the K7 ledger `/partners/portal/k7/collateral` with the rule in words and the download tally; Payload's one global limit is now 200 MB with `maxUpload` keeping Media, report files and deal files at their old caps; the collateral cap is `partner-settings.collateral.maxMb` (200 at most, on the K7 settings page); files under `PARTNER_UPLOAD_DIR` (default `uploads/collateral`)
+- Not in M6: notifications for new collateral (M8's templates), the storage adapter (staging), tiers (decision 7)
 
 ### M7 — schemes and eligibility (§9)
 - [ ] Scheme collection with slabs; listing by state and partner eligibility; registration with terms; approval or auto
@@ -303,7 +304,7 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
 | DEAL-02 … 09 | M4 | done 2026-10-22 (DEAL-04: over portal deals, the CRM switch not built; DEAL-06: the opportunity job written, not yet run on UAT; DEAL-07: one extension, decision 15) |
 | DASH-01 … 05, 08, 11 | M5 | built 2026-10-23 (DASH-05: the interval is `crm.syncMinutes`, default 60, the scheduler calls `/api/partners/sync`; DASH-11: one audit row per changed read, the CRM's figures shown, the registration kept; one real run against UAT 2026-10-23) |
 | DASH-10 | — | deferred (fresh start, decision 2) |
-| MKT-01 … 04 | M6 | — |
+| MKT-01 … 04 | M6 | built 2026-10-23 (MKT-01: product → category; MKT-02: the eight types, the cap a setting ≤ 200 MB, Payload refuses malformed PDFs and scripted SVGs; MKT-03: type, certification, country, region, ANDed; MKT-04: upload, replace as a new version, tag, retire in `/admin`) |
 | SCH-01 … 05 | M7 | — |
 | ELG-01 … 07 | M7 | — |
 | NTF-01 | M1 (spine), M8 (templates, SLA) | M1 done (`notify()`, the bell, email through the allowlist); M2 sends the application events (staff bell + mail, applicant mail, the invitation); M4 the deal events (submitted, resubmitted, decided, amended, extension asked and decided, withdrawn, expired, protection ending) |
@@ -515,3 +516,47 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
   an email address sits inside a text node (the browser shows "Encountered a script tag while rendering", which points at an extension
   rewriting the DOM before React hydrates, not the markup); worth a look with extensions off. Nothing committed (Navin commits). **Next:**
   M5 (`sync.ts`, `POST /api/partners/sync`, the `crm.snapshot` group on `partner-deals`, the dashboard). §7's author questions still open.
+
+- **Session 12 (2026-10-23, Claude Code): M6 built, the collateral library.** Two collections: `partner-collateral` (the item: title, product or the
+  programme, category from the FR-MKT-01 list, description, tags, state draft · published · retired with `publishedAt` / `retiredAt` set by a hook,
+  the FR-MKT-03 rule as a group `visibility` {types, certified, countries, regions}, order, and a `join` onto its files) and `partner-collateral-files`
+  (one upload per version, FR-MKT-02's mime types, `version` bumped from the previous when blank, `note`, `uploadedBy` from the admin's email, stored
+  under `PARTNER_UPLOAD_DIR` = `uploads/collateral`). Marketing editors (the Payload role) create and update both in `/admin`; admins delete.
+  **The size limit:** Payload has one `upload.limits.fileSize` for the whole config and a 50 MB `requestSizeLimit` default, so the config now
+  carries 200 MB / 201 MB and `src/collections/uploadLimit.ts` (`maxUpload`, a `beforeValidate` hook on `req.file.size`) keeps Media and report
+  files at 30 MB and deal files at 10 MB; the collateral's own cap is `partner-settings.collateral.maxMb` (new Collateral tab in the global and on
+  the K7 settings page; 200 at most). `collateral-model.ts` (pure: `visibleTo` / `readableBy`, the kinds, `filterLibrary`, `groupLibrary`,
+  `parseRange`, `nextVersion`) and `collateral.ts` (`libraryFor(me)`, `loadCollateralFor`, `recordDownload` as one audit row on the organisation,
+  `downloadTallies` from the audit rows, `serveCollateralFile` whole or by Range with the path checked against the directory). Pages:
+  `/partners/portal/collateral` (by product then category; search, product, category, file type), `…/[id]` (the strip, the version's note, the
+  download as the primary action, *Open in the browser*), `…/[id]/download` (the rule again, 206 on Range, `?inline=1`), the K7 ledger
+  `/partners/portal/k7/collateral` for Marketing Admins (every state, the rule in words, the current version linked, the tally; *Add an item* into
+  the admin) with its own download route (`?file=` for an earlier version), the Collateral links in the header and the desk strip, the block on both
+  homes. Section 10 P20–P21 (`partner.css`, `PartnerParts` README, CHANGELOG, `design-system.json`). `pnpm partner:seed-dev … --collateral` files
+  four PP-TEST items with generated one-page PDFs. Tests: `partner-collateral` (18 pure) and `partner-collateral-db` (5 against Postgres: two
+  organisations against eight items; the file whole and by range; the tally). Two things the tests taught: Payload validates PDFs (header, `xref`
+  and `%%EOF` in the tail), so a fixture needs a real xref; and `file-type`, which Payload runs on every upload, throws under vitest's jsdom
+  environment (another realm's `Uint8Array`), so the database test runs under `// @vitest-environment node`. Verified: `pnpm generate:types`,
+  `npx tsc --noEmit` clean, `pnpm lint` 0 errors (14 pre-existing warnings), `pnpm test:int` with `PARTNER_DB_TESTS=1` 19 files / 179 tests
+  passing. **Clicked in Chrome:** the partner side on localhost as pp-test@k7computing.com (the library with the three items the VAR in India may
+  read and the draft absent, the datasheet's sheet, the PDF inline through the download route, `?q=smb&category=datasheet`, the draft's sheet a
+  404, the home's Collateral block, the download in the recent record); the K7 side on the tunnel host through the probe session that was open
+  there (the ledger in Published and All with the rule in words and the state tags, the draft's PDF inline through the K7 route, the tally at 1 /
+  1 in 30 days after the partner's download). One thing the browser caught: the filters grid inside section 09's `views` flex row stretched the
+  fields to 150px, so the library's filters are their own block (`lib-filters`). **Clicked afterwards in the same session**, when Navin asked for the
+  left-out items to be done rather than listed: the dev seed gained `--editor` (a PP-TEST Marketing editor for `/admin`, its password
+  `PARTNER_DEV_EDITOR_PASSWORD` in `.env`), and as that editor the admin flow was clicked end to end on localhost: item 24 created with a product,
+  a tag and a VARs-only rule, two PDFs added through the Files drawer (versions 1 and 2 from a blank field, the uploader recorded), published
+  (the partner's library showed it with v2 within the minute, the sheet with the note and the published date), then retired (the sheet a 404,
+  `retiredAt` set). Three bugs it caught, all fixed: (1) a Marketing editor could not read `partner-products`, so the Product select was empty
+  for the role that files collateral (read access opened to the role; only admins change the catalogue); (2) `savePartnerSettings` never wrote
+  the `collateral` group, so the cap on the K7 settings page said "saved" and stayed at 200 (the group is now written; set to 1 and back to
+  200 through the page on the tunnel host, the row checked in Postgres each time); (3) the `maxUpload` hook read `req.file.size`, which Payload
+  leaves undefined for a non-image file by the time the hooks run (`generateFileData` rebuilds `req.file`), so a 1.5 MB PDF went through a
+  1 MB cap in the admin and through the local API; the hook now reads the `filesize` Payload records on the document, with the request's
+  file and its buffer as fallbacks, pinned in the pure test, and the same upload in the admin is refused with "pp-test-big-1500kb.pdf is
+  1.5 MB; this library accepts files up to 1 MB" (the row that slipped through was deleted). A phone width (390px, the pages in a frame of
+  that width because the window manager keeps the window full-size): the library's filters stack and its table scrolls in its wrap, the sheet's
+  strip stacks, the K7 ledger scrolls, the settings field stacks; the portal header's Dark | Light group overflowed the bar under 520px (a
+  section 09 rule since M1, the menu already carries the theme), so it now hides there (`portal.css`, SupportParts README, CHANGELOG).
+  Nothing committed (Navin commits). **Next:** M7, schemes and eligibility (§9); §7's author questions still open.
