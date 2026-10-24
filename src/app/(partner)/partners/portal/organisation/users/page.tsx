@@ -109,7 +109,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                 <input id="mobile" name="mobile" type="tel" inputMode="tel" defaultValue={sp.mobile ?? ''} />
               </Field>
               <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-                <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+                <legend className="label" style={{ marginBottom: 10 }}>
                   Roles *
                 </legend>
                 <div className="checks" style={{ gridTemplateColumns: '1fr' }}>

@@ -7,6 +7,7 @@ import type { Actor } from './audit'
 import type { OrgScope } from './scope'
 import { getPartnerSettings, staffRolesFor, type PartnerRole, type StaffRole } from './settings'
 import { loadPartnerUser, canSignIn, type PartnerOrg, type PartnerUser } from './users'
+import { isDeployed } from '@/lib/env'
 
 /* Who is calling the partner portal (02-build-plan.md §4). Partner users: the session names the `partner-users` row; the row
    and its organisation are re-read on every request, so a suspension or a role change bites at once, and the context carries
@@ -81,7 +82,7 @@ const k7FromSession = async (): Promise<K7Context | null> => {
   const email = (s.user.email ?? '').toLowerCase()
   const dev = Boolean(s.user.dev)
   const settings = await getPartnerSettings()
-  const roles = staffRolesFor(email, settings, { dev, production: process.env.NODE_ENV === 'production' })
+  const roles = staffRolesFor(email, settings, { dev, production: isDeployed() })
   return { kind: 'k7', email, name: s.user.name ?? '', userId: s.user.userId ?? '', dev, roles, actor: { kind: 'k7', id: s.user.userId ?? email, name: s.user.name ?? '', email } }
 }
 

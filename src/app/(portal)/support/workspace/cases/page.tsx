@@ -40,7 +40,8 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
   const care = settings.csat.enabled ? await careForCustomers(result.rows.map((r) => String(r._customerid_value ?? '')), settings).catch(() => new Map()) : new Map()
   const base = { view: view.name, q, sort: result.sort, dir: result.sort ? result.dir : undefined }
   const viewHref = (v: View, keepQ = false) => PATH + qs({ view: v.name, q: keepQ ? q : undefined })
-  const count = result.total !== undefined ? `${result.total.toLocaleString('en-IN')}${result.totalLimitExceeded ? '+' : ''} cases` : result.rows.length ? `${result.rows.length}${result.more ? '+' : ''} cases` : 'No cases'
+  const cases = (n: number, plus: boolean) => `${n.toLocaleString('en-IN')}${plus ? '+' : ''} ${n === 1 && !plus ? 'case' : 'cases'}`
+  const count = result.total !== undefined ? cases(result.total, Boolean(result.totalLimitExceeded)) : result.rows.length ? cases(result.rows.length, result.more) : 'No cases'
   const phase1 = (PHASE1_VIEWS as readonly string[]).map((n) => views.find((v) => v.name === n)).filter((v): v is View => Boolean(v))
   const byGroup = GROUPS.map((g) => ({ ...g, views: views.filter((v) => v.group === g.key) })).filter((g) => g.views.length)
 
@@ -99,7 +100,7 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
               Search in this view
             </label>
             <span className="control">
-              <input id="cases-q" name="q" type="search" placeholder="Case number, title, customer email or description" defaultValue={q ?? ''} autoComplete="off" />
+              <input id="cases-q" name="q" type="search" placeholder="Case number, title, customer email, incident ID or description" defaultValue={q ?? ''} autoComplete="off" />
             </span>
           </div>
           <div className="filters-actions">
@@ -114,6 +115,15 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
           </div>
         </form>
 
+        {q && (
+          // The box searches inside the saved view, which testers took for a search of every case (TR-11).
+          <p className="hint" style={{ margin: '0 0 16px' }}>
+            Searched in <strong>{view.name}</strong> only.{' '}
+            <Link className="link-u" href={`${WS}/search?q=${encodeURIComponent(q)}`}>
+              Search all cases for “{q}” →
+            </Link>
+          </p>
+        )}
         <ViewTable result={result} path={PATH} base={base} caseHref={(id) => `${PATH}/${id}`} minWidth={Math.max(960, result.columns.length * 112)} care={care} />
         {care.size > 0 && [...care.values()].some((c) => c.level === 'high' || c.level === 'watch') && (
           <p className="caveats">

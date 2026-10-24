@@ -4,6 +4,7 @@ import { buildQuery, entity, fetchXml, list, retrieve, type DataverseAuth, type 
 
 import { HOUR, memo } from './memo'
 import { PRIORITY_CRITICAL } from './options'
+import { caseStatusLabel } from './status'
 
 /* Dashboards (01-requirements.md §4.4): the two phase-1 dashboards are rebuilt from the chart definitions Dataverse already holds.
    Each chart runs its own aggregate FetchXML with the filters of the view it is bound to, as the model-driven app does. */
@@ -155,6 +156,6 @@ export const creationTrend = async (auth: DataverseAuth): Promise<ChartSeries[]>
 export const activeByStatus = async (auth: DataverseAuth): Promise<ChartSeries[]> => {
   const p = await list<Row>(auth, buildQuery('incidents', { select: ['incidentid', 'statuscode'], filter: 'statecode eq 0', top: 5000 }), 5000).catch(() => ({ value: [] as Row[] }))
   const m = new Map<string, number>()
-  for (const r of p.value) m.set(fv(r, 'statuscode'), (m.get(fv(r, 'statuscode')) ?? 0) + 1)
+  for (const r of p.value) m.set(caseStatusLabel(r), (m.get(caseStatusLabel(r)) ?? 0) + 1)
   return [...m.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value)
 }

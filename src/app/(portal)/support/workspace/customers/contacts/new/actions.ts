@@ -8,20 +8,22 @@ import { isGuid } from '@/lib/dataverse/odata'
 import { createContact } from '@/lib/support/customers'
 import { requireAgent } from '@/lib/support/session'
 
-import { readContactForm } from '../../forms'
+import { carry, checkGeo, readContactForm } from '../../forms'
 
 export async function createContactAction(form: FormData): Promise<void> {
   const me = await requireAgent()
-  const { v, errors } = readContactForm(form)
+  const { v, errors, bad } = readContactForm(form)
   const accountRaw = String(form.get('accountId') ?? '')
   const accountId = isGuid(accountRaw) ? accountRaw : null
   const ret = String(form.get('return') ?? '')
-  if (!v.email) errors.push('An email address is required for a new contact.')
-  if (errors.length) {
-    const q = new URLSearchParams({ error: errors.join(' '), firstName: v.firstName, lastName: v.lastName, email: v.email, mobile: v.mobile, phone: v.phone, jobTitle: v.jobTitle })
-    if (ret) q.set('return', ret)
-    redirect(`${WS}/customers/contacts/new?${q.toString()}`)
+  // Everything submitted goes back on an error, the organisation search and choice included (13-tester-round-1.md, TR-03).
+  const again = (error: string, marked: string[] = []) => redirect(`${WS}/customers/contacts/new?${carry({ ...v, regionId: undefined }, { error, bad: marked.join(','), return: ret, account: String(form.get('account') ?? ''), accountId }).toString()}`)
+  if (!v.email) {
+    errors.push('An email address is required for a new contact.')
+    bad.push('email')
   }
+  await checkGeo(me.auth, v, errors, bad)
+  if (errors.length) again(errors.join(' '), bad)
   let id = ''
   let error: string | null = null
   try {
@@ -41,7 +43,8 @@ export async function createContactAction(form: FormData): Promise<void> {
   } catch (e) {
     error = userMessage(e)
   }
-  if (error || !id) redirect(`${WS}/customers/contacts/new?error=${encodeURIComponent(error ?? 'Could not create the contact.')}`)
-  if (ret === 'cases/new') redirect(`${WS}/cases/new?customer=${encodeURIComponent(v.email)}&contact=${id}`)
+  if (error || !id) again(error ?? 'Could not create the contact.')
+  // Back on the case form with this contact chosen: `sel` is what the case form reads (TR-06).
+  if (ret === 'cases/new') redirect(`${WS}/cases/new?customer=${encodeURIComponent(v.email)}&sel=${encodeURIComponent(`contact:${id}`)}`)
   redirect(`${WS}/customers/contacts/${id}?ok=${encodeURIComponent('Contact created.')}`)
 }

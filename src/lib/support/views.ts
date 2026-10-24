@@ -101,7 +101,7 @@ export const runCaseView = async (auth: DataverseAuth, view: View, o: RunViewOpt
   const dir = o.dir ?? (sortable && (sortable === 'createdon' || sortable === 'modifiedon') ? 'desc' : 'asc')
   const q = o.q?.trim()
   const conditions: string[] = []
-  if (q) conditions.push(/^cs-/i.test(q) ? condition('ticketnumber', 'like', `${q.toUpperCase()}%`) : likeAny(['title', 'ticketnumber', 'k7_customeremail', 'description'], q))
+  if (q) conditions.push(/^cs-/i.test(q) ? condition('ticketnumber', 'like', `${q.toUpperCase()}%`) : likeAny(['title', 'ticketnumber', 'k7_customeremail', 'k7_incidentid', 'description'], q))
   const xml = shapeFetchXml(view.fetchxml, {
     page,
     count,

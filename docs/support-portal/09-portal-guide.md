@@ -21,6 +21,21 @@ contact lookup. The on-screen code is shown off localhost only when that list is
 the Cloudflare quick tunnel and sets or clears `AUTH_URL`, which Auth.js and `session.ts` then use in place of the request's
 host (the tunnel rewrites it to localhost).
 
+**How testers are served** (2026-10-24, `13-tester-round-1.md` TR-02): behind the tunnel, run the production server, not
+`next dev`. Through the tunnel Chrome kept dev chunks that a dropped transfer had cut short (the dev server's weak ETags
+revalidate a broken copy into place for good), and React then never hydrated; production chunks are content-hashed.
+```
+scripts/serve.sh rebuild     # stop, pnpm build, next start detached on :3000 (log: scripts/.server.log, git-ignored)
+scripts/serve.sh up|down|status
+```
+After a code change, `rebuild`. The script stops the server by pid; `pkill -f "next …"` also kills the shell that runs it.
+`next start` sets NODE_ENV=production, which would switch off the development fallbacks this machine relies on (the probe token as
+the customer side's service identity, the on-screen code, the partner portal default); `K7_LOCAL_BUILD=1` in `.env` keeps them
+(`src/lib/env.ts` `isDeployed()`), and `serve.sh` refuses to start without it. Never set it on a real deployment.
+`pnpm dev` stays for working alone on localhost. The portal routes send
+`Cache-Control: … no-transform` (`next.config.ts`): without it Cloudflare's Email Address Obfuscation rewrote every email in
+the HTML into a link and a decoding script, and React's hydration failed on any page that shows an address.
+
 Then open http://localhost:3000/support (customers) or http://localhost:3000/support/sign-in?agent=1
 (agents). Tests: `pnpm test:int` runs `tests/int/support-*.int.spec.ts` (guard, FetchXML shaping,
 OData helpers, status mapping, one-time codes, sanitiser) without a tenant.
@@ -57,11 +72,11 @@ generic OIDC provider in `src/auth.ts` and reuse `registerContact`/`findContactB
 /support/kb, /kb/[KA-number]  published, non-internal articles
 /support/profile              contact details, organisation, licences/contracts
 /support/workspace            agent home: my counters, my active cases, queue items, 14-day trend, status spread
-/support/workspace/cases      the 21 saved views by name (?view=&q=&sort=&dir=&page=; a care mark before the customer), /new, /[id] (timeline, details, related, action panels incl. Customer satisfaction; care band under the head), attachments
-/support/workspace/search     cases, contacts, accounts, articles
+/support/workspace/cases      the 21 saved views by name (?view=&q=&sort=&dir=&page=; a care mark before the customer; a search says it ran in the view and links to the search of all cases), /new (?customer=&sel=contact:<id>|account:<id>), /[id] (timeline, details, related, action panels incl. Customer satisfaction; care band under the head), attachments
+/support/workspace/search     cases (number, title, incident ID, the case email, the customer or primary contact's email, their phones when the query looks like a number; "20 of N" and ?all=1), contacts, accounts, articles
 /support/workspace/dashboards/active-cases | service-manager
 /support/workspace/queues     items I am working on, public queues, pick / release
-/support/workspace/customers  contacts and accounts: search, pages (care band, satisfaction history, the manager's care-flag panel), create, edit (state → city picker through /workspace/geo/cities)
+/support/workspace/customers  contacts and accounts: search, pages (care band, satisfaction history, the manager's care-flag panel; cases "25 of N", ?cases=all), create, edit (state → city picker through /workspace/geo/cities)
 /support/workspace/kb         read, draft, edit (publishing stays in Dynamics)
 /support/workspace/products   the active catalogue by family
 /support/workspace/product    the desk's side of the product loop (§4f): questions from product, released items to tell the customer, mine, all open;
@@ -102,6 +117,15 @@ helpers), `src/lib/support/` (one file per area; `session.ts` gives `requireAgen
 - Errors reach the UI through `userMessage(e, audience)`: agents get the OData code, customers a
   plain sentence; bodies are never logged.
 - HTML from Dataverse (notes, emails, articles) passes `sanitizeHtml` before rendering.
+- Contact and account forms (`customers/forms.tsx`, 2026-10-24): one rule each for mobile, phone (several numbers allowed,
+  separated by / , or &) and email, applied by the readers and mirrored as HTML `pattern`s; a stored value that predates a rule
+  does not block an edit while it is left unchanged (`keep_<field>`). A refused submit carries every value back in the query
+  (`carry` / `contactFromQuery` / `accountFromQuery`) with the failing fields in `bad`. A city must belong to the chosen state.
+- Lookups cleared in a form are sent as `"<nav>@odata.bind": null` on update (contacts, accounts and cases), which clears them
+  in Dataverse; creates leave empty lookups out.
+- The case head (`getCaseParties`, one expanded read) shows a contact customer's account, a callable number, and the case's
+  *Serial key* or else the account's licence key. *Incident ID* (`k7_incidentid`) is on Details, in Edit details, on the new
+  case form and in both searches; "-" reads as empty. A status reason the CRM no longer labels reads "Unknown status".
 
 ## 4c. The manager view (built 2026-10-13)
 Who: agents holding one of the configured Dynamics security roles (defaults: System Administrator, K7 - System Admin, CSR Manager,
@@ -277,6 +301,8 @@ hint, the sample script, the engineering door (phases B and C of the design).
   no longer needs them (mass deletes stay the CRM owner's call).
 
 ## 5. What is not done
+- **Tester round 1 (2026-10-24):** the fixes are built and verified (`13-tester-round-1.md`); what remains there are the decisions
+  D-1…D-4 (with TR-13, which waits on D-4), TR-15 (a screenshot from the tester) and U-1.
 - Product desk phases B and C (`10-product-desk.md` §10): the Yodiz adapter and status map, the CRM rows at raise and `k7_yodizid`, the
   outbox drain in the sweep and the auto-close, the manager cards and `/manage/product`, the `with-product` SLA state, the customer's hint,
   `k7-sample-submit.py` and the samples API, the engineering door, releases, the Zapier bridge. Phase A's mirror runs as the acting agent, so

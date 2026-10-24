@@ -10,6 +10,7 @@ import { EMPTY_COMPANY, isMobile, isPartnerType, normaliseMobile, validateCompan
 import { getPartnerSettings } from '@/lib/partner/settings'
 import { sendSms, smsCodeText, smsConfigured } from '@/lib/partner/sms'
 import { mailAllowed, mailAllowlist, mailConfigured, sendMail } from '@/lib/support/mail'
+import { isDeployed } from '@/lib/env'
 
 /* The join flow (01-requirements.md §3, 02-build-plan.md M2): type → company and contact → codes → terms. The draft lives in
    `partner-applications` from the first step; an httpOnly cookie scoped to /partners/join carries its resume key, and the
@@ -92,7 +93,7 @@ export async function saveDetailsAction(form: FormData): Promise<void> {
 
 /** Same rule as the doors: the on-screen code is for the developer's own machine, or a host with the allowlist set. */
 const showCodeHere = async (): Promise<boolean> => {
-  if (process.env.SUPPORT_DEV_SHOW_CODE !== '1' || process.env.NODE_ENV === 'production' || mailConfigured()) return false
+  if (process.env.SUPPORT_DEV_SHOW_CODE !== '1' || isDeployed() || mailConfigured()) return false
   if (mailAllowlist()) return true
   const h = await headers()
   if (h.get('x-forwarded-for') || h.get('x-forwarded-proto') || h.get('x-forwarded-host')) return false
@@ -179,6 +180,6 @@ export async function abandonDraft(): Promise<void> {
 
 /** The development code, when the portal cannot send mail. */
 export async function devJoinCode(): Promise<string | null> {
-  if (process.env.NODE_ENV === 'production') return null
+  if (isDeployed()) return null
   return (await cookies()).get(DEVCODE_COOKIE)?.value ?? null
 }

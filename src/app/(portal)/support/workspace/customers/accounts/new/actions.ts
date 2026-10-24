@@ -7,12 +7,15 @@ import { userMessage } from '@/lib/dataverse/errors'
 import { createAccount } from '@/lib/support/customers'
 import { requireAgent } from '@/lib/support/session'
 
-import { readAccountForm } from '../../forms'
+import { carry, checkGeo, readAccountForm } from '../../forms'
 
 export async function createAccountAction(form: FormData): Promise<void> {
   const me = await requireAgent()
-  const { v, errors } = readAccountForm(form)
-  if (errors.length) redirect(`${WS}/customers/accounts/new?${new URLSearchParams({ error: errors.join(' '), name: v.name, phone: v.phone, email: v.email, website: v.website }).toString()}`)
+  const { v, errors, bad } = readAccountForm(form)
+  // Everything submitted goes back on an error (13-tester-round-1.md, TR-03).
+  const again = (error: string, marked: string[] = []) => redirect(`${WS}/customers/accounts/new?${carry({ ...v, regionId: undefined }, { error, bad: marked.join(',') }).toString()}`)
+  await checkGeo(me.auth, v, errors, bad)
+  if (errors.length) again(errors.join(' '), bad)
   let id = ''
   let error: string | null = null
   try {
@@ -31,6 +34,6 @@ export async function createAccountAction(form: FormData): Promise<void> {
   } catch (e) {
     error = userMessage(e)
   }
-  if (error || !id) redirect(`${WS}/customers/accounts/new?error=${encodeURIComponent(error ?? 'Could not create the account.')}&name=${encodeURIComponent(v.name)}`)
+  if (error || !id) again(error ?? 'Could not create the account.')
   redirect(`${WS}/customers/accounts/${id}?ok=${encodeURIComponent('Account created.')}`)
 }

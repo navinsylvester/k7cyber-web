@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 import { forget, memo } from '@/lib/support/memo'
 
 import { DEFAULT_PARTNER_SETTINGS, normalisePartnerSettings, type PartnerSettings } from './settings-model'
+import { isDeployed } from '@/lib/env'
 
 export * from './settings-model'
 
@@ -54,4 +55,4 @@ export const savePartnerSettings = async (s: PartnerSettings): Promise<void> => 
 }
 
 /** The portal is on in development, and in production only with PARTNER_PORTAL_ENABLED=1 (02-build-plan.md §8). */
-export const partnerPortalEnabled = (): boolean => process.env.PARTNER_PORTAL_ENABLED === '1' || (process.env.NODE_ENV !== 'production' && process.env.PARTNER_PORTAL_ENABLED !== '0')
+export const partnerPortalEnabled = (): boolean => process.env.PARTNER_PORTAL_ENABLED === '1' || (!isDeployed() && process.env.PARTNER_PORTAL_ENABLED !== '0')

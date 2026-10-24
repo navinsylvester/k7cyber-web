@@ -8,15 +8,18 @@ import { isGuid } from '@/lib/dataverse/odata'
 import { updateContact } from '@/lib/support/customers'
 import { requireAgent } from '@/lib/support/session'
 
-import { readContactForm } from '../../forms'
+import { carry, checkGeo, readContactForm } from '../../forms'
 
 export async function updateContactAction(form: FormData): Promise<void> {
   const me = await requireAgent()
   const id = String(form.get('id') ?? '')
   if (!isGuid(id)) redirect(`${WS}/customers`)
   const back = (q: Record<string, string>) => redirect(`${WS}/customers/contacts/${id}?${new URLSearchParams(q).toString()}`)
-  const { v, errors } = readContactForm(form)
-  if (errors.length) back({ error: errors.join(' '), edit: '1' })
+  const { v, errors, bad } = readContactForm(form)
+  // On an error the panel reopens with what was submitted, not the stored record (TR-03).
+  const again = (error: string, marked: string[] = []) => back(Object.fromEntries(carry({ ...v, regionId: undefined }, { error, bad: marked.join(','), edit: '1' })))
+  await checkGeo(me.auth, v, errors, bad)
+  if (errors.length) again(errors.join(' '), bad)
   let error: string | null = null
   try {
     await updateContact(me.auth, id, {
@@ -34,6 +37,6 @@ export async function updateContactAction(form: FormData): Promise<void> {
   } catch (e) {
     error = userMessage(e)
   }
-  if (error) back({ error, edit: '1' })
+  if (error) again(error)
   back({ ok: 'Contact saved.' })
 }

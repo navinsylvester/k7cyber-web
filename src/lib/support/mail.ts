@@ -1,4 +1,5 @@
 import 'server-only'
+import { isDeployed } from '@/lib/env'
 
 /* Outbound mail for the portal: one-time codes and case notifications. SMTP when SMTP_URL is set; the console otherwise
    (development). Bodies never include case content beyond the number and title.
@@ -42,11 +43,11 @@ export const sendMail = async (m: Mail): Promise<SendResult> => {
   const extra = suppressed.length ? { suppressed } : {}
   if (suppressed.length) {
     // Addresses only outside production; the body never.
-    console.log(`[support mail] suppressed by SUPPORT_MAIL_ALLOWLIST: ${process.env.NODE_ENV !== 'production' ? suppressed.join(', ') : `${suppressed.length} recipient(s)`} · ${m.subject}`)
+    console.log(`[support mail] suppressed by SUPPORT_MAIL_ALLOWLIST: ${!isDeployed() ? suppressed.join(', ') : `${suppressed.length} recipient(s)`} · ${m.subject}`)
   }
   if (!to) return { sent: false, ...extra }
   if (!process.env.SMTP_URL) {
-    if (process.env.NODE_ENV !== 'production') console.log(`[support mail → ${to}] ${m.subject}${m.attachments?.length ? ` (+${m.attachments.map((a) => a.filename).join(', ')})` : ''}\n${m.text}`)
+    if (!isDeployed()) console.log(`[support mail → ${to}] ${m.subject}${m.attachments?.length ? ` (+${m.attachments.map((a) => a.filename).join(', ')})` : ''}\n${m.text}`)
     return { sent: false, ...extra }
   }
   const { createTransport } = await import('nodemailer')

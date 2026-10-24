@@ -4,10 +4,10 @@ import { condition, layoutCells, likeAny, rootAttributes, shapeFetchXml } from '
 import { and, bind, buildQuery, contains, entity, guid, or, str } from '@/lib/dataverse/odata'
 import { htmlToText, sanitizeHtml, splitTicket } from '@/lib/support/format'
 import { issueOtp, verifyOtp } from '@/lib/support/otp'
-import { customerScopeFilter } from '@/lib/support/cases'
+import { customerScopeFilter, partiesFrom } from '@/lib/support/cases'
 import { productFamily } from '@/lib/support/reference'
 import { STATUS } from '@/lib/support/options'
-import { canReopen, customerState, trackIndex } from '@/lib/support/status'
+import { canReopen, caseStatusLabel, customerState, trackIndex } from '@/lib/support/status'
 
 const VIEW = '<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false" savedqueryid="00000000-0000-0000-00aa-000010001028"><entity name="incident"><attribute name="ticketnumber" /><attribute name="title" /><order attribute="title" descending="false" /><filter type="and"><condition attribute="ownerid" operator="eq-userid" /><condition attribute="statecode" operator="eq" value="0" /></filter><link-entity name="contact" from="contactid" to="customerid" link-type="outer"><attribute name="emailaddress1" /><order attribute="emailaddress1" descending="true" /></link-entity><attribute name="incidentid" /></entity></fetch>'
 
@@ -125,5 +125,35 @@ describe('Formatting', () => {
     expect(productFamily('Total Security - 5U3Y')).toBe('Total Security')
     expect(productFamily('Mobile Security 1U6M')).toBe('Mobile Security')
     expect(productFamily('K7 Endpoint Security')).toBe('K7 Endpoint Security')
+  })
+})
+
+/* 13-tester-round-1.md: the case head's parties (TR-07, TR-08, TR-10) and the status fallback (TR-12). */
+describe('case head parties', () => {
+  const ACC = 'b57d9512-c2c7-f111-a05c-7ced8daf56a6'
+  it('gives a contact customer its account, its mobile and the account licence key', () => {
+    const p = partiesFrom({ customerid_contact: { mobilephone: '9995716824', telephone1: '044 1', parentcustomerid_account: { accountid: ACC, name: 'BATMAN corp', k7_description: 'KEY-1' } }, customerid_account: null, primarycontactid: null })
+    expect(p).toEqual({ account: { id: ACC, name: 'BATMAN corp' }, phone: '9995716824', licenceKey: 'KEY-1' })
+  })
+  it('falls back to the phone, then to the primary contact', () => {
+    expect(partiesFrom({ customerid_contact: { mobilephone: null, telephone1: '044 1' } }).phone).toBe('044 1')
+    expect(partiesFrom({ customerid_contact: { mobilephone: ' ' }, primarycontactid: { mobilephone: '98' } }).phone).toBe('98')
+  })
+  it('gives an account case its primary contact, else the account number, and no account row', () => {
+    expect(partiesFrom({ customerid_account: { telephone1: '044 2', k7_description: 'K' }, primarycontactid: { mobilephone: '97' } })).toEqual({ account: null, phone: '97', licenceKey: 'K' })
+    expect(partiesFrom({ customerid_account: { telephone1: '044 2' }, primarycontactid: null }).phone).toBe('044 2')
+  })
+  it('reads an empty expansion as nothing', () => {
+    expect(partiesFrom({})).toEqual({ account: null, phone: '', licenceKey: '' })
+  })
+})
+
+describe('case status label', () => {
+  it('prefers the CRM label, then ours, then says unknown, never a bare number', () => {
+    expect(caseStatusLabel({ statuscode: 1, 'statuscode@OData.Community.Display.V1.FormattedValue': 'Open' })).toBe('Open')
+    expect(caseStatusLabel({ statuscode: 5 })).toBe('Closed-Call')
+    expect(caseStatusLabel({ statuscode: 696720006 })).toBe('Unknown status')
+    expect(caseStatusLabel({ statuscode: 696720006, 'statuscode@OData.Community.Display.V1.FormattedValue': '696720006' })).toBe('Unknown status')
+    expect(caseStatusLabel({})).toBe('')
   })
 })

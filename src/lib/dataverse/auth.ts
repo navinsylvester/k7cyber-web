@@ -3,6 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 import { NotAuthenticated } from './errors'
+import { isDeployed } from '@/lib/env'
 
 /* Token sources for the Dataverse Web API (docs/support-portal/02-dataverse-integration.md §1–2).
    - Agents sign in with Entra ID; their delegated token comes from the Auth.js session (src/auth.ts) and is refreshed here.
@@ -90,7 +91,7 @@ export const serviceToken = async (): Promise<string> => {
 const PROBE_CLIENT = '51f81489-12ee-4a9e-aaae-a2591f45987d' // Microsoft's sample public client for Dataverse, as scripts/dataverse-probe.py uses
 const probeCachePath = () => path.join(process.cwd(), 'scripts', '.token_cache.json')
 
-const notProduction = () => process.env.NODE_ENV !== 'production'
+const notProduction = () => !isDeployed()
 
 /** The probe's token cache may be read: as the service identity (`SUPPORT_DEV_SERVICE=probe`) or for the dev-agent door (`SUPPORT_DEV_AGENT=probe`). */
 export const devProbeEnabled = (): boolean => notProduction() && (process.env.SUPPORT_DEV_AGENT === 'probe' || process.env.SUPPORT_DEV_SERVICE === 'probe')

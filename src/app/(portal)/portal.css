@@ -154,13 +154,16 @@
 .acts details[open] > summary::after { content: "−"; }
 .acts .act-body { padding: 0 0 20px; display: flex; flex-direction: column; gap: 16px; }
 .acts .act-body p { margin: 0; font-size: 14px; color: var(--mu); }
-.acts .field > .label { font-size: 10px; }
 .acts .control input, .acts .control select, .acts .control textarea { font-size: 16px; padding: 4px 24px 8px 0; }
 .acts .control textarea { min-height: 72px; }
 .acts .btn-sm { align-self: flex-start; }
 
 /* ---------- Forms ---------- */
 .form-sheet { max-width: 880px; }
+/* Forms read at a glance (tester round 1, TR-13): a field's label is 12px in full ink, not the 11px muted label of the site's
+   forms, in the sheets and in the case action panels alike; a form's numbered section titles take weight 500. */
+.form-grid .field > .label, .form-grid legend.label, .acts .field > .label, .filters-inline .field > .label { font-size: 12px; color: var(--fg); }
+.form-sheet .block-title.label { font-size: 12px; font-weight: 500; }
 .form-intro { margin: 0 0 clamp(24px, 3cqw, 40px); font-size: 17px; line-height: 1.5; color: var(--mu); max-width: 56ch; }
 .form-actions { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; padding-top: 16px; }
 .control input[type="file"] { font-size: 15px; padding: 10px 0; }

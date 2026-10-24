@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useCallback, use, useEffect, useState } from 'react'
+import React, { createContext, useCallback, use, useSyncExternalStore } from 'react'
 
 import type { Theme, ThemeContextType } from './types'
 
@@ -14,32 +14,32 @@ const initialContext: ThemeContextType = {
 
 const ThemeContext = createContext(initialContext)
 
+/* The theme lives on <html data-theme>, which the inline InitTheme script sets from the stored choice before the body
+   paints. The provider reads that attribute rather than keeping its own copy: the server snapshot is undefined so
+   hydration matches, and React re-renders with the attribute straight after hydrating, so the Dark/Light buttons show
+   the right one pressed without waiting for an effect to read localStorage again. */
+const subscribe = (onChange: () => void) => {
+  const observer = new MutationObserver(onChange)
+  observer.observe(document.documentElement, { attributeFilter: ['data-theme'], attributes: true })
+  return () => observer.disconnect()
+}
+const getSnapshot = (): Theme => {
+  const current = document.documentElement.getAttribute('data-theme')
+  return themeIsValid(current) ? current : defaultTheme
+}
+const getServerSnapshot = (): Theme | undefined => undefined
+
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  // Starts undefined on both server and client so the first render matches; the effect below reads the real theme.
-  const [theme, setThemeState] = useState<Theme | undefined>(undefined)
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   const setTheme = useCallback((themeToSet: Theme | null) => {
     if (themeToSet === null) {
       window.localStorage.removeItem(themeLocalStorageKey)
       document.documentElement.setAttribute('data-theme', defaultTheme)
-      setThemeState(defaultTheme)
     } else {
-      setThemeState(themeToSet)
       window.localStorage.setItem(themeLocalStorageKey, themeToSet)
       document.documentElement.setAttribute('data-theme', themeToSet)
     }
-  }, [])
-
-  useEffect(() => {
-    let themeToSet: Theme = defaultTheme
-    const preference = window.localStorage.getItem(themeLocalStorageKey)
-
-    if (themeIsValid(preference)) {
-      themeToSet = preference
-    }
-
-    document.documentElement.setAttribute('data-theme', themeToSet)
-    setThemeState(themeToSet)
   }, [])
 
   return <ThemeContext value={{ setTheme, theme }}>{children}</ThemeContext>

@@ -1,6 +1,6 @@
 # Support portal (Dynamics 365 / Dataverse) — planning handoff
 
-Staging 2026-10-15: the work list for a GCP staging deployment is `11-staging-readiness.md`. Design 2026-10-14: the **product desk** for developers and Labs is designed in `10-product-desk.md` (phase A built the same day, `09-portal-guide.md` §4f). Status 2026-10-13: **first build in the repo** (see `09-portal-guide.md`): agent workspace and customer self-service on UAT, with registration by one-time code. Planning status 2026-10-12: planning complete. **Development environment: UAT**
+Testers 2026-10-24: the first round of junior agents reported back; the verified findings and the fix list, worked across sessions, are `13-tester-round-1.md`. Staging 2026-10-15: the work list for a GCP staging deployment is `11-staging-readiness.md`. Design 2026-10-14: the **product desk** for developers and Labs is designed in `10-product-desk.md` (phase A built the same day, `09-portal-guide.md` §4f). Status 2026-10-13: **first build in the repo** (see `09-portal-guide.md`): agent workspace and customer self-service on UAT, with registration by one-time code. Planning status 2026-10-12: planning complete. **Development environment: UAT**
 (`https://k7crmuat.crm8.dynamics.com`, `07-production-safety.md` §1 and §1c): the tenant is over
 its Dataverse database entitlement, so no sandbox can be created or copied, and the existing UAT
 sandbox was prepared instead — support schema synced from production, customer-facing automation
@@ -19,6 +19,7 @@ Dataverse must not be touched during development (`07-production-safety.md`).
 | `07-production-safety.md` | UAT vs production rules, no-schema-change rule, rollout gates | before any Dataverse call |
 | `09-portal-guide.md` | **what is built**: routes, the three sign-in doors, enforced rules, how to run, what is not done | starting work, always |
 | `10-product-desk.md` | **the product desk** (designed 2026-10-14, not built): support → principal support → engineering and Lab in Yodiz; the item as a bridge record in Payload, Yodiz behind a swappable adapter, the CRM as a mirror through an outbox, samples by script, the clocks | before any work for engineering, Lab or Yodiz |
+| `13-tester-round-1.md` | **the fix list from the first tester round** (2026-10-24): each claim verified or explained, TR-01…TR-15 with cause, files and a done-when check, decisions D-1…D-4, the reply to testers, a session log | working on tester feedback, always before the next round |
 | `12-tester-brief.md` | the phase 1 message to the first testers (2026-10-15): link, the five rules, a 30-minute read-only script with one note; phase 2 scope listed | sending or re-sending the tester brief |
 | `11-staging-readiness.md` | **staging on GCP** (written 2026-10-15): the work list before support staff can test against UAT side by side with production: admin blockers, code changes, GCP build-out, UAT and tester readiness, decisions | planning the staging deployment |
 | `08-implementation-plan.md` | routes, libraries, auth, UI, milestones, env vars, first-session checklist (the intent) | planning questions |

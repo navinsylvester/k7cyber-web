@@ -9,6 +9,7 @@ import { devAgentDoorEnabled } from '@/lib/dataverse/auth'
 import { findContactByEmail } from '@/lib/support/customers'
 import { mailAllowed, mailAllowlist, mailConfigured, otpMail, sendMail } from '@/lib/support/mail'
 import { OTP_COOKIE, OTP_TTL_SECONDS, canSend, isEmail, issueOtp, normaliseEmail, verifyOtp } from '@/lib/support/otp'
+import { isDeployed } from '@/lib/env'
 
 /* Customer sign-in and registration by one-time code, and the agent door. Every step is a server action; the code's
    signed token travels in an httpOnly cookie, the code itself by email (or the console in development). With
@@ -25,7 +26,7 @@ const safeNext = (n: unknown): string | undefined => (typeof n === 'string' && /
 /** The on-screen code (SUPPORT_DEV_SHOW_CODE=1, no SMTP) is for the developer's own machine. On any other host it needs the
     allowlist, or whoever found the URL could take a seeded customer's address and read their cases. */
 const showCodeHere = async (): Promise<boolean> => {
-  if (process.env.SUPPORT_DEV_SHOW_CODE !== '1' || process.env.NODE_ENV === 'production' || mailConfigured()) return false
+  if (process.env.SUPPORT_DEV_SHOW_CODE !== '1' || isDeployed() || mailConfigured()) return false
   if (mailAllowlist()) return true
   const h = await headers()
   // A tunnel or proxy may rewrite Host to localhost; the forwarded headers it adds give it away.
@@ -149,6 +150,6 @@ export async function agentSignIn(form: FormData): Promise<void> {
 
 /** The development code, when the portal cannot send mail. */
 export async function devCode(): Promise<string | null> {
-  if (process.env.NODE_ENV === 'production') return null
+  if (isDeployed()) return null
   return (await cookies()).get(DEV_CODE_COOKIE)?.value ?? null
 }

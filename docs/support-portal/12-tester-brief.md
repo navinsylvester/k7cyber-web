@@ -14,11 +14,11 @@ Hi [names],
 We are building a web portal for support that works on top of Dynamics. It is not replacing anything yet. For this first
 round I want three or four of you to look at it next to the Hub for about 30 minutes and tell me what does not match.
 
-**The link:** https://colon-constantly-communication-same.trycloudflare.com/support/sign-in?agent=1
+**The link:** https://wins-sierra-olympic-creativity.trycloudflare.com/support/sign-in?agent=1
 Click *Sign in with Microsoft* and use your normal K7 account. This address changes when my machine restarts; if it stops
 working, wait for a new one from me. The first page you open can take a few seconds, later ones are quick.
 
-**Before you start, five things to know**
+**Before you start, six things to know**
 
 1. **It reads a test copy of Dynamics, not production.** Nothing you do in the portal reaches the real CRM. Keep doing your
    actual work in the Hub as usual.
@@ -29,6 +29,8 @@ working, wait for a new one from me. The first page you open can take a few seco
    only change allowed in this round is an internal note on a case you own, starting with the word TEST.
 5. **Report in [channel / email]** with: the page address, the case number if any, what you did, what you expected, what
    you saw, and a screenshot. The time helps me find it in the log.
+6. **If a button or the theme switch does nothing, press Ctrl+Shift+R once** (Cmd+Shift+R on a Mac). That reloads the page
+   without your browser's saved copy; tell me if it still does nothing.
 
 **What to test (in this order)**
 

@@ -11,7 +11,7 @@ import { AgentTimeline } from '@/components/support/Timeline'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { isGuid } from '@/lib/dataverse/odata'
 import { fv, lookup } from '@/lib/dataverse/types'
-import { getCase } from '@/lib/support/cases'
+import { getCase, getCaseParties } from '@/lib/support/cases'
 import { careForCustomer, causeOf, csatForCase, followUpState, isUnhappy } from '@/lib/support/csat'
 import { dmy, dmyHm } from '@/lib/support/format'
 import { getSettings } from '@/lib/support/kpi-config'
@@ -21,6 +21,7 @@ import { getAgents, getCategories, getProducts, getPublicQueues, getSubcategorie
 import { defectsOfCase, rfesOfCase } from '@/lib/support/rfe'
 import { requireAgent } from '@/lib/support/session'
 import { getTimeline, type TimelineEntry } from '@/lib/support/timeline'
+import { caseStatusLabel } from '@/lib/support/status'
 
 import { answerAction, toldAction } from '../../../product/items/[number]/actions'
 import { addNoteAction, assignAction, callAction, cancelAction, csatFollowUpAction, csatInviteAction, csatRecordAction, editAction, emailAction, escalateAction, linkItemAction, queueAction, reopenAction, replyAction, resolveAction, statusAction, taskAction } from './actions'
@@ -63,7 +64,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   if (!c) notFound()
   const settings = await getSettings()
   const customerLookup = lookup(c, 'customerid')
-  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care] = await Promise.all([
+  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care, parties] = await Promise.all([
     getTimeline(me.auth, id, 'agent').catch(() => []),
     rfesOfCase(me.auth, id).catch(() => []),
     defectsOfCase(me.auth, id).catch(() => []),
@@ -75,6 +76,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
     getSubcategories(me.auth).catch(() => []),
     settings.csat.enabled ? csatForCase(id) : Promise.resolve(null),
     settings.csat.enabled && customerLookup ? careForCustomer(customerLookup.id, settings) : Promise.resolve(null),
+    getCaseParties(me.auth, id),
   ])
   const tab: Tab = sp.tab === 'details' || sp.tab === 'related' ? sp.tab : 'timeline'
   // The customer's rating sits in the timeline where it happened, as the one entry that is neither email nor note.
@@ -147,6 +149,9 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   for (const p of products) families.set(p.family, [...(families.get(p.family) ?? []), p])
   const tabHref = (t: Tab) => (t === 'timeline' ? here : `${here}?tab=${t}`)
   const fcr = num('k7_caseconsideredas')
+  // The incident id is often "-" or empty in the CRM; both read as not set (TR-09).
+  const incidentId = /^[\s-]*$/.test(txt('k7_incidentid')) ? '' : txt('k7_incidentid')
+  const serial = txt('k7_2ndserialnumber')
   const critical = num('prioritycode') === 696720000
 
   return (
@@ -199,8 +204,14 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                 ),
                 sans: true,
               },
+              // A contact customer's organisation, which the case row does not carry (TR-07).
+              { k: 'Account', v: customer?.logicalName === 'contact' && parties.account ? <Link href={`${WS}/customers/accounts/${parties.account.id}`}>{parties.account.name}</Link> : '', sans: true },
               { k: 'Contact', v: primary && primary.id !== customer?.id ? <Link href={`${WS}/customers/contacts/${primary.id}`}>{primary.name}</Link> : '', sans: true },
+              { k: 'Phone', v: parties.phone ? <a href={`tel:${parties.phone.split(/[/,&]/)[0].replace(/[^0-9+]/g, '')}`}>{parties.phone}</a> : '' },
               { k: 'Email', v: txt('k7_customeremail') },
+              // The case's serial key; when it has none, the account's licence key, named as such (TR-10).
+              { k: 'Serial key', v: serial },
+              { k: 'Licence key', v: serial ? '' : parties.licenceKey },
               { k: 'Owner', v: owner?.name ?? '', sans: true },
               { k: 'Created', v: dmyHm(c.createdon) },
               { k: 'Modified', v: dmyHm(c.modifiedon) },
@@ -278,7 +289,8 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   <MetaRows
                     items={[
                       { k: 'Version', v: txt('k7_productversion') },
-                      { k: 'Serial', v: txt('k7_2ndserialnumber') },
+                      { k: 'Serial key', v: serial },
+                      { k: 'Incident ID', v: incidentId },
                       { k: 'Module', v: txt('k7_module'), sans: true },
                       { k: 'Sub module', v: txt('k7_submodule'), sans: true },
                       { k: 'Created by', v: fv(c, '_createdby_value'), sans: true },
@@ -360,8 +372,11 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                     <Field id="e-version" label="Product version">
                       <input id="e-version" name="productVersion" defaultValue={txt('k7_productversion')} />
                     </Field>
-                    <Field id="e-serial" label="Serial number">
-                      <input id="e-serial" name="serial" defaultValue={txt('k7_2ndserialnumber')} />
+                    <Field id="e-serial" label="Serial key">
+                      <input id="e-serial" name="serial" defaultValue={serial} spellCheck={false} />
+                    </Field>
+                    <Field id="e-incident" label="Incident ID">
+                      <input id="e-incident" name="incidentId" defaultValue={txt('k7_incidentid')} spellCheck={false} />
                     </Field>
                     <Field id="e-module" label="Module">
                       <input id="e-module" name="module" defaultValue={txt('k7_module')} />
@@ -872,7 +887,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                     <form action={reopenAction} className="act-body">
                       <input type="hidden" name="id" value={id} />
                       <p>
-                        This case is {fv(c, 'statuscode') || fv(c, 'statecode')}. Reopening sets it back to Open with the same owner.
+                        This case is {caseStatusLabel(c) || fv(c, 'statecode')}. Reopening sets it back to Open with the same owner.
                       </p>
                       <button className="btn btn-line btn-sm" type="submit">
                         Reopen case

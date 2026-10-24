@@ -87,7 +87,7 @@ export default async function JoinCompanyPage({ searchParams }: { searchParams: 
 
           {settings.regions.length > 0 && (
             <fieldset className={`field span-2${e('regions') ? ' is-invalid' : ''}`} style={{ border: 0, padding: 0, margin: 0 }}>
-              <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+              <legend className="label" style={{ marginBottom: 10 }}>
                 K7 regions you operate in *
               </legend>
               <div className="checks">

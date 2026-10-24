@@ -59,6 +59,10 @@ const nextConfig: NextConfig = {
   // referrer cut to the origin, no device access. TLS and Strict-Transport-Security belong to the host in front of the app.
   // `/support` can take the same lines when its own hardening pass comes.
   headers: async () => [
+    // The portals are rendered per request and never cached. `no-transform` also stops a proxy rewriting the HTML: through the
+    // Cloudflare tunnel testers use, Email Address Obfuscation replaced every email with a link and a decoding script, so React's
+    // hydration failed on any page that shows an address (docs/support-portal/13-tester-round-1.md, TR-02).
+    ...['/support/:path*', '/partners/:path*'].map((source) => ({ source, headers: [{ key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate, no-transform' }] })),
     {
       source: '/partners/:path*',
       headers: [

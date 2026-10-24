@@ -15,6 +15,8 @@ export const HeaderShell: React.FC<{ brand: React.ReactNode; links: L[]; account
   const pathname = usePathname()
   const [mobile, setMobile] = useState(false)
   const { theme, setTheme } = useTheme()
+  // Until hydration the theme is unknown here: no aria-pressed, and bundle.css presses the button matching <html data-theme>.
+  const pressed = (t: 'dark' | 'light') => (theme === undefined ? undefined : theme === t)
   const current = (href: string) => (href === home ? pathname === home : pathname.startsWith(href))
   return (
     <header className="site-header g-paper">
@@ -29,10 +31,10 @@ export const HeaderShell: React.FC<{ brand: React.ReactNode; links: L[]; account
         </nav>
         <div className="hdr-tools">
           <div className="seg" role="group" aria-label="Theme">
-            <button type="button" aria-pressed={theme !== 'light'} onClick={() => setTheme('dark')}>
+            <button type="button" data-choice="dark" aria-pressed={pressed('dark')} onClick={() => setTheme('dark')}>
               Dark
             </button>
-            <button type="button" aria-pressed={theme === 'light'} onClick={() => setTheme('light')}>
+            <button type="button" data-choice="light" aria-pressed={pressed('light')} onClick={() => setTheme('light')}>
               Light
             </button>
           </div>
@@ -51,10 +53,10 @@ export const HeaderShell: React.FC<{ brand: React.ReactNode; links: L[]; account
             </Link>
           ))}
           <div className="seg seg-l" role="group" aria-label="Theme" style={{ marginTop: 16 }}>
-            <button type="button" aria-pressed={theme !== 'light'} onClick={() => setTheme('dark')}>
+            <button type="button" data-choice="dark" aria-pressed={pressed('dark')} onClick={() => setTheme('dark')}>
               Dark
             </button>
-            <button type="button" aria-pressed={theme === 'light'} onClick={() => setTheme('light')}>
+            <button type="button" data-choice="light" aria-pressed={pressed('light')} onClick={() => setTheme('light')}>
               Light
             </button>
           </div>

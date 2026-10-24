@@ -50,7 +50,7 @@ export const ViewTable: React.FC<{ result: ViewResult; path: string; base: Recor
       <div className="ledger-foot label">
         <span>
           Page {result.page}
-          {result.total !== undefined ? ` · ${result.total.toLocaleString('en-IN')}${result.totalLimitExceeded ? '+' : ''} cases` : ''}
+          {result.total !== undefined ? ` · ${result.total.toLocaleString('en-IN')}${result.totalLimitExceeded ? '+' : ''} ${result.total === 1 && !result.totalLimitExceeded ? 'case' : 'cases'}` : ''}
         </span>
         <Pager page={result.page} totalPages={result.more ? result.page + 1 : result.page} href={(p) => path + qs(base, { page: p > 1 ? p : undefined })} label="Cases" newer="Previous" older="Next" />
       </div>

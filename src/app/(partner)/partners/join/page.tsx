@@ -48,7 +48,7 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
         )}
         <form action={startApplication} className="form-grid">
           <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-            <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+            <legend className="label" style={{ marginBottom: 10 }}>
               We are applying as *
             </legend>
             <div className="choice">
