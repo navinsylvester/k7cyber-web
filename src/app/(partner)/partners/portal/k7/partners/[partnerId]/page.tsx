@@ -7,13 +7,15 @@ import { K7Nav } from '@/components/partner/K7Nav'
 import { Field, Flash, LegalChanges, OrgStateTag, Pid, RoleTags, Strip, TypeTag, UserStateTag } from '@/components/partner/Parts'
 import { Crumbs } from '@/components/support/Parts'
 import { orgAudit } from '@/lib/partner/audit'
+import { k7CertificateHref, K7_CERTIFICATES, orgStanding } from '@/lib/partner/certificates'
+import { ruleText } from '@/lib/partner/certificates-model'
 import { listMembers } from '@/lib/partner/members'
 import { outboxOf } from '@/lib/partner/mirror'
 import { findOrgByPartnerId, K7_PARTNERS } from '@/lib/partner/organisation'
 import { legalChanges } from '@/lib/partner/organisation-model'
 import { K7_APPLICATIONS, loadApplication } from '@/lib/partner/registration'
 import { requireK7Role } from '@/lib/partner/session'
-import { getPartnerSettings } from '@/lib/partner/settings'
+import { getPartnerSettings, PARTNER_TYPE_LABEL } from '@/lib/partner/settings'
 import { dmy, dmyHm, relative } from '@/lib/support/format'
 
 import { decideLegalEditAction, setOrgStatusAction, setWaiverAction } from '../actions'
@@ -37,7 +39,7 @@ export default async function K7PartnerPage({ params, searchParams }: { params: 
   const org = await findOrgByPartnerId(partnerId)
   if (!org) notFound()
   const scope = { orgId: org.id }
-  const [settings, members, trail, jobs, app] = await Promise.all([getPartnerSettings(), listMembers(scope), orgAudit(scope, 30), outboxOf('partner-orgs', org.id), org.applicationId ? loadApplication(org.applicationId) : Promise.resolve(null)])
+  const [settings, members, trail, jobs, app, cert] = await Promise.all([getPartnerSettings(), listMembers(scope), orgAudit(scope, 30), outboxOf('partner-orgs', org.id), org.applicationId ? loadApplication(org.applicationId) : Promise.resolve(null), orgStanding(scope)])
   const regions = settings.regions.filter((r) => org.regions.includes(r.code)).map((r) => r.name)
   const edit = org.pendingLegalEdit
   const changes = edit ? legalChanges(org, edit) : []
@@ -68,7 +70,7 @@ export default async function K7PartnerPage({ params, searchParams }: { params: 
             { label: 'Status', value: <OrgStateTag status={org.status} /> },
             { label: 'Type', value: <TypeTag type={org.type} /> },
             { label: 'Users', value: `${String(members.filter((m) => m.status !== 'disabled').length).padStart(2, '0')} active or invited` },
-            { label: 'Certificate', value: org.certificate.status === 'valid' ? `Valid${org.certificate.until ? ` to ${dmy(org.certificate.until)}` : ''}` : org.waiverUntil ? `Waived to ${dmy(org.waiverUntil)}` : settings.deals.requireCertificate ? 'None (gate on)' : 'None (gate off)' },
+            { label: 'Certificate', value: cert.current && cert.state !== 'none' ? <Link href={k7CertificateHref(cert.current)}>{cert.state === 'valid' || cert.state === 'expiring' ? `${cert.state === 'expiring' ? 'Expiring' : 'Valid'} to ${dmy(cert.current.expiresAt)}` : cert.state === 'requested' ? 'Requested · to issue' : cert.state === 'declined' ? 'Declined' : cert.state === 'expired' ? 'Expired' : 'Revoked'}</Link> : org.waiverUntil ? `Waived to ${dmy(org.waiverUntil)}` : settings.deals.requireCertificate ? 'None (gate on)' : 'None (gate off)' },
             { label: 'CRM account', value: org.crm.accountCode || (job ? job.state : '—') },
           ]}
         />
@@ -232,6 +234,24 @@ export default async function K7PartnerPage({ params, searchParams }: { params: 
                   </button>
                 </div>
               </form>
+            </div>
+            <div>
+              <h2>Partner certificate</h2>
+              <p className="hint" style={{ margin: '0 0 12px' }}>
+                {cert.rule.configured ? `The rule for a ${PARTNER_TYPE_LABEL[org.type]} today: ${ruleText(cert.rule)}${cert.rule.met ? ' · met' : ' · not met'}.` : 'No rule is set for this partner type.'}
+                {cert.current ? ` Current: ${cert.current.number} (${cert.state}).` : ' No certificate or request yet.'}
+              </p>
+              <p className="more" style={{ marginTop: 0 }}>
+                {cert.current ? (
+                  <Link className="link-u" href={k7CertificateHref(cert.current)}>
+                    {cert.state === 'requested' ? 'Decide the request →' : 'The certificate →'}
+                  </Link>
+                ) : (
+                  <Link className="link-u" href={K7_CERTIFICATES}>
+                    The certificates desk →
+                  </Link>
+                )}
+              </p>
             </div>
             <div>
               <h2>Certificate waiver</h2>

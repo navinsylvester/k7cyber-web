@@ -53,13 +53,14 @@ its cadence (two hours at least).
 | Deal sweep | `/api/partners/deals/sweep` | daily | expires approved deals past protection; the ending notice once |
 | Daily digest | `/api/partners/notifications/digest` | daily | the digest mails; read bell rows past `notify.bellRetentionDays` removed |
 | Scheme eligibility | `/api/partners/schemes/run` | daily | results of published schemes that have closed |
+| Certificate sweep | `/api/partners/certificates/sweep` | daily | expires certificates past their date, the 60- and 30-day reminders once each, certificates for passes that predate them, the organisations' certificate mirror, the renewal request where the rule holds |
 | Housekeeping | `/api/partners/housekeeping` | daily | join drafts untouched for 30 days and job-run rows older than 90 days removed |
 
 ```
 curl -s -X POST -H "Authorization: Bearer $CRON_SECRET" https://<host>/api/partners/outbox
 ```
 Any job can also be run by hand from the desk (the outbox and sync on the applications and deals pages, the SLA pass on
-the reports page, the eligibility run on the schemes page, the digest on the templates page, housekeeping on Operations);
+the reports page, the eligibility run on the schemes page, the digest on the templates page, the certificate sweep on the certificates desk, housekeeping on Operations);
 those runs are recorded too, with the person's address. The limits that live in memory (one-time-code attempts, the
 per-address and per-client send windows) are per process: on more than one instance they are per instance until a shared
 store replaces the maps (`src/lib/support/otp.ts`).

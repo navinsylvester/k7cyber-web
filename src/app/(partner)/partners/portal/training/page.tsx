@@ -5,6 +5,7 @@ import React from 'react'
 import { Empty, Flash, Strip } from '@/components/partner/Parts'
 import { CourseLedger } from '@/components/partner/Training'
 import { requirePartner } from '@/lib/partner/session'
+import { PARTNER_CERTIFICATES } from '@/lib/partner/certificates'
 import { PARTNER_TRAINING, trainingFor } from '@/lib/partner/training'
 
 export const metadata: Metadata = { title: 'Training' }
@@ -19,8 +20,10 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
   const me = await requirePartner(PARTNER_TRAINING)
   const groups = await trainingFor(me)
   const rows = groups.flatMap((g) => g.courses)
-  const passed = rows.filter((r) => r.standing.test === 'passed').length
+  const passed = rows.filter((r) => r.standing.test === 'passed' || r.standing.test === 'recertify').length
   const ready = rows.filter((r) => r.standing.test === 'ready' || r.standing.test === 'failed').length
+  const recertify = rows.filter((r) => r.standing.test === 'recertify').length
+  const certs = rows.filter((r) => r.standing.certificate && (r.standing.certificate.state === 'valid' || r.standing.certificate.state === 'expiring')).length
   const modulesDone = rows.reduce((t, r) => t + r.standing.modulesDone, 0)
   const modulesTotal = rows.reduce((t, r) => t + r.standing.modulesTotal, 0)
   const admin = me.roles.includes('admin')
@@ -30,7 +33,7 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
         <div className="ws-head-main">
           <span className="label muted">{me.org.tradeName || me.org.name} · training</span>
           <h1 className="h-util">Your training.</h1>
-          <p className="lede">Self-paced videos with a test per course. A module counts once you have watched most of it; the test unlocks when every module of the course is complete. Passing earns an individual certificate, which arrives in the next phase of the portal.</p>
+          <p className="lede">Self-paced videos with a test per course. A module counts once you have watched most of it; the test unlocks when every module of the course is complete. Passing earns an individual certificate, a PDF with a number anyone can verify; it stands for a year, and the test opens again before it lapses.</p>
         </div>
         <div className="ws-actions">
           {admin ? (
@@ -47,8 +50,8 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
           { label: 'Tracks open to you', value: groups.length ? groups.map((g) => g.track.name).join(' · ') : '—' },
           { label: 'Courses', value: `${String(rows.length).padStart(2, '0')} · ${String(passed).padStart(2, '0')} passed` },
           { label: 'Modules', value: `${String(modulesDone).padStart(2, '0')} of ${String(modulesTotal).padStart(2, '0')} complete` },
-          { label: 'Tests to take', value: ready ? String(ready).padStart(2, '0') : 'None waiting' },
-          { label: 'Certificates', value: 'Next phase' },
+          { label: 'Tests to take', value: ready || recertify ? `${String(ready + recertify).padStart(2, '0')}${recertify ? ` · ${recertify} to recertify` : ''}` : 'None waiting' },
+          { label: 'Certificates', value: <Link href={PARTNER_CERTIFICATES}>{String(certs).padStart(2, '0')} current →</Link> },
         ]}
       />
       {groups.length === 0 ? (

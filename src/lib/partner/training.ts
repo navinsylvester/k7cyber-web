@@ -6,6 +6,8 @@ import { getPayload, type Where } from 'payload'
 import { TRAINING_DIR } from '@/collections/partner/PartnerTraining'
 
 import { audit, type Actor } from './audit'
+import { certificatesOfUser, currentByCourse, issueForPass } from './certificates'
+import { certificateState, type Certificate } from './certificates-model'
 import { serveStoredFile } from './files'
 import { notify } from './notify'
 import { trainingVars } from './notify-model'
@@ -159,7 +161,8 @@ export const trainingFor = async (me: PartnerContext, forUser: PartnerUser = me.
   if (!tracks.length) return []
   const courses = await listCourses({ trackIds: tracks.map((t) => t.id), status: 'published' })
   const ids = courses.map((c) => c.id)
-  const [modules, progress, attempts, banks, settings] = await Promise.all([listModules(ids), ids.length ? progressOf(me.scope, { and: [{ user: { equals: forUser.id } }, { course: { in: ids.map(rel) } }] }) : [], ids.length ? attemptsOf(me.scope, { and: [{ user: { equals: forUser.id } }, { course: { in: ids.map(rel) } }] }) : [], bankSizes(ids), getPartnerSettings()])
+  const [modules, progress, attempts, banks, settings, certs] = await Promise.all([listModules(ids), ids.length ? progressOf(me.scope, { and: [{ user: { equals: forUser.id } }, { course: { in: ids.map(rel) } }] }) : [], ids.length ? attemptsOf(me.scope, { and: [{ user: { equals: forUser.id } }, { course: { in: ids.map(rel) } }] }) : [], bankSizes(ids), getPartnerSettings(), certificatesOfUser(me.scope, forUser.id)])
+  const current = currentByCourse(certs)
   return tracks
     .map((track) => ({
       track,
@@ -169,26 +172,31 @@ export const trainingFor = async (me: PartnerContext, forUser: PartnerUser = me.
           const rules = courseRules(course, settings.training)
           const mods = modules.filter((m) => m.courseId === course.id)
           const mine = progress.filter((p) => p.courseId === course.id)
-          return { course, rules, modules: mods, progress: mine, standing: courseStanding(course, mods, mine, attempts.filter((a) => a.courseId === course.id), rules, banks.get(course.id) ?? 0) }
+          return { course, rules, modules: mods, progress: mine, standing: courseStanding(course, mods, mine, attempts.filter((a) => a.courseId === course.id), rules, banks.get(course.id) ?? 0, certStanding(current.get(course.id) ?? null, settings.certificates.reminderDays)) }
         }),
     }))
     .filter((g) => g.courses.length)
 }
 
-export type TrainingCount = { courses: number; passed: number; inProgress: number; ready: number }
+/** The standing's view of a certificate (training-model `CertStanding`). */
+const certStanding = (c: Certificate | null, reminderDays: number[]) => (c ? { state: certificateState(c, reminderDays), number: c.number, expiresAt: c.expiresAt, id: c.id } : null)
+
+export type TrainingCount = { courses: number; passed: number; inProgress: number; ready: number; recertify: number; certificates: number }
 
 /** For the partner's home. */
 export const trainingCountFor = async (me: PartnerContext): Promise<TrainingCount> => {
   const rows = (await trainingFor(me)).flatMap((g) => g.courses)
   return {
     courses: rows.length,
-    passed: rows.filter((r) => r.standing.test === 'passed').length,
-    inProgress: rows.filter((r) => r.standing.test !== 'passed' && (r.standing.modulesDone > 0 || r.standing.watchedShare > 0)).length,
+    passed: rows.filter((r) => r.standing.test === 'passed' || r.standing.test === 'recertify').length,
+    inProgress: rows.filter((r) => r.standing.test !== 'passed' && r.standing.test !== 'recertify' && (r.standing.modulesDone > 0 || r.standing.watchedShare > 0)).length,
     ready: rows.filter((r) => r.standing.test === 'ready' || r.standing.test === 'failed').length,
+    recertify: rows.filter((r) => r.standing.test === 'recertify').length,
+    certificates: rows.filter((r) => r.standing.certificate && (r.standing.certificate.state === 'valid' || r.standing.certificate.state === 'expiring')).length,
   }
 }
 
-export type CourseView = { track: Track; course: Course; rules: CourseRules; modules: Module[]; progress: Map<string, Progress>; attempts: Attempt[]; standing: CourseStanding; bank: number }
+export type CourseView = { track: Track; course: Course; rules: CourseRules; modules: Module[]; progress: Map<string, Progress>; attempts: Attempt[]; standing: CourseStanding; bank: number; /** The learner's certificates for the course, newest first (M11). */ certificates: Certificate[] }
 
 /** One course for the learner: null unless published under a track open to them. Expired open attempts are closed on the way. */
 export const loadCourseFor = async (me: PartnerContext, courseId: string): Promise<CourseView | null> => {
@@ -196,11 +204,13 @@ export const loadCourseFor = async (me: PartnerContext, courseId: string): Promi
   if (!course || course.status !== 'published') return null
   const track = (await myTracks(me)).find((t) => t.id === course.trackId)
   if (!track) return null
-  const [modules, progress, rawAttempts, banks, rules] = await Promise.all([listModules([course.id]), progressOf(me.scope, { and: [{ user: { equals: me.user.id } }, { course: { equals: course.id } }] }), attemptsOf(me.scope, { and: [{ user: { equals: me.user.id } }, { course: { equals: course.id } }] }), bankSizes([course.id]), rulesFor(course)])
+  const [modules, progress, rawAttempts, banks, rules, settings] = await Promise.all([listModules([course.id]), progressOf(me.scope, { and: [{ user: { equals: me.user.id } }, { course: { equals: course.id } }] }), attemptsOf(me.scope, { and: [{ user: { equals: me.user.id } }, { course: { equals: course.id } }] }), bankSizes([course.id]), rulesFor(course), getPartnerSettings()])
   const attempts: Attempt[] = []
   for (const a of rawAttempts) attempts.push(a.status === 'open' && isLate(a, new Date()) ? await finalise(me, a, a.answers, new Date(), course, track) : a)
   const bank = banks.get(course.id) ?? 0
-  return { track, course, rules, modules, progress: new Map(progress.map((p) => [p.moduleId, p])), attempts, standing: courseStanding(course, modules, progress, attempts, rules, bank), bank }
+  // Read after the attempts, so a pass just finalised shows its certificate.
+  const certificates = (await certificatesOfUser(me.scope, me.user.id)).filter((c) => c.courseId === course.id)
+  return { track, course, rules, modules, progress: new Map(progress.map((p) => [p.moduleId, p])), attempts, standing: courseStanding(course, modules, progress, attempts, rules, bank, certStanding(currentByCourse(certificates).get(course.id) ?? null, settings.certificates.reminderDays)), bank, certificates }
 }
 
 export type ModuleView = CourseView & { module: Module; mine: Progress | null; required: number; source: VideoSource | null; prev: Module | null; next: Module | null; index: number }
@@ -311,6 +321,8 @@ const finalise = async (me: PartnerContext, a: Attempt, answers: Record<string, 
     const body = `${me.user.name || me.user.email} passed the ${track.name} course “${course.title}” with ${grade.score}% (${grade.correct} of ${grade.total}, pass mark ${a.passMark}%).`
     const href = `${PARTNER_TRAINING}/${course.id}/test/${done.id}/result`
     await notify({ event: 'training.course.passed', vars, subject, body, href, to: me.roles.includes('admin') ? { kind: 'org', orgId: me.scope.orgId, roles: ['admin'] } : [{ kind: 'user', user: me.user }, { kind: 'org', orgId: me.scope.orgId, roles: ['admin'] }] })
+    // FR-TRN-07: the pass earns the certificate (unless a current one stands), then the organisation's rule is read.
+    await issueForPass(me, { attempt: done, course, track }).catch((e) => console.error(`[partner training] certificate for attempt ${done.id}: ${(e as Error).message}`))
   }
   return done
 }

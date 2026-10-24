@@ -76,7 +76,7 @@ Local dev uses Payload's push mode (schema synced on start). Credentials in `.en
 - `scripts/dataverse-probe.py` queries Dataverse from the shell (`DV_*` in `.env`); its
   token cache `scripts/.token_cache.json` and any `spec/` output are git-ignored.
 
-## Partner portal (M1–M4 built 2026-10-22, M5–M9 on 2026-10-23; the LMS, M10–M11, last)
+## Partner portal (M1–M4 built 2026-10-22, M5–M10 on 2026-10-23, M11 on 2026-10-24: all eleven milestones built)
 - Start at `docs/partner-portal/README.md`. `02-build-plan.md` is the plan and the cross-session state: status table,
   decisions, milestones M0–M11 with tick-boxes, traceability and a session log to update at the end of every session.
   `01-requirements.md` is the source document (Vijaichristopher, 2026-10-06) converted verbatim, with an appendix of gaps;
@@ -97,4 +97,9 @@ Local dev uses Payload's push mode (schema synced on start). Credentials in `.en
   hardening (M9: `docs/partner-portal/05-staging-and-go-live.md` is the runbook; the scheduled routes share `src/lib/cron-auth.ts`,
   every run is a `partner-job-runs` row read by `/partners/portal/k7/operations` and `GET /api/partners/health`; the CRM mirror has
   per-feature switches under `crm.enabled` for the go-live gate; `scripts/backup.sh` / `restore.sh`; `tests/int/partner-routes`
-  scans every route and action for its door). Next: the LMS (M10–M11) and `/partners/verify/[id]`.
+  scans every route and action for its door), training (M10: `src/lib/partner/training*.ts`, `video.ts`, the `partner-tracks` … `-attempts`
+  collections under the admin group *Partner training*, the Payload role `trainingEditor`) and certificates (M11: `src/lib/partner/certificates*.ts`,
+  `certificate-pdf.ts` drawing the PDF with pdf-lib on the TTFs in `design-system/assets/fonts`; `partner-certificates` + `-certificate-files`;
+  the public `/partners/verify/[id]`; the daily `POST /api/partners/certificates/sweep`; the organisation's standing mirrored onto
+  `partner-orgs.certificate`, which the deal gate reads; `deals.requireCertificate` on in the development settings). Next: launch (the
+  go-live gate in `05-staging-and-go-live.md` §5) and the M0 items that wait on people.

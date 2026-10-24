@@ -59,7 +59,7 @@ export default async function OrganisationPage({ searchParams }: { searchParams:
           { label: 'Status', value: <OrgStateTag status={org.status} /> },
           { label: 'Partner since', value: org.createdAt ? dmy(org.createdAt) : '—' },
           { label: 'Users', value: admin ? <Link href={`${PARTNER_ORG}/users`}>{String(standing).padStart(2, '0')} active or invited</Link> : `${String(standing).padStart(2, '0')} active or invited` },
-          { label: 'Certificate', value: org.certificate.status === 'valid' ? `Valid${org.certificate.until ? ` to ${dmy(org.certificate.until)}` : ''}` : org.waiverUntil ? `Waived to ${dmy(org.waiverUntil)}` : 'Not yet required' },
+          { label: 'Partner certificate', value: <Link href="/partners/portal/certificates">{org.certificate.status === 'valid' ? `Valid${org.certificate.until ? ` to ${dmy(org.certificate.until)}` : ''}` : org.certificate.status === 'expired' ? 'Expired' : org.certificate.status === 'revoked' ? 'Revoked' : org.waiverUntil ? `Waived to ${dmy(org.waiverUntil)}` : 'Not yet'}</Link> },
         ]}
       />
       <div className="phome">

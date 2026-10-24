@@ -386,3 +386,58 @@ tbody + tbody .lib-band th { padding-top: 26px; }
 .import-lines h2 .pixel { background: var(--acc); }
 .import-lines ul { margin: 0; padding: 0 0 0 16px; font-size: 14px; color: var(--mu); display: grid; gap: 4px; }
 .bank-bad { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
+
+/* ---------- P33 Certificates (M11): the state tag, the certificate as a filed card with its number, its facts and the QR ---------- */
+.tag-big { font-size: 13px; padding: 6px 12px; }
+.tag.is-struck { text-decoration: line-through; text-decoration-thickness: 1px; }
+.cert-grid { display: grid; gap: clamp(28px, 3cqw, 40px); margin-top: 30px; align-items: start; }
+@container (min-width: 900px) { .cert-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } }
+.cert-grid > div > .sub-head { margin-top: 0; }
+.cert-card { margin: 0; }
+.phome > div > .cert-card:first-child { margin-top: 28px; }
+.cert-card-body { padding: 22px 24px 24px; box-shadow: inset 0 0 0 1px var(--fg); }
+.cert-card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 14px; }
+.cert-card-head .tid-display { margin: 0; font-size: clamp(22px, 7.5cqw, 40px); }
+.cert-grid > * { min-width: 0; }
+.cert-card-words { margin: 0 0 18px; font-size: 15px; line-height: 1.55; color: var(--mu); max-width: 62ch; text-wrap: pretty; }
+.cert-sheet { display: grid; gap: 24px 32px; align-items: start; }
+@container (min-width: 760px) { .cert-sheet { grid-template-columns: minmax(0, 1fr) 160px; } }
+.cert-facts dd .tag { vertical-align: middle; }
+/* The facts grid's value column may shrink (a grid track's minimum is auto), so a long verification URL wraps inside the card. */
+.cert-facts, .verify-facts { grid-template-columns: max-content minmax(0, 1fr); }
+.cert-facts dd, .verify-facts dd { min-width: 0; overflow-wrap: anywhere; }
+.cert-sheet > * { min-width: 0; }
+.cert-verify { display: grid; gap: 10px; justify-items: start; }
+.cert-verify .label { margin: 0; max-width: 20ch; line-height: 1.5; }
+.cert-qr { display: block; color: var(--fg); background: var(--bg); padding: 8px; box-shadow: inset 0 0 0 1px var(--ln); box-sizing: content-box; }
+.ws-side .cert-qr { padding: 6px; }
+
+/* ---------- P34 The public verification sheet: the pixel on the headline, the one filed card, the number form ---------- */
+.verify .ws-head-main .tid-display { margin-bottom: 10px; }
+.verify .h-util .pixel { width: 14px; height: 14px; background: var(--mu); vertical-align: 0.1em; margin-right: 6px; }
+.verify .h-util .pixel.is-on { background: var(--signal); }
+.verify-card { max-width: 640px; margin-top: 30px; }
+.verify-card .ftab { position: static; }
+.verify-facts { padding: 20px 22px 22px; box-shadow: inset 0 0 0 1px var(--fg); margin: 0; }
+.verify-facts dd .tag { vertical-align: middle; }
+.verify-form { max-width: 560px; margin-top: 24px; }
+.verify .more { margin-top: 28px; }
+
+/* ---------- P35 The rule lines (people certified per track against the people needed) and the certificate ledgers ---------- */
+.rule-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.rule-lines li { display: grid; grid-template-columns: minmax(90px, 140px) auto minmax(0, 1fr); align-items: center; gap: 8px 16px; padding: 10px 0; border-bottom: 1px solid var(--ln); }
+.rule-lines li:first-child { border-top: 1px solid var(--fg); }
+.rule-track { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.rule-lines .mbar-cells { width: auto; grid-auto-columns: 14px; }
+.rule-lines li.is-short .mbar-cells i:not(.is-done) { background: var(--signal); opacity: .35; }
+.rule-lines li.is-met .mbar-n, .rule-lines li.is-met .rule-words { color: var(--fg); }
+.rule-lines li.is-short .rule-words { color: var(--acc); }
+.rule-words { white-space: nowrap; }
+.rule-lines.is-compact li { padding: 6px 0; grid-template-columns: minmax(70px, 100px) auto minmax(0, 1fr); }
+.rule-lines.is-compact .rule-track { font-size: 13px; }
+@media (max-width: 520px) { .rule-lines li { grid-template-columns: 1fr auto; } .rule-words { grid-column: 1 / -1; } }
+.cert-table td.title { min-width: 170px; }
+.cert-table tr.is-off td { color: var(--mu); }
+.cert-table tr.is-off .pid { opacity: .7; }
+.rule-table td.title { white-space: nowrap; }
+.rule-form input { width: 64px; text-align: right; padding: 6px 8px; font: 400 14px/1.4 var(--font-mono); }

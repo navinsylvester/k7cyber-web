@@ -4,6 +4,7 @@ import React from 'react'
 
 import { NotificationList, OrgStateTag, Pid, RoleTags, Strip, TypeTag } from '@/components/partner/Parts'
 import { orgAudit } from '@/lib/partner/audit'
+import { certificateHref, orgStanding, PARTNER_CERTIFICATES } from '@/lib/partner/certificates'
 import { collateralCountFor, PARTNER_COLLATERAL } from '@/lib/partner/collateral'
 import { dealCounts, PARTNER_DASHBOARD, PARTNER_DEALS, registerGate } from '@/lib/partner/deals'
 import { listNotifications } from '@/lib/partner/notify'
@@ -20,7 +21,7 @@ export const metadata: Metadata = { title: 'Home' }
    carries `me.scope`. */
 export default async function PartnerHomePage() {
   const me = await requirePartner('/partners/portal')
-  const [settings, notifications, trail, deals, blocked, collateral, schemes, training] = await Promise.all([getPartnerSettings(), listNotifications({ kind: 'user', userId: me.user.id, scope: me.scope }, 5), orgAudit(me.scope, 5), dealCounts(me.scope), registerGate(me), collateralCountFor(me), schemeCountFor(me), trainingCountFor(me)])
+  const [settings, notifications, trail, deals, blocked, collateral, schemes, training, cert] = await Promise.all([getPartnerSettings(), listNotifications({ kind: 'user', userId: me.user.id, scope: me.scope }, 5), orgAudit(me.scope, 5), dealCounts(me.scope), registerGate(me), collateralCountFor(me), schemeCountFor(me), trainingCountFor(me), orgStanding(me.scope)])
   const regions = settings.regions.filter((r) => me.org.regions.includes(r.code)).map((r) => r.name)
   const unread = notifications.filter((n) => !n.readAt).length
   return (
@@ -40,7 +41,7 @@ export default async function PartnerHomePage() {
           { label: 'Status', value: <OrgStateTag status={me.org.status} /> },
           { label: 'Your roles', value: <RoleTags roles={me.roles} /> },
           { label: 'Deals', value: <Link href={PARTNER_DEALS}>{String(deals.approved).padStart(2, '0')} protected · {String(deals.submitted + deals.extensionRequested).padStart(2, '0')} with K7{deals.infoRequested ? ` · ${String(deals.infoRequested).padStart(2, '0')} need you` : ''}</Link> },
-          { label: 'Certificate', value: me.org.certificate.status === 'valid' ? `Valid${me.org.certificate.until ? ` to ${dmy(me.org.certificate.until)}` : ''}` : 'Not yet required' },
+          { label: 'Partner certificate', value: <Link href={cert.current ? certificateHref(cert.current) : PARTNER_CERTIFICATES}>{cert.state === 'valid' || cert.state === 'expiring' ? `${cert.state === 'expiring' ? 'Expiring' : 'Valid'} to ${dmy(cert.current!.expiresAt)}` : cert.state === 'requested' ? 'Requested from K7' : cert.state === 'expired' ? 'Expired' : cert.state === 'revoked' ? 'Revoked' : me.org.waiverUntil ? `Waived to ${dmy(me.org.waiverUntil)}` : cert.rule.configured ? `Not yet · ${cert.rule.lines.map((l) => `${l.have}/${l.need} ${l.trackName}`).join(', ')}` : 'Not yet'}</Link> },
         ]}
       />
       <div className="phome">
@@ -117,11 +118,15 @@ export default async function PartnerHomePage() {
           <div>
             <h2>Training</h2>
             <p className="muted" style={{ margin: 0, fontSize: 15 }}>
-              {training.courses === 0 ? (me.roles.some((r) => r === 'sales' || r === 'technical') ? 'No course is published for your roles yet.' : 'Training is for the Sales and Technical roles; as Partner Admin you read the organisation’s progress.') : `${training.courses} course${training.courses === 1 ? '' : 's'} for your roles: ${training.passed} passed${training.ready ? `, ${training.ready} with a test to take` : ''}${training.inProgress ? `, ${training.inProgress} in progress` : ''}.`}
+              {training.courses === 0 ? (me.roles.some((r) => r === 'sales' || r === 'technical') ? 'No course is published for your roles yet.' : 'Training is for the Sales and Technical roles; as Partner Admin you read the organisation’s progress.') : `${training.courses} course${training.courses === 1 ? '' : 's'} for your roles: ${training.passed} passed${training.certificates ? ` (${training.certificates} certificate${training.certificates === 1 ? '' : 's'} current)` : ''}${training.recertify ? `, ${training.recertify} to recertify` : ''}${training.ready ? `, ${training.ready} with a test to take` : ''}${training.inProgress ? `, ${training.inProgress} in progress` : ''}.`}
             </p>
             <p className="more">
               <Link className="link-u" href={PARTNER_TRAINING}>
-                {training.ready ? 'Take a test →' : training.courses ? 'Your training →' : 'Training →'}
+                {training.recertify ? 'Recertify →' : training.ready ? 'Take a test →' : training.courses ? 'Your training →' : 'Training →'}
+              </Link>
+              {' · '}
+              <Link className="link-u" href={PARTNER_CERTIFICATES}>
+                Certificates
               </Link>
               {me.roles.includes('admin') ? (
                 <>

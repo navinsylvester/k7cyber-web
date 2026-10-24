@@ -5,6 +5,7 @@ import React from 'react'
 
 import { Flash, Strip } from '@/components/partner/Parts'
 import { AttemptTag, PaperReview, ResultFacts } from '@/components/partner/Training'
+import { certificateHref } from '@/lib/partner/certificates'
 import { requirePartner } from '@/lib/partner/session'
 import { loadAttemptFor, PARTNER_TRAINING } from '@/lib/partner/training'
 import { gradePaper } from '@/lib/partner/training-model'
@@ -26,6 +27,8 @@ export default async function ResultPage({ params }: { params: Promise<{ courseI
   const grade = gradePaper(a.paper, a.answers, a.passMark)
   const courseHref = `${PARTNER_TRAINING}/${view.course.id}`
   const canRetake = !a.passed && view.standing.unlock.ok && !view.attempts.some((x) => x.status === 'open')
+  const cert = view.certificates.find((c) => c.attemptId === a.id) ?? null
+  const standing = view.certificates.find((c) => c.status === 'valid') ?? null
   return (
     <section className="sheet ws g-paper">
       <div className="ws-head">
@@ -38,7 +41,22 @@ export default async function ResultPage({ params }: { params: Promise<{ courseI
           </span>
           <h1 className="h-util">{a.passed ? `Passed with ${a.score}%.` : a.status === 'expired' ? `Out of time · ${a.score}%.` : `${a.score}% · not passed.`}</h1>
           <p className="lede">
-            {a.passed ? `${a.correct} of ${a.total} right against a pass mark of ${a.passMark}%. Your Partner Admin has been told; the individual certificate arrives with the next phase of the portal.` : a.status === 'expired' ? `The time ran out and the paper was submitted with what you had answered: ${a.correct} of ${a.total} right, against a pass mark of ${a.passMark}%. You may take the test again.` : `${a.correct} of ${a.total} right, against a pass mark of ${a.passMark}%. Watch the modules again where you need to and take the test again; each attempt draws a fresh paper.`}
+            {a.passed ? (
+              <>
+                {a.correct} of {a.total} right against a pass mark of {a.passMark}%. Your Partner Admin has been told.{' '}
+                {cert ? (
+                  <>
+                    Your certificate <Link className="link-u" href={certificateHref(cert)}>{cert.number}</Link> ({cert.band}) has been issued and emailed to you; it stands to {cert.expiresAt?.slice(0, 10).split('-').reverse().join('-')}.
+                  </>
+                ) : standing ? (
+                  <>
+                    Your certificate <Link className="link-u" href={certificateHref(standing)}>{standing.number}</Link> already stands to {standing.expiresAt?.slice(0, 10).split('-').reverse().join('-')}; this pass is recorded beside it.
+                  </>
+                ) : (
+                  'Your certificate is issued shortly.'
+                )}
+              </>
+            ) : a.status === 'expired' ? `The time ran out and the paper was submitted with what you had answered: ${a.correct} of ${a.total} right, against a pass mark of ${a.passMark}%. You may take the test again.` : `${a.correct} of ${a.total} right, against a pass mark of ${a.passMark}%. Watch the modules again where you need to and take the test again; each attempt draws a fresh paper.`}
           </p>
         </div>
         <div className="ws-actions">

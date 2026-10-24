@@ -31,6 +31,8 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
     </label>
   )
   const probe = process.env.NODE_ENV !== 'production' && process.env.SUPPORT_DEV_SERVICE === 'probe'
+  const certTracks = [...new Set(s.certificates.rules.map((r) => r.track))]
+  if (!certTracks.length) certTracks.push('sales', 'technical')
   return (
     <>
       <K7Nav active="settings" roles={me.roles} />
@@ -130,7 +132,7 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                   <input id="deals_endingNoticeDays" name="deals_endingNoticeDays" inputMode="numeric" defaultValue={s.deals.endingNoticeDays} />
                 </Field>
                 <div className="span-2" style={{ display: 'grid', gap: 12 }}>
-                  {check('deals_requireCertificate', 'A deal needs a certified organisation', s.deals.requireCertificate, 'off until the LMS exists; waivers per organisation')}
+                  {check('deals_requireCertificate', 'A deal needs a certified organisation', s.deals.requireCertificate, 'FR-DEAL-01: a current partner certificate or a waiver set on the organisation; switch it on once the partners have had time to certify')}
                   {check('deals_conflictCheckCrm', 'Also look for the end customer in the CRM when checking conflicts', s.deals.conflictCheckCrm)}
                 </div>
               </div>
@@ -204,6 +206,69 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                   <input id="training_questionsPerTest" name="training_questionsPerTest" inputMode="numeric" defaultValue={s.training.questionsPerTest} />
                 </Field>
                 <div className="span-2">{check('training_showAnswers', 'Show the correct answers on the result page', s.training.showAnswers, 'FR-TRN-06; a course may override')}</div>
+              </div>
+            </div>
+            <div id="certificates">
+              <h2 className="sub-head">Certificates</h2>
+              <div className="form-grid">
+                <Field id="cert_validityMonths" label="Individual certificate stands for (months)" hint="FR-TRN-10: default 12; the recertification test opens inside the first reminder window.">
+                  <input id="cert_validityMonths" name="cert_validityMonths" inputMode="numeric" defaultValue={s.certificates.validityMonths} />
+                </Field>
+                <Field id="cert_orgValidityMonths" label="Partner certificate stands for (months)" hint="FR-CRT-05: default 12.">
+                  <input id="cert_orgValidityMonths" name="cert_orgValidityMonths" inputMode="numeric" defaultValue={s.certificates.orgValidityMonths} />
+                </Field>
+                <Field id="cert_reminderDays" label="Reminders (days before expiry)" hint="FR-TRN-10, FR-CRT-06: one reminder each; default 60, 30.">
+                  <input id="cert_reminderDays" name="cert_reminderDays" defaultValue={s.certificates.reminderDays.join(', ')} placeholder="60, 30" />
+                </Field>
+                <Field id="cert_meritFrom" label="Score bands: Merit from %, Distinction from %" hint="FR-TRN-07: Pass below Merit.">
+                  <span style={{ display: 'flex', gap: 8 }}>
+                    <input id="cert_meritFrom" name="cert_meritFrom" inputMode="numeric" defaultValue={s.certificates.meritFrom} aria-label="Merit from %" />
+                    <input id="cert_distinctionFrom" name="cert_distinctionFrom" inputMode="numeric" defaultValue={s.certificates.distinctionFrom} aria-label="Distinction from %" />
+                  </span>
+                </Field>
+                <Field id="cert_tracks" label="Tracks the rule counts" span hint="The track keys, as in the admin (sales, technical). One column each below.">
+                  <input id="cert_tracks" name="cert_tracks" defaultValue={certTracks.join(', ')} placeholder="sales, technical" />
+                </Field>
+                <div className="span-2">
+                  <span className="label" style={{ color: 'var(--mu)', display: 'block', marginBottom: 10 }}>
+                    FR-CRT-01: people who must hold a current individual certificate on each track before the organisation earns its partner certificate. 0 = that track is not required; a type with every column at 0 never qualifies.
+                  </span>
+                  <div className="table-wrap">
+                    <table className="dtable rule-table rule-form">
+                      <thead>
+                        <tr>
+                          <th scope="col">Partner type</th>
+                          {certTracks.map((t) => (
+                            <th scope="col" className="num" key={t}>
+                              {t}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {PARTNER_TYPES.map((ty) => (
+                          <tr key={ty}>
+                            <td className="title">{PARTNER_TYPE_LABEL[ty]}</td>
+                            {certTracks.map((t) => (
+                              <td className="num" key={t}>
+                                <input name={`cert_rule_${ty}_${t}`} inputMode="numeric" defaultValue={s.certificates.rules.find((r) => r.type === ty && r.track === t)?.people ?? 0} aria-label={`${PARTNER_TYPE_LABEL[ty]}, ${t}`} />
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <Field id="cert_signatoryName" label="Signatory" hint="FR-CRT-03: printed under the signature on the partner certificate. The image is the file PARTNER_CERT_SIGNATORY names.">
+                  <input id="cert_signatoryName" name="cert_signatoryName" defaultValue={s.certificates.signatoryName} placeholder="Name" />
+                </Field>
+                <Field id="cert_signatoryTitle" label="Signatory’s title">
+                  <input id="cert_signatoryTitle" name="cert_signatoryTitle" defaultValue={s.certificates.signatoryTitle} />
+                </Field>
+                <Field id="cert_issuer" label="Issuer" span hint="On both certificates and in the PDF’s author line.">
+                  <input id="cert_issuer" name="cert_issuer" defaultValue={s.certificates.issuer} />
+                </Field>
               </div>
             </div>
             <div>

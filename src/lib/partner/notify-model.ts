@@ -11,9 +11,9 @@ export const DELIVERY_HINT: Record<Delivery, string> = {
   bell: 'the bell row only; nothing by email',
 }
 
-export type EventGroup = 'applications' | 'organisation' | 'users' | 'deals' | 'schemes' | 'training' | 'sla'
-export const EVENT_GROUP_LABEL: Record<EventGroup, string> = { applications: 'Applications', organisation: 'Organisation', users: 'People', deals: 'Deals', schemes: 'Schemes', training: 'Training', sla: 'Approval SLA' }
-export const EVENT_GROUPS: readonly EventGroup[] = ['applications', 'organisation', 'users', 'deals', 'schemes', 'training', 'sla']
+export type EventGroup = 'applications' | 'organisation' | 'users' | 'deals' | 'schemes' | 'training' | 'certificates' | 'sla'
+export const EVENT_GROUP_LABEL: Record<EventGroup, string> = { applications: 'Applications', organisation: 'Organisation', users: 'People', deals: 'Deals', schemes: 'Schemes', training: 'Training', certificates: 'Certificates', sla: 'Approval SLA' }
+export const EVENT_GROUPS: readonly EventGroup[] = ['applications', 'organisation', 'users', 'deals', 'schemes', 'training', 'certificates', 'sla']
 
 export type Audience = 'partner' | 'k7' | 'applicant'
 
@@ -27,6 +27,8 @@ const SCHEME = ['scheme', 'partner', 'partnerId', 'startDate', 'endDate']
 const ORG = ['partner', 'partnerId']
 const USER = ['partner', 'partnerId', 'user', 'roles']
 const TRAINING = ['course', 'track', 'user', 'score', 'partner', 'partnerId']
+const CERT = ['certificate', 'course', 'track', 'user', 'band', 'issued', 'expires', 'verifyUrl', 'partner', 'partnerId']
+const ORG_CERT = ['certificate', 'issued', 'expires', 'verifyUrl', 'rule', 'reason', 'partner', 'partnerId']
 
 const ev = (key: string, group: EventGroup, label: string, audience: Audience, delivery: Delivery, vars: string[], hint: string): EventDef => ({ key, group, label, audience, delivery, vars, hint })
 
@@ -68,8 +70,18 @@ export const EVENTS: readonly EventDef[] = [
   ev('scheme.dispute.raised', 'schemes', 'Dispute raised', 'k7', 'immediate', SCHEME, 'To the Scheme Admins when a partner disputes its result.'),
   ev('scheme.dispute.resolved', 'schemes', 'Dispute answered', 'partner', 'immediate', SCHEME, 'To the Partner Admins with K7’s answer.'),
   ev('scheme.payout', 'schemes', 'Payout state changed', 'partner', 'immediate', SCHEME, 'To the Partner Admins when the payout moves to processed or paid.'),
-  ev('training.course.passed', 'training', 'Training course passed', 'partner', 'immediate', TRAINING, 'To the participant and the Partner Admins when a test is passed (FR-NTF-01); the certificate arrives with M11.'),
+  ev('training.course.passed', 'training', 'Training course passed', 'partner', 'immediate', TRAINING, 'To the participant and the Partner Admins when a test is passed (FR-NTF-01). When the pass earns a certificate, the certificate’s own message follows with the PDF.'),
   ev('training.bank.empty', 'training', 'Question bank empty', 'k7', 'immediate', ['course', 'track'], 'To the Training Admins when a learner completes every module of a published course whose bank has no askable question.'),
+  ev('training.certificate.issued', 'certificates', 'Individual certificate issued', 'partner', 'immediate', CERT, 'To the participant, with the PDF attached, and the Partner Admins when a pass earns a certificate (FR-TRN-07, 08). Sent at once or the PDF is not carried.'),
+  ev('training.certificate.expiring', 'certificates', 'Individual certificate expiring', 'partner', 'immediate', CERT, 'To the participant and the Partner Admins once per reminder day (60 and 30 by default) before an individual certificate expires; the recertification test is open (FR-TRN-10).'),
+  ev('training.certificate.expired', 'certificates', 'Individual certificate expired', 'partner', 'immediate', CERT, 'To the participant and the Partner Admins when the sweep expires an individual certificate.'),
+  ev('training.certificate.revoked', 'certificates', 'Individual certificate revoked', 'partner', 'immediate', CERT, 'To the participant and the Partner Admins when K7 revokes an individual certificate, with the reason.'),
+  ev('org.certificate.requested', 'certificates', 'Partner certificate to issue', 'k7', 'immediate', ORG_CERT, 'To the Channel Managers when an organisation first meets the rule for its type, or meets it again after its certificate expired (FR-CRT-02, 06).'),
+  ev('org.certificate.issued', 'certificates', 'Partner certificate issued', 'partner', 'immediate', ORG_CERT, 'To the Partner Admins, the primary contact first, with the PDF attached (FR-CRT-04). Sent at once or the PDF is not carried.'),
+  ev('org.certificate.declined', 'certificates', 'Partner certificate declined', 'partner', 'immediate', ORG_CERT, 'To the Partner Admins with the Channel Manager’s reason when a request is declined.'),
+  ev('org.certificate.expiring', 'certificates', 'Partner certificate expiring', 'partner', 'immediate', ORG_CERT, 'To the Partner Admins once per reminder day before the partner certificate expires, saying whether the organisation still meets the rule (FR-CRT-06).'),
+  ev('org.certificate.expired', 'certificates', 'Partner certificate expired', 'partner', 'immediate', ORG_CERT, 'To the Partner Admins when the sweep expires the partner certificate; a renewal request goes to K7 by itself when the rule is still met.'),
+  ev('org.certificate.revoked', 'certificates', 'Partner certificate revoked', 'partner', 'immediate', ORG_CERT, 'To the Partner Admins when K7 revokes the partner certificate, with the reason (FR-CRT-07).'),
   ev('sla.breached', 'sla', 'Approval SLA breached', 'k7', 'immediate', ['item', 'kind', 'partner', 'waitingSince', 'hours', 'overdueBy'], 'To the approvers of the queue and their managers when a deal or an application has waited past the target.'),
 ]
 
@@ -160,6 +172,13 @@ export const SAMPLE_VARS: Record<string, string> = {
   course: 'Selling K7 Endpoint Security',
   track: 'Sales',
   score: '85%',
+  certificate: 'K7P-C-7KQ2MX',
+  band: 'Merit',
+  issued: '23-10-2026',
+  expires: '23-10-2027',
+  verifyUrl: 'https://www.k7computing.com/partners/verify/K7P-C-7KQ2MX',
+  rule: '1 of 1 on Sales · 1 of 1 on Technical',
+  reason: 'The GST registration is under review; ask again once it is confirmed.',
   item: 'K7D-00130',
   kind: 'deal',
   waitingSince: '21-10-2026 10:15',
@@ -191,6 +210,21 @@ export const appVars = (a: { number: string; company: { legalName: string }; con
 export const orgVars = (o: { name: string; tradeName?: string; partnerId: string }): Record<string, string> => ({ partner: o.tradeName || o.name, partnerId: o.partnerId })
 
 export const trainingVars = (c: { title: string; trackName: string }, u: { name: string; email: string }, score: number | null, o?: { name: string; tradeName?: string; partnerId: string }): Record<string, string> => ({ course: c.title, track: c.trackName, user: u.name || u.email, score: score === null ? '' : `${score}%`, ...(o ? orgVars(o) : {}) })
+
+export const certVars = (c: { number: string; courseTitle: string; trackName: string; userName: string; userEmail: string; band: string; issuedAt: string | null; expiresAt: string | null; orgName: string; orgTradeName: string; orgPartnerId: string }, verifyUrl: string, extra: { rule?: string; reason?: string } = {}): Record<string, string> => ({
+  certificate: c.number,
+  course: c.courseTitle,
+  track: c.trackName,
+  user: c.userName || c.userEmail,
+  band: c.band,
+  issued: dmyOf(c.issuedAt),
+  expires: dmyOf(c.expiresAt),
+  verifyUrl,
+  rule: extra.rule ?? '',
+  reason: extra.reason ?? '',
+  partner: c.orgTradeName || c.orgName,
+  partnerId: c.orgPartnerId,
+})
 
 export const schemeVars = (sc: { name: string; startDate: string; endDate: string }, o?: { name: string; tradeName?: string; partnerId: string }): Record<string, string> => ({ scheme: sc.name, startDate: dmyOf(sc.startDate), endDate: dmyOf(sc.endDate), ...(o ? orgVars(o) : {}) })
 

@@ -111,6 +111,8 @@ export interface Config {
     'partner-training-files': PartnerTrainingFile;
     'partner-progress': PartnerProgress;
     'partner-attempts': PartnerAttempt;
+    'partner-certificates': PartnerCertificate;
+    'partner-certificate-files': PartnerCertificateFile;
     media: Media;
     users: User;
     redirects: Redirect;
@@ -180,6 +182,8 @@ export interface Config {
     'partner-training-files': PartnerTrainingFilesSelect<false> | PartnerTrainingFilesSelect<true>;
     'partner-progress': PartnerProgressSelect<false> | PartnerProgressSelect<true>;
     'partner-attempts': PartnerAttemptsSelect<false> | PartnerAttemptsSelect<true>;
+    'partner-certificates': PartnerCertificatesSelect<false> | PartnerCertificatesSelect<true>;
+    'partner-certificate-files': PartnerCertificateFilesSelect<false> | PartnerCertificateFilesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -2497,7 +2501,7 @@ export interface PartnerOrg {
     contactId?: string | null;
   };
   /**
-   * The organisation certificate (M11). Until then: none, and the deal gate ignores it.
+   * The mirror of the organisation’s partner certificate (M11): written by src/lib/partner/certificates.ts from the partner-certificates rows; read by the deal gate and the collateral rule. Do not edit.
    */
   certificate?: {
     status?: ('none' | 'valid' | 'expired' | 'revoked') | null;
@@ -3441,6 +3445,16 @@ export interface PartnerMailTemplate {
     | 'scheme.payout'
     | 'training.course.passed'
     | 'training.bank.empty'
+    | 'training.certificate.issued'
+    | 'training.certificate.expiring'
+    | 'training.certificate.expired'
+    | 'training.certificate.revoked'
+    | 'org.certificate.requested'
+    | 'org.certificate.issued'
+    | 'org.certificate.declined'
+    | 'org.certificate.expiring'
+    | 'org.certificate.expired'
+    | 'org.certificate.revoked'
     | 'sla.breached';
   /**
    * Off: the code’s own text is sent.
@@ -3467,7 +3481,7 @@ export interface PartnerMailTemplate {
  */
 export interface PartnerJobRun {
   id: number;
-  job: 'outbox' | 'sync' | 'dealsSweep' | 'digest' | 'slaSweep' | 'schemesRun' | 'housekeeping';
+  job: 'outbox' | 'sync' | 'dealsSweep' | 'digest' | 'slaSweep' | 'schemesRun' | 'certificatesSweep' | 'housekeeping';
   trigger: 'cron' | 'manual';
   /**
    * Off when the run threw.
@@ -3796,6 +3810,130 @@ export interface PartnerAttempt {
     | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * Individual certificates (a pass on a course) and partner certificates (the organisation’s, issued by the Channel Manager once the rule is met). Written by the portal; do not edit. Issue, decline and revoke on the partner desk.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-certificates".
+ */
+export interface PartnerCertificate {
+  id: number;
+  /**
+   * K7P-C-xxxxxx (individual) or K7P-O-xxxxxx (organisation).
+   */
+  number: string;
+  kind: 'individual' | 'org';
+  status: 'requested' | 'valid' | 'expired' | 'revoked' | 'declined' | 'superseded';
+  /**
+   * The PDF as issued.
+   */
+  file?: (number | null) | PartnerCertificateFile;
+  org: number | PartnerOrg;
+  orgPartnerId?: string | null;
+  /**
+   * The legal name at issue.
+   */
+  orgName?: string | null;
+  orgTradeName?: string | null;
+  /**
+   * The partner type at issue (FR-CRT-03).
+   */
+  orgType?: ('distributor' | 'integrationPartner' | 'var' | 'msp') | null;
+  /**
+   * The holder of an individual certificate.
+   */
+  user?: (number | null) | PartnerUser;
+  userName?: string | null;
+  userEmail?: string | null;
+  course?: (number | null) | PartnerCourse;
+  courseTitle?: string | null;
+  courseVersion?: number | null;
+  trackKey?: string | null;
+  trackName?: string | null;
+  /**
+   * The pass this certifies.
+   */
+  attempt?: (number | null) | PartnerAttempt;
+  /**
+   * %
+   */
+  score?: number | null;
+  /**
+   * FR-TRN-07: the score band.
+   */
+  band?: ('Pass' | 'Merit' | 'Distinction') | null;
+  issuedAt?: string | null;
+  expiresAt?: string | null;
+  /**
+   * The Channel Manager, or “Portal” for an individual certificate.
+   */
+  issuedBy?: string | null;
+  /**
+   * FR-CRT-02: when the rule was first met.
+   */
+  requestedAt?: string | null;
+  /**
+   * The organisation’s standing against the rule when the request was raised or the certificate issued: [{track, trackName, need, have}].
+   */
+  ruleLines?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  declinedAt?: string | null;
+  declinedReason?: string | null;
+  revokedAt?: string | null;
+  revokedBy?: string | null;
+  /**
+   * FR-CRT-07: recorded, read on the desk; the public page says only that it is revoked.
+   */
+  revokedReason?: string | null;
+  /**
+   * The number of the recertification that replaced this one (FR-TRN-10).
+   */
+  supersededBy?: string | null;
+  /**
+   * The number this one renews (FR-CRT-06).
+   */
+  renewalOf?: string | null;
+  /**
+   * The reminders sent, by days before expiry: {"60": "<when>", "30": "<when>"}.
+   */
+  reminded?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * The certificate PDFs as issued, written by the portal. Served only through the portal to the holder, the organisation’s admins and K7.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-certificate-files".
+ */
+export interface PartnerCertificateFile {
+  id: number;
+  number?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -4162,6 +4300,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'partner-attempts';
         value: number | PartnerAttempt;
+      } | null)
+    | ({
+        relationTo: 'partner-certificates';
+        value: number | PartnerCertificate;
+      } | null)
+    | ({
+        relationTo: 'partner-certificate-files';
+        value: number | PartnerCertificateFile;
       } | null)
     | ({
         relationTo: 'media';
@@ -6075,6 +6221,63 @@ export interface PartnerAttemptsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-certificates_select".
+ */
+export interface PartnerCertificatesSelect<T extends boolean = true> {
+  number?: T;
+  kind?: T;
+  status?: T;
+  file?: T;
+  org?: T;
+  orgPartnerId?: T;
+  orgName?: T;
+  orgTradeName?: T;
+  orgType?: T;
+  user?: T;
+  userName?: T;
+  userEmail?: T;
+  course?: T;
+  courseTitle?: T;
+  courseVersion?: T;
+  trackKey?: T;
+  trackName?: T;
+  attempt?: T;
+  score?: T;
+  band?: T;
+  issuedAt?: T;
+  expiresAt?: T;
+  issuedBy?: T;
+  requestedAt?: T;
+  ruleLines?: T;
+  declinedAt?: T;
+  declinedReason?: T;
+  revokedAt?: T;
+  revokedBy?: T;
+  revokedReason?: T;
+  supersededBy?: T;
+  renewalOf?: T;
+  reminded?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner-certificate-files_select".
+ */
+export interface PartnerCertificateFilesSelect<T extends boolean = true> {
+  number?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -6907,7 +7110,7 @@ export interface PartnerSetting {
      */
     endingNoticeDays?: number | null;
     /**
-     * FR-DEAL-01: a deal needs a certified organisation. Off until the LMS exists (M11, decision 8).
+     * FR-DEAL-01: a deal needs an organisation with a current partner certificate, or a waiver (decision 8). Certificates arrived with M11; switch it on when the partners have had time to certify.
      */
     requireCertificate?: boolean | null;
     /**
@@ -6957,6 +7160,59 @@ export interface PartnerSetting {
      * FR-TRN-06: show the correct answers on the result page.
      */
     showAnswers?: boolean | null;
+  };
+  /**
+   * Certificates (01-requirements.md §4 FR-TRN-07–10, §5, M11): how long they stand, when the holder is reminded, the score bands, the rule per partner type for the organisation certificate, and the signatory. The signature image is the file PARTNER_CERT_SIGNATORY points at.
+   */
+  certificates?: {
+    /**
+     * FR-TRN-10: months an individual certificate stands.
+     */
+    validityMonths?: number | null;
+    /**
+     * FR-CRT-05: months the partner certificate stands.
+     */
+    orgValidityMonths?: number | null;
+    /**
+     * FR-TRN-07: the score band reads Merit from this %.
+     */
+    meritFrom?: number | null;
+    /**
+     * Distinction from this %; Pass below Merit.
+     */
+    distinctionFrom?: number | null;
+    /**
+     * FR-TRN-10, FR-CRT-06: days before expiry at which the holder (and the Partner Admins) are reminded once each.
+     */
+    reminderDays?:
+      | {
+          days: number;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * FR-CRT-01: per partner type and track, how many people must hold a current individual certificate before the organisation earns its partner certificate. A type with no row never qualifies.
+     */
+    rules?:
+      | {
+          type: 'distributor' | 'integrationPartner' | 'var' | 'msp';
+          /**
+           * The track’s key: sales, technical.
+           */
+          track: string;
+          /**
+           * People certified on that track.
+           */
+          people: number;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * FR-CRT-03: printed under the signature on the partner certificate.
+     */
+    signatoryName?: string | null;
+    signatoryTitle?: string | null;
+    issuer?: string | null;
   };
   /**
    * What the outbox writes to Dynamics on approval (decisions 2, 10, 19). Off: the jobs queue as pending and nothing reaches the CRM. UAT only; production is read-only in code.
@@ -7355,6 +7611,31 @@ export interface PartnerSettingsSelect<T extends boolean = true> {
         timeLimitMinutes?: T;
         questionsPerTest?: T;
         showAnswers?: T;
+      };
+  certificates?:
+    | T
+    | {
+        validityMonths?: T;
+        orgValidityMonths?: T;
+        meritFrom?: T;
+        distinctionFrom?: T;
+        reminderDays?:
+          | T
+          | {
+              days?: T;
+              id?: T;
+            };
+        rules?:
+          | T
+          | {
+              type?: T;
+              track?: T;
+              people?: T;
+              id?: T;
+            };
+        signatoryName?: T;
+        signatoryTitle?: T;
+        issuer?: T;
       };
   crm?:
     | T

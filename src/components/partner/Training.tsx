@@ -8,8 +8,8 @@ import { dmy, dmyHm } from '@/lib/support/format'
    the course ledger per track with the modules bar, the module list with the watched share, the result as filed facts and the
    paper's review. Server components; the player and the paper's clock are the two client components beside this file. */
 
-/** P29 The test state: Passed solid, Ready to take on signal (the learner must act), Not passed yet state, Locked dashed. */
-export const TestStateTag: React.FC<{ state: TestState }> = ({ state }) => <span className={state === 'passed' ? 'tag tag-solid' : state === 'ready' ? 'tag tag-signal' : state === 'failed' ? 'tag tag-state' : 'tag tag-dashed'}>{TEST_STATE_LABEL[state]}</span>
+/** P29 The test state: Passed solid, Ready to take and Recertify on signal (the learner must act), Not passed yet state, Locked dashed. */
+export const TestStateTag: React.FC<{ state: TestState }> = ({ state }) => <span className={state === 'passed' ? 'tag tag-solid' : state === 'ready' || state === 'recertify' ? 'tag tag-signal' : state === 'failed' ? 'tag tag-state' : 'tag tag-dashed'}>{TEST_STATE_LABEL[state]}</span>
 
 /** The content's state for K7: Published solid, Draft dashed, Retired closed; never signal. */
 export const ContentStateTag: React.FC<{ status: ContentStatus }> = ({ status }) => <span className={status === 'published' ? 'tag tag-solid' : status === 'retired' ? 'tag tag-closed' : 'tag tag-dashed'}>{CONTENT_STATUS_LABEL[status]}</span>
@@ -89,7 +89,7 @@ export const CourseLedger: React.FC<{ groups: TrackGroup[]; href: (c: CourseRow)
                   <td className="num">{r.standing.lastActivity ? dmy(r.standing.lastActivity) : '—'}</td>
                   <td className="num lib-act">
                     <Link className="btn btn-line btn-sm" href={href(r)}>
-                      {r.standing.test === 'passed' ? 'Open' : r.standing.test === 'ready' ? 'Take the test' : r.standing.modulesDone > 0 || r.standing.watchedShare > 0 ? 'Continue' : 'Start'}
+                      {r.standing.test === 'passed' ? 'Open' : r.standing.test === 'recertify' ? 'Recertify' : r.standing.test === 'ready' ? 'Take the test' : r.standing.modulesDone > 0 || r.standing.watchedShare > 0 ? 'Continue' : 'Start'}
                     </Link>
                   </td>
                 </tr>

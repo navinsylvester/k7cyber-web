@@ -7,7 +7,8 @@ import 'server-only'
    seed, so when the list is set the portal writes only to the addresses and domains on it and logs everything else as
    suppressed. The one-time-code steps use the same list to decide who may ask for a code at all. Unset = no restriction. */
 
-export type Mail = { to: string; subject: string; text: string; html?: string; /** Overrides SUPPORT_MAIL_FROM (the partner portal writes as its own sender). */ from?: string }
+export type MailAttachment = { filename: string; content: Buffer; contentType: string }
+export type Mail = { to: string; subject: string; text: string; html?: string; /** Overrides SUPPORT_MAIL_FROM (the partner portal writes as its own sender). */ from?: string; /** Files carried with the message (M11: the certificate PDF). */ attachments?: MailAttachment[] }
 export type SendResult = { sent: boolean; suppressed?: string[] }
 
 export const mailConfigured = (): boolean => Boolean(process.env.SMTP_URL)
@@ -45,12 +46,12 @@ export const sendMail = async (m: Mail): Promise<SendResult> => {
   }
   if (!to) return { sent: false, ...extra }
   if (!process.env.SMTP_URL) {
-    if (process.env.NODE_ENV !== 'production') console.log(`[support mail → ${to}] ${m.subject}\n${m.text}`)
+    if (process.env.NODE_ENV !== 'production') console.log(`[support mail → ${to}] ${m.subject}${m.attachments?.length ? ` (+${m.attachments.map((a) => a.filename).join(', ')})` : ''}\n${m.text}`)
     return { sent: false, ...extra }
   }
   const { createTransport } = await import('nodemailer')
   const t = createTransport(process.env.SMTP_URL)
-  await t.sendMail({ from, to, subject: m.subject, text: m.text, html: m.html })
+  await t.sendMail({ from, to, subject: m.subject, text: m.text, html: m.html, attachments: m.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType })) })
   return { sent: true, ...extra }
 }
 
