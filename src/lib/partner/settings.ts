@@ -44,6 +44,8 @@ export const savePartnerSettings = async (s: PartnerSettings): Promise<void> => 
       collateral: { ...s.collateral },
       schemes: { ...s.schemes },
       training: { ...s.training },
+      // The global's reminder days are an array of rows; the model holds numbers.
+      certificates: { ...s.certificates, reminderDays: s.certificates.reminderDays.map((days) => ({ days })), rules: s.certificates.rules.map((r) => ({ ...r })) },
       // The global's `days` is a select of strings ('1' … '6', '0'); the model holds numbers.
       sla: { ...s.sla.hours, days: s.sla.hours.days.map(String), warnShare: s.sla.warnShare, escalateTo: s.sla.escalateTo.map((email) => ({ email })) },
     } as never,

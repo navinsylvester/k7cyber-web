@@ -1,4 +1,4 @@
-# The partner portal as built (M1–M9, 2026-10-22 to 23): routes, doors, rules, how to run it
+# The partner portal as built (M1–M11, 2026-10-22 to 24): routes, doors, rules, how to run it
 
 What exists in the repo after the skeleton (M1), onboarding (M2), organisation (M3), deal registration (M4), the dashboard (M5), the collateral library (M6), schemes with eligibility (M7) the notification templates, the approval SLA and the reports (M8) and the hardening (M9: the Operations page, the health route, the
 per-feature CRM switches, the runbook `05-staging-and-go-live.md`), how it fits the
@@ -216,9 +216,28 @@ programme's share (default 90%), gaps do not count; the test unlocks when every 
 the paper is drawn with a seed kept on the attempt and the correct keys recorded; graded all-or-nothing; late by more than 45 s = expired;
 the pass tells the participant and the Partner Admins. Tests: `partner-training` (pure), `partner-training-db` (`PARTNER_DB_TESTS=1`).
 
-## 8. Not done (next: M11)
-M10 was clicked end to end on both sides, in the admin and at a phone width (02-build-plan.md §10, session 16). Not done by decision:
-certificates (M11), a Vimeo-hosted video (the seed and the checks used direct MP4 links; a Vimeo embed is wired through the player's
+## 7c. M11 certificates (built 2026-10-24, session 17 of `02-build-plan.md` §10)
+Partner side: `/partners/portal/certificates` (the organisation's certificate as a card with the rule lines, the user's own, every person's
+for the admin), `/certificates/[id]` (the facts, the QR, *Download the PDF*, *Recertify* when the test is open) and `/[id]/file` (the
+holder's own, the organisation's, or any for an admin, through the scope). Public: `/partners/verify` (the number field) and
+`/partners/verify/[id]` (genuine · valid · expired · revoked · replaced, the minimum of FR-TRN-09; no session). K7 side:
+`/partners/portal/k7/certificates` (Channel Manager and Training Admin: counters, views, the rule table, *Run the sweep*), `/[id]`
+(issue a waiting request or a renewal, decline with a reason, revoke with a reason; a Training Admin revokes individual ones only)
+and `/[id]/file`. Scheduled: `POST /api/partners/certificates/sweep` daily. Rules: a pass issues an individual certificate unless a
+current one stands outside the first reminder window; inside it, or after expiry or revocation, the test is open again (*Recertify*) and
+the new pass supersedes the old certificate; the organisation's rule (settings → Certificates, per type and track, distinct people with
+a current certificate) raises one request to the Channel Managers when first met or met again after a lapse, a declined request
+waits for a change; the organisation's standing is mirrored onto `partner-orgs.certificate`, which the deal gate and the collateral
+rule read; reminders go once per threshold to the holder and the Partner Admins; the public page shows no email, score or reason. The
+PDF is drawn in the server (`certificate-pdf.ts`) and kept under `PARTNER_CERTIFICATE_DIR`, redrawn if lost; the signatory's image is
+`PARTNER_CERT_SIGNATORY`. Tests: `partner-certificates` (pure, the PDF parsed back), `partner-certificates-db` (`PARTNER_DB_TESTS=1`).
+
+## 8. Not done (next: launch)
+M11 was clicked end to end on both sides, in the admin and at a phone width (02-build-plan.md §10, session 17). Not done by decision:
+a signature image (none exists; the issuer prints over the rule until `PARTNER_CERT_SIGNATORY` names one), an attempt cap on the
+recertification test (none required), a per-course switch to keep a course out of the organisation rule (the rule counts tracks; a
+course that should not count stays in its own track), a certificate on the public marketing page (the verify door is linked from the
+certificates themselves and the portal footer when the Partners page is written). M10 left by decision: a Vimeo-hosted video (the seed and the checks used direct MP4 links; a Vimeo embed is wired through the player's
 postMessage API but no account exists to click it), an attempt cap or cooldown (none required), copy-on-publish versioning (decision 20).
 M9 left by decision (`05-staging-and-go-live.md` §7): object storage, a shared store for the in-memory limits, the production guard's exception
 for the partner jobs (step 4 of the gate), the same headers and limiter on `/support`. The CRM-side conflict check (a switch,

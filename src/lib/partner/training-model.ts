@@ -454,8 +454,12 @@ export const secondsLeft = (a: Pick<Attempt, 'expiresAt'>, now: Date): number | 
 
 /* ---------- Standing ---------- */
 
-export type TestState = 'locked' | 'ready' | 'passed' | 'failed'
-export const TEST_STATE_LABEL: Record<TestState, string> = { locked: 'Locked', ready: 'Ready to take', passed: 'Passed', failed: 'Not passed yet' }
+/** `recertify` (M11, FR-TRN-10): passed, but the certificate is expiring, expired or revoked and the test is open again. */
+export type TestState = 'locked' | 'ready' | 'passed' | 'failed' | 'recertify'
+export const TEST_STATE_LABEL: Record<TestState, string> = { locked: 'Locked', ready: 'Ready to take', passed: 'Passed', failed: 'Not passed yet', recertify: 'Recertify' }
+
+/** What the standing needs to know of the learner's current certificate for the course (certificates-model.ts). */
+export type CertStanding = { state: 'requested' | 'valid' | 'expiring' | 'expired' | 'revoked' | 'declined' | 'superseded'; number: string; expiresAt: string | null; id: string }
 
 export type CourseStanding = {
   modulesTotal: number
@@ -471,6 +475,8 @@ export type CourseStanding = {
   /** True when the pass was on an earlier version of the course (FR-TRN-14). */
   passOutdated: boolean
   lastActivity: string | null
+  /** The learner's current certificate for the course, when one exists (M11). */
+  certificate: CertStanding | null
 }
 
 const finished = (a: Attempt): boolean => a.status !== 'open'
@@ -483,7 +489,7 @@ export const bestAttempt = (attempts: Attempt[]): Attempt | null => {
 
 export const latestPass = (attempts: Attempt[]): Attempt | null => [...attempts].filter((a) => finished(a) && a.passed).sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0] ?? null
 
-export const courseStanding = (course: Pick<Course, 'version'>, modules: Module[], progress: Progress[], attempts: Attempt[], rules: CourseRules, bankSize: number): CourseStanding => {
+export const courseStanding = (course: Pick<Course, 'version'>, modules: Module[], progress: Progress[], attempts: Attempt[], rules: CourseRules, bankSize: number, certificate: CertStanding | null = null): CourseStanding => {
   const live = sortContent(modules.filter((m) => m.status === 'published'))
   const byModule = new Map(progress.map((p) => [p.moduleId, p]))
   const completed = new Set<string>()
@@ -497,7 +503,8 @@ export const courseStanding = (course: Pick<Course, 'version'>, modules: Module[
   const unlock = testUnlocked(live, completed, bankSize)
   const best = bestAttempt(attempts)
   const pass = latestPass(attempts)
-  const test: TestState = pass ? 'passed' : !unlock.ok ? 'locked' : best ? 'failed' : 'ready'
+  const lapsed = certificate !== null && (certificate.state === 'expiring' || certificate.state === 'expired' || certificate.state === 'revoked')
+  const test: TestState = pass ? (lapsed && unlock.ok ? 'recertify' : 'passed') : !unlock.ok ? 'locked' : best ? 'failed' : 'ready'
   const stamps = [...progress.map((p) => p.updatedAt), ...attempts.map((a) => a.submittedAt ?? a.startedAt)].filter(Boolean).sort()
   return {
     modulesTotal: live.length,
@@ -510,6 +517,7 @@ export const courseStanding = (course: Pick<Course, 'version'>, modules: Module[
     pass,
     passOutdated: Boolean(pass && pass.courseVersion < course.version),
     lastActivity: stamps[stamps.length - 1] ?? null,
+    certificate,
   }
 }
 
@@ -517,7 +525,7 @@ export const courseStanding = (course: Pick<Course, 'version'>, modules: Module[
 export type CourseRow = { course: Course; rules: CourseRules; standing: CourseStanding; modules: Module[]; progress: Progress[] }
 export type TrackGroup = { track: Track; courses: CourseRow[] }
 
-export const standingLabel = (st: CourseStanding): string => (st.test === 'passed' ? `Passed · ${st.pass?.score ?? 0}%` : st.test === 'failed' ? `Not passed · best ${st.best?.score ?? 0}%` : st.modulesDone === 0 && st.watchedShare === 0 ? 'Not started' : st.test === 'ready' ? 'Modules done · test ready' : `${st.modulesDone} of ${st.modulesTotal} modules`)
+export const standingLabel = (st: CourseStanding): string => (st.test === 'recertify' ? `Certificate ${st.certificate?.state === 'expiring' ? 'expiring' : st.certificate?.state ?? 'lapsed'} · recertify` : st.test === 'passed' ? `Passed · ${st.pass?.score ?? 0}%` : st.test === 'failed' ? `Not passed · best ${st.best?.score ?? 0}%` : st.modulesDone === 0 && st.watchedShare === 0 ? 'Not started' : st.test === 'ready' ? 'Modules done · test ready' : `${st.modulesDone} of ${st.modulesTotal} modules`)
 
 /* ---------- The bank as a CSV (FR-TRN-13) ---------- */
 

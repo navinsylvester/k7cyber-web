@@ -80,6 +80,12 @@ describe.skipIf(!enabled)('training (database)', () => {
     }
     const imported = await payload.find({ collection: 'partner-questions', where: { course: { equals: Number(courseId) } }, limit: 200, depth: 0, overrideAccess: true })
     for (const d of imported.docs) await payload.delete({ collection: 'partner-questions', id: d.id, overrideAccess: true }).catch(() => null)
+    // M11: the certificate sweep may have issued certificates for this test's passes (the backfill) before the rows are removed.
+    const certs = await payload.find({ collection: 'partner-certificates', where: { org: { in: [Number(A.scope.orgId), Number(B.scope.orgId)] } }, limit: 200, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as Record<string, unknown>[] }))
+    for (const d of certs.docs as Record<string, unknown>[]) {
+      await payload.delete({ collection: 'partner-certificates', id: d.id as number, overrideAccess: true }).catch(() => null)
+      if (d.file) await payload.delete({ collection: 'partner-certificate-files', id: d.file as number, overrideAccess: true }).catch(() => null)
+    }
     for (const c of ['partner-notifications', 'partner-audit'] as const) {
       const r = await payload.find({ collection: c, where: { orgId: { in: [A.scope.orgId, B.scope.orgId] } }, limit: 200, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as { id: string | number }[] }))
       for (const d of r.docs) await payload.delete({ collection: c, id: d.id, overrideAccess: true }).catch(() => null)

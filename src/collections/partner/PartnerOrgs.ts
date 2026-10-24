@@ -47,7 +47,7 @@ export const PartnerOrgs: CollectionConfig = {
     {
       name: 'certificate',
       type: 'group',
-      admin: { description: 'The organisation certificate (M11). Until then: none, and the deal gate ignores it.' },
+      admin: { description: 'The mirror of the organisation’s partner certificate (M11): written by src/lib/partner/certificates.ts from the partner-certificates rows; read by the deal gate and the collateral rule. Do not edit.' },
       fields: [
         { type: 'row', fields: [{ name: 'status', type: 'select', options: ['none', 'valid', 'expired', 'revoked'], defaultValue: 'none', admin: { width: '50%' } }, { name: 'until', type: 'date', admin: { width: '50%' } }] },
       ],

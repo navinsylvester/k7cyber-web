@@ -2,7 +2,7 @@ import 'server-only'
 import configPromise from '@payload-config'
 import { getPayload, type Where } from 'payload'
 
-import { sendMail } from '@/lib/support/mail'
+import { sendMail, type MailAttachment } from '@/lib/support/mail'
 import { forget, memo } from '@/lib/support/memo'
 import { getServerSideURL } from '@/utilities/getURL'
 
@@ -22,7 +22,7 @@ import { orgUsers, toUser, type PartnerUser } from './users'
 
 export type Recipient = { kind: 'user'; user: PartnerUser } | { kind: 'org'; orgId: string; roles?: PartnerRole[] } | { kind: 'staff'; role: StaffRole } | { kind: 'email'; address: string; name?: string }
 
-export type NotifyInput = { event: string; subject: string; body: string; href?: string; to: Recipient | Recipient[]; email?: boolean; /** The event's placeholders for the template (notify-model.ts). */ vars?: Record<string, string> }
+export type NotifyInput = { event: string; subject: string; body: string; href?: string; to: Recipient | Recipient[]; email?: boolean; /** The event's placeholders for the template (notify-model.ts). */ vars?: Record<string, string>; /** Carried on the immediate email only (M11: the certificate PDF); a digest or bell-only rule drops it and the body says where to download. */ attachments?: MailAttachment[]; /** The link's words on the button. */ linkLabel?: string }
 export type NotifyResult = { bell: number; emailed: number; queued: number; suppressed: string[] }
 
 export type Notification = { id: string; at: string; event: string; subject: string; body: string; href: string; readAt: string | null; delivery: Delivery; emailedAt: string | null }
@@ -81,12 +81,12 @@ export const resetTemplate = async (event: string): Promise<boolean> => {
 
 type Target = { data?: Record<string, unknown>; address: string; name: string }
 
-const mailFor = (subject: string, body: string, link: string, settings: PartnerSettings, to: string) => ({
+const mailFor = (subject: string, body: string, link: string, settings: PartnerSettings, to: string, linkLabel?: string) => ({
   to,
   from: settings.notify.mailFrom,
   subject,
   text: mailText({ body, link, signature: settings.notify.signature }),
-  html: mailHtml({ body, link, signature: settings.notify.signature }),
+  html: mailHtml({ body, link, linkLabel, signature: settings.notify.signature }),
 })
 
 export const notify = async (n: NotifyInput): Promise<NotifyResult> => {
@@ -121,7 +121,7 @@ export const notify = async (n: NotifyInput): Promise<NotifyResult> => {
     let emailError = ''
     if (email && t.address) {
       try {
-        const r = await sendMail(mailFor(rendered.subject, rendered.body, link, settings, t.address))
+        const r = await sendMail({ ...mailFor(rendered.subject, rendered.body, link, settings, t.address, n.linkLabel), ...(n.attachments?.length ? { attachments: n.attachments } : {}) })
         if (r.sent) {
           emailedAt = new Date().toISOString()
           emailTo = t.address

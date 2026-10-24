@@ -48,7 +48,7 @@ not for its history.
 | M8 | Notifications, bell, editable templates, approval SLA, reporting, exports (§10 and the gaps) | **built 2026-10-23** (session 14): the event catalogue and the templates page with a delivery rule per event (at once · daily digest · bell only), the digest and retention pass, the approval SLA in working hours with the breach notice to approvers, managers and escalation addresses, the SLA reading on the K7 queues and sheets, the four reports with CSV; tests pass; the K7 side clicked end to end on localhost, the partner side's rendered row too; the non-functional requirements proposed in §11, to confirm with the author |
 | M9 | Hardening and staging: non-functional requirements, tests, go-live gate → **launch 1 (no LMS)** | **built 2026-10-23** (session 15): `05-staging-and-go-live.md` (the runbook: host needs, environment per stage, the scheduler, operations, the gate, backup); the shared cron guard, the per-client code limit, the portal headers, the per-feature CRM switches, the job-run log with the Operations page and the health route, housekeeping, backup and restore scripts rehearsed; the matrix, scope, fixture and route-door tests; the items earlier sessions left unclicked are clicked. Hosting itself is still undecided, so staging is specified, not stood up |
 | M10 | Training (§4): tracks, courses, modules, video progress, tests, attempts, results, admin | **built 2026-10-23** (session 16): the six collections and the training files in the Payload admin for the Training editor, the video adapter (Vimeo · direct link · uploaded file) with the player posting watched ranges and the server deciding completion, the test engine (unlock, seeded draw from the bank, time limit, all-or-nothing grading, attempts stored with the paper and the answers), the learner's pages, the Partner Admin's organisation view, the Training Admin's desk with the CSV import, the Training settings; certificates wait for M11 |
-| M11 | Certificates (§4 FR-TRN-07–10, §5): PDF + QR, public verification, expiry, org certificate, revoke; then the deal gate switch | not started (last phase) |
+| M11 | Certificates (§4 FR-TRN-07–10, §5): PDF + QR, public verification, expiry, org certificate, revoke; then the deal gate switch | **built 2026-10-24** (session 17): the pure model (numbers, bands, expiry, the state today, the rule per type, when a pass earns a certificate, the reminders), the PDF drawn in the server on the design language's terms, the private file collection served through the portal's routes, the public verification page, the individual certificate on a pass (emailed with the PDF), the organisation's request when the rule is first met and the Channel Manager's issue · decline · revoke, the daily sweep (expiry, reminders, the backfill of earlier passes, the mirror, the renewal request), the recertification test, the partner's certificates page and sheet, the K7 desk and sheet, the settings; the deal gate switched on in the development settings |
 
 The notification spine (one `notify()` and the bell) is built in M1–M2 because every later
 milestone emits events; M8 added the editable templates, the delivery rules and the SLA.
@@ -173,6 +173,23 @@ portal is imported. The CRM has no partner-programme tables of its own
     limit 20 min, 10 questions, answers shown) and a course or a module may override each in the
     admin; the K7 settings page edits the programme's values.
 
+24. **A certificate is a row and a PDF drawn once** (`partner-certificates`, M11, decision 12): the facts as they stood at
+    issue are copied onto the row (names, type, course, track, version, score, band), so the PDF, the sheet and the public
+    page read the same after a rename or a course change; the PDF is a `partner-certificate-files` row and is redrawn from the
+    row if the disk loses it. Numbers are six symbols from a thirty-symbol alphabet without the look-alikes (`K7P-C-`,
+    `K7P-O-`), allocated at random and checked unique; the public page is keyed on the number alone.
+25. **The organisation rule counts people per track** (FR-CRT-01): per partner type, so many distinct people holding a
+    current individual certificate on a course of each track (the track's key: `sales`, `technical`); a row with 0 people
+    waives that track, a type with no row never qualifies, no rows at all mean the defaults (one person on each track). The
+    request to the Channel Manager is raised when the rule is first met, and again when it is met after the certificate
+    expired or was revoked; a declined request is not raised again until an individual certificate is issued after the
+    decline. The organisation's standing is mirrored onto `partner-orgs.certificate` (valid · expired · revoked · none, with
+    the date), which is what the deal gate (decision 8) and the collateral rule already read, so neither changed.
+26. **Recertification is the same test** (FR-TRN-10): inside the first reminder window (60 days by default) and after expiry
+    or revocation the course's test opens again and a pass issues a new certificate; while the certificate stands outside the
+    window a retake is recorded beside it and prints nothing. Individual certificates stand 12 months, the organisation's 12
+    months, both configurable; reminders go once per threshold (60, 30) to the holder and the Partner Admins; the sweep also
+    issues certificates for passes recorded before M11, so no learner is left without one.
 ## 4. Where it lives
 ```
 src/app/(partner)/                       own root layout (site header, noindex, dynamic, partner.css)
@@ -294,12 +311,12 @@ Tick as done; dates in the session log.
 - [x] Test engine: unlock rule, shuffled draw from the bank, time limit, scoring, stored attempts, results page with optional answers: `testUnlocked`, `drawPaper` (seeded), `gradePaper`, the attempt row with the paper and the answers, `TestPaper.client.tsx` with the clock that submits at zero, the result page with the review; the pass tells the participant and the Partner Admins (`training.course.passed`); a course whose bank cannot make a paper tells the Training Admins once per learner who completes it (`training.bank.empty`)
 - [x] Progress dashboard for the user and, for the Partner Admin, the organisation (FR-TRN-11): `/partners/portal/training` (the ledger per track with the standing), `/training/organisation` (one ledger per user), the home page's Training card; the K7 ledger and course sheet with the learners
 
-### M11 — certificates (§4 FR-TRN-07–10, §5), last phase
-- [ ] PDF generator (individual, organisation) with QR; private upload collection; download in profile; emailed on issue
-- [ ] `/partners/verify/[id]` public page (valid / expired / revoked, minimal data)
-- [ ] Expiry (default 12 months), reminders at 60/30 days (a pass in the scheduled job), recertification test
-- [ ] Organisation rule per type in settings; issuance request to the Channel Manager; issue, status strip, renewal, revoke with reason
-- [ ] Switch `deals.requireCertificate` on with the waiver flow (decision 8)
+### M11 — certificates (§4 FR-TRN-07–10, §5), built 2026-10-24
+- [x] PDF generator (individual, organisation) with QR; private upload collection; download in profile; emailed on issue: `certificate-pdf.ts` (pdf-lib, the Archivo and Plex Mono TTFs embedded from `design-system/assets/fonts`, the QR from `qrcode`'s modules as squares, the K7 mark from the logo's own paths, the signatory image from `PARTNER_CERT_SIGNATORY`), `partner-certificates` + `partner-certificate-files` (admin read-only; `PARTNER_CERTIFICATE_DIR`, redrawn and stored again if the file is lost), `/partners/portal/certificates` (the organisation's card, yours, everyone's for the admin), `/certificates/[id]` (the facts, the QR, the PDF) and `/[id]/file`; `notify()` carries attachments on the immediate mail (`training.certificate.issued`, `org.certificate.issued`)
+- [x] `/partners/verify/[id]` public page (valid / expired / revoked, minimal data): `findForVerification` → `verifyView` (holder, organisation, partner ID, course or programme, issued, valid to, revoked; no email, score or reason; a request or a declined one verifies as unknown); `/partners/verify` is the door with the number field; typed numbers normalised (`parseCertificateNumber`)
+- [x] Expiry (default 12 months), reminders at 60/30 days (a pass in the scheduled job), recertification test: `expiryFrom`, `certificateState` (*expiring* inside the first reminder window), `reminderDue` once per threshold, `POST /api/partners/certificates/sweep` (`certificatesSweep` job, also *Run the sweep* on the desk) expiring, reminding, backfilling passes without a certificate, syncing the organisations' `certificate` mirror and raising the renewal request; the standing reads *Recertify* (a new `TestState`) when the certificate is expiring, expired or revoked and the modules stand, the course page's panel turns into *Recertification*, a pass inside the window supersedes the old certificate (`shouldIssueIndividual`)
+- [x] Organisation rule per type in settings; issuance request to the Channel Manager; issue, status strip, renewal, revoke with reason: `partner-settings.certificates` (validity ×2, reminder days, the bands, `rules[]` per type and track, the signatory, the issuer) edited on the K7 settings page and the admin tab; `readRule` counts distinct people with a current certificate per track; `raiseOrgRequestIfMet` (first met, or met again after expiry or revocation; a declined request waits for a change) → `org.certificate.requested` to the Channel Managers; `/partners/portal/k7/certificates` (counters, views, the rule table, the sweep) and `/[id]` (issue a request or a renewal, decline with a reason, revoke either kind with a reason; a Training Admin may revoke an individual one); `orgMirror` writes `partner-orgs.certificate` so the deal gate and the collateral rule read it unchanged; the strips on both homes, the organisation page and the K7 partner sheet
+- [x] Switch `deals.requireCertificate` on with the waiver flow (decision 8): the code default stays off; switched on in the development settings on 2026-10-24 (the K7 settings page), the gate read against the mirror (`registerBlocked` unchanged, covered by `partner-certificates-db`: valid passes, revoked blocks, the waiver reopens, the switch off ignores it)
 
 ## 7. M0 checklist: what remains before building
 Done 2026-10-22: the UAT exploration (`03-dynamics-exploration.md`): the opportunity's shape, the
@@ -317,7 +334,7 @@ Existing: `SMTP_URL`, `SUPPORT_MAIL_FROM`, `SUPPORT_MAIL_ALLOWLIST`, `CRON_SECRE
 `DATAVERSE_WRITES_ENABLED`, `SUPPORT_DEV_SERVICE=probe` (lets the outbox use the probe token on UAT in
 development). New (add to `.env.example` as they are introduced): `PARTNER_PORTAL_ENABLED`,
 `PARTNER_SMS_PROVIDER` + credentials, `PARTNER_UPLOAD_DIR` (default `uploads/collateral`), and for
-the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` (signature image path).
+the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERTIFICATE_DIR` (default `uploads/partner-certificates`) and `PARTNER_CERT_SIGNATORY` (the signatory's image, PNG or JPG; empty prints the issuer over the rule), both in `.env.example` since M11.
 
 ## 9. Traceability
 `status`: — not started · M<n> in progress · done (date) · deferred (reason). Update per session.
@@ -327,18 +344,18 @@ the last phase `PARTNER_VIDEO_PROVIDER` + credentials, `PARTNER_CERT_SIGNATORY` 
 | ROLE-01, 02, 03 | M1, M3 | done 2026-10-22 (M1: the scope rule, several roles per user and per K7 person; M3: the user pages, the standing-admin rule, the scope pinned against the database) |
 | REG-01 … 06, 08 | M2 | done 2026-10-22 (REG-03: email code; mobile code behind the SMS adapter, `skipped` and shown as such until a gateway exists; REG-06: the CRM account and contact through the outbox, verified on UAT as ACC-2610-00154) |
 | REG-07 | M3 | done 2026-10-22 (legal name, GSTIN and PAN proposed → Channel Manager approves or declines; the CRM rename stays manual) |
-| DEAL-01 | M4 (org gate), M11 (certificate gate) | M4 done 2026-10-22 (the organisation and user gate; the certificate half is the switch, off until M11, with the waiver) |
+| DEAL-01 | M4 (org gate), M11 (certificate gate) | done 2026-10-24 (M4: the organisation and user gate; M11: the switch reads the organisation's certificate mirror, on in the development settings, the waiver per organisation) |
 | DEAL-02 … 09 | M4 | done 2026-10-22 (DEAL-04: over portal deals, the CRM switch not built; DEAL-06: the opportunity job written, not yet run on UAT; DEAL-07: one extension, decision 15) |
 | DASH-01 … 05, 08, 11 | M5 | built 2026-10-23 (DASH-05: the interval is `crm.syncMinutes`, default 60, the scheduler calls `/api/partners/sync`; DASH-11: one audit row per changed read, the CRM's figures shown, the registration kept; one real run against UAT 2026-10-23) |
 | DASH-10 | — | deferred (fresh start, decision 2) |
 | MKT-01 … 04 | M6 | built 2026-10-23 (MKT-01: product → category; MKT-02: the eight types, the cap a setting ≤ 200 MB, Payload refuses malformed PDFs and scripted SVGs; MKT-03: type, certification, country, region, ANDed; MKT-04: upload, replace as a new version, tag, retire in `/admin`) |
 | SCH-01 … 05 | M7 | built 2026-10-23 (SCH-01: the admin collection with slabs and the PDF; SCH-02: three groups, type and region, published only; SCH-03: the Partner Admin accepts the terms, name and time stored; SCH-04: per-scheme switch; SCH-05: provisional progress from the snapshots) |
 | ELG-01 … 07 | M7 | built 2026-10-23 (ELG-01: won in the CRM, closed inside the dates, on a named product, at the order value; ELG-02: adjust with reason, publish; ELG-03/04: the page with the slab, the benefit, the gap, the deals; ELG-05: window = setting or the scheme's days; ELG-06: pending · processed · paid with reference; ELG-07: CSV) |
-| NTF-01 | M1 (spine), M8 (templates, SLA) | M1 done (`notify()`, the bell, email through the allowlist); M2 sends the application events (staff bell + mail, applicant mail, the invitation); M4 the deal events (submitted, resubmitted, decided, amended, extension asked and decided, withdrawn, expired, protection ending); M7 the scheme events; **M8 built 2026-10-23**: templates K7 edits per event with a delivery rule and the daily digest, the approval SLA breach to the approvers and their managers (the training and certificate rows of the table arrive with M10–M11) |
+| NTF-01 | M1 (spine), M8 (templates, SLA) | M1 done (`notify()`, the bell, email through the allowlist); M2 sends the application events (staff bell + mail, applicant mail, the invitation); M4 the deal events (submitted, resubmitted, decided, amended, extension asked and decided, withdrawn, expired, protection ending); M7 the scheme events; **M8 built 2026-10-23**: templates K7 edits per event with a delivery rule and the daily digest, the approval SLA breach to the approvers and their managers M10–M11 add the training and certificate rows: `training.course.passed`, `training.certificate.issued` (the PDF attached) · `expiring` · `expired` · `revoked`, `org.certificate.requested` (K7) · `issued` (the PDF attached) · `declined` · `expiring` · `expired` · `revoked`, each with a template and a delivery rule |
 | non-functional (none written) | M8, M9 | proposed 2026-10-23 (§11), to confirm with the author; M9 carries out 7 (the guard, the limiter, the headers, the route-door test), 8 (every run a row), 9 (backup rehearsed) and the retention lines of 4 (drafts, job runs) in code and the rest as the runbook `05-staging-and-go-live.md` |
 | TRN-01 … 06, 11, 12, 13, 14 | M10 | built 2026-10-23 (TRN-01: two tracks by role, courses of ordered modules with video and reading; TRN-02: Vimeo or the browser player through the portal, resume from the last position, download removed; TRN-03: completion from the union of watched ranges at the configured share, gaps do not count; TRN-04: the test unlocks when every module is complete, three question types, shuffled draw per attempt; TRN-05: pass mark and time limit per course or programme-wide; TRN-06: the score and, by setting, the answers; attempts and answers stored; TRN-11: the learner's and the Partner Admin's views; TRN-12, 13: the admin collections and the CSV import with the template; TRN-14: the integer version on every progress row and attempt, earlier passes kept) |
-| TRN-07, 08, 09, 10 | M11 | — (last phase) |
-| CRT-01 … 07 | M11 | — (last phase) |
+| TRN-07, 08, 09, 10 | M11 | done 2026-10-24 (TRN-07: the PDF on a pass with the name, organisation, course and track, date, score band, number and QR; TRN-08: `/partners/portal/certificates` and the sheet's download at any time, emailed with the PDF on issue; TRN-09: `/partners/verify/[id]` with the minimum; TRN-10: 12 months by default, reminders at 60 and 30 days by the sweep, the recertification test from the first window) |
+| CRT-01 … 07 | M11 | done 2026-10-24 (CRT-01: `certificates.rules` per type and track; CRT-02: the request to the Channel Managers when first met; CRT-03: the PDF with the legal name, type, partner ID, issue date, validity, number, signatory and QR; CRT-04: the Partner Admins' download, the email with the PDF, the card on the certificates page and the strips; CRT-05: validity configurable, the state Valid · Expiring soon · Expired on every strip; CRT-06: the renewal request when the lapsed organisation still meets the rule, reminders at 60 and 30 days saying whether it does; CRT-07: revoke with a recorded reason, the public page reads revoked) |
 
 ## 11. Non-functional requirements (proposed 2026-10-23, to confirm with the author)
 The source document promises these and gives none (appendix 1). Defaults the build assumes, written so the author can strike or
@@ -760,3 +777,43 @@ change a line rather than write from nothing; each is either already true of the
   whenever it ticks or flushes). Also the seed's second clip (Google's Big Buck Bunny sample) did not load in Chrome; swapped for MDN's
   CC0 *friday* clip. Test data left: the PP-TEST tracks, courses and banks; pp-test's progress, four attempts (two per course); the
   pp-test-trainer admin user. Nothing committed (Navin commits). **Next:** M11 (certificates), then the certificate gate switch.
+
+- **Session 17 (2026-10-24, Claude Code): M11 built, certificates.** Model `certificates-model.ts` (the numbers and their parser, the
+  bands, `expiryFrom`, the state today, `shouldIssueIndividual`, `reminderDue`, `readRule`, `orgMirror`, `verifyView`, the settings),
+  the PDF `certificate-pdf.ts` (pdf-lib + fontkit on the Archivo and Plex Mono TTFs now in `design-system/assets/fonts` with their OFL
+  texts, the QR from `qrcode`'s modules, the K7 mark from the logo SVG's paths), the library `certificates.ts` (issue on a pass, the
+  organisation's request · issue · decline · revoke, the sweep with the backfill, the mirror, the K7 ledger and counts); collections
+  `partner-certificates` and `partner-certificate-files`; `partner-settings.certificates` with the admin tab and the K7 settings section
+  (the rule as a types × tracks table); ten events in the catalogue and `notify()` carrying attachments (`sendMail` too); the job
+  `certificatesSweep` with its route, Operations line and summary; the partner pages `/certificates`, `/[id]`, `/[id]/file`, the public
+  `/partners/verify` and `/[id]`, the K7 `/k7/certificates`, `/[id]`, `/[id]/file` and actions; the recertify standing in
+  `training-model.ts`/`training.ts` (the certificate on the course view, `issueForPass` from `finalise`); the strips and links on both
+  homes, the training list and course page, the result page, the organisation page, the K7 partner sheet, the header and the desk strip.
+  Section 10 P33–P35 (`partner.css`, `PartnerParts` README, CHANGELOG, `design-system.json`). Decisions 24–26 written; `.env.example`
+  gains `PARTNER_CERTIFICATE_DIR` and `PARTNER_CERT_SIGNATORY`; the runbook's scheduler table the sweep. Verified: `pnpm generate:types`,
+  `npx tsc --noEmit` clean, `pnpm lint` 0 errors (14 pre-existing warnings), `partner-certificates` (15 pure, the PDF parsed back with its
+  fonts) and `partner-certificates-db` (5 against Postgres: the pass issues the row, the file and the bell and a retake prints nothing; the
+  Technical pass meets the rule, the request reaches the Channel Managers, K7 issues and the mirror and the deal gate follow; the public
+  view's minimum and the scope; revoke, the gate, the waiver, the renewal after a revocation; the sweep's reminders once per threshold,
+  the expiry, the recertify standing, the recertification and the renewal request); the whole partner suite with `PARTNER_DB_TESTS=1`:
+  25 files, 239 tests green. **Clicked in Chrome on localhost**: as pp-test (Partner Admin, Sales, Technical): the certificates page
+  (the backfilled Sales certificate from the suite's sweep, the rule 1/1 · 0/1), the certificate sheet with its QR, the PDF inline through
+  the route, the public page (genuine and valid; an unknown number; a lowercase number redirected to its canonical form), the training
+  strip, the Technical test taken and passed (100%, the result page naming K7P-C-EFPPAQ, the mail logged with the PDF attached), the
+  rule met and *Requested from K7* on the strip and the card; through the probe door as K7: the desk (1 to issue), the request's sheet,
+  *Issue →* (the PDF, the mail with the attachment to the Partner Admins), the organisation PDF, the K7 partner sheet's certificate line
+  and panel, the settings' Certificates section saved (the deal gate switched on, Merit 80 and back to 85), revoke with a reason (the
+  public page reads *Revoked.*), the sweep by hand (the renewal request raised; the first click surfaced a bug: the action's redirect sat
+  inside its try and read as *The sweep failed: NEXT_REDIRECT*, fixed), the request declined, the sweep again (0 requests: the decline
+  guard holds), the renewal issued from the revoked sheet (K7P-O-9ZYCY2 renews K7P-O-37MSTG), Operations' Certificate sweep line, the
+  templates' Certificates group, the admin's Certificates collection as the seeded Training editor (read-only); then as pp-test again:
+  the home strip *Valid to 24-10-2027* with *Register a deal* open under the gate, the bell rows (issued, declined, revoked), the course
+  page's panel naming the certificate. At 390px in a same-origin frame: the K7 sheet, the K7 desk, the public page, the partner
+  certificates page and sheet; two things caught and fixed (the facts grid's value track had no minimum so the verification URL pushed
+  the card out; the card's display number did not scale). Also caught: the suite's sweep backfilled a certificate for the training
+  test's organisation before that test removed it, and the foreign key then kept the organisation alive; the training test now removes
+  its certificates first, and the leftover (K7P-C-AE2NWE, organisation 239) was removed by hand. Test data left: pp-test's two individual
+  certificates (K7P-C-GGCKS6, K7P-C-EFPPAQ), the organisation's K7P-O-37MSTG (revoked), K7P-O-FG3M6K (declined) and K7P-O-9ZYCY2
+  (valid to 2027-10-24), the Technical pass, the deal gate on, `SUPPORT_DEV_AGENT` set and put back. Nothing committed (Navin commits).
+  **Next:** the M0 items that still wait on people (§7), `/partners/verify` linked from the marketing Partners page when it is written,
+  the go-live gate at launch (`05-staging-and-go-live.md` §5).

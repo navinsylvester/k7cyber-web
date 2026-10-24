@@ -7,7 +7,7 @@ import { roleAccess } from '../../access/roles'
    to say whether the scheduler is firing and the readiness route reads nothing from here. Written by src/lib/partner/ops.ts;
    append-only; housekeeping removes rows older than ninety days. */
 
-export const PARTNER_JOB_KEYS = ['outbox', 'sync', 'dealsSweep', 'digest', 'slaSweep', 'schemesRun', 'housekeeping'] as const
+export const PARTNER_JOB_KEYS = ['outbox', 'sync', 'dealsSweep', 'digest', 'slaSweep', 'schemesRun', 'certificatesSweep', 'housekeeping'] as const
 
 export const PartnerJobRuns: CollectionConfig = {
   slug: 'partner-job-runs',

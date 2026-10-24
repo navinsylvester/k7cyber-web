@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 
 import { requireK7Role } from '@/lib/partner/session'
 import { WEEKDAYS } from '@/lib/partner/sla-model'
+import { parseReminderDays } from '@/lib/partner/certificates-model'
 import { COLLATERAL_MAX_MB_CEILING, CRM_FEATURES, getPartnerSettings, PARTNER_TYPES, savePartnerSettings, STAFF_ROLES, type PartnerSettings, type PartnerType, type StaffRole } from '@/lib/partner/settings'
 
 /* Saves the partner portal's settings from the desk's page in one post (02-build-plan.md decision 5, §5). The staff list comes as
@@ -93,6 +94,24 @@ export async function savePartnerSettingsAction(form: FormData): Promise<void> {
       questionsPerTest: n(form, 'training_questionsPerTest', cur.training.questionsPerTest, 1),
       showAnswers: on(form, 'training_showAnswers'),
     },
+    certificates: (() => {
+      const merit = Math.min(100, n(form, 'cert_meritFrom', cur.certificates.meritFrom, 1))
+      const tracks = s(form, 'cert_tracks').split(/[\s,;]+/).map((x) => x.trim().toLowerCase()).filter(Boolean)
+      const rules: PartnerSettings['certificates']['rules'] = []
+      for (const type of PARTNER_TYPES) for (const track of tracks) rules.push({ type, track, people: n(form, `cert_rule_${type}_${track}`, 0, 0) })
+      const reminders = parseReminderDays(s(form, 'cert_reminderDays'))
+      return {
+        validityMonths: n(form, 'cert_validityMonths', cur.certificates.validityMonths, 1),
+        orgValidityMonths: n(form, 'cert_orgValidityMonths', cur.certificates.orgValidityMonths, 1),
+        reminderDays: reminders.length ? reminders : cur.certificates.reminderDays,
+        meritFrom: merit,
+        distinctionFrom: Math.max(merit, Math.min(100, n(form, 'cert_distinctionFrom', cur.certificates.distinctionFrom, 1))),
+        rules: tracks.length ? rules : cur.certificates.rules,
+        signatoryName: s(form, 'cert_signatoryName'),
+        signatoryTitle: s(form, 'cert_signatoryTitle') || cur.certificates.signatoryTitle,
+        issuer: s(form, 'cert_issuer') || cur.certificates.issuer,
+      }
+    })(),
   }
   try {
     await savePartnerSettings(next)

@@ -1,4 +1,5 @@
 import { DEFAULT_SLA_SETTINGS, type SlaSettings } from './sla-model'
+import { DEFAULT_CERTIFICATE_SETTINGS, normaliseCertificateSettings, type CertificateSettings } from './certificates-model'
 import { DEFAULT_TRAINING_SETTINGS, normaliseTrainingSettings, type TrainingSettings } from './training-model'
 
 /* The partner portal's settings as the code reads them (02-build-plan.md §5, global `partner-settings`): a pure model with
@@ -60,6 +61,8 @@ export type PartnerSettings = {
   /** M10 (FR-TRN-03, 05, 06): the share of a video that completes a module, the pass mark, the time limit, the draw and
       whether the answers show after a test; a course may override each in the admin. */
   training: TrainingSettings
+  /** M11 (FR-TRN-07, 10; FR-CRT-01, 03, 05): validity, the reminder days, the score bands, the rule per partner type, the signatory. */
+  certificates: CertificateSettings
 }
 
 export const CRM_FEATURES = ['accountCreate', 'opportunityCreate', 'sync'] as const
@@ -92,6 +95,7 @@ export const DEFAULT_PARTNER_SETTINGS: PartnerSettings = {
   collateral: { maxMb: 200 },
   schemes: { disputeDays: 14 },
   training: { ...DEFAULT_TRAINING_SETTINGS },
+  certificates: { ...DEFAULT_CERTIFICATE_SETTINGS, reminderDays: [...DEFAULT_CERTIFICATE_SETTINGS.reminderDays], rules: DEFAULT_CERTIFICATE_SETTINGS.rules.map((r) => ({ ...r })) },
 }
 
 type Raw = Record<string, unknown>
@@ -152,6 +156,7 @@ export const normalisePartnerSettings = (g: Raw | null | undefined): PartnerSett
     collateral: { maxMb: Math.min(num(obj(r.collateral).maxMb, D.collateral.maxMb, 1), COLLATERAL_MAX_MB_CEILING) },
     schemes: { disputeDays: num(obj(r.schemes).disputeDays, D.schemes.disputeDays, 0) },
     training: normaliseTrainingSettings(obj(r.training)),
+    certificates: normaliseCertificateSettings(obj(r.certificates)),
   }
 }
 

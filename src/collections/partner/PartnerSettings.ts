@@ -107,7 +107,7 @@ export const PartnerSettings: GlobalConfig = {
                 {
                   type: 'row',
                   fields: [
-                    { name: 'requireCertificate', type: 'checkbox', defaultValue: false, admin: { width: '50%', description: 'FR-DEAL-01: a deal needs a certified organisation. Off until the LMS exists (M11, decision 8).' } },
+                    { name: 'requireCertificate', type: 'checkbox', defaultValue: false, admin: { width: '50%', description: 'FR-DEAL-01: a deal needs an organisation with a current partner certificate, or a waiver (decision 8). Certificates arrived with M11; switch it on when the partners have had time to certify.' } },
                     { name: 'conflictCheckCrm', type: 'checkbox', defaultValue: false, admin: { width: '50%', description: 'Also look for the end customer in the CRM when checking conflicts (03-dynamics-exploration.md §7). Off: portal deals only.' } },
                   ],
                 },
@@ -155,6 +155,59 @@ export const PartnerSettings: GlobalConfig = {
                   ],
                 },
                 { name: 'showAnswers', type: 'checkbox', defaultValue: true, admin: { description: 'FR-TRN-06: show the correct answers on the result page.' } },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Certificates',
+          fields: [
+            {
+              name: 'certificates',
+              type: 'group',
+              admin: { description: 'Certificates (01-requirements.md §4 FR-TRN-07–10, §5, M11): how long they stand, when the holder is reminded, the score bands, the rule per partner type for the organisation certificate, and the signatory. The signature image is the file PARTNER_CERT_SIGNATORY points at.' },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'validityMonths', type: 'number', min: 1, max: 120, defaultValue: 12, admin: { width: '25%', description: 'FR-TRN-10: months an individual certificate stands.' } },
+                    { name: 'orgValidityMonths', type: 'number', min: 1, max: 120, defaultValue: 12, admin: { width: '25%', description: 'FR-CRT-05: months the partner certificate stands.' } },
+                    { name: 'meritFrom', type: 'number', min: 1, max: 100, defaultValue: 85, admin: { width: '25%', description: 'FR-TRN-07: the score band reads Merit from this %.' } },
+                    { name: 'distinctionFrom', type: 'number', min: 1, max: 100, defaultValue: 95, admin: { width: '25%', description: 'Distinction from this %; Pass below Merit.' } },
+                  ],
+                },
+                {
+                  name: 'reminderDays',
+                  type: 'array',
+                  labels: { singular: 'Reminder', plural: 'Reminders' },
+                  defaultValue: [{ days: 60 }, { days: 30 }],
+                  admin: { description: 'FR-TRN-10, FR-CRT-06: days before expiry at which the holder (and the Partner Admins) are reminded once each.' },
+                  fields: [{ name: 'days', type: 'number', min: 1, max: 365, required: true }],
+                },
+                {
+                  name: 'rules',
+                  type: 'array',
+                  labels: { singular: 'Rule', plural: 'Rules' },
+                  admin: { description: 'FR-CRT-01: per partner type and track, how many people must hold a current individual certificate before the organisation earns its partner certificate. A type with no row never qualifies.' },
+                  fields: [
+                    {
+                      type: 'row',
+                      fields: [
+                        { name: 'type', type: 'select', options: PARTNER_TYPE_OPTIONS, required: true, admin: { width: '40%' } },
+                        { name: 'track', type: 'text', required: true, admin: { width: '30%', description: 'The track’s key: sales, technical.' } },
+                        { name: 'people', type: 'number', min: 0, defaultValue: 1, required: true, admin: { width: '30%', description: 'People certified on that track.' } },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'signatoryName', type: 'text', admin: { width: '34%', description: 'FR-CRT-03: printed under the signature on the partner certificate.' } },
+                    { name: 'signatoryTitle', type: 'text', defaultValue: 'Authorised signatory', admin: { width: '33%' } },
+                    { name: 'issuer', type: 'text', defaultValue: 'K7 Computing Private Limited', admin: { width: '33%' } },
+                  ],
+                },
               ],
             },
           ],

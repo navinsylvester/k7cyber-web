@@ -5,7 +5,7 @@ import type { CrmFeatures } from './settings-model'
    environment, and the two retention periods housekeeping applies. The server side (ops.ts) gathers the picture and records
    the runs; this file is tested without a tenant. */
 
-export type JobKey = 'outbox' | 'sync' | 'dealsSweep' | 'digest' | 'slaSweep' | 'schemesRun' | 'housekeeping'
+export type JobKey = 'outbox' | 'sync' | 'dealsSweep' | 'digest' | 'slaSweep' | 'schemesRun' | 'certificatesSweep' | 'housekeeping'
 export type JobSpec = { key: JobKey; label: string; route: string; /** How often the scheduler should call it. */ cadenceMinutes: number; what: string }
 
 export const JOBS: JobSpec[] = [
@@ -15,6 +15,7 @@ export const JOBS: JobSpec[] = [
   { key: 'slaSweep', label: 'Approval SLA pass', route: '/api/partners/sla/sweep', cadenceMinutes: 60, what: 'One breach notice per deal or application past the target, to the queue’s role, the managers and the escalation addresses.' },
   { key: 'digest', label: 'Daily digest', route: '/api/partners/notifications/digest', cadenceMinutes: 24 * 60, what: 'Mails the bell rows whose template says digest, one email per person; removes read rows past the retention.' },
   { key: 'schemesRun', label: 'Scheme eligibility', route: '/api/partners/schemes/run', cadenceMinutes: 24 * 60, what: 'Computes the results of every published scheme that has closed and has none yet.' },
+  { key: 'certificatesSweep', label: 'Certificate sweep', route: '/api/partners/certificates/sweep', cadenceMinutes: 24 * 60, what: 'Expires certificates past their date, sends the 60- and 30-day reminders once each, keeps the organisations’ certificate mirror true, and raises the renewal request when an expired organisation still meets the rule.' },
   { key: 'housekeeping', label: 'Housekeeping', route: '/api/partners/housekeeping', cadenceMinutes: 24 * 60, what: 'Removes abandoned join drafts and old job-run rows.' },
 ]
 export const jobSpec = (key: JobKey): JobSpec => JOBS.find((j) => j.key === key)!
@@ -57,6 +58,8 @@ export const summariseResult = (job: JobKey, r: unknown): string => {
       return `${n('expired')} expired · ${n('noticed')} told of the end${n('errors') ? ` · ${n('errors')} errors` : ''}`
     case 'slaSweep':
       return `${n('checked')} on the clock · ${n('breached')} past the target · ${n('noticed')} notices${n('errors') ? ` · ${n('errors')} errors` : ''}`
+    case 'certificatesSweep':
+      return `${n('checked')} checked · ${n('expired')} expired · ${n('reminded')} reminded · ${n('requested')} renewal requests${n('errors') ? ` · ${n('errors')} errors` : ''}`
     case 'digest':
       return `${n('mails')} emails · ${n('rows')} rows · ${n('removed')} read rows removed${n('errors') ? ` · ${n('errors')} errors` : ''}`
     case 'schemesRun':

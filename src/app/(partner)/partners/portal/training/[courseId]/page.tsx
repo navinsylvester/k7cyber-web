@@ -5,6 +5,7 @@ import React from 'react'
 
 import { Empty, Flash, Strip } from '@/components/partner/Parts'
 import { AttemptsLedger, ModuleList, ModulesBar, TestStateTag } from '@/components/partner/Training'
+import { certificateHref } from '@/lib/partner/certificates'
 import { requirePartner } from '@/lib/partner/session'
 import { loadCourseFor, PARTNER_TRAINING } from '@/lib/partner/training'
 import { dmy } from '@/lib/support/format'
@@ -49,11 +50,11 @@ export default async function CoursePage({ params, searchParams }: { params: Pro
             <Link className="btn btn-primary" href={`${PARTNER_TRAINING}/${course.id}/test/${open.id}`}>
               Resume the test →
             </Link>
-          ) : st.test === 'ready' || st.test === 'failed' ? (
+          ) : st.test === 'ready' || st.test === 'failed' || st.test === 'recertify' ? (
             <form action={startTestAction}>
               <input type="hidden" name="courseId" value={course.id} />
               <button className="btn btn-primary" type="submit">
-                {st.test === 'failed' ? 'Take the test again →' : 'Take the test →'}
+                {st.test === 'recertify' ? 'Take the recertification test →' : st.test === 'failed' ? 'Take the test again →' : 'Take the test →'}
               </button>
             </form>
           ) : firstUndone ? (
@@ -89,12 +90,26 @@ export default async function CoursePage({ params, searchParams }: { params: Pro
           ) : null}
         </div>
         <aside className="ws-side">
-          <div className={`decide test-box${st.test === 'ready' ? ' is-ready' : ''}`}>
-            <h2>The test</h2>
-            {st.test === 'passed' ? (
+          <div className={`decide test-box${st.test === 'ready' || st.test === 'recertify' ? ' is-ready' : ''}`}>
+            <h2>{st.test === 'recertify' ? 'Recertification' : 'The test'}</h2>
+            {st.test === 'recertify' ? (
+              <p className="muted" style={{ margin: '0 0 12px', fontSize: 15 }}>
+                Your certificate {st.certificate!.number} {st.certificate!.state === 'expiring' ? `expires on ${dmy(st.certificate!.expiresAt)}` : st.certificate!.state === 'expired' ? `expired on ${dmy(st.certificate!.expiresAt)}` : 'was revoked'}. Take the test again ({rules.questionsPerTest} questions, {rules.timeLimitMinutes} minutes, pass mark {rules.passMark}%); passing issues a new certificate.
+              </p>
+            ) : st.test === 'passed' ? (
               <>
                 <p className="muted" style={{ margin: '0 0 12px', fontSize: 15 }}>
-                  Passed on {dmy(st.pass!.submittedAt ?? st.pass!.startedAt)} with {st.pass!.score}% (version {st.pass!.courseVersion}).{st.passOutdated ? ` The course is now on version ${course.version}; your pass stays valid, and you may take the new version.` : ' Your individual certificate arrives with the next phase of the portal.'}
+                  Passed on {dmy(st.pass!.submittedAt ?? st.pass!.startedAt)} with {st.pass!.score}% (version {st.pass!.courseVersion}).{st.passOutdated ? ` The course is now on version ${course.version}; your pass stays valid, and you may take the new version.` : ''}
+                  {st.certificate && (st.certificate.state === 'valid' || st.certificate.state === 'expiring') ? (
+                    <>
+                      {' '}
+                      Certificate <Link className="link-u" href={certificateHref({ id: st.certificate.id })}>{st.certificate.number}</Link>, valid to {dmy(st.certificate.expiresAt)}.
+                    </>
+                  ) : st.certificate ? (
+                    ` Certificate ${st.certificate.number} is ${st.certificate.state}.`
+                  ) : (
+                    ' Your certificate is issued by the next sweep.'
+                  )}
                 </p>
                 {st.passOutdated && !open && st.unlock.ok ? (
                   <form action={startTestAction}>
