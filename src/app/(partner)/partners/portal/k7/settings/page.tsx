@@ -10,6 +10,7 @@ import { WEEKDAYS } from '@/lib/partner/sla-model'
 import { serviceConfigured } from '@/lib/dataverse/auth'
 
 import { savePartnerSettingsAction } from './actions'
+import { isDeployed } from '@/lib/env'
 
 export const metadata: Metadata = { title: 'Partner portal settings' }
 
@@ -30,7 +31,7 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
       </span>
     </label>
   )
-  const probe = process.env.NODE_ENV !== 'production' && process.env.SUPPORT_DEV_SERVICE === 'probe'
+  const probe = !isDeployed() && process.env.SUPPORT_DEV_SERVICE === 'probe'
   const certTracks = [...new Set(s.certificates.rules.map((r) => r.track))]
   if (!certTracks.length) certTracks.push('sales', 'technical')
   return (
@@ -100,7 +101,7 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
               <h2 className="sub-head">Programme</h2>
               <div className="form-grid">
                 <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-                  <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+                  <legend className="label" style={{ marginBottom: 10 }}>
                     A company can apply as
                   </legend>
                   <div className="checks">{PARTNER_TYPES.map((t) => check(`type_${t}`, PARTNER_TYPE_LABEL[t], s.partnerTypes.includes(t)))}</div>
@@ -310,7 +311,7 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                   <input id="sla_end" name="sla_end" defaultValue={s.sla.hours.end} placeholder="18:00" />
                 </Field>
                 <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-                  <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+                  <legend className="label" style={{ marginBottom: 10 }}>
                     Working days
                   </legend>
                   <div className="checks">{WEEKDAYS.map((w) => check(`sla_day_${w.n}`, w.label, s.sla.hours.days.includes(w.n)))}</div>

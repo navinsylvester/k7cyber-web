@@ -15,19 +15,21 @@ import { requireAgent } from '@/lib/support/session'
 export const metadata: Metadata = { title: 'Search' }
 
 /* Quick search across the desk: cases first, then the people, then the articles. */
-export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string; all?: string }> }) {
   const sp = await searchParams
   const q = (sp.q ?? '').trim()
   const me = await requireAgent()
-  const [cases, contacts, accounts, articles] = q
+  const all = sp.all === '1'
+  const [found, contacts, accounts, articles] = q
     ? await Promise.all([
-        searchCases(me.auth, q, 20).catch(() => []),
+        searchCases(me.auth, q, all ? 500 : 20).catch(() => ({ rows: [], total: 0 })),
         searchContacts(me.auth, q, 10).catch(() => []),
         searchAccounts(me.auth, q, 10).catch(() => []),
         listArticles(me.auth, { q, audience: 'agent', state: 'all', top: 10 }).catch(() => []),
       ])
-    : [[], [], [], []]
-  const total = cases.length + contacts.length + accounts.length + articles.length
+    : [{ rows: [], total: 0 }, [], [], []]
+  const cases = found.rows
+  const total = found.total + contacts.length + accounts.length + articles.length
   return (
     <>
       <WorkspaceBar active="search" q={q} />
@@ -42,10 +44,10 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(32px, 4cqw, 48px)' }}>
             <div>
               <h2 className="sub-head">
-                Cases <span className="label">{cases.length}</span>
+                Cases <span className="label">{found.total > cases.length ? `${cases.length} of ${found.total}` : cases.length}</span>
               </h2>
               {cases.length === 0 ? (
-                <Empty label="Cases">No case number, title or customer email matches.</Empty>
+                <Empty label="Cases">No case number, title, incident ID, customer email or customer phone matches.</Empty>
               ) : (
                 <Ledger caption="Matching cases" heads={[{ label: 'Case' }, { label: 'Title' }, { label: 'Customer' }, { label: 'Status' }, { label: 'Modified' }]}>
                   {cases.map((c) => (
@@ -62,6 +64,14 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                     </tr>
                   ))}
                 </Ledger>
+              )}
+              {found.total > cases.length && (
+                // The list used to stop at 20 without saying so (TR-11).
+                <p className="hint" style={{ marginTop: 12 }}>
+                  <Link className="link-u" href={`${WS}/search?q=${encodeURIComponent(q)}&all=1`}>
+                    Show all {found.total} cases →
+                  </Link>
+                </p>
               )}
             </div>
 

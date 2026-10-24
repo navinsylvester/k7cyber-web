@@ -2,22 +2,24 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
 
-import { Crumbs, Flash } from '@/components/support/Parts'
+import { Crumbs, Flash, RequiredNote } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { requireAgent } from '@/lib/support/session'
 
-import { AccountFields, loadGeo } from '../../forms'
+import { AccountFields, accountFromQuery, badFromQuery, loadGeo } from '../../forms'
 
 import { createAccountAction } from './actions'
 
 export const metadata: Metadata = { title: 'New account' }
 
-type SP = { error?: string; name?: string; phone?: string; email?: string; website?: string }
+type SP = { error?: string; name?: string; phone?: string; email?: string; website?: string; type?: string; vertical?: string; licenceKey?: string; stateId?: string; cityId?: string; bad?: string }
 
 export default async function NewAccountPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams
   const me = await requireAgent()
-  const geo = await loadGeo(me.auth)
+  // Values come back in the query after a refused submit (TR-03), so the city list is loaded for the state that was chosen.
+  const values = accountFromQuery(sp)
+  const geo = await loadGeo(me.auth, values.stateId)
   return (
     <>
       <WorkspaceBar active="customers" />
@@ -29,8 +31,9 @@ export default async function NewAccountPage({ searchParams }: { searchParams: P
           </h1>
           <p className="form-intro">An organisation that uses K7: a company, a school, a partner or a distributor. Add its people as contacts afterwards.</p>
           {sp.error && <Flash kind="error">{sp.error}</Flash>}
+          <RequiredNote />
           <form action={createAccountAction} className="form-grid">
-            <AccountFields v={{ name: sp.name ?? '', phone: sp.phone ?? '', email: sp.email ?? '', website: sp.website ?? '' }} geo={geo} />
+            <AccountFields v={values} geo={geo} bad={badFromQuery(sp)} />
             <div className="form-actions span-2">
               <button className="btn btn-primary" type="submit">
                 Create account →

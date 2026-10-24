@@ -73,7 +73,7 @@ export default async function K7TemplatesPage({ searchParams }: { searchParams: 
               <form action={saveTemplateAction} className="form-grid tpl-form">
                 <input type="hidden" name="event" value={selected} />
                 <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-                  <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+                  <legend className="label" style={{ marginBottom: 10 }}>
                     Delivery
                   </legend>
                   <div className="choice">

@@ -21,7 +21,11 @@ const Field: React.FC<{ id: string; label: string; required?: boolean; hint?: st
   <div className={`field${span ? ' span-2' : ''}${error ? ' is-invalid' : ''}`}>
     <label className="label" htmlFor={id}>
       {label}
-      {required ? ' *' : ''}
+      {required ? (
+        <span className="req" aria-hidden="true">
+          {' *'}
+        </span>
+      ) : null}
     </label>
     <span className={`control${select ? ' is-select' : ''}`}>{children}</span>
     {hint && !error && <span className="hint">{hint}</span>}

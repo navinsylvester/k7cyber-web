@@ -11,7 +11,7 @@ import { CUSTOMER_VISIBLE_FILTER } from './status'
 export const CASE_SELECT = [
   'incidentid', 'ticketnumber', 'title', 'description', 'statecode', 'statuscode', 'caseorigincode', 'prioritycode', 'casetypecode',
   'createdon', 'modifiedon', 'new_verticaltype', 'new_customertype', 'k7_caseconsideredas', 'new_category', 'k7_productversion',
-  'k7_2ndserialnumber', 'k7_customeremail', 'k7_module', 'k7_submodule', 'adx_resolution', 'adx_stepstoreproduce', 'adx_createdbyusername',
+  'k7_2ndserialnumber', 'k7_incidentid', 'k7_customeremail', 'k7_module', 'k7_submodule', 'adx_resolution', 'adx_stepstoreproduce', 'adx_createdbyusername',
   '_customerid_value', '_primarycontactid_value', '_productid_value', '_new_issue_value', '_new_subcategory_value', '_ownerid_value',
   '_k7_rfe_value', '_k7_defectnew_value', '_createdby_value', '_modifiedby_value', 'firstresponseslastatus', 'resolvebyslastatus', 'escalatedon', 'followupby', 'cit_productcategory',
 ] as const
@@ -32,26 +32,77 @@ export const getCase = async (auth: DataverseAuth, id: string): Promise<CaseRow 
   }
 }
 
+/** What the case head shows beside the customer and is not on the case row (13-tester-round-1.md, TR-07, TR-08, TR-10). */
+export type CaseParties = {
+  /** The contact's organisation, when the customer is a contact whose parent is an account. */
+  account: { id: string; name: string } | null
+  /** A number to call: the customer contact's mobile, else phone; for an account, its primary contact's, else the account's. */
+  phone: string
+  /** The account's licence key (`k7_description`), for when the case has no serial key of its own. */
+  licenceKey: string
+}
+
+const PARTY_EXPAND =
+  'customerid_contact($select=_parentcustomerid_value,mobilephone,telephone1;$expand=parentcustomerid_account($select=name,k7_description)),' +
+  'customerid_account($select=telephone1,k7_description),primarycontactid($select=mobilephone,telephone1)'
+
+const textOf = (v: unknown): string => (typeof v === 'string' ? v.trim() : '')
+
+/** Reads the expansion of PARTY_EXPAND. Exported for the tests. */
+export const partiesFrom = (row: Row): CaseParties => {
+  const contact = (row.customerid_contact ?? null) as Row | null
+  const account = (row.customerid_account ?? null) as Row | null
+  const primary = (row.primarycontactid ?? null) as Row | null
+  const parent = contact ? ((contact.parentcustomerid_account ?? null) as Row | null) : null
+  const callable = (r: Row | null) => (r ? textOf(r.mobilephone) || textOf(r.telephone1) : '')
+  return {
+    account: parent && typeof parent.accountid === 'string' ? { id: parent.accountid, name: textOf(parent.name) || 'Unnamed account' } : null,
+    phone: contact ? callable(contact) || callable(primary) : callable(primary) || textOf(account?.telephone1),
+    licenceKey: textOf((account ?? parent)?.k7_description),
+  }
+}
+
+export const getCaseParties = async (auth: DataverseAuth, id: string): Promise<CaseParties> => {
+  const none: CaseParties = { account: null, phone: '', licenceKey: '' }
+  if (!isGuid(id)) return none
+  const row = await retrieve<Row>(auth, `${entity('incidents', id)}?$select=incidentid&$expand=${PARTY_EXPAND}`).catch(() => null)
+  return row ? partiesFrom(row) : none
+}
+
 export const getCaseByTicket = async (auth: DataverseAuth, ticket: string): Promise<CaseRow | null> => {
   const p = await list<CaseRow>(auth, buildQuery('incidents', { select: [...CASE_SELECT], filter: `ticketnumber eq ${str(ticket.trim().toUpperCase())}`, top: 1 }), 1)
   return p.value[0] ?? null
 }
 
-/** Quick search for the workspace header: case number prefix, title words or customer email. */
-export const searchCases = async (auth: DataverseAuth, q: string, top = 10): Promise<CaseRow[]> => {
+/** Quick search for the workspace header: case number prefix, title words, incident id, the case's customer email or
+    the email of its customer contact or primary contact (25 active UAT cases have no email of their own), and the
+    contacts' phone numbers when the needle looks like one. `total` counts every match (TR-11). */
+export const searchCases = async (auth: DataverseAuth, q: string, top = 20): Promise<{ rows: CaseRow[]; total: number }> => {
   const needle = q.trim()
-  if (!needle) return []
+  if (!needle) return { rows: [], total: 0 }
+  const like = (col: string, v = needle) => `contains(${col},${str(v)})`
+  const digits = /^\+?[0-9 ()-]{6,}$/.test(needle) ? needle.replace(/[^0-9]/g, '') : ''
   const filter = /^cs-/i.test(needle)
     ? `startswith(ticketnumber,${str(needle.toUpperCase())})`
-    : or(`contains(title,${str(needle)})`, `contains(ticketnumber,${str(needle.toUpperCase())})`, `contains(k7_customeremail,${str(needle)})`)
-  const p = await list<CaseRow>(auth, buildQuery('incidents', { select: [...CASE_LIST_SELECT], filter, orderby: 'modifiedon desc', top }), top)
-  return p.value
+    : or(
+        like('title'),
+        like('ticketnumber', needle.toUpperCase()),
+        like('k7_customeremail'),
+        like('k7_incidentid'),
+        like('customerid_contact/emailaddress1'),
+        like('primarycontactid/emailaddress1'),
+        digits ? like('customerid_contact/mobilephone', digits) : null,
+        digits ? like('customerid_contact/telephone1', digits) : null,
+        digits ? like('primarycontactid/mobilephone', digits) : null,
+      )
+  const p = await list<CaseRow>(auth, buildQuery('incidents', { select: [...CASE_LIST_SELECT], filter, orderby: 'modifiedon desc', top, count: true }), top)
+  return { rows: p.value, total: p.total ?? p.value.length }
 }
 
-/** Cases of a customer record, newest first (account or contact pages). */
-export const casesForCustomer = async (auth: DataverseAuth, customerId: string, top = 25): Promise<CaseRow[]> => {
-  const p = await list<CaseRow>(auth, buildQuery('incidents', { select: [...CASE_LIST_SELECT], filter: or(`_customerid_value eq ${guid(customerId)}`, `_primarycontactid_value eq ${guid(customerId)}`), orderby: 'modifiedon desc', top }), top)
-  return p.value
+/** Cases of a customer record, newest first (account or contact pages), with the count of all of them (TR-11). */
+export const casesForCustomer = async (auth: DataverseAuth, customerId: string, top = 25): Promise<{ rows: CaseRow[]; total: number }> => {
+  const p = await list<CaseRow>(auth, buildQuery('incidents', { select: [...CASE_LIST_SELECT], filter: or(`_customerid_value eq ${guid(customerId)}`, `_primarycontactid_value eq ${guid(customerId)}`), orderby: 'modifiedon desc', top, count: true }), top)
+  return { rows: p.value, total: p.total ?? p.value.length }
 }
 
 /* ---------- Agent writes ---------- */
@@ -73,6 +124,8 @@ export type NewCase = {
   consideredAs?: number
   productVersion?: string
   serial?: string
+  /** Incident ID (`k7_incidentid`), free text the desk fills from another system. */
+  incidentId?: string
   module?: string
   submodule?: string
   customerEmail?: string
@@ -102,6 +155,7 @@ const caseBody = (c: Partial<NewCase>): Row => {
   if (c.consideredAs !== undefined) b.k7_caseconsideredas = c.consideredAs
   if (c.productVersion !== undefined) b.k7_productversion = c.productVersion
   if (c.serial !== undefined) b.k7_2ndserialnumber = c.serial
+  if (c.incidentId !== undefined) b.k7_incidentid = c.incidentId
   if (c.module !== undefined) b.k7_module = c.module
   if (c.submodule !== undefined) b.k7_submodule = c.submodule
   if (c.customerEmail !== undefined) b.k7_customeremail = c.customerEmail
@@ -109,14 +163,15 @@ const caseBody = (c: Partial<NewCase>): Row => {
   if (c.createdBy !== undefined) b.adx_createdbyusername = c.createdBy
   if (c.ownerId !== undefined) b['ownerid@odata.bind'] = bind('systemusers', c.ownerId)
   if (c.status !== undefined) b.statuscode = c.status
-  // Lookups cleared with null need the navigation-property form; drop the @odata.bind key for those.
-  for (const k of Object.keys(b)) if (b[k] === null && k.endsWith('@odata.bind')) delete b[k]
+  // A lookup cleared is sent as `"<nav>@odata.bind": null`, which UAT accepts on PATCH (checked 2026-10-24). These keys used
+  // to be dropped, so clearing the product or category in Edit details said "saved" and changed nothing.
   return b
 }
 
 /** Creates a case and returns its id and number (autonumber assigned by Dataverse). */
 export const createCase = async (auth: DataverseAuth, input: NewCase): Promise<{ id: string; ticket: string }> => {
-  const r = await callDataverse<{ incidentid: string; ticketnumber: string }>(auth, 'POST', 'incidents', { body: caseBody(input), prefer: ['return=representation'] })
+  const body = Object.fromEntries(Object.entries(caseBody(input)).filter(([, v]) => v !== null))
+  const r = await callDataverse<{ incidentid: string; ticketnumber: string }>(auth, 'POST', 'incidents', { body, prefer: ['return=representation'] })
   return { id: r.incidentid, ticket: r.ticketnumber }
 }
 

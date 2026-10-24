@@ -1,4 +1,6 @@
-import { STATE, STATUS } from './options'
+import { fv, type Row } from '@/lib/dataverse/types'
+
+import { STATE, STATUS, STATUS_REASONS } from './options'
 
 /* Customer-facing status (01-requirements.md §5.3): the ten Dynamics status reasons collapse to four states a customer can act on,
    and merged or cancelled cases are never shown. Agents keep the full status reason. */
@@ -65,3 +67,12 @@ export const canReopen = (statecode: number | null | undefined, modifiedon: stri
 
 /** Visible to customers: active and resolved, never cancelled or merged. OData fragment on incident. */
 export const CUSTOMER_VISIBLE_FILTER = `(statecode eq ${STATE.ACTIVE} or statecode eq ${STATE.RESOLVED})`
+
+/** A case's status reason for agents: the CRM's label, else ours for the code, else "Unknown status". Five legacy UAT cases
+    carry 696720006, which is no longer an option, so the CRM sends no label and the bare number used to show (TR-12). */
+export const caseStatusLabel = (row: Row): string => {
+  const f = fv(row, 'statuscode')
+  if (f && !/^[0-9]+$/.test(f)) return f
+  if (typeof row.statuscode !== 'number') return ''
+  return STATUS_REASONS.find((s) => s.value === row.statuscode)?.label ?? 'Unknown status'
+}

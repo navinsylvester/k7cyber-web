@@ -15,7 +15,7 @@ import { careForCustomer, csatForCustomer, flagHistory, followUpState } from '@/
 import { getSettings } from '@/lib/support/kpi-config'
 import { isManager, requireAgent } from '@/lib/support/session'
 
-import { AccountFields, loadGeo } from '../../forms'
+import { badFromQuery, AccountFields, accountFromQuery, loadGeo } from '../../forms'
 
 import { updateAccountAction } from './actions'
 
@@ -39,15 +39,18 @@ const LicenceKey: React.FC<{ value: string }> = ({ value }) => {
 }
 
 /* An account: the organisation, its people, its cases and contracts; the edit panel on the right. */
-export default async function AccountPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string; edit?: string }> }) {
+export default async function AccountPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string; edit?: string; [k: string]: string | undefined }> }) {
   const { id } = await params
   const sp = await searchParams
   const me = await requireAgent()
   const a = await getAccount(me.auth, id)
   if (!a) notFound()
   const stateId = a._k7_state_value ? String(a._k7_state_value) : null
+  // After a refused save the panel reopens with what was submitted (TR-03), and the city list follows that state.
+  const submitted = sp.edit === '1' && sp.error ? accountFromQuery(sp) : null
   const settings = await getSettings()
-  const [contacts, cases, contracts, geo, care, ratings, flags, manager] = await Promise.all([contactsOfAccount(me.auth, a.accountid, 50).catch(() => []), casesForCustomer(me.auth, a.accountid, 25).catch(() => []), contractsOfAccount(me.auth, a.accountid), loadGeo(me.auth, stateId), careForCustomer(a.accountid, settings), csatForCustomer(a.accountid), flagHistory(a.accountid), isManager(me)])
+  const [contacts, caseList, contracts, geo, care, ratings, flags, manager] = await Promise.all([contactsOfAccount(me.auth, a.accountid, 50).catch(() => []), casesForCustomer(me.auth, a.accountid, sp.cases === 'all' ? 500 : 25).catch(() => ({ rows: [], total: 0 })), contractsOfAccount(me.auth, a.accountid), loadGeo(me.auth, submitted ? submitted.stateId : stateId), careForCustomer(a.accountid, settings), csatForCustomer(a.accountid), flagHistory(a.accountid), isManager(me)])
+  const cases = caseList.rows
   const readings = new Map(ratings.map((r) => [r.id, { status: r.followUp, reading: followUpState(r, settings) }]))
   const here = `${WS}/customers/accounts/${a.accountid}`
   const parent = lookup(a, 'parentaccountid')
@@ -71,7 +74,7 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
             </div>
           </div>
           <div className="ws-actions">
-            <Link className="btn btn-primary btn-sm" href={`${WS}/cases/new?account=${a.accountid}`}>
+            <Link className="btn btn-primary btn-sm" href={`${WS}/cases/new?sel=account:${a.accountid}`}>
               New case for this account →
             </Link>
             <Link className="btn btn-line btn-sm" href={`${WS}/customers/contacts/new?account=${encodeURIComponent(name)}`}>
@@ -135,9 +138,9 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
               )}
             </div>
 
-            <div style={{ marginTop: 40 }}>
+            <div style={{ marginTop: 40 }} id="cases">
               <h2 className="sub-head">
-                Cases <span className="label">{cases.length}</span>
+                Cases <span className="label">{caseList.total > cases.length ? `${cases.length} of ${caseList.total}` : cases.length}</span>
               </h2>
               {cases.length === 0 ? (
                 <Empty label="No cases">No case names this account as the customer.</Empty>
@@ -158,6 +161,14 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
                     </Link>
                   ))}
                 </div>
+              )}
+              {caseList.total > cases.length && (
+                // The list used to stop at 25 without saying so (TR-11).
+                <p className="hint" style={{ marginTop: 12 }}>
+                  <Link className="link-u" href={`${here}?cases=all#cases`}>
+                    Show all {caseList.total} cases →
+                  </Link>
+                </p>
               )}
             </div>
 
@@ -193,18 +204,22 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
                   <form action={updateAccountAction} className="form-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
                     <input type="hidden" name="id" value={a.accountid} />
                     <AccountFields
-                      v={{
-                        name: String(a.name ?? ''),
-                        phone: String(a.telephone1 ?? ''),
-                        email: String(a.emailaddress1 ?? ''),
-                        website: String(a.websiteurl ?? ''),
-                        type: typeof a.alletec_accounttype === 'number' ? a.alletec_accounttype : null,
-                        vertical: typeof a.k7_verticaltype === 'number' ? a.k7_verticaltype : null,
-                        licenceKey: String(a.k7_description ?? ''),
-                        stateId,
-                        cityId: a._alletec_city_value ? String(a._alletec_city_value) : null,
-                      }}
+                      v={
+                        submitted ?? {
+                          name: String(a.name ?? ''),
+                          phone: String(a.telephone1 ?? ''),
+                          email: String(a.emailaddress1 ?? ''),
+                          website: String(a.websiteurl ?? ''),
+                          type: typeof a.alletec_accounttype === 'number' ? a.alletec_accounttype : null,
+                          vertical: typeof a.k7_verticaltype === 'number' ? a.k7_verticaltype : null,
+                          licenceKey: String(a.k7_description ?? ''),
+                          stateId,
+                          cityId: a._alletec_city_value ? String(a._alletec_city_value) : null,
+                        }
+                      }
+                      stored={{ phone: String(a.telephone1 ?? '') }}
                       geo={geo}
+                      bad={submitted ? badFromQuery(sp) : []}
                     />
                     <button className="btn btn-line btn-sm" type="submit">
                       Save changes

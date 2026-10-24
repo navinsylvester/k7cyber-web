@@ -28,6 +28,7 @@ uploads/
 # Support portal: Dataverse probe token cache and discovery output (local only)
 scripts/.token_cache.json
 scripts/.tunnel.*
+scripts/.server.log
 spec/
 
 # Dataverse UAT working files (local only)

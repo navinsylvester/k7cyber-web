@@ -136,7 +136,7 @@ export default async function OrganisationPage({ searchParams }: { searchParams:
                   </Field>
                   {settings.regions.length > 0 && (
                     <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-                      <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+                      <legend className="label" style={{ marginBottom: 10 }}>
                         K7 regions you operate in *
                       </legend>
                       <div className="checks">

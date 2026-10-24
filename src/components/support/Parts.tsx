@@ -2,10 +2,9 @@ import Link from 'next/link'
 import React from 'react'
 
 import type { Row } from '@/lib/dataverse/types'
-import { fv } from '@/lib/dataverse/types'
 import { dmyHm, initials, relative, splitTicket } from '@/lib/support/format'
 import { PRIORITY_CRITICAL } from '@/lib/support/options'
-import { CUSTOMER_STATE_HINT, CUSTOMER_STATE_LABEL, TRACK, customerState, trackIndex, type CustomerState } from '@/lib/support/status'
+import { CUSTOMER_STATE_HINT, CUSTOMER_STATE_LABEL, TRACK, caseStatusLabel, customerState, trackIndex, type CustomerState } from '@/lib/support/status'
 
 export { Pager, qs, SortHead } from '@/components/research/Parts'
 
@@ -45,7 +44,7 @@ export const StatusTag: React.FC<{ row: Row; solid?: boolean }> = ({ row, solid 
   return (
     <span className={`tag${solid && !resolved ? ' tag-solid' : ''}${resolved ? ' tag-closed' : ''}`}>
       {critical && <i className="crit" aria-label="Critical" />}
-      {fv(row, 'statuscode') || '—'}
+      {caseStatusLabel(row) || '—'}
     </span>
   )
 }
@@ -151,12 +150,27 @@ export const Field: React.FC<{ id: string; label: string; required?: boolean; hi
   <div className={`field${span ? ' span-2' : ''}${error ? ' is-invalid' : ''}`}>
     <label className="label" htmlFor={id}>
       {label}
-      {required ? ' *' : ''}
+      {required ? <Req /> : null}
     </label>
     <span className={`control${select ? ' is-select' : ''}`}>{children}</span>
     {hint && !error && <span className="hint">{hint}</span>}
     {error && <span className="field-error">{error}</span>}
   </div>
+)
+
+/** The required mark after a label: an asterisk in the accent (Field README; 13-tester-round-1.md, TR-14). The input's own
+    `required` attribute is what assistive technology announces, so the mark is hidden from it. */
+export const Req: React.FC = () => (
+  <span className="req" aria-hidden="true">
+    {' *'}
+  </span>
+)
+
+/** Said once above a form that has required fields. */
+export const RequiredNote: React.FC = () => (
+  <p className="req-note label">
+    Fields marked <span className="req">*</span> are mandatory.
+  </p>
 )
 
 export const Options: React.FC<{ items: { value: string | number; label: string }[]; empty?: string }> = ({ items, empty }) => (

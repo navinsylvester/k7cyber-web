@@ -36,14 +36,14 @@ export const getAccount = async (auth: DataverseAuth, id: string): Promise<Accou
 export const searchContacts = async (auth: DataverseAuth, q: string, top = 25): Promise<ContactRow[]> => {
   const needle = q.trim()
   const filter = needle ? or(`contains(fullname,${str(needle)})`, `contains(emailaddress1,${str(needle)})`, `contains(mobilephone,${str(needle)})`) : 'statecode eq 0'
-  const p = await list<ContactRow>(auth, buildQuery('contacts', { select: ['contactid', 'fullname', 'emailaddress1', 'mobilephone', 'modifiedon', '_parentcustomerid_value', '_alletec_city_value'], filter, orderby: 'modifiedon desc', top }), top)
+  const p = await list<ContactRow>(auth, buildQuery('contacts', { select: ['contactid', 'fullname', 'emailaddress1', 'mobilephone', 'k7_verticaltype', 'modifiedon', '_parentcustomerid_value', '_alletec_city_value'], filter, orderby: 'modifiedon desc', top }), top)
   return p.value
 }
 
 export const searchAccounts = async (auth: DataverseAuth, q: string, top = 25): Promise<AccountRow[]> => {
   const needle = q.trim()
   const filter = needle ? or(`contains(name,${str(needle)})`, `contains(accountnumber,${str(needle)})`, `contains(alletec_accountid,${str(needle)})`) : 'statecode eq 0'
-  const p = await list<AccountRow>(auth, buildQuery('accounts', { select: ['accountid', 'name', 'accountnumber', 'alletec_accountid', 'alletec_accounttype', 'modifiedon', '_alletec_city_value', '_primarycontactid_value'], filter, orderby: 'modifiedon desc', top }), top)
+  const p = await list<AccountRow>(auth, buildQuery('accounts', { select: ['accountid', 'name', 'accountnumber', 'alletec_accountid', 'alletec_accounttype', 'k7_verticaltype', 'modifiedon', '_alletec_city_value', '_primarycontactid_value'], filter, orderby: 'modifiedon desc', top }), top)
   return p.value
 }
 
@@ -71,13 +71,23 @@ const contactBody = (c: Partial<ContactInput>): Row => {
   if (c.description !== undefined) b.description = c.description
   if (c.portalUsername !== undefined) b.adx_identity_username = c.portalUsername
   if (c.accountId) b['parentcustomerid_account@odata.bind'] = bind('accounts', c.accountId)
-  if (c.cityId) b['alletec_City@odata.bind'] = bind('alletec_cities', c.cityId)
-  if (c.stateId) b['k7_State@odata.bind'] = bind('k7_states', c.stateId)
-  if (c.regionId) b['k7_Region@odata.bind'] = bind('k7_regions', c.regionId)
+  geoBind(b, c)
   return b
 }
 
-export const createContact = async (auth: DataverseAuth, c: ContactInput): Promise<string> => create(auth, 'contacts', contactBody(c), SUPPRESS_DUPES)
+/* City, state and region: an id binds the lookup, null clears it (UAT accepts `"<nav>@odata.bind": null` on PATCH,
+   checked 2026-10-24 on a contact), undefined leaves it alone. Before, an empty city was simply not sent and Dynamics kept
+   the old one when the state changed (13-tester-round-1.md, TR-05). */
+const geoBind = (b: Row, g: { cityId?: string | null; stateId?: string | null; regionId?: string | null }) => {
+  if (g.cityId !== undefined) b['alletec_City@odata.bind'] = g.cityId ? bind('alletec_cities', g.cityId) : null
+  if (g.stateId !== undefined) b['k7_State@odata.bind'] = g.stateId ? bind('k7_states', g.stateId) : null
+  if (g.regionId !== undefined) b['k7_Region@odata.bind'] = g.regionId ? bind('k7_regions', g.regionId) : null
+}
+
+/** A new record has nothing to clear: the empty lookups are left out. */
+const forCreate = (b: Row): Row => Object.fromEntries(Object.entries(b).filter(([, v]) => v !== null))
+
+export const createContact = async (auth: DataverseAuth, c: ContactInput): Promise<string> => create(auth, 'contacts', forCreate(contactBody(c)), SUPPRESS_DUPES)
 export const updateContact = async (auth: DataverseAuth, id: string, c: Partial<ContactInput>): Promise<void> => update(auth, entity('contacts', id), contactBody(c))
 
 export type AccountInput = { name: string; phone?: string; email?: string; website?: string; type?: number; vertical?: number; licenceKey?: string; cityId?: string | null; stateId?: string | null; regionId?: string | null; primaryContactId?: string | null }
@@ -91,14 +101,12 @@ const accountBody = (a: Partial<AccountInput>): Row => {
   if (a.type !== undefined) b.alletec_accounttype = a.type
   if (a.vertical !== undefined) b.k7_verticaltype = a.vertical
   if (a.licenceKey !== undefined) b.k7_description = a.licenceKey
-  if (a.cityId) b['alletec_City@odata.bind'] = bind('alletec_cities', a.cityId)
-  if (a.stateId) b['k7_State@odata.bind'] = bind('k7_states', a.stateId)
-  if (a.regionId) b['k7_Region@odata.bind'] = bind('k7_regions', a.regionId)
+  geoBind(b, a)
   if (a.primaryContactId) b['primarycontactid@odata.bind'] = bind('contacts', a.primaryContactId)
   return b
 }
 
-export const createAccount = async (auth: DataverseAuth, a: AccountInput): Promise<string> => create(auth, 'accounts', accountBody(a), SUPPRESS_DUPES)
+export const createAccount = async (auth: DataverseAuth, a: AccountInput): Promise<string> => create(auth, 'accounts', forCreate(accountBody(a)), SUPPRESS_DUPES)
 export const updateAccount = async (auth: DataverseAuth, id: string, a: Partial<AccountInput>): Promise<void> => update(auth, entity('accounts', id), accountBody(a))
 
 /* ---------- Identity: portal sign-in → contact (01-requirements.md §3.1, §5.1) ---------- */

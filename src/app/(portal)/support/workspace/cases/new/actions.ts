@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { userMessage } from '@/lib/dataverse/errors'
 import { isGuid } from '@/lib/dataverse/odata'
 import { agentNewCase, createCase } from '@/lib/support/cases'
+import { getContact } from '@/lib/support/customers'
 import { requireAgent } from '@/lib/support/session'
 
 /* Creating a case as an agent: the customer must be chosen, the title must say something; everything else is optional. */
@@ -34,6 +35,8 @@ export async function createCaseAction(form: FormData): Promise<void> {
   if (title.length < 3) back('The title needs at least three characters.')
   let msg: string | null = null
   let created: { id: string; ticket: string } | null = null
+  // A contact picked with the email left blank: the case takes the contact's address, as the form shows it (TR-06).
+  const customerEmail = str(form, 'customerEmail') || (kind === 'contact' ? String((await getContact(me.auth, custId!).catch(() => null))?.emailaddress1 ?? '') : '')
   try {
     created = await createCase(
       me.auth,
@@ -53,9 +56,10 @@ export async function createCaseAction(form: FormData): Promise<void> {
         consideredAs: num(form, 'consideredAs'),
         productVersion: str(form, 'productVersion') || undefined,
         serial: str(form, 'serial') || undefined,
+        incidentId: str(form, 'incidentId') || undefined,
         module: str(form, 'module') || undefined,
         submodule: str(form, 'submodule') || undefined,
-        customerEmail: str(form, 'customerEmail') || undefined,
+        customerEmail: customerEmail || undefined,
         ownerId: optGuid(form, 'ownerId'),
         createdBy: me.email || undefined,
       }),

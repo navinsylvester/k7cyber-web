@@ -89,6 +89,8 @@ button { font: inherit; color: inherit; }
 .seg { display: inline-flex; border: 1px solid var(--ln); }
 .seg button { border: 0; background: transparent; padding: 5px 9px; cursor: pointer; font: 400 11px/1.3 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; transition: background .24s var(--ease), color .24s; }
 .seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+/* The theme pair before hydration: the server cannot know the stored choice, so the button matching <html data-theme> is pressed by CSS. */
+:root[data-theme="dark"] .seg button[data-choice="dark"]:not([aria-pressed]), :root[data-theme="light"] .seg button[data-choice="light"]:not([aria-pressed]) { background: var(--fg); color: var(--bg); }
 .seg button:not([aria-pressed="true"]):hover { color: var(--acc); }
 /* The theme toggle: one 36px frame with the theme glyph (Icon, chrome), hover inverts; it replaced the Dark | Light group on 2026-10-16. */
 .theme-btn { width: 36px; height: 36px; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; box-shadow: inset 0 0 0 1px var(--ln); background: transparent; color: inherit; cursor: pointer; transition: background .24s var(--ease), color .24s var(--ease); }
@@ -399,6 +401,11 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .field-error { color: var(--acc); display: none; font-size: 13px; }
 .field.is-invalid .field-error { display: block; }
 .field.is-invalid .control { border-bottom-color: var(--acc); }
+/* A field the browser has refused (after the reader has typed or tried to submit) reads as an error too. */
+.control:has(:user-invalid) { border-bottom-color: var(--acc); }
+/* Required: the asterisk alone takes the accent, the label stays muted; the note says it once above the form. */
+.req { color: var(--acc); }
+.req-note { color: var(--mu); margin: 0 0 20px; }
 .form-foot { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: center; justify-content: space-between; padding-top: 8px; }
 .consent { display: flex; flex-direction: column; gap: 12px; }
 

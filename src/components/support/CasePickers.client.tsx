@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 type Cat = { id: string; name: string; label?: string }
 type Sub = { id: string; name: string; categoryId: string }
@@ -30,8 +30,8 @@ export const CategoryPicker: React.FC<{
     <>
       {mode === 'tiles' ? (
         <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
-            What is it about?{required ? ' *' : ''}
+          <legend className="label" style={{ marginBottom: 10 }}>
+            What is it about?{required ? <span className="req" aria-hidden="true">{' *'}</span> : null}
           </legend>
           <div className="choice">
             {categories.map((c) => (
@@ -45,7 +45,7 @@ export const CategoryPicker: React.FC<{
       ) : (
         <div className="field">
           <label className="label" htmlFor={`f-${categoryName}`}>
-            Issue category{required ? ' *' : ''}
+            Issue category{required ? <span className="req" aria-hidden="true">{' *'}</span> : null}
           </label>
           <span className="control is-select">
             <select id={`f-${categoryName}`} name={categoryName} value={cat} onChange={(e) => onCat(e.target.value)} required={required}>
@@ -85,7 +85,9 @@ export const GeoPicker: React.FC<{
   initialState?: string
   initialCity?: string
   cities?: { id: string; name: string }[]
-}> = ({ states, regions, initialState = '', initialCity = '', cities = [] }) => {
+  /** Fields a refused submit marked (`stateId`, `cityId`). */
+  bad?: string[]
+}> = ({ states, regions, initialState = '', initialCity = '', cities = [], bad = [] }) => {
   const [state, setState] = useState(initialState)
   const [list, setList] = useState<{ id: string; name: string }[]>(cities)
   const [loading, setLoading] = useState(false)
@@ -104,7 +106,7 @@ export const GeoPicker: React.FC<{
   }
   return (
     <>
-      <div className="field">
+      <div className={`field${bad.includes('stateId') ? ' is-invalid' : ''}`}>
         <label className="label" htmlFor="f-state">
           State
         </label>
@@ -119,7 +121,7 @@ export const GeoPicker: React.FC<{
           </select>
         </span>
       </div>
-      <div className="field">
+      <div className={`field${bad.includes('cityId') ? ' is-invalid' : ''}`}>
         <label className="label" htmlFor="f-city">
           City
         </label>
@@ -145,4 +147,41 @@ export const GeoPicker: React.FC<{
       </div>
     </>
   )
+}
+
+/** On the agent's new case form, picking a customer fills *Customer email* and *Vertical* from data attributes on the radio
+    (`data-email`, `data-vertical`), unless the agent has typed or chosen something there by hand. Renders nothing; without
+    JavaScript the server's prefill for a chosen contact still applies (13-tester-round-1.md, TR-06). */
+export const CustomerAutofill: React.FC<{ email?: string; vertical?: string }> = ({ email = 'customerEmail', vertical = 'vertical' }) => {
+  const ref = useRef<HTMLSpanElement>(null)
+  useEffect(() => {
+    const form = ref.current?.closest('form')
+    if (!form) return
+    const touched = new Set<string>()
+    const onInput = (e: Event) => {
+      const t = e.target as HTMLInputElement | HTMLSelectElement
+      // A change the agent makes is theirs to keep; the fills below set values directly and fire no events.
+      if (e.isTrusted && (t.name === email || t.name === vertical)) touched.add(t.name)
+    }
+    const onChange = (e: Event) => {
+      onInput(e)
+      const r = e.target as HTMLInputElement
+      if (r.type !== 'radio' || r.name !== 'customer' || !r.checked) return
+      const fill = (name: string, value: string | undefined) => {
+        const el = form.elements.namedItem(name) as HTMLInputElement | HTMLSelectElement | null
+        if (!el || touched.has(name) || value === undefined) return
+        if (name === vertical && value === '' && el.value !== '') return
+        el.value = value
+      }
+      fill(email, r.dataset.email)
+      fill(vertical, r.dataset.vertical)
+    }
+    form.addEventListener('input', onInput)
+    form.addEventListener('change', onChange)
+    return () => {
+      form.removeEventListener('input', onInput)
+      form.removeEventListener('change', onChange)
+    }
+  }, [email, vertical])
+  return <span ref={ref} hidden />
 }

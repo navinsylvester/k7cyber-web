@@ -71,7 +71,11 @@ export const K7Form: React.FC<{ form: FormType; privacyUrl: string; maxWidth?: n
   const control = (f: AnyField) => {
     const id = `f-${f.name}`
     const reg = register(f.name, { required: f.required ? 'This field is required' : false })
-    const star = f.required ? ' *' : ''
+    const star = f.required ? (
+      <span className="req" aria-hidden="true">
+        {' *'}
+      </span>
+    ) : null
     const invalid = errors[f.name] ? ' is-invalid' : ''
     const wide = f.blockType === 'textarea' || f.blockType === 'message' ? ' span-2' : ''
     if (f.blockType === 'message') {
@@ -135,7 +139,11 @@ export const K7Form: React.FC<{ form: FormType; privacyUrl: string; maxWidth?: n
           {checks.map((f) => (
             <label className={`check${errors[f.name] ? ' is-invalid' : ''}`} key={f.name}>
               <input type="checkbox" {...register(f.name, { required: f.required ? 'Required' : false })} /> {f.label}
-              {f.required ? ' *' : ''}
+              {f.required ? (
+                <span className="req" aria-hidden="true">
+                  {' *'}
+                </span>
+              ) : null}
             </label>
           ))}
         </div>

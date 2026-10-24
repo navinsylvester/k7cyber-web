@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
 
-import { CategoryPicker } from '@/components/support/CasePickers.client'
-import { Field, Flash, Options, PageHead } from '@/components/support/Parts'
+import { CategoryPicker, CustomerAutofill } from '@/components/support/CasePickers.client'
+import { Field, Flash, Options, PageHead, Req, RequiredNote } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { isGuid } from '@/lib/dataverse/odata'
 import { fv } from '@/lib/dataverse/types'
@@ -42,6 +42,10 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
   const selHref = (kind: 'contact' | 'account', id: string) => `${PATH}?customer=${encodeURIComponent(q)}&sel=${kind}:${id}${sp.title ? `&title=${encodeURIComponent(sp.title)}` : ''}${sp.description ? `&description=${encodeURIComponent(sp.description)}` : ''}`
   const chosen = selectedContact ? { kind: 'contact' as const, id: selectedContact.contactid, name: selectedContact.fullname, detail: [selectedContact.emailaddress1, selectedContact.mobilephone ? String(selectedContact.mobilephone) : '', fv(selectedContact, '_parentcustomerid_value')].filter(Boolean).join(' · ') } : selectedAccount ? { kind: 'account' as const, id: selectedAccount.accountid, name: selectedAccount.name, detail: [String(selectedAccount.alletec_accountid ?? selectedAccount.accountnumber ?? ''), fv(selectedAccount, 'alletec_accounttype'), fv(selectedAccount, '_alletec_city_value')].filter(Boolean).join(' · ') } : null
   const inList = (kind: 'contact' | 'account', id: string) => (kind === 'contact' ? contacts.some((c) => c.contactid === id) : accounts.some((a) => a.accountid === id))
+  // What a pick fills in (CustomerAutofill): a contact's email and vertical, an account's vertical.
+  const verticalOf = (r: ContactRow | AccountRow | null) => (r && typeof r.k7_verticaltype === 'number' ? String(r.k7_verticaltype) : '')
+  const fills = (r: ContactRow | AccountRow, kind: 'contact' | 'account') => ({ 'data-email': kind === 'contact' ? String((r as ContactRow).emailaddress1 ?? '') : undefined, 'data-vertical': verticalOf(r) })
+  const chosenRow = selectedContact ?? selectedAccount
 
   return (
     <>
@@ -66,6 +70,7 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
         {sp.error && <Flash kind="error">{sp.error}</Flash>}
 
         <div className="form-sheet">
+          <RequiredNote />
           <h2 className="block-title label">1 · Customer</h2>
           <form className="filters-inline" action={PATH} method="get" role="search" aria-label="Find the customer">
             {sp.title && <input type="hidden" name="title" value={sp.title} />}
@@ -91,6 +96,7 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
 
           <form action={createCaseAction} className="form-grid" style={{ marginTop: 8 }}>
             <input type="hidden" name="customerQ" value={q} />
+            <CustomerAutofill />
             {chosen && !inList(chosen.kind, chosen.id) && <input type="hidden" name="customer" value={`${chosen.kind}:${chosen.id}`} />}
 
             {q && contacts.length === 0 && accounts.length === 0 && !chosen && (
@@ -100,13 +106,14 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
             )}
             {(contacts.length > 0 || accounts.length > 0 || chosen) && (
               <fieldset className="span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-                <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
-                  Pick the customer *
+                <legend className="label" style={{ marginBottom: 10 }}>
+                  Pick the customer
+                  <Req />
                 </legend>
                 <div className="choice">
                   {chosen && !inList(chosen.kind, chosen.id) && (
                     <label>
-                      <input type="radio" name="customer" value={`${chosen.kind}:${chosen.id}`} defaultChecked />
+                      <input type="radio" name="customer" value={`${chosen.kind}:${chosen.id}`} defaultChecked {...(chosenRow ? fills(chosenRow, chosen.kind) : {})} />
                       <span className="t">{chosen.name}</span>
                       <span className="d">
                         {chosen.kind === 'account' ? 'Account' : 'Contact'}
@@ -116,14 +123,14 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
                   )}
                   {contacts.map((c) => (
                     <label key={c.contactid}>
-                      <input type="radio" name="customer" value={`contact:${c.contactid}`} defaultChecked={selected?.id === c.contactid} />
+                      <input type="radio" name="customer" value={`contact:${c.contactid}`} defaultChecked={selected?.id === c.contactid} {...fills(c, 'contact')} />
                       <span className="t">{c.fullname}</span>
                       <span className="d">Contact · {[c.emailaddress1, c.mobilephone ? String(c.mobilephone) : '', fv(c, '_parentcustomerid_value')].filter(Boolean).join(' · ') || 'no details'}</span>
                     </label>
                   ))}
                   {accounts.map((a) => (
                     <label key={a.accountid}>
-                      <input type="radio" name="customer" value={`account:${a.accountid}`} defaultChecked={selected?.id === a.accountid} />
+                      <input type="radio" name="customer" value={`account:${a.accountid}`} defaultChecked={selected?.id === a.accountid} {...fills(a, 'account')} />
                       <span className="t">{a.name}</span>
                       <span className="d">
                         Account · {[String(a.alletec_accountid ?? a.accountnumber ?? ''), fv(a, 'alletec_accounttype'), fv(a, '_alletec_city_value')].filter(Boolean).join(' · ') || 'no details'} ·{' '}
@@ -188,7 +195,7 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
             </Field>
             <CategoryPicker mode="select" categories={categories} subcategories={subcategories} subLabel="Sub category" />
             <Field id="vertical" label="Vertical" select>
-              <select id="vertical" name="vertical" defaultValue={selectedContact && typeof selectedContact.k7_verticaltype === 'number' ? String(selectedContact.k7_verticaltype) : selectedAccount && typeof selectedAccount.k7_verticaltype === 'number' ? String(selectedAccount.k7_verticaltype) : ''}>
+              <select id="vertical" name="vertical" defaultValue={verticalOf(chosenRow)}>
                 <Options items={VERTICAL} empty="Not set" />
               </select>
             </Field>
@@ -214,8 +221,11 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
             <Field id="productVersion" label="Product version">
               <input id="productVersion" name="productVersion" placeholder="16.0.1234" />
             </Field>
-            <Field id="serial" label="Serial number">
-              <input id="serial" name="serial" />
+            <Field id="serial" label="Serial key">
+              <input id="serial" name="serial" spellCheck={false} />
+            </Field>
+            <Field id="incidentId" label="Incident ID">
+              <input id="incidentId" name="incidentId" spellCheck={false} />
             </Field>
             <Field id="module" label="Module">
               <input id="module" name="module" />

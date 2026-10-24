@@ -53,7 +53,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
             <input id="mobile" name="mobile" type="tel" inputMode="tel" autoComplete="tel" defaultValue={sp.mobile ?? ''} placeholder="98400 00000" />
           </Field>
           <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-            <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+            <legend className="label" style={{ marginBottom: 10 }}>
               I am using K7
             </legend>
             <div className="choice" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))' }}>

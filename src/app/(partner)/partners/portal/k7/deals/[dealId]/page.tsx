@@ -140,7 +140,7 @@ export default async function K7DealPage({ params, searchParams }: { params: Pro
                 <form action={decideDealAction} className="form-grid" style={{ gap: 16 }}>
                   <input type="hidden" name="dealId" value={deal.dealId} />
                   <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-                    <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+                    <legend className="label" style={{ marginBottom: 10 }}>
                       Decision
                     </legend>
                     <div className="choice" style={{ gridTemplateColumns: '1fr' }}>
@@ -174,7 +174,7 @@ export default async function K7DealPage({ params, searchParams }: { params: Pro
                 <form action={decideExtensionAction} className="form-grid" style={{ gap: 16 }}>
                   <input type="hidden" name="dealId" value={deal.dealId} />
                   <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-                    <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+                    <legend className="label" style={{ marginBottom: 10 }}>
                       Decision
                     </legend>
                     <div className="choice">

@@ -357,6 +357,7 @@ export async function editAction(form: FormData): Promise<void> {
       text('description', 'description')
       text('productVersion', 'k7_productversion')
       text('serial', 'k7_2ndserialnumber')
+      text('incidentId', 'k7_incidentid')
       text('module', 'k7_module')
       text('submodule', 'k7_submodule')
       text('customerEmail', 'k7_customeremail')
@@ -370,7 +371,8 @@ export async function editAction(form: FormData): Promise<void> {
       look('productId', '_productid_value')
       look('categoryId', '_new_issue_value')
       look('subcategoryId', '_new_subcategory_value')
-      // A choice cleared to nothing cannot be sent as undefined; drop those (Dataverse keeps the value), lookups cleared are dropped by caseBody.
+      // A choice cleared to nothing cannot be sent as undefined; drop those (Dataverse keeps the value). A lookup cleared arrives as
+      // an empty string and caseBody sends it as null, which clears it.
       for (const k of Object.keys(patch)) if ((patch as Record<string, unknown>)[k] === null) delete (patch as Record<string, unknown>)[k]
       if (Object.keys(patch).length === 0) msg = 'Nothing changed.'
       else await updateCase(me.auth, id, patch)

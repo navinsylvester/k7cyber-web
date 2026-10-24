@@ -13,6 +13,7 @@ import { DEAL_FILE_DIR } from './deal-files'
 import { DRAFT_RETENTION_DAYS, JOB_RUN_RETENTION_DAYS, JOBS, jobStanding, readinessChecks, summariseResult, type Check, type DirCheck, type JobKey, type JobRun, type JobStanding } from './ops-model'
 import { SCHEME_FILE_DIR } from './schemes'
 import { getPartnerSettings } from './settings'
+import { isDeployed } from '@/lib/env'
 
 /* Operations (M9, docs/partner-portal/05-staging-and-go-live.md): every scheduled job records its run so the Operations page
    can say whether the scheduler fires; the readiness checks read the environment, the settings and the upload directories;
@@ -93,8 +94,8 @@ export const readiness = async (): Promise<Check[]> => {
   const settings = await getPartnerSettings()
   const env = process.env
   return readinessChecks({
-    production: env.NODE_ENV === 'production',
-    portalEnabled: env.PARTNER_PORTAL_ENABLED === '1' || (env.NODE_ENV !== 'production' && env.PARTNER_PORTAL_ENABLED !== '0'),
+    production: isDeployed(env),
+    portalEnabled: env.PARTNER_PORTAL_ENABLED === '1' || (!isDeployed(env) && env.PARTNER_PORTAL_ENABLED !== '0'),
     authSecretLength: (env.AUTH_SECRET ?? '').length,
     cronSecretUsable: cronSecretUsable(),
     databaseUrl: Boolean(env.DATABASE_URL),

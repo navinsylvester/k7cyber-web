@@ -73,6 +73,9 @@ Local dev uses Payload's push mode (schema synced on start). Credentials in `.en
   collections, `product-settings` global); the tracker sits behind `src/lib/support/tracker/` (link-only now, Yodiz in phase B); the CRM
   mirror writes notes, tasks, the status reason and the `k7_rfe`/`k7_defect` rows (an enhancement is an RFE, a defect or detection a defect),
   as the acting agent, logged in `product-mirror`; the old RFEs tab is merged into the desk; samples never enter the portal.
+- Tester round 1 (2026-10-24): `docs/support-portal/13-tester-round-1.md` is the fix list (TR-01…TR-15, decisions D-1…D-4) with a
+  status table and a session log; all TR items closed the same day, the decisions D-1…D-3 wait on the support lead. Testers are
+  served by the production build through the tunnel: `scripts/serve.sh rebuild` after any change (not `pnpm dev`).
 - `scripts/dataverse-probe.py` queries Dataverse from the shell (`DV_*` in `.env`); its
   token cache `scripts/.token_cache.json` and any `spec/` output are git-ignored.
 

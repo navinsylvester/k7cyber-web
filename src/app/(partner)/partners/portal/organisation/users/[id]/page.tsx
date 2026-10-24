@@ -69,7 +69,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
               <input id="email" type="email" defaultValue={user.email} disabled />
             </Field>
             <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-              <legend className="label" style={{ color: 'var(--mu)', marginBottom: 10 }}>
+              <legend className="label" style={{ marginBottom: 10 }}>
                 Roles *
               </legend>
               <div className="checks">

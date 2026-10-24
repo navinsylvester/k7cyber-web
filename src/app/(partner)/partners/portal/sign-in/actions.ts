@@ -10,6 +10,7 @@ import { OTP_TTL_SECONDS, PARTNER_DEVCODE_COOKIE, PARTNER_OTP_COOKIE, PARTNER_OT
 import { getPartnerSettings } from '@/lib/partner/settings'
 import { canSignIn, findPartnerUserByEmail } from '@/lib/partner/users'
 import { mailAllowed, mailAllowlist, mailConfigured, sendMail } from '@/lib/support/mail'
+import { isDeployed } from '@/lib/env'
 
 /* The partner door (02-build-plan.md decision 3): a known partner user asks for a code by email, the code's signed token rides in
    an httpOnly cookie scoped to /partners, and the `partner` provider turns the verified code into a session. The same allowlist
@@ -35,7 +36,7 @@ const verifyUrl = (email: string, next?: string, extra: Record<string, string> =
 
 /** Same rule as the support door: the on-screen code is for the developer's own machine, or a host with the allowlist set. */
 const showCodeHere = async (): Promise<boolean> => {
-  if (process.env.SUPPORT_DEV_SHOW_CODE !== '1' || process.env.NODE_ENV === 'production' || mailConfigured()) return false
+  if (process.env.SUPPORT_DEV_SHOW_CODE !== '1' || isDeployed() || mailConfigured()) return false
   if (mailAllowlist()) return true
   const h = await headers()
   if (h.get('x-forwarded-for') || h.get('x-forwarded-proto') || h.get('x-forwarded-host')) return false
@@ -122,6 +123,6 @@ export async function staffSignIn(form: FormData): Promise<void> {
 
 /** The development code, when the portal cannot send mail. */
 export async function devPartnerCode(): Promise<string | null> {
-  if (process.env.NODE_ENV === 'production') return null
+  if (isDeployed()) return null
   return (await cookies()).get(PARTNER_DEVCODE_COOKIE)?.value ?? null
 }

@@ -15,22 +15,25 @@ import { careForCustomer, csatForCustomer, flagHistory, followUpState } from '@/
 import { getSettings } from '@/lib/support/kpi-config'
 import { isManager, requireAgent } from '@/lib/support/session'
 
-import { ContactFields, loadGeo } from '../../forms'
+import { badFromQuery, ContactFields, contactFromQuery, loadGeo } from '../../forms'
 
 import { updateContactAction } from './actions'
 
 export const metadata: Metadata = { title: 'Contact' }
 
 /* A contact: who they are, how to reach them, their organisation, their cases and contracts, and the edit panel on the right. */
-export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string; edit?: string }> }) {
+export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string; edit?: string; [k: string]: string | undefined }> }) {
   const { id } = await params
   const sp = await searchParams
   const me = await requireAgent()
   const c = await getContact(me.auth, id)
   if (!c) notFound()
   const stateId = c._k7_state_value ? String(c._k7_state_value) : null
+  // After a refused save the panel reopens with what was submitted (TR-03), and the city list follows that state.
+  const submitted = sp.edit === '1' && sp.error ? contactFromQuery(sp) : null
   const settings = await getSettings()
-  const [cases, contracts, geo, care, ratings, flags, manager] = await Promise.all([casesForCustomer(me.auth, c.contactid, 25).catch(() => []), contractsOfAccount(me.auth, c.contactid), loadGeo(me.auth, stateId), careForCustomer(c.contactid, settings), csatForCustomer(c.contactid), flagHistory(c.contactid), isManager(me)])
+  const [caseList, contracts, geo, care, ratings, flags, manager] = await Promise.all([casesForCustomer(me.auth, c.contactid, sp.cases === 'all' ? 500 : 25).catch(() => ({ rows: [], total: 0 })), contractsOfAccount(me.auth, c.contactid), loadGeo(me.auth, submitted ? submitted.stateId : stateId), careForCustomer(c.contactid, settings), csatForCustomer(c.contactid), flagHistory(c.contactid), isManager(me)])
+  const cases = caseList.rows
   const readings = new Map(ratings.map((r) => [r.id, { status: r.followUp, reading: followUpState(r, settings) }]))
   const here = `${WS}/customers/contacts/${c.contactid}`
   const account = lookup(c, 'parentcustomerid')
@@ -92,9 +95,9 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               </div>
             ) : null}
 
-            <div style={{ marginTop: 40 }}>
+            <div style={{ marginTop: 40 }} id="cases">
               <h2 className="sub-head">
-                Cases <span className="label">{cases.length}</span>
+                Cases <span className="label">{caseList.total > cases.length ? `${cases.length} of ${caseList.total}` : cases.length}</span>
               </h2>
               {cases.length === 0 ? (
                 <Empty label="No cases">This contact has not raised a case.</Empty>
@@ -115,6 +118,14 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                     </Link>
                   ))}
                 </div>
+              )}
+              {caseList.total > cases.length && (
+                // The list used to stop at 25 without saying so (TR-11).
+                <p className="hint" style={{ marginTop: 12 }}>
+                  <Link className="link-u" href={`${here}?cases=all#cases`}>
+                    Show all {caseList.total} cases →
+                  </Link>
+                </p>
               )}
             </div>
 
@@ -150,18 +161,22 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                   <form action={updateContactAction} className="form-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
                     <input type="hidden" name="id" value={c.contactid} />
                     <ContactFields
-                      v={{
-                        firstName: String(c.firstname ?? ''),
-                        lastName: String(c.lastname ?? ''),
-                        email: String(c.emailaddress1 ?? ''),
-                        mobile: String(c.mobilephone ?? ''),
-                        phone: String(c.telephone1 ?? ''),
-                        jobTitle: String(c.jobtitle ?? ''),
-                        vertical: typeof c.k7_verticaltype === 'number' ? c.k7_verticaltype : null,
-                        stateId,
-                        cityId: c._alletec_city_value ? String(c._alletec_city_value) : null,
-                      }}
+                      v={
+                        submitted ?? {
+                          firstName: String(c.firstname ?? ''),
+                          lastName: String(c.lastname ?? ''),
+                          email: String(c.emailaddress1 ?? ''),
+                          mobile: String(c.mobilephone ?? ''),
+                          phone: String(c.telephone1 ?? ''),
+                          jobTitle: String(c.jobtitle ?? ''),
+                          vertical: typeof c.k7_verticaltype === 'number' ? c.k7_verticaltype : null,
+                          stateId,
+                          cityId: c._alletec_city_value ? String(c._alletec_city_value) : null,
+                        }
+                      }
+                      stored={{ phone: String(c.telephone1 ?? ''), mobile: String(c.mobilephone ?? '') }}
                       geo={geo}
+                      bad={submitted ? badFromQuery(sp) : []}
                       emailRequired={false}
                     />
                     <button className="btn btn-line btn-sm" type="submit">

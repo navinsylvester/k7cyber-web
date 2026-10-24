@@ -9,6 +9,7 @@ import { KPI_DEFS, kpiDef, periodBounds, resolveTarget, type KpiKey, type KpiSet
 import { memo } from './memo'
 import { label as optLabel, ORIGIN, PRIORITY, PRIORITY_CRITICAL, STATE, STATUS, VERTICAL } from './options'
 import { crmKpiState, median, NO_READING, pct, readSla, workingDaysBetween, workingMinutesBetween, type SlaReading, type SlaState } from './sla'
+import { caseStatusLabel } from './status'
 
 /* The manager's numbers (09-portal-guide.md §4c). Raw rows are fetched once per period and memoised for 90 seconds across managers
    (the desk is one desk); every reading is recomputed per request from the current settings, so a changed target applies at once.
@@ -275,7 +276,7 @@ const toLite = (r: Row, raw: RawDesk, s: Settings, now: Date): CaseLite => {
     modifiedon,
     statecode,
     statuscode,
-    status: fv(r, 'statuscode'),
+    status: caseStatusLabel(r),
     priority,
     origin,
     vertical,
