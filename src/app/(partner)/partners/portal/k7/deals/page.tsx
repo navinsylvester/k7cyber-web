@@ -6,6 +6,7 @@ import { DealStateTag, Did } from '@/components/partner/Deals'
 import { K7Nav } from '@/components/partner/K7Nav'
 import { Empty, Flash, Pid } from '@/components/partner/Parts'
 import { SlaTag } from '@/components/partner/Sla'
+import { SubmitButton } from '@/components/partner/SubmitButton.client'
 import { Pager, qs } from '@/components/support/Parts'
 import { dealCounts, K7_DEALS, listDealsK7, type DealView } from '@/lib/partner/deals'
 import { daysLeft, formatInr } from '@/lib/partner/deals-model'
@@ -63,15 +64,15 @@ export default async function K7DealsPage({ searchParams }: { searchParams: Prom
             </form>
             {owed > 0 && settings.crm.enabled && (
               <form action={runDealOutboxAction}>
-                <button className="btn btn-line btn-sm" type="submit" title="Run the CRM jobs that are waiting">
+                <SubmitButton className="btn btn-line btn-sm" pendingLabel="Running…" title="Run the CRM jobs that are waiting">
                   Run {owed} CRM job{owed === 1 ? '' : 's'}
-                </button>
+                </SubmitButton>
               </form>
             )}
             <form action={syncNowAction}>
-              <button className="btn btn-line btn-sm" type="submit" title="Read the portal's opportunities back from Dynamics for the partner dashboards now">
+              <SubmitButton className="btn btn-line btn-sm" pendingLabel="Reading…" title="Read the portal's opportunities back from Dynamics for the partner dashboards now">
                 Sync the CRM
-              </button>
+              </SubmitButton>
             </form>
             <Link className="link-u label" href={`${K7_DEALS}/sync`}>
               Reconciliation log →

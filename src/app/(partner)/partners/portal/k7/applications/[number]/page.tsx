@@ -7,6 +7,7 @@ import { ApplicationSummary } from '@/components/partner/Join'
 import { K7Nav } from '@/components/partner/K7Nav'
 import { Aid, AppStateTag, Field, Flash, Pid, Strip, TypeTag } from '@/components/partner/Parts'
 import { SlaValue } from '@/components/partner/Sla'
+import { SubmitButton } from '@/components/partner/SubmitButton.client'
 import { Crumbs } from '@/components/support/Parts'
 import { objectAudit } from '@/lib/partner/audit'
 import { outboxOf } from '@/lib/partner/mirror'
@@ -127,9 +128,7 @@ export default async function K7ApplicationPage({ params, searchParams }: { para
                     <textarea id="comment" name="comment" rows={4} placeholder="What you need, or why not." />
                   </Field>
                   <div className="form-actions span-2">
-                    <button className="btn btn-primary" type="submit">
-                      Record the decision →
-                    </button>
+                    <SubmitButton>Record the decision →</SubmitButton>
                   </div>
                 </form>
               </div>
@@ -160,9 +159,9 @@ export default async function K7ApplicationPage({ params, searchParams }: { para
                           <form action={runOutboxAction} style={{ marginTop: 8 }}>
                             <input type="hidden" name="number" value={app.number} />
                             <input type="hidden" name="job" value={job.id} />
-                            <button className="btn btn-line btn-sm" type="submit">
+                            <SubmitButton className="btn btn-line btn-sm" pendingLabel="Running…">
                               {job.state === 'pending' ? 'Run now' : 'Retry'}
-                            </button>
+                            </SubmitButton>
                           </form>
                         )}
                       </>

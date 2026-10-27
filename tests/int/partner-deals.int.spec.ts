@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { accountVertical, canRequestExtension, conflictsAmong, conflictWith, customerKey, daysLeft, emailDomain, EMPTY_DEAL_INPUT, linesFrom, opportunityBodies, protectionEnd, protectionShare, registerBlocked, toDeal, validateDeal, type ConflictCandidate, type Deal, type Product } from '@/lib/partner/deals-model'
-import { canDecideDeal, canMoveDeal, DEAL_DECISION_TO, dealDecisionNeedsComment } from '@/lib/partner/status'
+import { alreadyLine, canDecideDeal, canMoveDeal, DEAL_DECISION_TO, dealDecisionNeedsComment, isRepeatedDealDecision, isRepeatedExtension } from '@/lib/partner/status'
 
 /* Deal registration without a tenant (docs/partner-portal/04-portal-guide.md M4): the status machine of 01-requirements §7.2, the
    form's validation and the gate, the protection maths, the conflict matcher over portal deals and the opportunity mapping. */
@@ -161,5 +161,26 @@ describe('the opportunity mapping', () => {
     const b = opportunityBodies({ ...deal, customer: { ...deal.customer, industry: 'Quantum knitting' } }, { partnerName: 'P', namePattern: '{customer}', enquirySource: 1, productCategory: 36, partnerType: 'var' })
     expect(b.customerAccount).not.toHaveProperty('alletec_verticalbusiness')
     expect(b.opportunity.k7_industry).toBe('Quantum knitting')
+  })
+})
+
+describe('the same K7 decision twice (B-03)', () => {
+  it('reads a second approval or extension decision as done', () => {
+    expect(isRepeatedDealDecision('approved', 'approve')).toBe(true)
+    expect(isRepeatedDealDecision('approved', 'approveWithChanges')).toBe(true)
+    expect(isRepeatedDealDecision('rejected', 'reject')).toBe(true)
+    expect(isRepeatedDealDecision('infoRequested', 'requestInfo')).toBe(true)
+    expect(isRepeatedDealDecision('submitted', 'approve')).toBe(false)
+    expect(isRepeatedDealDecision('approved', 'reject')).toBe(false) // a different decision: the machine refuses it
+    expect(canDecideDeal('approved', 'reject')).toBe(false)
+    expect(isRepeatedDealDecision('extensionRequested', 'approve')).toBe(false)
+    const decided = { decidedAt: '2026-10-27T10:00:00.000Z', granted: true }
+    expect(isRepeatedExtension('approved', decided, true)).toBe(true)
+    expect(isRepeatedExtension('approved', decided, false)).toBe(false)
+    expect(isRepeatedExtension('extensionRequested', decided, true)).toBe(false) // a new request waits
+    expect(isRepeatedExtension('approved', { decidedAt: null, granted: false }, false)).toBe(false)
+    expect(isRepeatedExtension('expired', { decidedAt: '2026-10-27T10:00:00.000Z', granted: false }, false)).toBe(true)
+    expect(alreadyLine('approveWithChanges', 'Ravi')).toBe('Already approved by Ravi.')
+    expect(alreadyLine('grant')).toBe('Already extended.')
   })
 })

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { formatId } from '@/lib/partner/ids'
 import { accountBody, clarificationNote, contactBody, normaliseWebsite, readyToSubmit, SIZE_BANDS, TURNOVER_BANDS, validateCompany, validateContact, validateRegions, yearsInBusinessBand, type Application, type Company } from '@/lib/partner/registration-model'
-import { canMoveApplication, canMoveOrg, decisionPath, isOpenApplication } from '@/lib/partner/status'
+import { alreadyLine, canMoveApplication, canMoveOrg, decisionPath, isOpenApplication, isRepeatedDecision } from '@/lib/partner/status'
 
 /* The application's machine, validation and CRM mapping without a tenant (docs/partner-portal/04-portal-guide.md M2). */
 
@@ -96,5 +96,19 @@ describe('CRM account mapping (03-dynamics-exploration.md §6)', () => {
     expect(formatId('partner', 1)).toBe('K7P-00001')
     expect(formatId('application', 123)).toBe('K7A-00123')
     expect(formatId('deal', 99999)).toBe('K7D-99999')
+  })
+})
+
+describe('the same decision twice (B-03)', () => {
+  it('reads a second click as done, and a different decision still meets the machine', () => {
+    expect(isRepeatedDecision('approved', 'approve')).toBe(true)
+    expect(isRepeatedDecision('rejected', 'reject')).toBe(true)
+    expect(isRepeatedDecision('clarification', 'clarify')).toBe(true)
+    expect(isRepeatedDecision('underReview', 'approve')).toBe(false)
+    expect(isRepeatedDecision('approved', 'reject')).toBe(false)
+    expect(decisionPath('approved', 'reject')).toEqual([])
+    expect(isRepeatedDecision('rejected', 'approve')).toBe(false)
+    expect(alreadyLine('approve', 'Asha K')).toBe('Already approved by Asha K.')
+    expect(alreadyLine('clarify')).toBe('Already sent back for clarification.')
   })
 })

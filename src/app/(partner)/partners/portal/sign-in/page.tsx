@@ -6,6 +6,8 @@ import React from 'react'
 import { auth } from '@/auth'
 import { Field, Flash } from '@/components/partner/Parts'
 import { devAgentDoorEnabled } from '@/lib/dataverse/auth'
+import { partnerSessionState } from '@/lib/partner/session'
+import { signInLanding } from '@/lib/partner/session-model'
 
 import { requestPartnerCode, staffSignIn } from './actions'
 
@@ -34,11 +36,12 @@ export default async function PartnerSignInPage({ searchParams }: { searchParams
   const sp = await searchParams
   const s = await auth()
   const next = sp.next && /^\/partners\/portal(\/|$)/.test(sp.next) ? sp.next : undefined
-  if (s?.user?.kind === 'partner') redirect(next ?? '/partners/portal')
-  if (s?.user?.kind === 'agent') redirect(next?.startsWith('/partners/portal/k7') ? next : '/partners/portal/k7')
-  const staffError = !!sp.error && !PARTNER_ERRORS.has(sp.error)
+  const landing = signInLanding({ kind: s?.user?.kind, state: s?.user?.kind === 'partner' ? await partnerSessionState() : 'none', next })
+  if ('redirect' in landing) redirect(landing.redirect)
+  const code = sp.error ?? landing.error
+  const staffError = !!code && !PARTNER_ERRORS.has(code)
   const staffFirst = sp.staff === '1' || staffError
-  const error = sp.error ? (ERRORS[sp.error] ?? 'Sign-in did not complete. Try again.') : null
+  const error = code ? (ERRORS[code] ?? 'Sign-in did not complete. Try again.') : null
 
   const partner = (
     <div className="signin">

@@ -4,7 +4,7 @@ import { getPayload, type Where } from 'payload'
 
 import { sendMail, type MailAttachment } from '@/lib/support/mail'
 import { forget, memo } from '@/lib/support/memo'
-import { getServerSideURL } from '@/utilities/getURL'
+import { partnerPublicUrl } from './public-url'
 
 import { deliveryFor, digestMail, mailHtml, mailText, renderTemplate, SAMPLE_VARS, toTemplate, type Delivery, type Template } from './notify-model'
 import type { OrgScope } from './scope'
@@ -32,8 +32,8 @@ const s = (v: unknown): string => (v === null || v === undefined ? '' : String(v
 const d = (v: unknown): string | null => (typeof v === 'string' && v ? v : null)
 const toRow = (x: Doc): Notification => ({ id: s(x.id), at: s(x.createdAt), event: s(x.event), subject: s(x.subject), body: s(x.body), href: s(x.href), readAt: d(x.readAt), delivery: x.delivery === 'digest' || x.delivery === 'bell' ? x.delivery : 'immediate', emailedAt: d(x.emailedAt) })
 
-const portalUrl = (): string => `${getServerSideURL()}/partners/portal`
-const absolute = (href?: string): string => (href ? (href.startsWith('http') ? href : `${getServerSideURL()}${href}`) : portalUrl())
+const portalUrl = (): string => `${partnerPublicUrl()}/partners/portal`
+const absolute = (href?: string): string => (href ? (href.startsWith('http') ? href : `${partnerPublicUrl()}${href}`) : portalUrl())
 
 const db = () => getPayload({ config: configPromise })
 

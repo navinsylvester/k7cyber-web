@@ -36,6 +36,7 @@ export async function decideDealAction(form: FormData): Promise<void> {
   if (!['approve', 'approveWithChanges', 'requestInfo', 'reject'].includes(decision)) return back(dealId, { error: 'Pick a decision.' })
   const r = await decideDeal(deal, decision, f(form, 'note'), changesFrom(form), me)
   if (!r.ok) return back(dealId, { error: r.error })
+  if (r.already) return back(dealId, { ok: r.already })
   back(dealId, { ok: decision === 'reject' ? 'Rejected; the partner has the reason.' : decision === 'requestInfo' ? 'Sent back; the partner has your note and can edit and resubmit.' : `Approved and protected until ${r.deal.protectionEnds?.slice(0, 10)}; the opportunity job is queued.` })
 }
 
@@ -44,6 +45,7 @@ export async function decideExtensionAction(form: FormData): Promise<void> {
   const grant = f(form, 'decision') === 'grant'
   const r = await decideExtension(deal, grant, f(form, 'note'), me)
   if (!r.ok) return back(dealId, { error: r.error })
+  if (r.already) return back(dealId, { ok: r.already })
   back(dealId, { ok: grant ? `Extended to ${r.deal.protectionEnds?.slice(0, 10)}; the partner is told.` : 'Declined; the partner has your reason.' })
 }
 
@@ -51,6 +53,7 @@ export async function amendDealAction(form: FormData): Promise<void> {
   const { me, deal, dealId } = await load(form)
   const r = await amendDeal(deal, changesFrom(form), f(form, 'note'), me)
   if (!r.ok) return back(dealId, { error: r.error })
+  if (r.already) return back(dealId, { ok: r.already })
   back(dealId, { ok: 'Amended; the partner is told what changed.' })
 }
 

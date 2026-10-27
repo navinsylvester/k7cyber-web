@@ -14,7 +14,7 @@ import { normaliseMobile, type FieldErrors } from './registration-model'
 import { orgRel, orgWhere, type OrgScope } from './scope'
 import type { K7Context, PartnerContext } from './session'
 import { getPartnerSettings } from './settings'
-import { canDecideDeal, canMoveDeal, DEAL_DECISION_LABEL, DEAL_DECISION_TO, DEAL_STATUS_LABEL, dealDecisionNeedsComment, LIVE_DEAL_STATUSES, OPEN_DEAL_STATUSES, type DealDecision, type DealStatus } from './status'
+import { alreadyLine, canDecideDeal, canMoveDeal, DEAL_DECISION_LABEL, DEAL_DECISION_TO, DEAL_STATUS_LABEL, dealDecisionNeedsComment, isRepeatedDealDecision, isRepeatedExtension, LIVE_DEAL_STATUSES, OPEN_DEAL_STATUSES, type DealDecision, type DealStatus } from './status'
 import { loadPartnerUser, orgUsers, type PartnerUser } from './users'
 
 /* Deal registrations (01-requirements.md §7, 02-build-plan.md M4): the partner's submission with its number and attachments, the
@@ -265,7 +265,8 @@ const partnerRecipients = async (dl: Deal): Promise<Recipient[]> => {
 }
 
 export type DealResult = { ok: true; deal: Deal } | { ok: false; errors: FieldErrors }
-export type DealMove = { ok: true; deal: Deal } | { ok: false; error: string }
+/** `already` is set when the same K7 decision had been made (a second click, B-03): nothing changed, the line says so. */
+export type DealMove = { ok: true; deal: Deal; already?: string } | { ok: false; error: string }
 
 /** Why this person may not register now, or null (decision 8). */
 export const registerGate = async (me: PartnerContext): Promise<string | null> => {
@@ -432,6 +433,7 @@ const changeLines = (dl: Deal, ch: DealChanges): { field: string; from: string; 
 /** Approve (plain or with changes), request information, or reject. Approval sets the protection window and queues the
     opportunity job; the partner is told by bell and mail (FR-DEAL-05). */
 export const decideDeal = async (dl: Deal, decision: DealDecision, note: string, changes: DealChanges, me: K7Context): Promise<DealMove> => {
+  if (isRepeatedDealDecision(dl.status, decision)) return { ok: true, deal: dl, already: alreadyLine(decision, [...dl.thread].reverse().find((e) => e.kind === 'decision' && e.to === DEAL_DECISION_TO[decision])?.byName) }
   if (!canDecideDeal(dl.status, decision)) return { ok: false, error: `${DEAL_STATUS_LABEL[dl.status]} deals cannot be ${decision === 'reject' ? 'rejected' : decision === 'requestInfo' ? 'sent back' : 'approved'}.` }
   const text = note.trim()
   const lines = decision === 'approveWithChanges' ? changeLines(dl, changes) : []
@@ -477,7 +479,8 @@ export const decideDeal = async (dl: Deal, decision: DealDecision, note: string,
 export const amendDeal = async (dl: Deal, changes: DealChanges, note: string, me: K7Context): Promise<DealMove> => {
   if (!k7MayAmend(dl.status)) return { ok: false, error: `An amendment is for an approved deal; this one is ${DEAL_STATUS_LABEL[dl.status].toLowerCase()}.` }
   const lines = changeLines(dl, changes)
-  if (!lines.length) return { ok: false, error: 'Nothing changed.' }
+  // The form carries the deal's figures, so a second click (B-03) or an untouched form finds nothing to change: harmless.
+  if (!lines.length) return { ok: true, deal: dl, already: 'Nothing to change: the deal already has these figures.' }
   const now = new Date().toISOString()
   const changed = lines.map((l) => `${l.field}: ${l.from} → ${l.to}`).join('; ')
   const text = [changed, note.trim()].filter(Boolean).join('\n')
@@ -492,6 +495,7 @@ export const amendDeal = async (dl: Deal, changes: DealChanges, note: string, me
 /** Grant the extension (the window grows by the settings' extension days from its current end) or decline it (the protection
     runs on as before; if it has already run out the deal expires now). */
 export const decideExtension = async (dl: Deal, grant: boolean, note: string, me: K7Context): Promise<DealMove> => {
+  if (isRepeatedExtension(dl.status, dl.extension, grant)) return { ok: true, deal: dl, already: alreadyLine(grant ? 'grant' : 'decline', dl.extension.decidedBy) }
   if (dl.status !== 'extensionRequested') return { ok: false, error: 'No extension request is waiting.' }
   const text = note.trim()
   if (!grant && text.length < 3) return { ok: false, error: 'Tell the partner why not.' }

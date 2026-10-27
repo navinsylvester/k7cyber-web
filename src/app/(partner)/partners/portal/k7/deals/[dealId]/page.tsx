@@ -7,6 +7,7 @@ import { ConflictBox, DealFacts, DealStateTag, DealThread, Did, Protection } fro
 import { K7Nav } from '@/components/partner/K7Nav'
 import { Field, Flash, Pid, Strip } from '@/components/partner/Parts'
 import { SlaValue } from '@/components/partner/Sla'
+import { SubmitButton } from '@/components/partner/SubmitButton.client'
 import { Crumbs } from '@/components/support/Parts'
 import { objectAudit } from '@/lib/partner/audit'
 import { findConflicts, findDealByNumber, K7_DEALS } from '@/lib/partner/deals'
@@ -158,9 +159,7 @@ export default async function K7DealPage({ params, searchParams }: { params: Pro
                     <textarea id="decide-note" name="note" rows={4} placeholder="What you need, what you changed, or why not." />
                   </Field>
                   <div className="form-actions span-2">
-                    <button className="btn btn-primary" type="submit">
-                      Record the decision →
-                    </button>
+                    <SubmitButton>Record the decision →</SubmitButton>
                   </div>
                 </form>
               </div>
@@ -194,9 +193,7 @@ export default async function K7DealPage({ params, searchParams }: { params: Pro
                     <textarea id="ext-note" name="note" rows={3} />
                   </Field>
                   <div className="form-actions span-2">
-                    <button className="btn btn-primary" type="submit">
-                      Record the decision →
-                    </button>
+                    <SubmitButton>Record the decision →</SubmitButton>
                   </div>
                 </form>
               </div>
@@ -214,9 +211,9 @@ export default async function K7DealPage({ params, searchParams }: { params: Pro
                     <input id="amend-note" name="note" type="text" />
                   </Field>
                   <div className="form-actions span-2">
-                    <button className="btn btn-line btn-sm" type="submit">
+                    <SubmitButton className="btn btn-line btn-sm" pendingLabel="Amending…">
                       Amend
-                    </button>
+                    </SubmitButton>
                   </div>
                 </form>
               </div>
@@ -231,9 +228,9 @@ export default async function K7DealPage({ params, searchParams }: { params: Pro
                     <form action={runDealOutboxAction} style={{ marginTop: 8 }}>
                       <input type="hidden" name="dealId" value={deal.dealId} />
                       <input type="hidden" name="job" value={job.id} />
-                      <button className="btn btn-line btn-sm" type="submit">
+                      <SubmitButton className="btn btn-line btn-sm" pendingLabel="Running…">
                         {job.state === 'pending' ? 'Run now' : 'Retry'}
-                      </button>
+                      </SubmitButton>
                     </form>
                   )}
                 </dd>
@@ -260,9 +257,9 @@ export default async function K7DealPage({ params, searchParams }: { params: Pro
               {deal.crm.opportunityId && (
                 <form action={syncNowAction} style={{ marginTop: 10 }}>
                   <input type="hidden" name="dealId" value={deal.dealId} />
-                  <button className="btn btn-line btn-sm" type="submit" title="Read every portal opportunity back from Dynamics now">
+                  <SubmitButton className="btn btn-line btn-sm" pendingLabel="Reading…" title="Read every portal opportunity back from Dynamics now">
                     {deal.crm.snapshot.syncedAt ? 'Read back again' : 'Read back now'}
-                  </button>
+                  </SubmitButton>
                 </form>
               )}
               <p className="more">

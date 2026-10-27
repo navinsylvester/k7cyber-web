@@ -5,6 +5,7 @@ import React from 'react'
 import { K7, K7Nav } from '@/components/partner/K7Nav'
 import { Aid, AppStateTag, Empty, Flash, TypeTag } from '@/components/partner/Parts'
 import { SlaTag } from '@/components/partner/Sla'
+import { SubmitButton } from '@/components/partner/SubmitButton.client'
 import { Pager, qs } from '@/components/support/Parts'
 import { owedOutboxCount } from '@/lib/partner/mirror'
 import { applicationCounts, K7_APPLICATIONS, listApplications, type ApplicationFilter } from '@/lib/partner/registration'
@@ -58,9 +59,9 @@ export default async function K7ApplicationsPage({ searchParams }: { searchParam
           <div className="ws-actions">
             {owed > 0 && settings.crm.enabled && (
               <form action={runOutboxAction}>
-                <button className="btn btn-line btn-sm" type="submit" title="Run the CRM jobs that are waiting">
+                <SubmitButton className="btn btn-line btn-sm" pendingLabel="Running…" title="Run the CRM jobs that are waiting">
                   Run {owed} CRM job{owed === 1 ? '' : 's'}
-                </button>
+                </SubmitButton>
               </form>
             )}
           </div>

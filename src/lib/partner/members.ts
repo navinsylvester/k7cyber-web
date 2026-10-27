@@ -2,7 +2,7 @@ import 'server-only'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { getServerSideURL } from '@/utilities/getURL'
+import { partnerPublicUrl } from './public-url'
 
 import { audit } from './audit'
 import { notify } from './notify'
@@ -50,7 +50,7 @@ const invitation = (org: PartnerOrg, user: PartnerUser, by: string) => ({
   event: 'user.invited',
   vars: userVars(org, user),
   subject: `You are invited to the K7 Partner Portal for ${org.tradeName || org.name}`,
-  body: `${by} added you to ${org.name} (${org.partnerId}) as ${user.roles.map((r) => PARTNER_ROLE_LABEL[r]).join(', ')}. Sign in with this email address at ${getServerSideURL()}/partners/portal/sign-in: we send a one-time code, no password.`,
+  body: `${by} added you to ${org.name} (${org.partnerId}) as ${user.roles.map((r) => PARTNER_ROLE_LABEL[r]).join(', ')}. Sign in with this email address at ${partnerPublicUrl()}/partners/portal/sign-in: we send a one-time code, no password.`,
   href: '/partners/portal',
   to: { kind: 'user' as const, user },
 })
