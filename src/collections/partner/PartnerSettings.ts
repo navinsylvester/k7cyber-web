@@ -59,6 +59,7 @@ export const PartnerSettings: GlobalConfig = {
               ],
             },
             { name: 'devStaffPass', type: 'checkbox', defaultValue: true, admin: { description: 'Development sign-ins (the probe door) hold every role. Ignored in production builds.' } },
+            { name: 'testerStaffPass', type: 'checkbox', defaultValue: false, admin: { description: 'A Microsoft sign-in that is not on the staff list holds every role (for testers; a row on the list sets their roles instead). Ignored in production builds.' } },
           ],
         },
         {

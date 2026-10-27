@@ -61,6 +61,13 @@ describe('K7 staff roles', () => {
     expect(staffRolesFor('', s, { dev: true, production: true })).toEqual([])
     expect(staffRolesFor('', { ...s, devStaffPass: false }, { dev: true })).toEqual([])
   })
+  it('lets a tester off the list hold every role while the tester pass is on, except in production; a row on the list still decides', () => {
+    const t = { ...s, testerStaffPass: true }
+    expect(staffRolesFor('someone@k7computing.com', t)).toHaveLength(5)
+    expect(staffRolesFor('someone@k7computing.com', t, { production: true })).toEqual([])
+    expect(staffRolesFor('priya@k7computing.com', t)).toEqual(['channelManager', 'dealDeskApprover'])
+    expect(staffRolesFor('', t)).toEqual([])
+  })
   it('lists who holds a role, fallbacks included, for notifications', () => {
     expect(staffWithRole('dealDeskApprover', s).map((p) => p.email)).toEqual(['priya@k7computing.com', 'raman@k7computing.com'])
     expect(staffWithRole('schemeAdmin', s).map((p) => p.email)).toEqual(['raman@k7computing.com'])

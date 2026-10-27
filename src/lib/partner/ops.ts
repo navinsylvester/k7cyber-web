@@ -109,6 +109,7 @@ export const readiness = async (): Promise<Check[]> => {
     writesEnabled: env.DATAVERSE_WRITES_ENABLED === '1',
     crm: { enabled: settings.crm.enabled, features: settings.crm.features },
     devStaffPass: settings.devStaffPass,
+    testerStaffPass: settings.testerStaffPass,
     dirs: uploadDirs(),
   })
 }

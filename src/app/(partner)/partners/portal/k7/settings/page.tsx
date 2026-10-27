@@ -93,6 +93,7 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
               {check('channelManagersApproveDeals', 'Channel Managers also act as Deal Desk Approvers', s.channelManagersApproveDeals)}
               {check('marketingAdminsRunSchemes', 'Marketing Admins also act as Scheme Admins', s.marketingAdminsRunSchemes)}
               {check('devStaffPass', 'Development sign-ins hold every role', s.devStaffPass, 'the probe door only; ignored in production')}
+              {check('testerStaffPass', 'Testers hold every role', s.testerStaffPass, 'a Microsoft sign-in that is not in the table above; a row in the table sets their roles instead; ignored in production')}
             </div>
           </div>
 

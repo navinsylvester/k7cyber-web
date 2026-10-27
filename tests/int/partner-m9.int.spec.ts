@@ -228,6 +228,7 @@ describe('the readiness checks', () => {
     writesEnabled: true,
     crm: { enabled: true, features: { accountCreate: true, opportunityCreate: true, sync: true } },
     devStaffPass: true,
+    testerStaffPass: false,
     dirs: [{ label: 'collateral', path: '/x/uploads/collateral', exists: true, writable: true }],
   }
   const level = (checks: ReturnType<typeof readinessChecks>, key: string) => checks.find((c) => c.key === key)?.level

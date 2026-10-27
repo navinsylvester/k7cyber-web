@@ -43,6 +43,7 @@ export async function savePartnerSettingsAction(form: FormData): Promise<void> {
     channelManagersApproveDeals: on(form, 'channelManagersApproveDeals'),
     marketingAdminsRunSchemes: on(form, 'marketingAdminsRunSchemes'),
     devStaffPass: on(form, 'devStaffPass'),
+    testerStaffPass: on(form, 'testerStaffPass'),
     partnerTypes: partnerTypes.length ? partnerTypes : cur.partnerTypes,
     regions,
     terms: { version: s(form, 'terms_version') || cur.terms.version, url: s(form, 'terms_url') },

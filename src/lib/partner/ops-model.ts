@@ -94,6 +94,7 @@ export type ReadinessEnv = {
   writesEnabled: boolean
   crm: { enabled: boolean; features: CrmFeatures }
   devStaffPass: boolean
+  testerStaffPass: boolean
   dirs: DirCheck[]
 }
 
@@ -131,6 +132,7 @@ export const readinessChecks = (e: ReadinessEnv): Check[] => {
     add('features', 'CRM features', 'ok', on.length === 3 ? 'All three features are on.' : on.length ? `On: ${on.join(', ')}. The others wait as pending.` : 'Every feature is off: the mirror is on in name only.')
   } else add('crm', 'CRM mirror', 'ok', 'Off in the partner settings: jobs queue as pending and the read-back does not run. Turn it on, feature by feature, at the gate.')
   if (e.production && e.devStaffPass) add('devStaffPass', 'Development staff pass', 'ok', 'On, but ignored in production (a development sign-in never holds every role there).')
+  if (e.testerStaffPass) add('testerStaffPass', 'Tester staff pass', e.production ? 'ok' : 'warn', e.production ? 'On, but ignored in production.' : 'On: every Microsoft sign-in that is not on the staff list holds every role. For a test round only; switch it off in Settings afterwards.')
   for (const d of e.dirs) add(`dir:${d.label}`, `Uploads · ${d.label}`, d.exists && d.writable ? 'ok' : d.exists ? 'fail' : 'warn', d.exists ? (d.writable ? `${d.path} exists and is writable.` : `${d.path} exists but is not writable: uploads will fail.`) : `${d.path} does not exist yet; it is created on the first upload, so the parent must be writable and the directory must persist across deploys.`)
   return out
 }
