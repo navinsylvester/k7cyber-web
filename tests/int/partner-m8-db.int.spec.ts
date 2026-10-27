@@ -35,7 +35,8 @@ describe.skipIf(!enabled)('templates, the digest and the SLA sweep (database)', 
     writesBefore = process.env.DATAVERSE_WRITES_ENABLED
     process.env.DATAVERSE_WRITES_ENABLED = '0'
     before = await templateFor(EVENT)
-    const org = await payload.create({ collection: 'partner-orgs', overrideAccess: true, depth: 0, data: { partnerId, type: 'var', status: 'approved', name: `PP-TEST M8 ${stamp}`, country: 'India', city: 'Chennai', state: 'Tamil Nadu', address: '1 Test Road', pin: '600001', regions: [] } as never })
+    // The waiver keeps the deal clear of deals.requireCertificate (on in the development settings since M11).
+    const org = await payload.create({ collection: 'partner-orgs', overrideAccess: true, depth: 0, data: { partnerId, type: 'var', status: 'approved', waiverUntil: '2099-12-31', name: `PP-TEST M8 ${stamp}`, country: 'India', city: 'Chennai', state: 'Tamil Nadu', address: '1 Test Road', pin: '600001', regions: [] } as never })
     orgId = String(org.id)
     const user = await payload.create({ collection: 'partner-users', overrideAccess: true, depth: 0, data: { org: orgRel({ orgId }), email: `pp-test-m8-${stamp}@k7computing.com`, name: 'M8 Admin', roles: ['admin'], status: 'active', lastSignInAt: new Date().toISOString() } as never })
     const p = await payload.create({ collection: 'partner-products', overrideAccess: true, depth: 0, data: { name: `PP-TEST M8 Product ${stamp}`, sku: `PPM8-${stamp}`, family: 'Test', active: true, order: 999 } as never })

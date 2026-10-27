@@ -12,7 +12,9 @@ import { toOrg, toUser } from '@/lib/partner/users'
    number, K7 asks for information, A resubmits, K7 approves with a changed value (protection set, the opportunity job queued
    but never run: Dataverse writes are off for the run), B's registration for the same customer shows A's as a conflict that B
    never reads, A asks for the extension and K7 grants it, the sweep expires a window that has run out, B never reads A's deal
-   by number. Runs only with PARTNER_DB_TESTS=1; rows are removed again. No mail leaves: no SMTP_URL in tests. */
+   by number. Both organisations carry a certificate waiver, so the run does not depend on deals.requireCertificate (the gate
+   itself is tested in partner-deals and partner-certificates-db). Runs only with PARTNER_DB_TESTS=1; rows are removed again. No
+   mail leaves: no SMTP_URL in tests. */
 
 const enabled = process.env.PARTNER_DB_TESTS === '1' && Boolean(process.env.DATABASE_URL)
 const stamp = Date.now()
@@ -28,7 +30,7 @@ describe.skipIf(!enabled)('deal registration (database)', () => {
   let writesBefore: string | undefined
 
   const makeOrg = async (tag: string, n: number, type: 'var' | 'distributor') => {
-    const doc = await payload.create({ collection: 'partner-orgs', overrideAccess: true, depth: 0, data: { partnerId: `K7P-8${String(stamp % 1000).padStart(3, '0')}${n}`, type, status: 'approved', name: `PP-TEST Deals ${tag} ${stamp}`, country: 'India', city: 'Chennai', state: 'Tamil Nadu', address: '1 Test Road', pin: '600001', regions: [] } as never })
+    const doc = await payload.create({ collection: 'partner-orgs', overrideAccess: true, depth: 0, data: { partnerId: `K7P-8${String(stamp % 1000).padStart(3, '0')}${n}`, type, status: 'approved', waiverUntil: '2099-12-31', name: `PP-TEST Deals ${tag} ${stamp}`, country: 'India', city: 'Chennai', state: 'Tamil Nadu', address: '1 Test Road', pin: '600001', regions: [] } as never })
     orgIds.push(String(doc.id))
     return toOrg(doc as unknown as Record<string, unknown>)
   }
