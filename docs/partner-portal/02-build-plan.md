@@ -848,3 +848,8 @@ change a line rather than write from nothing; each is either already true of the
   disabled 01:19:42Z (sign-in page with the reason, no loop; reinstated and re-enabled users signed in again), B-02 01:21:13Z (a new
   invitation's notice and the redrawn K7P-C-VGKWKN PDF carry the tunnel host). Test data: K7D-00114, pp-test-walk-5 (Sales, K7P-00028).
   Not committed (Navin commits). Note: when the tunnel address changes, `AUTH_URL` already carries the new host, so no rebuild is needed for links.
+- **2026-10-27 (20)** — `partner-deals-db` and `partner-m8-db` failed on HEAD since M11: their test organisations had no certificate
+  and the development settings have `deals.requireCertificate` on, so the first `submitDeal` was refused (correctly). Both tests now
+  give their organisations a certificate waiver to 2099-12-31, so they test the deal machine and the M8 templates/digest/SLA whatever
+  the setting; the gate keeps its own tests (`partner-deals`, `partner-certificates-db`). Full suite with `PARTNER_DB_TESTS=1`:
+  342 passed, 1 skipped; tsc clean, lint 0 errors; no test organisations left behind.
