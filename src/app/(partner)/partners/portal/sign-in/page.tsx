@@ -74,6 +74,7 @@ export default async function PartnerSignInPage({ searchParams }: { searchParams
       </h2>
       <p>Sign in with your K7 Microsoft account. Your partner-portal roles come from the portal’s settings, not from Dynamics.</p>
       {error && staffError && <Flash kind="error">{error}</Flash>}
+      {'crossing' in landing && landing.crossing && <Flash>You are signed in as a partner user. The partner desk needs a K7 staff sign-in, which ends the partner session.</Flash>}
       <form action={staffSignIn} className="actions">
         {next && <input type="hidden" name="next" value={next} />}
         <button className={`btn ${staffFirst ? 'btn-primary' : 'btn-line'}`} type="submit" name="provider" value="microsoft-entra-id">

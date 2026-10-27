@@ -5,7 +5,8 @@ import { auth } from '@/auth'
 /* Request interception for the two portals. Support (08-implementation-plan.md §2): the workspace needs an agent, the customer's
    own pages need a customer session, everything else under /support is public. Partners (partner-portal/02-build-plan.md §4):
    /partners/portal/k7/* needs an agent session (the role is checked in requireK7Role, which needs Payload), the rest of
-   /partners/portal/* a partner session, the door itself is public. A partner session counts for nothing on /support and a
+   /partners/portal/* a partner session; the door and the portal's front page (its visitor side) are public, and an agent
+   is sent from the front page to the desk. A partner session counts for nothing on /support and a
    customer session for nothing on /partners: one cookie, three kinds, each side sees only its own. Running Auth.js here also
    keeps the session cookie refreshed. */
 
@@ -33,6 +34,7 @@ export default auth((req) => {
       return NextResponse.next()
     }
     if (session?.kind === 'agent') return NextResponse.redirect(new URL('/partners/portal/k7', req.url))
+    if (/^\/partners\/portal\/?$/.test(pathname)) return NextResponse.next()
     if (session?.kind !== 'partner') return NextResponse.redirect(partnerSignInUrl(req, false))
     return NextResponse.next()
   }

@@ -66,8 +66,11 @@ export const headerMenu = [
     label: 'Partners',
     url: '/partners',
     columns: [
+      // Three places, one each: what the programme is, how to join, and the portal's front page (both sign-in doors are there).
+      // Columns without rows, as About Us: the phone menu lists columns only, so rows inside one column would not reach a phone.
       col('Partner programme', '/partners'),
-      col('Partner portal', '/partners/portal/sign-in', [['Join the programme', '/partners/join'], ['Sign in', '/partners/portal/sign-in'], ['K7 partner desk', '/partners/portal/sign-in?staff=1']]),
+      col('Become a partner', '/partners/join'),
+      col('Partner portal', '/partners/portal'),
     ],
   },
   {
@@ -103,7 +106,7 @@ export const footer = {
   columns: [
     { heading: 'Company', links: [nav('Home', '/'), nav('About Us', '/about-k7'), nav('Careers', '/careers'), nav('Contact Us', '/contact-us')] },
     { heading: 'Offer', links: [nav('Platform', '/k7-seventh-sense'), nav('Solutions', '/solutions'), nav('Services', '/services'), nav('Partners', '/partners')] },
-    { heading: 'Resources', links: [nav('Insight', '/insight'), nav('Research', '/research'), nav('Media Room', '/media-room'), nav('Support', '/support'), nav('Partner portal', '/partners/portal/sign-in')] },
+    { heading: 'Resources', links: [nav('Insight', '/insight'), nav('Research', '/research'), nav('Media Room', '/media-room'), nav('Support', '/support'), nav('Partner portal', '/partners/portal')] },
     { heading: 'Legal', links: [nav('Privacy Policy', '/privacy-policy'), nav('EULA', '/eula')] },
   ],
   socials: [

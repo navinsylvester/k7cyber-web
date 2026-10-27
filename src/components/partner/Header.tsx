@@ -11,8 +11,10 @@ import { signOutAction } from '@/app/(partner)/partners/portal/actions'
 
 import { Bell } from './Parts'
 
-/* The partner portal's header (SiteHeader shape through the shared shell): brand, the audience's links, the bell, the theme toggle
-   and the account. Partner users and K7 staff see different links; a visitor sees the door. */
+/* The partner portal's header (SiteHeader shape through the shared shell): brand, the core links, the bell, the theme toggle and
+   the account. A partner user gets the four jobs (deals, sales material, schemes, training), with the dashboard under Deals and
+   certificates under Training; the organisation is behind their name, notifications behind the bell. K7 staff get the desk and
+   the queues they decide on; the rest of the back office is the desk strip (K7Nav). A visitor gets the front page and the two doors. */
 export const PartnerHeader: React.FC = async () => {
   const me = await partnerSideSession()
   const partner = me?.kind === 'partner' ? me : null
@@ -20,18 +22,14 @@ export const PartnerHeader: React.FC = async () => {
   const links = partner
     ? [
         { href: '/partners/portal', label: 'Home' },
-        { href: '/partners/portal/deals', label: 'Deals' },
-        { href: '/partners/portal/dashboard', label: 'Dashboard' },
-        { href: '/partners/portal/collateral', label: 'Collateral' },
+        { href: '/partners/portal/deals', label: 'Deals', match: ['/partners/portal/dashboard'] },
+        { href: '/partners/portal/collateral', label: 'Sales material' },
         { href: '/partners/portal/schemes', label: 'Schemes' },
-        { href: '/partners/portal/training', label: 'Training' },
-        { href: '/partners/portal/certificates', label: 'Certificates' },
-        { href: '/partners/portal/organisation', label: 'Organisation' },
-        { href: '/partners/portal/notifications', label: 'Notifications' },
+        { href: '/partners/portal/training', label: 'Training', match: ['/partners/portal/certificates'] },
       ]
     : k7
       ? [
-          { href: '/partners/portal/k7', label: 'Partner desk' },
+          { href: '/partners/portal/k7', label: 'Desk' },
           ...(k7.roles.includes('channelManager')
             ? [
                 { href: '/partners/portal/k7/applications', label: 'Applications' },
@@ -39,18 +37,15 @@ export const PartnerHeader: React.FC = async () => {
               ]
             : []),
           ...(k7.roles.includes('dealDeskApprover') ? [{ href: '/partners/portal/k7/deals', label: 'Deals' }] : []),
-          ...(k7.roles.includes('marketingAdmin') ? [{ href: '/partners/portal/k7/collateral', label: 'Collateral' }] : []),
-          ...(k7.roles.includes('schemeAdmin') ? [{ href: '/partners/portal/k7/schemes', label: 'Schemes' }] : []),
-          ...(k7.roles.includes('trainingAdmin') ? [{ href: '/partners/portal/k7/training', label: 'Training' }] : []),
-          ...(k7.roles.some((r) => r === 'channelManager' || r === 'trainingAdmin') ? [{ href: '/partners/portal/k7/certificates', label: 'Certificates' }] : []),
           ...(k7.roles.some((r) => r === 'channelManager' || r === 'dealDeskApprover' || r === 'schemeAdmin') ? [{ href: '/partners/portal/k7/reports', label: 'Reports' }] : []),
         ]
       : [
-          { href: '/partners', label: 'The programme' },
-          { href: '/partners/join', label: 'Join' },
+          { href: '/partners/portal', label: 'Home' },
+          { href: '/partners', label: 'The programme', exact: true },
+          { href: '/partners/join', label: 'Apply' },
         ]
   const unread = partner ? await unreadCount({ kind: 'user', userId: partner.user.id, scope: partner.scope }) : k7 ? await unreadCount({ kind: 'staff', roles: k7.roles }) : 0
-  const home = partner ? '/partners/portal' : k7 ? '/partners/portal/k7' : '/partners/portal/sign-in'
+  const home = k7 ? '/partners/portal/k7' : '/partners/portal'
   return (
     <>
       {k7?.dev && (
@@ -63,7 +58,7 @@ export const PartnerHeader: React.FC = async () => {
       )}
       <HeaderShell
         name="Partners"
-        home="/partners/portal"
+        home={home}
         brand={
           <Link className="brand" href={home} aria-label="K7 Partners">
             <Logo />
@@ -71,12 +66,12 @@ export const PartnerHeader: React.FC = async () => {
           </Link>
         }
         links={links}
-        mobileExtra={me ? [] : [{ href: '/partners/portal/sign-in', label: 'Sign in' }]}
+        mobileExtra={partner ? [{ href: '/partners/portal/organisation', label: 'Organisation' }, { href: '/partners/portal/notifications', label: 'Notifications' }] : me ? [] : [{ href: '/partners/portal/sign-in', label: 'Sign in' }]}
         account={
           me ? (
             <form action={signOutAction}>
               {(partner || k7) && <Bell href={partner ? '/partners/portal/notifications' : '/partners/portal/k7/notifications'} unread={unread} />}
-              <Link className="who" href={home} title={partner ? partner.user.email : k7?.email}>
+              <Link className="who" href={partner ? '/partners/portal/organisation' : home} title={partner ? partner.user.email : k7?.email}>
                 <span className="avatar" aria-hidden="true">
                   {initials(partner ? partner.user.name || partner.user.email : k7?.name || k7?.email || '?')}
                 </span>

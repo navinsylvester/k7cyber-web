@@ -79,4 +79,22 @@ export const forms: FormData[] = [
       textarea('message', 'Enter your message here', true),
     ],
   },
+  {
+    title: 'Partner enquiry',
+    submitButtonLabel: 'Submit',
+    confirmationType: 'message',
+    confirmationMessage: para('Thank you. The K7 channel team will be in touch soon.'),
+    fields: [
+      text('firstName', 'First name'),
+      text('lastName', 'Last name'),
+      text('company', 'Company'),
+      email('email', 'Email address'),
+      { blockType: 'country' as const, name: 'country', label: 'Country', required: true },
+      select('state', 'State', INDIAN_STATES, true),
+      text('phone', 'Phone', false),
+      select('regarding', 'My inquiry is regarding', ['Channel Partner', 'MSP', 'Other'], true),
+      textarea('message', 'Message', true),
+      checkbox('consent', 'I agree to the collection and processing of my personal data for the stated purpose', true),
+    ],
+  },
 ]

@@ -4,6 +4,7 @@ Newest first. Each entry names the rule, the reference CSS and the parts it touc
 
 ## 2026-10-27
 
+- **Section 10 · Partners, the front page and the core links**: P6 is now the portal's front page on section 09's help-centre parts (`help-hero`, `help-search`, `mine-strip`, `paths`, `cta-sheet`), public for visitors (what the portal is for, Sign in, Apply) and personal for partner users (four counts, the four ways in with where each stands, the latest notifications, the register-a-deal sheet); the strip of organisation facts, the side column and the record left the home for the organisation page. The partner header keeps the four jobs (nine links became five; `HeaderShell` links take `match` for the pages they stand for), the K7 header the desk and the decision queues, the footer two links. No new CSS. `PartnerParts` README; `page.tsx`, `Header.tsx`, `Header.client.tsx`. No artboard: the partner portal has none yet.
 - **Section 10 · Partners, the pending action** (B-03: approving took 10 to 20 seconds while Dynamics was written, nothing showed it, and a second click came back as a red refusal): P10's primary action, the CRM job buttons and *Sync now* / *Read back* on the K7 desk are `SubmitButton`, disabled on the existing `.btn[disabled]` while the post runs and reading *Recording…*, *Running…*, *Reading…* or *Amending…*; a repeated decision is an ok flash (*Already approved by …*). No new CSS. `PartnerParts` README; `SubmitButton.client.tsx`. No artboard: the partner portal has none yet.
 
 ## 2026-10-24

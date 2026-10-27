@@ -110,6 +110,9 @@ describe('the door with a session already held (B-01)', () => {
     expect(signInLanding({ kind: 'partner', state: 'ok' })).toEqual({ redirect: '/partners/portal' })
     expect(signInLanding({ kind: 'partner', state: 'ok', next: '/partners/portal/deals' })).toEqual({ redirect: '/partners/portal/deals' })
   })
+  it('keeps a partner session on its way to the K7 desk on the door, since the proxy sends it back from there', () => {
+    expect(signInLanding({ kind: 'partner', state: 'ok', next: '/partners/portal/k7/operations' })).toEqual({ stale: false, crossing: true })
+  })
   it('keeps a suspended, disabled or removed partner session on the door with the reason, so requirePartner cannot loop', () => {
     expect(signInLanding({ kind: 'partner', state: 'org', next: '/partners/portal' })).toEqual({ error: 'suspended', stale: true })
     expect(signInLanding({ kind: 'partner', state: 'user' })).toEqual({ error: 'disabled', stale: true })

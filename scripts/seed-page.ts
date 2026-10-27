@@ -1,10 +1,12 @@
 /* Reseeds one page from the seed definitions without touching the rest of the site:
      pnpm tsx scripts/seed-page.ts home
-   The page is deleted and recreated by slug, as the full seed does. Forms are looked up, not recreated. */
+   The page is deleted and recreated by slug, as the full seed does. Forms are looked up, not recreated; a seed form the database
+   does not have yet is created, so a new page's form arrives with it. */
 import 'dotenv/config'
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
+import { forms as seedForms } from '../src/endpoints/seed/forms'
 import { pages } from '../src/endpoints/seed/pages'
 import { morePages } from '../src/endpoints/seed/pages2'
 
@@ -17,6 +19,10 @@ if (!slug) {
 const payload = await getPayload({ config })
 const forms = await payload.find({ collection: 'forms', limit: 100, pagination: false })
 const formIds = Object.fromEntries(forms.docs.map((f) => [f.title, f.id])) as Record<string, number>
+for (const f of seedForms.filter((f) => !(f.title in formIds))) {
+  formIds[f.title] = (await payload.create({ collection: 'forms', data: f })).id
+  console.log(`Created form "${f.title}" (id ${formIds[f.title]})`)
+}
 
 const page = [...pages, ...morePages(formIds)].find((p) => p.slug === slug)
 if (!page) {
