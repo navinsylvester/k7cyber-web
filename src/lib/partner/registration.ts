@@ -5,7 +5,7 @@ import configPromise from '@payload-config'
 import { getPayload, type Where } from 'payload'
 
 import { sendMail } from '@/lib/support/mail'
-import { getServerSideURL } from '@/utilities/getURL'
+import { partnerPublicUrl } from './public-url'
 
 import { audit, type Actor } from './audit'
 import { nextId } from './ids'
@@ -15,7 +15,7 @@ import { appVars } from './notify-model'
 import { clarificationNote, EMPTY_COMPANY, normaliseWebsite, readyToSubmit, type Application, type Company, type Contact, type DecisionRow } from './registration-model'
 import type { K7Context } from './session'
 import { getPartnerSettings, PARTNER_TYPE_LABEL, PARTNER_TYPES, type PartnerType } from './settings'
-import { APPLICATION_STATUS_LABEL, canMoveApplication, decisionPath, DECISION_TO, type ApplicationStatus, type Decision } from './status'
+import { alreadyLine, APPLICATION_STATUS_LABEL, canMoveApplication, decisionPath, DECISION_TO, isRepeatedDecision, type ApplicationStatus, type Decision } from './status'
 import { findPartnerUserByEmail, toUser } from './users'
 
 /* Applications and onboarding (01-requirements.md §3, 02-build-plan.md M2): the draft the join pages fill, the submission that
@@ -167,7 +167,7 @@ export const markVerified = (a: Application, o: { email?: boolean; mobile?: 'sms
     },
   })
 
-const statusLink = (a: Pick<Application, 'number' | 'resumeKey'>): string => `${getServerSideURL()}${JOIN}/status?a=${encodeURIComponent(a.number)}&k=${encodeURIComponent(a.resumeKey)}`
+const statusLink = (a: Pick<Application, 'number' | 'resumeKey'>): string => `${partnerPublicUrl()}${JOIN}/status?a=${encodeURIComponent(a.number)}&k=${encodeURIComponent(a.resumeKey)}`
 
 const applicantMail = async (a: Application, subject: string, body: string): Promise<void> => {
   if (!a.contact.email) return
@@ -257,10 +257,12 @@ export const assignApplication = async (a: Application, me: K7Context, to: { ema
   return app
 }
 
-export type DecideResult = { ok: true; app: Application; org?: { id: string; partnerId: string } } | { ok: false; error: string }
+/** `already` is set when the same decision had been made (a second click, B-03): nothing changed, the line says so. */
+export type DecideResult = { ok: true; app: Application; org?: { id: string; partnerId: string }; already?: string } | { ok: false; error: string }
 
 /** Approve, reject or send back. From Submitted the application is assigned to the decider first, so the trail shows both. */
 export const decideApplication = async (a: Application, decision: Decision, comment: string, me: K7Context): Promise<DecideResult> => {
+  if (isRepeatedDecision(a.status, decision)) return { ok: true, app: a, already: alreadyLine(decision, [...a.decisions].reverse().find((d) => d.to === DECISION_TO[decision])?.byName) }
   const path = decisionPath(a.status, decision)
   if (!path.length) return { ok: false, error: `${APPLICATION_STATUS_LABEL[a.status]} applications cannot be ${decision === 'approve' ? 'approved' : decision === 'reject' ? 'rejected' : 'sent back'}.` }
   const note = comment.trim()
@@ -330,7 +332,7 @@ export const approveApplication = async (a: Application, comment: string, me: K7
     event: 'application.approved',
     vars: { ...appVars(app, PARTNER_TYPE_LABEL[a.type]), partner: a.company.legalName, partnerId },
     subject: `Welcome to the K7 Partner Programme: ${partnerId}`,
-    body: `${a.company.legalName} is approved as a ${PARTNER_TYPE_LABEL[a.type]}. Your partner ID is ${partnerId}. Sign in with this email address at ${getServerSideURL()}/partners/portal/sign-in: we send a one-time code, no password.${comment ? `\n\nFrom your Channel Manager: ${comment}` : ''}`,
+    body: `${a.company.legalName} is approved as a ${PARTNER_TYPE_LABEL[a.type]}. Your partner ID is ${partnerId}. Sign in with this email address at ${partnerPublicUrl()}/partners/portal/sign-in: we send a one-time code, no password.${comment ? `\n\nFrom your Channel Manager: ${comment}` : ''}`,
     href: '/partners/portal',
     to: { kind: 'user', user },
   })

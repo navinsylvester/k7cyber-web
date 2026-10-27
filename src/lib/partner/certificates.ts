@@ -6,7 +6,7 @@ import path from 'path'
 import { getPayload, type Where } from 'payload'
 
 import { CERTIFICATE_DIR } from '@/collections/partner/PartnerCertificates'
-import { getServerSideURL } from '@/utilities/getURL'
+import { partnerPublicUrl } from './public-url'
 
 import { audit, SYSTEM, type Actor } from './audit'
 import { renderCertificatePdf } from './certificate-pdf'
@@ -60,7 +60,7 @@ const now = () => new Date().toISOString()
 const who = (a: Actor): string => a.name || a.email || 'Portal'
 const BIG = 5000
 
-export const verifyUrlFor = (number: string): string => `${getServerSideURL()}${VERIFY}/${number}`
+export const verifyUrlFor = (number: string): string => `${partnerPublicUrl()}${VERIFY}/${number}`
 export const certificateHref = (c: Pick<Certificate, 'id'>): string => `${PARTNER_CERTIFICATES}/${c.id}`
 export const k7CertificateHref = (c: Pick<Certificate, 'id'>): string => `${K7_CERTIFICATES}/${c.id}`
 

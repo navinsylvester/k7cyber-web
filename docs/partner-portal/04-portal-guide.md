@@ -15,6 +15,9 @@ pnpm partner:seed-dev you@example.com "Your Name" [--crm] [--collateral] [--edit
 ```
 `.env` needs the support portal's keys (`AUTH_SECRET`, Postgres, and for the K7 door the Entra app or `SUPPORT_DEV_AGENT=probe`)
 plus `PARTNER_PORTAL_ENABLED` (on in development unless `0`; production needs `1`, or every `/partners/portal` page is a 404).
+Every absolute link the portal hands out (notices, the applicant's status link, the certificate's verify link and QR) comes from
+`partnerPublicUrl()` (`src/lib/partner/public-url.ts`), read at run time: `PARTNER_PUBLIC_URL`, else `AUTH_URL`, else `NEXT_PUBLIC_SERVER_URL`
+(fixed into the build, so it said `localhost` on the tunnel until 2026-10-27, B-02). Rows and PDFs written before then keep their old links.
 `SUPPORT_DEV_SHOW_CODE=1` shows the partner's one-time code on the verify page while no `SMTP_URL` is set, under the same
 localhost-or-allowlist rule as the support door. `SUPPORT_MAIL_ALLOWLIST` applies to partner codes and notifications too.
 
@@ -46,7 +49,9 @@ A code's purpose is inside the signed payload, so a partner code never opens the
 test). One cookie carries one session: signing in on one side ends the other side's session. The two sides ignore each
 other's sessions rather than looping: `/support` treats a partner session as signed out (`proxy.ts`, `requireCustomer`,
 `optionalSession`, the support header), `/partners/portal` sends a customer session to the partner door and an agent session to
-the K7 side.
+the K7 side. The door sends a partner session home only while it can still be used (`signInLanding` in
+`src/lib/partner/session-model.ts`): a session whose organisation is suspended or whose user is disabled or removed stays on the
+door with the reason (B-01, it looped with `requirePartner` before), and asking for a new code ends that session first.
 
 `src/proxy.ts` (Next 16's proxy, Node runtime) gates `/partners/portal/k7/*` to an agent session and the rest of
 `/partners/portal/*` to a partner session; `sign-in` and `verify` are public. The role check needs Payload and happens in the
@@ -116,7 +121,7 @@ file under Files, each upload a version) by a Payload user with the marketing ed
 ## 4. Library (`src/lib/partner/`)
 | file | what |
 |---|---|
-| `session.ts` | `requirePartner(next?)` → `PartnerContext { user, org, scope, roles, actor }`, re-reading the user and organisation from Payload on every request so a suspension or role change bites at once; `requirePartnerRole(roles)`; `requireK7(next?)` / `requireK7Role(roles)` → `K7Context { email, name, roles, dev, actor }`; `tryPartner`, `tryK7`, `partnerSideSession` for the header (never redirect) |
+| `session.ts` | `requirePartner(next?)` → `PartnerContext { user, org, scope, roles, actor }`, re-reading the user and organisation from Payload on every request so a suspension or role change bites at once; `requirePartnerRole(roles)`; `requireK7(next?)` / `requireK7Role(roles)` → `K7Context { email, name, roles, dev, actor }`; `tryPartner`, `tryK7`, `partnerSideSession` for the header, `partnerSessionState` for the door (never redirect) |
 | `scope.ts` | `orgWhere(scope, extra?, field)` puts the organisation into every Payload `Where` first and throws `ScopeError` on an empty scope; `inScope(scope, row)` for detail pages reached by id; `orgRel(scope)` the organisation as a relationship value on a create (Postgres ids are numbers). **Rule:** every partner query takes `me.scope`; a review checklist item (FR-ROLE-01), pinned against the database by `tests/int/partner-scope.int.spec.ts` |
 | `settings-model.ts` / `settings.ts` | the typed settings with defaults and the normaliser (M9: `crm.features` `accountCreate` · `opportunityCreate` · `sync`, default on, with `crmFeatureOn(settings, feature)` = the master and the feature); `getPartnerSettings()` (30 s memo), `savePartnerSettings()`, `partnerPortalEnabled()`; `staffRolesFor(email, settings, { dev })` with the two default-on fallbacks (Channel Manager → Deal Desk Approver, Marketing Admin → Scheme Admin); `staffWithRole(role)` for notifications, each person once |
 | `users.ts` | `findPartnerUserByEmail`, `loadPartnerUser`, `canSignIn(user, org)` (not disabled, organisation not suspended), `touchSignIn`, `orgUsers(orgId, roles?)`; `toOrg` reads the whole organisation row (identity, address, CRM ids, waiver, suspension, the pending legal edit) |

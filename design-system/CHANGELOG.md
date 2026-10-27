@@ -2,6 +2,10 @@
 
 Newest first. Each entry names the rule, the reference CSS and the parts it touched, so the system describes the site as built (README.md, "Keeping it current"). Until 2026-10-15 the folder mirrored the Design System artifact unchanged (SOURCE.md).
 
+## 2026-10-27
+
+- **Section 10 · Partners, the pending action** (B-03: approving took 10 to 20 seconds while Dynamics was written, nothing showed it, and a second click came back as a red refusal): P10's primary action, the CRM job buttons and *Sync now* / *Read back* on the K7 desk are `SubmitButton`, disabled on the existing `.btn[disabled]` while the post runs and reading *Recording…*, *Running…*, *Reading…* or *Amending…*; a repeated decision is an ok flash (*Already approved by …*). No new CSS. `PartnerParts` README; `SubmitButton.client.tsx`. No artboard: the partner portal has none yet.
+
 ## 2026-10-24
 
 - **Field, required and invalid** (support tester round 1, `docs/support-portal/13-tester-round-1.md` TR-14): the required asterisk alone takes the accent (`.req`), the label stays muted; "Fields marked * are mandatory" is `req-note`; a control the browser finds invalid underlines in the accent (`.control:has(:user-invalid)`) as `is-invalid` already did. `bundle.css`; Field README and preview; the Contact and Quote artboards; `Field`/`Req`/`RequiredNote` in `src/components/support/Parts.tsx`, the FormSheet block and the partner deal form.

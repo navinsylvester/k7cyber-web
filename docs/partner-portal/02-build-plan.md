@@ -817,3 +817,34 @@ change a line rather than write from nothing; each is either already true of the
   (valid to 2027-10-24), the Technical pass, the deal gate on, `SUPPORT_DEV_AGENT` set and put back. Nothing committed (Navin commits).
   **Next:** the M0 items that still wait on people (§7), `/partners/verify` linked from the marketing Partners page when it is written,
   the go-live gate at launch (`05-staging-and-go-live.md` §5).
+- **2026-10-27 (18)** — **Test plan for the partner portal team, every case walked.** The plan for the non-technical evaluators is a
+  shared doc (https://claude.ai/artifact/7nvCpaaAsq3PtAH1jaKLwd): setup and accounts, 18 partner cases (P-01…P-18) and 20 K7 cases
+  (K-01…K-20) as plain steps, the walk-through results with a dropdown column for each tester, the bugs, and what is not built
+  (video encoding and hosting, email, SMS, the scheduler, the terms text, the /partners page, the generic admin). All 38 cases run on
+  the tunnel production build: in Chrome as Navin (Microsoft door), partner sessions and the admin in Playwright on system Chrome
+  (the extension dropped mid-run), the K7 desk after that through the probe door on a local-only `next start -p 3100` (stopped after).
+  28 pass, 9 pass with an issue, 1 fail. Bugs: **B-01** a suspended / disabled / removed partner's open session loops
+  (`/partners/portal` → `sign-in?error=suspended` → the sign-in page redirects any `kind: 'partner'` session home; seen for
+  suspension only, the other two share the path); **B-02** notice links, the certificate verify link and its QR say
+  `http://localhost:3000` (`NEXT_PUBLIC_SERVER_URL` in `.env`, baked into the build); **B-03** approvals take 10–20 s with no busy
+  state and a second click errors. Smaller: M-01…M-11 in the doc (attachment dropped after a refused deal form, the partner never told
+  about a conflict, FR codes in user text, admin dates month-first, a `.mov` refused and an HEVC MP4 accepted that Chrome cannot
+  play, …). UAT writes: account ACC-2610-00157 (00:18:23Z), OPP-2610-00269 (00:33:22Z), -00270 (00:34:54Z), -00271 (00:40:12Z).
+  Local changes: scheme PP-TEST Q3 Sprint (43) added at 00:45:45Z for the testers' compute case, PP-TEST Walkthrough Scheme (45) and its
+  draft duplicate (44), collateral 113 retired, training files 1–2 and module 36, two imported questions; settings protection 60 → 90
+  and Navin's Marketing/Training Admin roles added at 00:39:38Z and removed at 00:56:37Z. Nothing committed (Navin commits).
+  **Next:** fix B-01…B-03 (B-02 is `.env` + `scripts/serve.sh rebuild`), add the testers to Staff, name the report channel, send the doc.
+- **2026-10-27 (19)** — **B-01…B-03 fixed and re-checked in Chrome.** B-01: `session-model.ts` (`signInLanding`, `sessionError`) and
+  `partnerSessionState()` in `session.ts`; the sign-in page sends a partner session home only while `canSignIn` still holds, otherwise
+  it shows the reason with a working form; `requestPartnerCode` ends a stale session first. B-02: `partnerPublicUrl()`
+  (`public-url.ts`: `PARTNER_PUBLIC_URL`, else `AUTH_URL`, else `NEXT_PUBLIC_SERVER_URL`, read at run time) for notices, the status
+  link and certificates; the stored certificate PDFs were moved aside (scratchpad) so they redraw with the right address. B-03:
+  `SubmitButton.client.tsx` (`useFormStatus`: disabled, "Recording…") on the K7 decision, extension, amend, CRM-run and sync buttons;
+  a repeated decision (`isRepeatedDecision` / `isRepeatedDealDecision` / `isRepeatedExtension` in `status.ts`) returns an ok flash
+  ("Already approved by …") and changes nothing; design system P10, CHANGELOG, `design-system.json`. tsc clean, lint 0 errors, int
+  304 passed; `partner-deals-db` fails on HEAD too (its first `submitDeal` meets the certificate gate, on in the development settings
+  since M11): to fix separately. `scripts/serve.sh rebuild` 01:13:32–01:14:23Z. Chrome checks: B-03 01:16:39Z on K7D-00114
+  (OPP-2610-00272, one approval in the record, the stale tab got "Already approved by Navin Sylvester."), B-01 suspended 01:18:19Z and
+  disabled 01:19:42Z (sign-in page with the reason, no loop; reinstated and re-enabled users signed in again), B-02 01:21:13Z (a new
+  invitation's notice and the redrawn K7P-C-VGKWKN PDF carry the tunnel host). Test data: K7D-00114, pp-test-walk-5 (Sales, K7P-00028).
+  Not committed (Navin commits). Note: when the tunnel address changes, `AUTH_URL` already carries the new host, so no rebuild is needed for links.

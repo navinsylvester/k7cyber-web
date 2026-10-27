@@ -6,6 +6,7 @@ import { auth } from '@/auth'
 import type { Actor } from './audit'
 import type { OrgScope } from './scope'
 import { getPartnerSettings, staffRolesFor, type PartnerRole, type StaffRole } from './settings'
+import { sessionError, type PartnerSessionState } from './session-model'
 import { loadPartnerUser, canSignIn, type PartnerOrg, type PartnerUser } from './users'
 import { isDeployed } from '@/lib/env'
 
@@ -28,7 +29,7 @@ const signInUrl = (o: { staff?: boolean; next?: string; error?: string }) => {
   return q ? `${SIGN_IN}?${q}` : SIGN_IN
 }
 
-const partnerFromSession = async (): Promise<PartnerContext | { error: 'none' | 'kind' | 'gone' | 'org' | 'user' }> => {
+const partnerFromSession = async (): Promise<PartnerContext | { error: Exclude<PartnerSessionState, 'ok'> }> => {
   const s = await auth()
   if (!s?.user) return { error: 'none' }
   if (s.user.kind !== 'partner' || !s.user.partnerUserId) return { error: 'kind' }
@@ -54,7 +55,7 @@ export const requirePartner = async (next?: string): Promise<PartnerContext> => 
       const s = await auth()
       if (s?.user?.kind === 'agent') redirect('/partners/portal/k7')
     }
-    redirect(signInUrl({ next, error: r.error === 'org' ? 'suspended' : r.error === 'user' ? 'disabled' : r.error === 'gone' ? 'gone' : undefined }))
+    redirect(signInUrl({ next, error: sessionError(r.error) }))
   }
   return r
 }
@@ -73,6 +74,16 @@ export const tryPartner = async (): Promise<PartnerContext | null> => {
     return 'error' in r ? null : r
   } catch {
     return null
+  }
+}
+
+/** Whether the session is a partner session that can still be used, for the door (never redirects). */
+export const partnerSessionState = async (): Promise<PartnerSessionState> => {
+  try {
+    const r = await partnerFromSession()
+    return 'error' in r ? r.error : 'ok'
+  } catch {
+    return 'none'
   }
 }
 

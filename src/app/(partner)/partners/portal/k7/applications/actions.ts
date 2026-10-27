@@ -35,6 +35,7 @@ export async function decideAction(form: FormData): Promise<void> {
   if (!app) redirect(K7_APPLICATIONS)
   const r = await decideApplication(app, decision, f(form, 'comment'), me)
   if (!r.ok) return back(number, { error: r.error })
+  if (r.already) return back(number, { ok: r.already })
   back(number, { ok: decision === 'approve' ? `Approved. ${r.org?.partnerId} is created and the Partner Admin has been invited.` : decision === 'reject' ? 'Rejected; the applicant has the reason by email.' : 'Sent back; the applicant has your note and the link to resubmit.' })
 }
 

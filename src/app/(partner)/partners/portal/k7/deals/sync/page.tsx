@@ -6,6 +6,7 @@ import { OutcomeTag } from '@/components/partner/Dashboard'
 import { Did } from '@/components/partner/Deals'
 import { K7Nav } from '@/components/partner/K7Nav'
 import { Empty, Flash, Pid } from '@/components/partner/Parts'
+import { SubmitButton } from '@/components/partner/SubmitButton.client'
 import { Crumbs } from '@/components/support/Parts'
 import { dealCounts, K7_DEALS } from '@/lib/partner/deals'
 import { requireK7Role } from '@/lib/partner/session'
@@ -42,9 +43,9 @@ export default async function K7SyncLogPage({ searchParams }: { searchParams: Pr
           </div>
           <div className="ws-actions">
             <form action={syncNowAction}>
-              <button className="btn btn-primary btn-sm" type="submit" title="Read every portal opportunity back from Dynamics now, whatever the interval">
+              <SubmitButton className="btn btn-primary btn-sm" pendingLabel="Reading…" title="Read every portal opportunity back from Dynamics now, whatever the interval">
                 Sync now
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>

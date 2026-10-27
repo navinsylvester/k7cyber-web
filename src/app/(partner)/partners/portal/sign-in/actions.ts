@@ -4,9 +4,10 @@ import { AuthError } from 'next-auth'
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-import { signIn } from '@/auth'
+import { auth, signIn, signOut } from '@/auth'
 import { devAgentDoorEnabled } from '@/lib/dataverse/auth'
 import { OTP_TTL_SECONDS, PARTNER_DEVCODE_COOKIE, PARTNER_OTP_COOKIE, PARTNER_OTP_PURPOSE, canSend, canSendFrom, clientKey, isEmail, issueOtp, normaliseEmail, verifyOtp } from '@/lib/partner/otp'
+import { partnerSessionState } from '@/lib/partner/session'
 import { getPartnerSettings } from '@/lib/partner/settings'
 import { canSignIn, findPartnerUserByEmail } from '@/lib/partner/users'
 import { mailAllowed, mailAllowlist, mailConfigured, sendMail } from '@/lib/support/mail'
@@ -62,6 +63,7 @@ const sendCode = async (email: string, name: string, next?: string) => {
 
 /** Step 1: a known, active partner user gets a code. Unknown addresses are told so without revealing anything else. */
 export async function requestPartnerCode(form: FormData): Promise<void> {
+  if ((await auth())?.user?.kind === 'partner' && (await partnerSessionState()) !== 'ok') await signOut({ redirect: false })
   const email = normaliseEmail(String(form.get('email') ?? ''))
   const next = safeNext(form.get('next'))
   if (!isEmail(email)) back('email', '', next)

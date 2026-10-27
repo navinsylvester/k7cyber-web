@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { ScopeError, inScope, orgWhere } from '@/lib/partner/scope'
+import { sessionError, signInLanding } from '@/lib/partner/session-model'
 import { DEFAULT_PARTNER_SETTINGS, normalisePartnerSettings, staffRolesFor, staffWithRole } from '@/lib/partner/settings-model'
 import { issueOtp, verifyOtp } from '@/lib/support/otp'
 
@@ -101,5 +102,25 @@ describe('the two code doors', () => {
     const [body, hash, sig] = partner.token.split('.')
     const forged = Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(body!, 'base64url').toString()), purpose: 'sign-in' })).toString('base64url')
     expect(verifyOtp(`${forged}.${hash}.${sig}`, partner.code).ok).toBe(false)
+  })
+})
+
+describe('the door with a session already held (B-01)', () => {
+  it('sends a usable partner session home, to next when it is given', () => {
+    expect(signInLanding({ kind: 'partner', state: 'ok' })).toEqual({ redirect: '/partners/portal' })
+    expect(signInLanding({ kind: 'partner', state: 'ok', next: '/partners/portal/deals' })).toEqual({ redirect: '/partners/portal/deals' })
+  })
+  it('keeps a suspended, disabled or removed partner session on the door with the reason, so requirePartner cannot loop', () => {
+    expect(signInLanding({ kind: 'partner', state: 'org', next: '/partners/portal' })).toEqual({ error: 'suspended', stale: true })
+    expect(signInLanding({ kind: 'partner', state: 'user' })).toEqual({ error: 'disabled', stale: true })
+    expect(signInLanding({ kind: 'partner', state: 'gone' })).toEqual({ error: 'gone', stale: true })
+    expect(signInLanding({ kind: 'partner', state: 'none' })).toEqual({ error: undefined, stale: true })
+    expect(sessionError('ok')).toBeUndefined()
+  })
+  it('sends an agent session to the partner desk and shows the door to anyone else', () => {
+    expect(signInLanding({ kind: 'agent', state: 'none', next: '/partners/portal' })).toEqual({ redirect: '/partners/portal/k7' })
+    expect(signInLanding({ kind: 'agent', state: 'none', next: '/partners/portal/k7/deals' })).toEqual({ redirect: '/partners/portal/k7/deals' })
+    expect(signInLanding({ kind: 'customer', state: 'none' })).toEqual({ stale: false })
+    expect(signInLanding({ state: 'none' })).toEqual({ stale: false })
   })
 })

@@ -122,3 +122,20 @@ export const DEAL_DECISION_LABEL: Record<DealDecision, string> = { approve: 'App
 export const dealDecisionNeedsComment = (d: DealDecision): boolean => d !== 'approve'
 /** The four decisions are taken on a submitted deal only: an extension request moves to approved too, but through the extension decision, never the approval. */
 export const canDecideDeal = (from: DealStatus, d: DealDecision): boolean => from === 'submitted' && canMoveDeal(from, DEAL_DECISION_TO[d])
+
+/* ---------- The same decision twice (B-03) ---------- */
+
+/* Approving writes to Dynamics and can take 10 to 20 seconds; a second click on "Record the decision" then lands after the first
+   has moved the record. When the record already stands where the same decision takes it, the decision is made: the action says
+   so in the ok flash and changes nothing. A genuinely different decision still meets the machines' rules above. */
+
+/** The application already stands where this decision takes it (approve on Approved, reject on Rejected, clarify on Clarification needed). */
+export const isRepeatedDecision = (from: ApplicationStatus, d: Decision): boolean => from === DECISION_TO[d]
+/** The deal already stands where this decision takes it; both approvals count as approval. */
+export const isRepeatedDealDecision = (from: DealStatus, d: DealDecision): boolean => from === DEAL_DECISION_TO[d]
+/** The extension has been decided the same way and nothing new is waiting. */
+export const isRepeatedExtension = (from: DealStatus, ext: { decidedAt: string | null; granted: boolean }, grant: boolean): boolean => from !== 'extensionRequested' && Boolean(ext.decidedAt) && ext.granted === grant
+
+const DONE: Record<Decision | DealDecision, string> = { approve: 'approved', approveWithChanges: 'approved', reject: 'rejected', clarify: 'sent back for clarification', requestInfo: 'sent back for more information' }
+/** The ok flash for a repeated decision: "Already approved by Asha." */
+export const alreadyLine = (d: Decision | DealDecision | 'grant' | 'decline', by = ''): string => `Already ${d === 'grant' ? 'extended' : d === 'decline' ? 'declined' : DONE[d]}${by.trim() ? ` by ${by.trim()}` : ''}.`
