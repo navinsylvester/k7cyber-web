@@ -896,3 +896,22 @@ change a line rather than write from nothing; each is either already true of the
   door; the portal's front page explains them), leaving the content doc's banner (Apply, Go to the partner portal), the partner
   types and the Let's Talk form. Build served 03:59:40Z. Chrome: the desktop panel, the 390 px phone menu (Partners → Partner
   programme · Become a partner · Partner portal), `/partners` and the portal front page.
+- **2026-10-28 (24)** — **The settings page in sub tabs** (Navin: the page needs sub tabs or grouping to declutter it). The K7
+  settings page's eleven sections now sit under six tabs on the existing `rtabs` part, server-rendered with `?tab=` as on the case
+  sheet: *Staff and roles* (default), *Programme* (with collateral and schemes), *Deals and SLA*, *CRM mirror*, *Training and
+  certificates*, *Notifications*. Each tab is its own form posting `section`; the action builds only that section and keeps the rest
+  as stored, so a switch on a hidden tab is never read as off (the old single post would have reset them). Links from the
+  certificates desk (`?tab=training#certificates`) and the templates page (`?tab=notifications`) follow. Checked on a local-only
+  `next dev -p 3100` through the probe door (stopped after): every tab renders; saving all six tabs unchanged left every stored value
+  as it was (pg_dump of the `partner_settings*` tables before and after: only Payload's regenerated row ids differ); 390 px in a
+  frame: no horizontal page scroll on any tab, the strip scrolls inside itself. Served to testers: `scripts/serve.sh rebuild` at
+  23:31:25Z, serving 23:31:58Z (build `1RilaiyPPPwH7paHYKlCF`); signed out, `?tab=crm` goes to the staff door with the tab kept. Design system: `PartnerParts`, CHANGELOG, `design-system.json`; `04-portal-guide.md`.
+  Same day, Navin: the desk strip's tab design used again for the sub tabs looked wrong, use the sections as on the reports page.
+  The switch is now the reports' and dashboard's `seg-choice` of links (`is-on`), wrapping on a phone (`set-views` in `partner.css`);
+  the save button keeps CRM and SLA in capitals and the flash names the section (*CRM mirror saved.*). Checked on :3100 again (390 px:
+  the switch wraps to four lines, no page scroll; the CRM save returns to its section), then rebuilt for testers: 23:36:12Z, serving 23:36:38Z (build `Jtn3znYMO-wzRd6jgmukx`).
+  Then, Navin: the section headings (K7 staff; Programme, Collateral, Schemes; …) had no separation and the page looked cluttered.
+  Each heading on the settings form now stands on a `line` hairline with a 32 × 2px signal segment at its start (`set-form .sub-head`
+  in `partner.css`, scoped so the shared `sub-head` elsewhere is untouched). Checked on :3100 in dark and light (theme set back to
+  dark), then rebuilt for testers: 23:42:20Z, serving 23:42:45Z (build `3sa-LdDc_CTgiZXuhOQ3s`).
+

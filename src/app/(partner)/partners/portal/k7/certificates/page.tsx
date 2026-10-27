@@ -60,7 +60,7 @@ export default async function K7CertificatesPage({ searchParams }: { searchParam
                 </button>
               </form>
             ) : null}
-            <Link className="link-u" href="/partners/portal/k7/settings#certificates">
+            <Link className="link-u" href="/partners/portal/k7/settings?tab=training#certificates">
               The rules and validity
             </Link>
           </div>

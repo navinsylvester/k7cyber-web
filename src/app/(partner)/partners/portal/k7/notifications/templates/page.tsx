@@ -129,7 +129,7 @@ export default async function K7TemplatesPage({ searchParams }: { searchParams: 
             </div>
             <Preview subject={preview.subject} body={preview.body} label={t?.enabled ? 'Preview on sample values' : 'What the code sends, on sample values'} />
             <p className="hint">
-              <Link className="link-u" href="/partners/portal/k7/settings">
+              <Link className="link-u" href="/partners/portal/k7/settings?tab=notifications">
                 The sender, the signature and the digest’s retention are in the settings
               </Link>
               .

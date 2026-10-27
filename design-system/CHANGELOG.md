@@ -2,6 +2,10 @@
 
 Newest first. Each entry names the rule, the reference CSS and the parts it touched, so the system describes the site as built (README.md, "Keeping it current"). Until 2026-10-15 the folder mirrored the Design System artifact unchanged (SOURCE.md).
 
+## 2026-10-28
+
+- **Section 10 · Partners, the settings page in sub tabs** (Navin: declutter the page): the eleven sections of the K7 settings page sit under six sections chosen on the reports' and dashboard's switch (`seg-choice` of links, `is-on`; *Staff and roles*, *Programme* with collateral and schemes, *Deals and SLA*, *CRM mirror*, *Training and certificates*, *Notifications*), `?tab=` on the server, one form and one save per section. First tried on the desk strip's `rtabs` and dropped the same day: a second strip of tabs under the desk strip read as the same rank. One rule in `partner.css` (`set-views`: the switch wraps on a phone). Then (Navin: headings without separation looked cluttered) each section heading on the page stands on a `line` hairline with a 32 × 2px `signal` segment at its start (`set-form .sub-head`), scoped to the settings form since `sub-head` is shared across the portals; checked in both themes. `PartnerParts` README; `settings/page.tsx`, `settings/tabs.ts`. No artboard: the partner portal has none yet.
+
 ## 2026-10-27
 
 - **Section 10 · Partners, the front page and the core links**: P6 is now the portal's front page on section 09's help-centre parts (`help-hero`, `help-search`, `mine-strip`, `paths`, `cta-sheet`), public for visitors (what the portal is for, Sign in, Apply) and personal for partner users (four counts, the four ways in with where each stands, the latest notifications, the register-a-deal sheet); the strip of organisation facts, the side column and the record left the home for the organisation page. The partner header keeps the four jobs (nine links became five; `HeaderShell` links take `match` for the pages they stand for), the K7 header the desk and the decision queues, the footer two links. No new CSS. `PartnerParts` README; `page.tsx`, `Header.tsx`, `Header.client.tsx`. No artboard: the partner portal has none yet.
