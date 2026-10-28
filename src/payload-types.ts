@@ -7069,6 +7069,10 @@ export interface PartnerSetting {
    */
   devStaffPass?: boolean | null;
   /**
+   * A Microsoft sign-in that is not on the staff list holds every role (for testers; a row on the list sets their roles instead). Ignored in production builds.
+   */
+  testerStaffPass?: boolean | null;
+  /**
    * The types a company can apply as. MSP stays off until the author confirms it (decision 6).
    */
   partnerTypes?: ('distributor' | 'integrationPartner' | 'var' | 'msp')[] | null;
@@ -7569,6 +7573,7 @@ export interface PartnerSettingsSelect<T extends boolean = true> {
   channelManagersApproveDeals?: T;
   marketingAdminsRunSchemes?: T;
   devStaffPass?: T;
+  testerStaffPass?: T;
   partnerTypes?: T;
   regions?:
     | T

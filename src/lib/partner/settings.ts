@@ -36,6 +36,7 @@ export const savePartnerSettings = async (s: PartnerSettings): Promise<void> => 
       channelManagersApproveDeals: s.channelManagersApproveDeals,
       marketingAdminsRunSchemes: s.marketingAdminsRunSchemes,
       devStaffPass: s.devStaffPass,
+      testerStaffPass: s.testerStaffPass,
       partnerTypes: s.partnerTypes,
       regions: s.regions.map((r) => ({ ...r })),
       terms: { ...s.terms },

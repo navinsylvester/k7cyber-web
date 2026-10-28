@@ -35,6 +35,8 @@ export type PartnerSettings = {
   channelManagersApproveDeals: boolean
   marketingAdminsRunSchemes: boolean
   devStaffPass: boolean
+  /** On a test server, a K7 Microsoft sign-in that is not on `staff` holds every role; ignored in production. */
+  testerStaffPass: boolean
   partnerTypes: PartnerType[]
   regions: { code: string; name: string }[]
   terms: { version: string; url: string }
@@ -85,6 +87,7 @@ export const DEFAULT_PARTNER_SETTINGS: PartnerSettings = {
   channelManagersApproveDeals: true,
   marketingAdminsRunSchemes: true,
   devStaffPass: true,
+  testerStaffPass: false,
   partnerTypes: ['distributor', 'integrationPartner', 'var'],
   regions: [],
   terms: { version: '2026-10', url: '' },
@@ -123,6 +126,7 @@ export const normalisePartnerSettings = (g: Raw | null | undefined): PartnerSett
     channelManagersApproveDeals: bool(r.channelManagersApproveDeals, D.channelManagersApproveDeals),
     marketingAdminsRunSchemes: bool(r.marketingAdminsRunSchemes, D.marketingAdminsRunSchemes),
     devStaffPass: bool(r.devStaffPass, D.devStaffPass),
+    testerStaffPass: bool(r.testerStaffPass, D.testerStaffPass),
     partnerTypes: types.length ? types : D.partnerTypes,
     regions: arr(r.regions)
       .map((x) => ({ code: str(x.code, '').trim(), name: str(x.name, '').trim() }))
@@ -183,8 +187,10 @@ export const staffRolesFor = (emailAddress: string, s: PartnerSettings, o: { dev
   if (o.dev && !o.production && s.devStaffPass) return [...STAFF_ROLES]
   const e = emailAddress.trim().toLowerCase()
   if (!e) return []
+  const rows = s.staff.filter((p) => p.email === e)
+  if (!rows.length && !o.production && s.testerStaffPass) return [...STAFF_ROLES]
   const held = new Set<StaffRole>()
-  for (const p of s.staff) if (p.email === e) for (const r of p.roles) held.add(r)
+  for (const p of rows) for (const r of p.roles) held.add(r)
   if (s.channelManagersApproveDeals && held.has('channelManager')) held.add('dealDeskApprover')
   if (s.marketingAdminsRunSchemes && held.has('marketingAdmin')) held.add('schemeAdmin')
   return STAFF_ROLES.filter((r) => held.has(r))

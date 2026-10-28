@@ -73,10 +73,12 @@ describe('every partner-portal entry point has its door', () => {
       }
     }
   })
-  it('the proxy gates both sides and leaves only the door public', () => {
+  it('the proxy gates both sides and leaves only the door and the front page public', () => {
     const src = readFileSync(path.resolve(ROOT, '../proxy.ts'), 'utf8')
     expect(src).toMatch(/\/partners\/portal\/k7/)
     expect(src).toMatch(/sign-in\|verify/)
+    // The front page alone, exactly: anything under it stays behind the partner session.
+    expect(src).toContain("if (/^\\/partners\\/portal\\/?$/.test(pathname)) return NextResponse.next()")
     expect(src).toMatch(/'\/partners\/portal\/:path\*'/)
   })
 })

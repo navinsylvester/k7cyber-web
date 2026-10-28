@@ -268,8 +268,15 @@ a.kpi:hover { background: var(--tn); color: inherit; }
 
 /* ---------- Queue and customer pages ---------- */
 .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: clamp(32px, 4cqw, 56px); }
-.sub-head { margin: 0 0 14px; font-size: 20px; letter-spacing: -.025em; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.sub-head { position: relative; margin: 0 0 20px; padding-bottom: 12px; border-bottom: 1px solid var(--ln); font-size: 20px; letter-spacing: -.025em; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .sub-head .label { color: var(--mu); }
+/* A section heading stands on a line: its own hairline with a short signal segment at its start, the record rail's 2px rule kept
+   short, so sections read apart without boxes. */
+.sub-head::after, .settings-section h2::after { content: ""; position: absolute; z-index: 1; left: 0; bottom: -1px; width: 32px; height: 2px; background: var(--signal); }
+.g-signal .sub-head::after { background: var(--on-signal); }
+/* Over a block that opens on its own ink rule (a ledger, rows, facts, a thread, the empty state) the heading stands on that rule
+   instead: no hairline of its own, the segment lies on the rule. The class is doubled to outrank a context's margin. */
+.sub-head.sub-head:has(+ :is(.acts, .board, .case-list, .conf-list, .convo, .dthread, .empty, .events, .facts, .impact, .kpi-rows, .kpis, .ledit, .meta-rows, .mini-rows, .mods, .ntf, .rate-block, .rule-lines, .rules, .slastrip, .suggest, .sweep-box, .table-wrap, .item-rows, .tl)) { border-bottom: 0; margin-bottom: 0; }
 .mini-rows { border-top: 1px solid var(--fg); }
 .mini-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 0; border-bottom: 1px solid var(--ln); text-decoration: none; transition: background .24s var(--ease), color .24s, padding .24s var(--ease); }
 a.mini-row:hover { background: var(--fg); color: var(--bg); padding-left: 10px; padding-right: 10px; }
@@ -412,7 +419,7 @@ a.kpic:hover .kpic-meter i.is-missed { background: var(--signal); }
 .targets .del { font: 400 12px/1 var(--font-mono); color: var(--mu); }
 .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px 24px; }
 .settings-section { margin-bottom: clamp(32px, 4cqw, 48px); }
-.settings-section h2 { font-size: 22px; letter-spacing: -.025em; font-weight: 600; margin: 0 0 6px; }
+.settings-section h2 { position: relative; font-size: 22px; letter-spacing: -.025em; font-weight: 600; margin: 0 0 14px; padding-bottom: 12px; border-bottom: 1px solid var(--ln); }
 .settings-section > p { margin: 0 0 18px; font-size: 15px; color: var(--mu); max-width: 64ch; }
 .kpi-rows { border-top: 1px solid var(--fg); }
 .kpi-row { display: grid; grid-template-columns: auto minmax(0, 1fr) 140px; gap: 10px 20px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--ln); }
@@ -555,6 +562,7 @@ details.classify[open] summary::after { content: "close"; }
 .tracker-ref a:hover { background: var(--fg); color: var(--bg); }
 .prio { min-width: 2.6em; justify-content: center; }
 .product-band { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 12px 0; margin: -8px 0 clamp(20px, 2.4cqw, 32px); border-top: 1px solid var(--fg); border-bottom: 1px solid var(--ln); font-size: 15px; }
+.item-rows { border-top: 1px solid var(--fg); }
 .product-band.is-ask { border-top-color: var(--signal); border-top-width: 2px; }
 .product-band .band-last { flex: 1 1 280px; color: var(--mu); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .product-band .band-act { margin-left: auto; }

@@ -178,4 +178,32 @@ const eulaPage = legalPage('End User Licence Agreement', 'eula', 'Legal · EULA'
   'This is a placeholder for the K7 end user licence agreement. The current agreement at k7computing.com will be migrated here before launch.',
 ])
 
-export const morePages = (formIds: Record<string, number>): PageData[] => [comparisonPage, contactPage(formIds['Contact enquiry']!), quotePage(formIds['Request quote · XDR']!), privacyPage, eulaPage]
+/* ---------------- Partners ---------------- */
+/* The content doc's Partners page (K7 Partner Network): the banner line with the two ways on (apply; the partner portal, whose own
+   front page explains what is inside and carries the doors for partners and K7 staff), the two partner types with their copy, and
+   the Let's Talk form. The reseller and MSP lists the doc asks to recreate from
+   k7computing.com are not here yet. */
+const partnersPage = (formId: number): PageData => ({
+  title: 'K7 Partner Network',
+  slug: 'partners',
+  _status: 'published',
+  meta: { title: 'K7 Partner Network – K7 CyberSecurity', description: 'The K7 partner programme offers a host of benefits that include training, support, and a variety of sales enablement tools built to support different partner types.' },
+  layout: [
+    { blockType: 'pageBanner', metaLeft: 'Partners', metaRight: 'K7 Partner Network', lede: 'The K7 partner programme offers a host of benefits that include training, support, and a variety of sales enablement tools built to support different partner types.', actions: [custom('Apply to the programme →', '/partners/join', 'primary'), custom('Go to the partner portal', '/partners/portal')] },
+    {
+      blockType: 'indexRows',
+      tabLabel: 'Partner types',
+      ground: 'panel',
+      headline: 'Build your business with K7.',
+      lede: 'Two ways to work with K7, each with its own benefits.',
+      numbered: true,
+      rows: [
+        { title: 'Value Added Resellers', description: 'Build your business with the world’s most efficient security solutions. Our partner programme offers a host of benefits including attractive margins, training, support, and a variety of sales enablement tools to ensure your success.', link: { type: 'custom' as const, url: '#enquiry' } },
+        { title: 'Integration Partners', description: 'Provide K7’s best-of-breed endpoint security and remotely provision, configure, and manage endpoint cybersecurity for your customers from a single portal, alleviating their cybersecurity challenges while enhancing your value proposition to them.', link: { type: 'custom' as const, url: '#enquiry' } },
+      ],
+    },
+    { blockType: 'formSheet', tabLabel: 'Let’s talk', ground: 'paper', headline: 'Let’s talk! Just fill in your information and we’ll be in touch soon.', note: 'Fields marked * are mandatory.', form: formId, privacyUrl: '/privacy-policy' },
+  ],
+})
+
+export const morePages = (formIds: Record<string, number>): PageData[] => [comparisonPage, contactPage(formIds['Contact enquiry']!), quotePage(formIds['Request quote · XDR']!), privacyPage, eulaPage, partnersPage(formIds['Partner enquiry']!)]

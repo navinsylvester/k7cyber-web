@@ -58,7 +58,7 @@ export default async function ProductInbox({ searchParams }: { searchParams: Pro
         {raised.length === 0 ? (
           <Empty label="Inbox">Nothing waits for triage. Agents raise items from the case sheet.</Empty>
         ) : (
-          <div style={{ borderTop: '1px solid var(--fg)', marginBottom: 40 }}>
+          <div className="item-rows" style={{ marginBottom: 40 }}>
             {raised.map((i) => (
               <ItemRowLine key={i.id} item={i} settings={settings} audience="principal" clock={triageReading(i, settings, hours, now)} facts={<span>raised by {i.raisedBy.name}</span>} action={<Link className="btn btn-line btn-sm" href={`${PRODUCT}/items/${i.number}`}>Triage →</Link>} />
             ))}
@@ -70,7 +70,7 @@ export default async function ProductInbox({ searchParams }: { searchParams: Pro
             <h2 className="sub-head">
               Waiting on the desk <span className="label">{asked.length}</span>
             </h2>
-            <div style={{ borderTop: '1px solid var(--fg)', marginBottom: 40 }}>
+            <div className="item-rows" style={{ marginBottom: 40 }}>
               {asked.map((i) => (
                 <ItemRowLine key={i.id} item={i} settings={settings} audience="principal" facts={<span>owner {i.supportOwner.name || '—'}</span>} />
               ))}
@@ -84,7 +84,7 @@ export default async function ProductInbox({ searchParams }: { searchParams: Pro
         {tracked.length === 0 ? (
           <Empty label="With product">Nothing is being worked on right now.</Empty>
         ) : (
-          <div style={{ borderTop: '1px solid var(--fg)', marginBottom: 40 }}>
+          <div className="item-rows" style={{ marginBottom: 40 }}>
             {tracked.map((i) => (
               <ItemRowLine key={i.id} item={i} settings={settings} audience="principal" clock={cadenceReading(i, settings, hours, now)} clockLabel="Update due" facts={i.productOwner ? <span>{i.productOwner}</span> : undefined} />
             ))}
@@ -96,7 +96,7 @@ export default async function ProductInbox({ searchParams }: { searchParams: Pro
             <h2 className="sub-head">
               Released, waiting for the desk to close <span className="label">{released.length}</span>
             </h2>
-            <div style={{ borderTop: '1px solid var(--fg)' }}>
+            <div className="item-rows">
               {released.map((i) => (
                 <ItemRowLine key={i.id} item={i} settings={settings} audience="principal" facts={<span>{i.releasedVersion}</span>} />
               ))}

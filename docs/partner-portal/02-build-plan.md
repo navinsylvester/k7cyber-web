@@ -853,3 +853,75 @@ change a line rather than write from nothing; each is either already true of the
   give their organisations a certificate waiver to 2099-12-31, so they test the deal machine and the M8 templates/digest/SLA whatever
   the setting; the gate keeps its own tests (`partner-deals`, `partner-certificates-db`). Full suite with `PARTNER_DB_TESTS=1`:
   342 passed, 1 skipped; tsc clean, lint 0 errors; no test organisations left behind.
+- **2026-10-27 (21)** — **The site menu reaches every part of the portal, and `/partners` has content.** The Header global's *Partners*
+  mega menu now has four columns (seed `headerMenu` in `src/endpoints/seed/index.ts`): *Partner programme* (the K7 Partner Network
+  page, apply, check a certificate, Let's talk), *Partner portal* (sign in and the eleven partner pages), *K7 partner desk* (the staff
+  door and the eleven queues) and *Partner admin* (the CMS screens: settings and staff, products, collateral, schemes, training
+  courses, modules, question banks, organisations). Written to the live global by `pnpm tsx scripts/seed-nav-item.ts Partners`, which
+  rewrites that one item and keeps the rest of the menu, the primary action and the footer as edited in /admin (`seed:nav` would
+  overwrite them). `/partners` is a Payload page (id 57, `partnersPage` in `seed/pages2.ts`, `pnpm seed:page partners`) from the
+  content doc's Partners section: the banner, the two partner types, the portal's pages for partners and for K7 staff, and the
+  Let's Talk form (new form *Partner enquiry*, created by `seed-page.ts`, which now creates a seed form the database lacks). The
+  reseller and MSP lists the doc asks to recreate are not there yet. Found on the way: the site had served a header cached on
+  2026-10-15 (one-year `unstable_cache` entry, *Partners* without columns) because the seed scripts write with revalidation off; the
+  entry was removed from `.next/cache/fetch-cache` before the rebuild. Fixed: a partner session sent to a K7 desk page looped between
+  the desk and the sign-in page (`signInLanding` now keeps it on the door with a note; the staff door replaces the session).
+- **2026-10-27 (22)** — **A simple front page and the core links** (Navin: "like support portal", "remove unnecessary links and
+  complicated structure"). `/partners/portal` is now the help centre's shape and public (`proxy.ts` lets the exact path through; an
+  agent still goes to the desk; an unusable partner session still goes to the door with its reason): visitors get the hero (Sign in,
+  Apply), the four ways in and the apply sheet; partner users get the hero with the sales-material search and four counts (deals
+  protected, need your answer, schemes open, Register a deal, or training to finish with the reason when registration is closed), the
+  four ways in with where each stands, the latest three notifications and the register sheet. The status strip, side column and
+  record moved off the home (the organisation page has them). The partner header went from nine links to five (Home · Deals · Sales
+  material · Schemes · Training; `HeaderShell` links take `match` and `exact`, so the dashboard counts as Deals and certificates as
+  Training; the organisation is behind the name, notifications behind the bell, both in the phone menu), the K7 header to Desk and
+  the decision queues (the rest is the desk strip), the footer to two links. The site menu's *Partners* item went from four columns
+  (about 35 links: every portal page, the eleven desk queues, the CMS screens) to two (programme 3, portal 5), written live with
+  `seed-nav-item.ts Partners` at 03:29:45Z; `/partners` reseeded at 03:29:49Z (page id 57 → 58, untouched since its seed) with the
+  portal section cut to four rows and the staff section removed; the footer's *Partner portal* link now points to `/partners/portal`
+  (live row updated 03:29:53Z). Header/footer fetch-cache entries moved to the scratchpad before the rebuild. Builds served 03:30:56Z
+  and 03:33:20Z. Chrome (localhost): visitor page and header (one bug found and fixed: *The programme* was current on every portal page,
+  as `/partners` prefixes `/partners/portal`); signed in as `pp-test@k7computing.com`: the page, the counts, search → collateral
+  `?q=datasheet`, Deals current on the dashboard, Training on certificates, the name → organisation, 390 px in a frame (no
+  horizontal scroll, phone menu with Organisation and Notifications), light theme and back, sign-out; the K7 header on the desk; the
+  site menu and `/partners`. tsc clean, lint 0 errors, int 307 passed. Design system P6 and the header in `PartnerParts`, CHANGELOG,
+  `design-system.json`; `04-portal-guide.md`. Not committed (Navin commits).
+- **2026-10-27 (23)** — **The Partners menu cut to three places** (Navin: too many links that lead to the same place or do not make
+  sense; keep a customer- and partner-friendly approach). Session 22's two columns repeated their own headings (*K7 Partner Network*
+  = *Partner programme*, *Portal home* = *Partner portal*) and sent visitors to four signed-in pages that only bounce to the door. Now
+  three columns without rows, the About Us pattern: *Partner programme* (`/partners`), *Become a partner* (`/partners/join`),
+  *Partner portal* (`/partners/portal`, the front page with both doors); *Support* stays one link. A single column with three rows
+  was tried and dropped: the phone menu lists columns only, so Join and the portal would not reach a phone. Live at 03:59:03Z
+  (`seed-nav-item.ts Partners`). `/partners` reseeded at 03:54:13Z (id 58 → 59): the portal section removed (its four rows led to the
+  door; the portal's front page explains them), leaving the content doc's banner (Apply, Go to the partner portal), the partner
+  types and the Let's Talk form. Build served 03:59:40Z. Chrome: the desktop panel, the 390 px phone menu (Partners → Partner
+  programme · Become a partner · Partner portal), `/partners` and the portal front page.
+- **2026-10-28 (24)** — **The settings page in sub tabs** (Navin: the page needs sub tabs or grouping to declutter it). The K7
+  settings page's eleven sections now sit under six tabs on the existing `rtabs` part, server-rendered with `?tab=` as on the case
+  sheet: *Staff and roles* (default), *Programme* (with collateral and schemes), *Deals and SLA*, *CRM mirror*, *Training and
+  certificates*, *Notifications*. Each tab is its own form posting `section`; the action builds only that section and keeps the rest
+  as stored, so a switch on a hidden tab is never read as off (the old single post would have reset them). Links from the
+  certificates desk (`?tab=training#certificates`) and the templates page (`?tab=notifications`) follow. Checked on a local-only
+  `next dev -p 3100` through the probe door (stopped after): every tab renders; saving all six tabs unchanged left every stored value
+  as it was (pg_dump of the `partner_settings*` tables before and after: only Payload's regenerated row ids differ); 390 px in a
+  frame: no horizontal page scroll on any tab, the strip scrolls inside itself. Served to testers: `scripts/serve.sh rebuild` at
+  23:31:25Z, serving 23:31:58Z (build `1RilaiyPPPwH7paHYKlCF`); signed out, `?tab=crm` goes to the staff door with the tab kept. Design system: `PartnerParts`, CHANGELOG, `design-system.json`; `04-portal-guide.md`.
+  Same day, Navin: the desk strip's tab design used again for the sub tabs looked wrong, use the sections as on the reports page.
+  The switch is now the reports' and dashboard's `seg-choice` of links (`is-on`), wrapping on a phone (`set-views` in `partner.css`);
+  the save button keeps CRM and SLA in capitals and the flash names the section (*CRM mirror saved.*). Checked on :3100 again (390 px:
+  the switch wraps to four lines, no page scroll; the CRM save returns to its section), then rebuilt for testers: 23:36:12Z, serving 23:36:38Z (build `Jtn3znYMO-wzRd6jgmukx`).
+  Then, Navin: the section headings (K7 staff; Programme, Collateral, Schemes; …) had no separation and the page looked cluttered.
+  Each heading on the settings form now stands on a `line` hairline with a 32 × 2px signal segment at its start (`set-form .sub-head`
+  in `partner.css`, scoped so the shared `sub-head` elsewhere is untouched). Checked on :3100 in dark and light (theme set back to
+  dark), then rebuilt for testers: 23:42:20Z, serving 23:42:45Z (build `3sa-LdDc_CTgiZXuhOQ3s`).
+- **2026-10-28 (25)** — **The section heading on both portals** (Navin: the heading rule not only on the settings page but on
+  every page, partner and support). `sub-head` in `portal.css` (section 09 S30) now stands on a hairline with the 32 × 2px signal
+  segment; over a block that opens on its own ink rule (ledgers in `table-wrap`, rows, facts, threads, empty states; the list in
+  `portal.css`) the hairline drops and the segment lies on that rule, so no page gets a double line. The KPI settings' section titles
+  take it too; the product desk's inline-ruled item lists became `item-rows`; the settings-only rule left `partner.css`. Measured on a
+  local-only `next dev -p 3100` (stopped after) by walking every page the probe agent, the K7 desk and `pp-test@k7computing.com`
+  reach: 58 workspace and desk pages with 70 headings, 21 partner pages with 11, no heading left with its own line over a ruled block;
+  the customer case sheet and profile were read from the source (a customer sign-in would create a UAT contact). Dark and light
+  checked (theme set back to dark). Design system: SupportParts S30, PartnerParts, CHANGELOG, `design-system.json`.
+  Rebuilt for testers: 00:03:46Z, serving 00:04:22Z (build `EPNxEy7fHr5weHHo8psLW`).
+

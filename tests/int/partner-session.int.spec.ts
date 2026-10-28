@@ -61,6 +61,13 @@ describe('K7 staff roles', () => {
     expect(staffRolesFor('', s, { dev: true, production: true })).toEqual([])
     expect(staffRolesFor('', { ...s, devStaffPass: false }, { dev: true })).toEqual([])
   })
+  it('lets a tester off the list hold every role while the tester pass is on, except in production; a row on the list still decides', () => {
+    const t = { ...s, testerStaffPass: true }
+    expect(staffRolesFor('someone@k7computing.com', t)).toHaveLength(5)
+    expect(staffRolesFor('someone@k7computing.com', t, { production: true })).toEqual([])
+    expect(staffRolesFor('priya@k7computing.com', t)).toEqual(['channelManager', 'dealDeskApprover'])
+    expect(staffRolesFor('', t)).toEqual([])
+  })
   it('lists who holds a role, fallbacks included, for notifications', () => {
     expect(staffWithRole('dealDeskApprover', s).map((p) => p.email)).toEqual(['priya@k7computing.com', 'raman@k7computing.com'])
     expect(staffWithRole('schemeAdmin', s).map((p) => p.email)).toEqual(['raman@k7computing.com'])
@@ -109,6 +116,9 @@ describe('the door with a session already held (B-01)', () => {
   it('sends a usable partner session home, to next when it is given', () => {
     expect(signInLanding({ kind: 'partner', state: 'ok' })).toEqual({ redirect: '/partners/portal' })
     expect(signInLanding({ kind: 'partner', state: 'ok', next: '/partners/portal/deals' })).toEqual({ redirect: '/partners/portal/deals' })
+  })
+  it('keeps a partner session on its way to the K7 desk on the door, since the proxy sends it back from there', () => {
+    expect(signInLanding({ kind: 'partner', state: 'ok', next: '/partners/portal/k7/operations' })).toEqual({ stale: false, crossing: true })
   })
   it('keeps a suspended, disabled or removed partner session on the door with the reason, so requirePartner cannot loop', () => {
     expect(signInLanding({ kind: 'partner', state: 'org', next: '/partners/portal' })).toEqual({ error: 'suspended', stale: true })
