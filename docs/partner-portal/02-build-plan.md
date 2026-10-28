@@ -914,4 +914,14 @@ change a line rather than write from nothing; each is either already true of the
   Each heading on the settings form now stands on a `line` hairline with a 32 × 2px signal segment at its start (`set-form .sub-head`
   in `partner.css`, scoped so the shared `sub-head` elsewhere is untouched). Checked on :3100 in dark and light (theme set back to
   dark), then rebuilt for testers: 23:42:20Z, serving 23:42:45Z (build `3sa-LdDc_CTgiZXuhOQ3s`).
+- **2026-10-28 (25)** — **The section heading on both portals** (Navin: the heading rule not only on the settings page but on
+  every page, partner and support). `sub-head` in `portal.css` (section 09 S30) now stands on a hairline with the 32 × 2px signal
+  segment; over a block that opens on its own ink rule (ledgers in `table-wrap`, rows, facts, threads, empty states; the list in
+  `portal.css`) the hairline drops and the segment lies on that rule, so no page gets a double line. The KPI settings' section titles
+  take it too; the product desk's inline-ruled item lists became `item-rows`; the settings-only rule left `partner.css`. Measured on a
+  local-only `next dev -p 3100` (stopped after) by walking every page the probe agent, the K7 desk and `pp-test@k7computing.com`
+  reach: 58 workspace and desk pages with 70 headings, 21 partner pages with 11, no heading left with its own line over a ruled block;
+  the customer case sheet and profile were read from the source (a customer sign-in would create a UAT contact). Dark and light
+  checked (theme set back to dark). Design system: SupportParts S30, PartnerParts, CHANGELOG, `design-system.json`.
+  Rebuilt for testers: 00:03:46Z, serving 00:04:22Z (build `EPNxEy7fHr5weHHo8psLW`).
 

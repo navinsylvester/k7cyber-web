@@ -154,9 +154,6 @@
 .seg-choice a:hover, .seg-choice a.is-on { background: var(--fg); color: var(--bg); }
 /* The settings page's sections on the same switch, as links (the six do not fit a phone on one line). */
 .set-views .seg-choice { flex-wrap: wrap; }
-/* A settings section's heading stands on a hairline with a short signal segment at its start, so the sections read apart. */
-.set-form .sub-head { position: relative; padding-bottom: 12px; margin-bottom: 22px; border-bottom: 1px solid var(--ln); }
-.set-form .sub-head::after { content: ""; position: absolute; left: 0; bottom: -1px; width: 32px; height: 2px; background: var(--signal); }
 
 /* ---------- P18 The outcome tag, P19 the money charts on section 09's S9 grid ---------- */
 .dash-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: clamp(28px, 3.4cqw, 48px) clamp(32px, 4cqw, 56px); margin-bottom: clamp(36px, 4.4cqw, 56px); }

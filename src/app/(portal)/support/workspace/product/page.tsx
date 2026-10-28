@@ -180,7 +180,7 @@ export default async function WorkspaceProduct({ searchParams }: { searchParams:
         {desk.needsInfo.length === 0 ? (
           <Empty label="Questions">Nothing waits on the desk.</Empty>
         ) : (
-          <div style={{ borderTop: '1px solid var(--fg)', marginBottom: 40 }}>
+          <div className="item-rows" style={{ marginBottom: 40 }}>
             {desk.needsInfo.map((i) => (
               <ItemRowLine
                 key={i.id}
@@ -208,7 +208,7 @@ export default async function WorkspaceProduct({ searchParams }: { searchParams:
         {desk.toTell.length === 0 ? (
           <Empty label="Released">Nothing shipped that a customer has not heard about.</Empty>
         ) : (
-          <div style={{ borderTop: '1px solid var(--fg)', marginBottom: 40 }}>
+          <div className="item-rows" style={{ marginBottom: 40 }}>
             {desk.toTell.map(({ item, cases }) => (
               <div className="board-row item-row" key={item.id}>
                 <div>
@@ -271,7 +271,7 @@ export default async function WorkspaceProduct({ searchParams }: { searchParams:
         {desk.mine.length === 0 ? (
           <Empty label="Mine">You have raised nothing that is still open. Escalate from a case sheet when the product, not the desk, has to act.</Empty>
         ) : (
-          <div style={{ borderTop: '1px solid var(--fg)', marginBottom: 40 }}>
+          <div className="item-rows" style={{ marginBottom: 40 }}>
             {desk.mine.map((i) => (
               <ItemRowLine key={i.id} item={i} settings={settings} audience="support" facts={i.crmRef ? <span>{i.crmRef}</span> : undefined} />
             ))}
@@ -284,7 +284,7 @@ export default async function WorkspaceProduct({ searchParams }: { searchParams:
         {desk.open.length === 0 ? (
           <Empty label="Open items">No item is open.</Empty>
         ) : (
-          <div style={{ borderTop: '1px solid var(--fg)' }}>
+          <div className="item-rows">
             {desk.open.map((i) => (
               <ItemRowLine key={i.id} item={i} settings={settings} audience="support" facts={<span>raised by {i.raisedBy.name}{i.crmRef ? ` · ${i.crmRef}` : ''}</span>} />
             ))}
