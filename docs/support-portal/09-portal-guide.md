@@ -296,7 +296,8 @@ hint, the sample script, the engineering door (phases B and C of the design).
   cases from 13-10 were typed by hand.
 - Two Dataverse rules learnt the hard way: a case whose customer is a contact must not carry that contact as
   `primarycontactid` (0x8004f865), and UAT's create automation sets a new case's status reason itself (the
-  portal does not send one). Both are handled in `src/lib/support/cases.ts`.
+  portal does not send one). Both are handled in `src/lib/support/cases.ts`; the agent's *New case* action
+  (`workspace/cases/new/actions.ts`) sent the contact as its own primary contact until 2026-11-06 and failed on every contact case.
 - The test contact and case are real rows in UAT; delete them from the Customer Service Hub when the demo
   no longer needs them (mass deletes stay the CRM owner's call).
 
