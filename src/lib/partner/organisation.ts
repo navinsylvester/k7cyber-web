@@ -2,6 +2,8 @@ import 'server-only'
 import configPromise from '@payload-config'
 import { getPayload, type Where } from 'payload'
 
+import { canonicalCountry, canonicalState } from '@/lib/geo'
+
 import { audit } from './audit'
 import { notify } from './notify'
 import { orgVars } from './notify-model'
@@ -89,14 +91,14 @@ export const orgCounts = async (): Promise<{ approved: number; suspended: number
 
 export type SaveResult<T = PartnerOrg> = { ok: true; org: T } | { ok: false; errors: FieldErrors }
 
-/** The details change at once: trade name, address, website, regions. Not the legal identity. */
+/** The details change at once: trade name, address, website. Not the legal identity, and not the K7 region (K7 assigns it). */
 export const saveOrgDetails = async (me: PartnerContext, d: OrgDetails): Promise<SaveResult> => {
-  const settings = await getPartnerSettings()
-  const regions = d.regions.filter((r) => settings.regions.some((a) => a.code === r))
-  const errors = validateDetails({ ...d, regions }, settings.regions)
+  const country = canonicalCountry(d.country) || d.country.trim()
+  const details = { ...d, country, state: canonicalState(country, d.state) || d.state.trim() }
+  const errors = validateDetails(details)
   if (Object.keys(errors).length) return { ok: false, errors }
   const before = (await loadOrg(me.scope.orgId)) ?? me.org
-  const data = { tradeName: d.tradeName.trim(), address: d.address.trim(), city: d.city.trim(), state: d.state.trim(), country: d.country.trim(), pin: d.pin.trim(), website: normaliseWebsite(d.website), regions }
+  const data = { tradeName: d.tradeName.trim(), address: d.address.trim(), city: d.city.trim(), state: details.state, country, pin: d.pin.trim(), website: normaliseWebsite(d.website) }
   const org = await update(me.scope.orgId, data)
   const changed = (Object.keys(data) as (keyof typeof data)[]).filter((k) => JSON.stringify(before[k]) !== JSON.stringify(data[k]))
   if (changed.length) await audit({ actor: me.actor, object: 'partner-orgs', objectId: org.id, objectLabel: org.partnerId, action: 'org.details-updated', orgId: org.id, comment: `Changed: ${changed.join(', ')}`, meta: { before: Object.fromEntries(changed.map((k) => [k, before[k]])), after: Object.fromEntries(changed.map((k) => [k, data[k]])) } })
@@ -181,6 +183,16 @@ export const setOrgStatus = async (o: PartnerOrg, to: OrgStatus, reason: string,
     href: '/partners/portal',
     to: { kind: 'org', orgId: saved.id },
   })
+  return { ok: true, org: saved }
+}
+
+/** The K7 region, which the Channel Manager assigns (on approval, and here after it); one of the settings' regions. */
+export const setOrgRegion = async (o: PartnerOrg, region: string, me: K7Context): Promise<{ ok: true; org: PartnerOrg } | { ok: false; error: string }> => {
+  const settings = await getPartnerSettings()
+  if (!settings.regions.some((r) => r.code === region)) return { ok: false, error: 'Pick one of the K7 regions.' }
+  if (o.regions.length === 1 && o.regions[0] === region) return { ok: true, org: o }
+  const saved = await update(o.id, { regions: [region] })
+  await audit({ actor: me.actor, object: 'partner-orgs', objectId: saved.id, objectLabel: saved.partnerId, action: 'org.region-set', from: o.regions.join(', '), to: region, orgId: saved.id })
   return { ok: true, org: saved }
 }
 

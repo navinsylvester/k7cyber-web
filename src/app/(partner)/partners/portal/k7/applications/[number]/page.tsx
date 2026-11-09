@@ -3,12 +3,13 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
-import { ApplicationSummary } from '@/components/partner/Join'
+import { ApplicationSummary, territoryOf } from '@/components/partner/Join'
 import { K7Nav } from '@/components/partner/K7Nav'
-import { Aid, AppStateTag, Field, Flash, Pid, Strip, TypeTag } from '@/components/partner/Parts'
+import { Aid, AppStateTag, Field, Flash, Options, Pid, Strip, TypeTag } from '@/components/partner/Parts'
 import { SlaValue } from '@/components/partner/Sla'
 import { SubmitButton } from '@/components/partner/SubmitButton.client'
 import { Crumbs } from '@/components/support/Parts'
+import { crmRegionOfState } from '@/lib/geo'
 import { objectAudit } from '@/lib/partner/audit'
 import { outboxOf } from '@/lib/partner/mirror'
 import { findByNumber, K7_APPLICATIONS, orgOfApplication } from '@/lib/partner/registration'
@@ -23,6 +24,13 @@ import { assignAction, decideAction, runOutboxAction } from '../actions'
 
 export const metadata: Metadata = { title: 'Application' }
 
+/** The settings' region that holds the CRM's region for the applicant's state ("West" → "West and Central"), or ''. */
+const suggestRegion = (regions: { code: string; name: string }[], crm: string): string => {
+  if (!crm) return ''
+  const w = crm.toLowerCase()
+  return (regions.find((r) => r.name.toLowerCase() === w) ?? regions.find((r) => r.name.toLowerCase().split(/[^a-z]+/).includes(w)))?.code ?? ''
+}
+
 /* One application for the Channel Manager (FR-REG-05, FR-REG-06): the filed facts, the decision panel (take it; approve, reject
    with a reason, send back with a note), the record of decisions, and after approval the organisation and the CRM job's state. */
 export default async function K7ApplicationPage({ params, searchParams }: { params: Promise<{ number: string }>; searchParams: Promise<{ ok?: string; error?: string }> }) {
@@ -36,6 +44,7 @@ export default async function K7ApplicationPage({ params, searchParams }: { para
   const mineToTake = app.status === 'submitted' || (app.status === 'underReview' && app.assignee.email !== me.email)
   const job = jobs[0]
   const clock = applicationClock(app)
+  const suggested = suggestRegion(settings.regions, crmRegionOfState(app.company.country, app.company.state))
   return (
     <>
       <K7Nav active="applications" roles={me.roles} />
@@ -124,6 +133,13 @@ export default async function K7ApplicationPage({ params, searchParams }: { para
                       ))}
                     </div>
                   </fieldset>
+                  {decisions.includes('approve') && settings.regions.length > 0 && (
+                    <Field id="region" label="K7 region" span select hint={`Needed to approve. The applicant asked for: ${territoryOf(app, regions) || '—'}.${suggested ? ' Suggested from the state.' : ''}`}>
+                      <select id="region" name="region" defaultValue={suggested}>
+                        <Options empty="Choose…" items={settings.regions.map((r) => ({ value: r.code, label: r.name }))} />
+                      </select>
+                    </Field>
+                  )}
                   <Field id="comment" label="Note to the applicant" span hint="Required for a rejection or a clarification; optional on approval.">
                     <textarea id="comment" name="comment" rows={4} placeholder="What you need, or why not." />
                   </Field>

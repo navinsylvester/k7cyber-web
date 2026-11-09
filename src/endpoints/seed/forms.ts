@@ -24,7 +24,8 @@ const select = (name: string, label: string, options: string[], required = false
   options: options.map((o) => ({ label: o, value: o })),
 })
 
-const INDIAN_STATES = ['Andhra Pradesh', 'Delhi', 'Gujarat', 'Haryana', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Punjab', 'Rajasthan', 'Tamil Nadu', 'Telangana', 'Uttar Pradesh', 'West Bengal', 'Other']
+/* The state follows the country on the page (K7Form, src/lib/geo): a select where the country has a list, free text elsewhere. */
+const state = (required = true) => ({ blockType: 'state' as const, name: 'state', label: 'State', required })
 
 /* The shared Enquiry / Request demo field set from the content doc; Request quote adds the sizing field. */
 const estateFields = (sizing: boolean) => [
@@ -33,7 +34,7 @@ const estateFields = (sizing: boolean) => [
   email('email', 'Contact email'),
   text('phone', 'Contact phone'),
   { blockType: 'country' as const, name: 'country', label: 'Country', required: true },
-  select('state', 'State', INDIAN_STATES, true),
+  state(),
   text('city', 'City'),
   ...(sizing ? [number('employees', 'No. of employees')] : []),
   textarea('comment', 'Comment'),
@@ -90,9 +91,9 @@ export const forms: FormData[] = [
       text('company', 'Company'),
       email('email', 'Email address'),
       { blockType: 'country' as const, name: 'country', label: 'Country', required: true },
-      select('state', 'State', INDIAN_STATES, true),
-      text('phone', 'Phone', false),
-      select('regarding', 'My inquiry is regarding', ['Channel Partner', 'MSP', 'Other'], true),
+      state(),
+      text('phone', 'Phone', true),
+      select('regarding', 'My inquiry is regarding', ['Distributor', 'Integration Partner', 'Value Added Reseller', 'MSSP', 'Other'], true),
       textarea('message', 'Message', true),
       checkbox('consent', 'I agree to the collection and processing of my personal data for the stated purpose', true),
     ],

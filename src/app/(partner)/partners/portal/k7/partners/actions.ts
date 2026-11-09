@@ -2,11 +2,11 @@
 
 import { redirect } from 'next/navigation'
 
-import { decideLegalEdit, findOrgByPartnerId, K7_PARTNERS, setOrgStatus, setWaiver } from '@/lib/partner/organisation'
+import { decideLegalEdit, findOrgByPartnerId, K7_PARTNERS, setOrgRegion, setOrgStatus, setWaiver } from '@/lib/partner/organisation'
 import { requireK7Role } from '@/lib/partner/session'
 
 /* The Channel Manager's levers on an organisation (M3, FR-REG-07, decision 8): decide a legal-identity edit, suspend or
-   reinstate with a reason, set or clear the certificate waiver. The role is re-checked on every post; the library writes the
+   reinstate with a reason, assign the K7 region, set or clear the certificate waiver. The role is re-checked on every post; the library writes the
    trail and tells the organisation. */
 
 const f = (form: FormData, k: string): string => String(form.get(k) ?? '').trim()
@@ -32,6 +32,16 @@ export async function setOrgStatusAction(form: FormData): Promise<void> {
   const r = await setOrgStatus(org, to, f(form, 'reason'), me)
   if (!r.ok) return back(pid, { error: r.error })
   back(pid, { ok: to === 'suspended' ? 'Suspended. Every user is refused at the door and told by email; open sessions end on their next request.' : 'Reinstated; the users can sign in again.' })
+}
+
+export async function setRegionAction(form: FormData): Promise<void> {
+  const pid = f(form, 'partnerId')
+  const me = await requireK7Role(['channelManager'], `${K7_PARTNERS}/${pid}`)
+  const org = await findOrgByPartnerId(pid)
+  if (!org) redirect(K7_PARTNERS)
+  const r = await setOrgRegion(org, f(form, 'region'), me)
+  if (!r.ok) return back(pid, { error: r.error })
+  back(pid, { ok: 'Region saved. The CRM account keeps the region it was created with until the CRM admin changes it.' })
 }
 
 export async function setWaiverAction(form: FormData): Promise<void> {

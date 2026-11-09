@@ -6,7 +6,6 @@ import { orgAudit } from '@/lib/partner/audit'
 import { addMember, listMembers, loadMember, removeMember, setMemberStatus, updateMember } from '@/lib/partner/members'
 import { decideLegalEdit, proposeLegalEdit, saveOrgDetails, scopedOrg, setOrgStatus, withdrawLegalEdit } from '@/lib/partner/organisation'
 import type { K7Context, PartnerContext } from '@/lib/partner/session'
-import { getPartnerSettings } from '@/lib/partner/settings'
 import { orgRel } from '@/lib/partner/scope'
 import { canSignIn, findPartnerUserByEmail, toOrg, toUser } from '@/lib/partner/users'
 
@@ -69,10 +68,10 @@ describe.skipIf(!enabled)('organisation scope and M3 moves (database)', () => {
     expect(await loadMember(A.scope, B.user.id)).toBeNull()
     expect(await loadMember(B.scope, B.user.id)).toMatchObject({ id: B.user.id })
     // The trail is scoped the same way.
-    const regions = (await getPartnerSettings()).regions.slice(0, 1).map((r) => r.code)
-    const saved = await saveOrgDetails(B, { tradeName: 'B Trading', address: '2 Test Road', city: 'Chennai', state: 'Tamil Nadu', country: 'India', pin: '600002', website: 'example.com', regions })
+    const saved = await saveOrgDetails(B, { tradeName: 'B Trading', address: '2 Test Road', city: 'Chennai', state: 'tamil nadu', country: 'India', pin: '600002', website: 'example.com' })
     expect(saved.ok).toBe(true)
     expect(saved.ok && saved.org.website).toBe('https://example.com')
+    expect(saved.ok && saved.org.state).toBe('Tamil Nadu')
     const trailA = await orgAudit(A.scope)
     expect(trailA.every((t) => t.orgId === A.org.id)).toBe(true)
     expect((await orgAudit(B.scope)).some((t) => t.action === 'org.details-updated')).toBe(true)

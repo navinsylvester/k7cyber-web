@@ -1,3 +1,5 @@
+import { canonicalState, currencyOf, isIndia, statesOf } from '@/lib/geo'
+
 import { PARTNER_TYPES, type PartnerType } from './settings-model'
 import type { ApplicationStatus } from './status'
 
@@ -7,18 +9,23 @@ import type { ApplicationStatus } from './status'
 
 /* ---------- Bands (the CRM's own option sets, by value, never by label) ---------- */
 
-/** Annual turnover: `alletec_approxlyturnover` 0–7. */
+/** Annual turnover: `alletec_approxlyturnover` 0–7, bands in rupees. Outside India the same bands are asked in US dollars (`usd`, at
+    about ₹88 to the dollar, rounded), so the CRM value is the same whichever currency the applicant read. */
 export const TURNOVER_BANDS = [
-  { key: 'lt1', label: 'Under ₹1 crore', crm: 0 },
-  { key: '1-5', label: '₹1–5 crore', crm: 1 },
-  { key: '6-10', label: '₹6–10 crore', crm: 2 },
-  { key: '11-20', label: '₹11–20 crore', crm: 3 },
-  { key: '21-40', label: '₹21–40 crore', crm: 4 },
-  { key: '41-60', label: '₹41–60 crore', crm: 5 },
-  { key: '61-100', label: '₹61–100 crore', crm: 6 },
-  { key: 'gt100', label: 'Over ₹100 crore', crm: 7 },
+  { key: 'lt1', label: 'Under ₹1 crore', usd: 'Under US$ 0.1 million', crm: 0 },
+  { key: '1-5', label: '₹1–5 crore', usd: 'US$ 0.1–0.6 million', crm: 1 },
+  { key: '6-10', label: '₹6–10 crore', usd: 'US$ 0.6–1.2 million', crm: 2 },
+  { key: '11-20', label: '₹11–20 crore', usd: 'US$ 1.2–2.4 million', crm: 3 },
+  { key: '21-40', label: '₹21–40 crore', usd: 'US$ 2.4–5 million', crm: 4 },
+  { key: '41-60', label: '₹41–60 crore', usd: 'US$ 5–7 million', crm: 5 },
+  { key: '61-100', label: '₹61–100 crore', usd: 'US$ 7–12 million', crm: 6 },
+  { key: 'gt100', label: 'Over ₹100 crore', usd: 'Over US$ 12 million', crm: 7 },
 ] as const
 export type TurnoverBand = (typeof TURNOVER_BANDS)[number]['key']
+
+/** The bands as the applicant reads them: rupees for India, US dollars for every other country. */
+export const turnoverOptions = (country: string): { value: TurnoverBand; label: string }[] => TURNOVER_BANDS.map((b) => ({ value: b.key, label: currencyOf(country) === 'USD' ? b.usd : b.label }))
+export const turnoverLabel = (key: string, country: string): string => turnoverOptions(country).find((o) => o.value === key)?.label ?? ''
 
 /** Company size by people; the CRM only has a sales-force count (`alletec_salesforcecount`), so the mapping is the nearest band up. */
 export const SIZE_BANDS = [
@@ -76,6 +83,9 @@ export type Application = {
   status: ApplicationStatus
   company: Company
   contact: Contact
+  /** The applicant's own words: which region(s) or territory the partnership should cover. */
+  territory: string
+  /** Region codes from the settings; assigned by the Channel Manager on approval (empty before). */
   regions: string[]
   terms: { version: string; acceptedAt: string | null }
   assignee: { email: string; name: string }
@@ -115,8 +125,8 @@ export const validateCompany = (c: Company, now = new Date().getFullYear()): Fie
   if (c.legalName.trim().length < 2) e.legalName = 'Give the registered legal name.'
   if (c.address.trim().length < 4) e.address = 'Give the registered address.'
   if (!c.city.trim()) e.city = 'City is needed.'
-  if (!c.state.trim()) e.state = 'State is needed.'
   if (!c.country.trim()) e.country = 'Country is needed.'
+  else if (statesOf(c.country).length && !canonicalState(c.country, c.state)) e.state = 'Pick the state.'
   if (!c.pin.trim()) e.pin = 'PIN or postal code is needed.'
   if (c.website && !/^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(normaliseWebsite(c.website))) e.website = 'That does not look like a web address.'
   if (c.yearOfIncorporation === null || !Number.isInteger(c.yearOfIncorporation) || c.yearOfIncorporation < 1900 || c.yearOfIncorporation > now) e.yearOfIncorporation = `A year between 1900 and ${now}.`
@@ -136,19 +146,18 @@ export const validateContact = (c: Pick<Contact, 'name' | 'designation' | 'email
   return e
 }
 
-export const validateRegions = (regions: string[], allowed: { code: string }[]): FieldErrors => {
-  if (!allowed.length) return {}
-  const ok = regions.filter((r) => allowed.some((a) => a.code === r))
-  return ok.length ? {} : { regions: 'Pick at least one region you operate in.' }
-}
+export const validateTerritory = (territory: string): FieldErrors => (territory.trim().length < 2 ? { territory: 'Say which region(s) or territory the partnership should cover.' } : {})
+
+/** GSTIN and PAN are Indian registrations: kept for an Indian company, dropped for any other. */
+export const indianIds = (c: Pick<Company, 'country' | 'gstin' | 'pan'>): { gstin: string; pan: string } => (isIndia(c.country) ? { gstin: c.gstin.trim().toUpperCase(), pan: c.pan.trim().toUpperCase() } : { gstin: '', pan: '' })
 
 export const isPartnerType = (v: unknown): v is PartnerType => typeof v === 'string' && (PARTNER_TYPES as readonly string[]).includes(v)
 
 /** Whether an application may be submitted: every step complete and the email verified (FR-REG-03). */
-export const readyToSubmit = (a: Pick<Application, 'company' | 'contact' | 'regions'>, allowedRegions: { code: string }[]): FieldErrors => ({
+export const readyToSubmit = (a: Pick<Application, 'company' | 'contact' | 'territory'>): FieldErrors => ({
   ...validateCompany(a.company),
   ...validateContact(a.contact),
-  ...validateRegions(a.regions, allowedRegions),
+  ...validateTerritory(a.territory),
   ...(a.contact.emailVerifiedAt ? {} : { emailVerified: 'The contact email has not been verified yet.' }),
 })
 

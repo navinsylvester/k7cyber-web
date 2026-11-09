@@ -6,7 +6,8 @@ import { redirect } from 'next/navigation'
 import { currentDraft, JOIN_COOKIE, JOIN_DEVCODE_COOKIE, JOIN_OTP_COOKIE, JOIN_PATH } from '@/lib/partner/join'
 import { OTP_TTL_SECONDS, canSend, canSendFrom, clientKey, issueOtp, normaliseEmail, verifyOtp } from '@/lib/partner/otp'
 import { createDraft, editable, findByNumber, JOIN, markVerified, saveDetails, saveType, submitApplication } from '@/lib/partner/registration'
-import { EMPTY_COMPANY, isMobile, isPartnerType, normaliseMobile, validateCompany, validateContact, validateRegions, type Company, type SizeBand, type TurnoverBand } from '@/lib/partner/registration-model'
+import { canonicalCountry, canonicalState } from '@/lib/geo'
+import { EMPTY_COMPANY, indianIds, isMobile, isPartnerType, normaliseMobile, validateCompany, validateContact, validateTerritory, type Company, type SizeBand, type TurnoverBand } from '@/lib/partner/registration-model'
 import { getPartnerSettings } from '@/lib/partner/settings'
 import { sendSms, smsCodeText, smsConfigured } from '@/lib/partner/sms'
 import { mailAllowed, mailAllowlist, mailConfigured, sendMail } from '@/lib/support/mail'
@@ -62,15 +63,15 @@ export async function startApplication(form: FormData): Promise<void> {
 /** Step 2: company, contact and regions; then the code to the contact email, unless it is already verified and unchanged. */
 export async function saveDetailsAction(form: FormData): Promise<void> {
   const app = await requireEditable()
-  const settings = await getPartnerSettings()
   const year = Number(f(form, 'yearOfIncorporation'))
-  const company: Company = {
+  const country = canonicalCountry(f(form, 'country')) || f(form, 'country') || EMPTY_COMPANY.country
+  const typed: Company = {
     legalName: f(form, 'legalName'),
     tradeName: f(form, 'tradeName'),
     address: f(form, 'address'),
     city: f(form, 'city'),
-    state: f(form, 'state'),
-    country: f(form, 'country') || EMPTY_COMPANY.country,
+    state: canonicalState(country, f(form, 'state')) || f(form, 'state'),
+    country,
     pin: f(form, 'pin'),
     website: f(form, 'website'),
     yearOfIncorporation: Number.isInteger(year) && year > 0 ? year : null,
@@ -79,11 +80,12 @@ export async function saveDetailsAction(form: FormData): Promise<void> {
     gstin: f(form, 'gstin').toUpperCase(),
     pan: f(form, 'pan').toUpperCase(),
   }
+  const company: Company = { ...typed, ...indianIds(typed) }
   const contact = { name: f(form, 'contactName'), designation: f(form, 'contactDesignation'), email: normaliseEmail(f(form, 'contactEmail')), mobile: f(form, 'contactMobile') }
-  const regions = form.getAll('regions').map(String).filter((r) => settings.regions.some((x) => x.code === r))
+  const territory = f(form, 'territory')
   // Save first so nothing typed is lost, then say what is missing.
-  const saved = await saveDetails(app, company, contact, regions)
-  const errors = { ...validateCompany(company), ...validateContact(contact), ...validateRegions(regions, settings.regions) }
+  const saved = await saveDetails(app, company, contact, territory)
+  const errors = { ...validateCompany(company), ...validateContact(contact), ...validateTerritory(territory) }
   if (Object.keys(errors).length) withErrors(`${JOIN}/company`, errors)
   if (!mailAllowed(contact.email)) withErrors(`${JOIN}/company`, { contactEmail: 'This test system only sends codes to approved email addresses. Ask the portal team to add yours.' })
   if (saved.contact.emailVerifiedAt) redirect(`${JOIN}/terms`)

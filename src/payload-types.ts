@@ -2559,7 +2559,7 @@ export interface PartnerUser {
 export interface PartnerApplication {
   id: number;
   /**
-   * K7A-00001, given at submission.
+   * K7PA-00001, given at submission (K7A-00001 before 2026-11-09).
    */
   number?: string | null;
   type: 'distributor' | 'integrationPartner' | 'var' | 'msp';
@@ -2582,7 +2582,11 @@ export interface PartnerApplication {
   gstin?: string | null;
   pan?: string | null;
   /**
-   * Region codes from the settings.
+   * In the applicant’s words: which region(s) or territory the partnership should cover.
+   */
+  territory?: string | null;
+  /**
+   * Region codes from the settings, assigned by the Channel Manager on approval.
    */
   regions?: string[] | null;
   /**
@@ -5585,6 +5589,7 @@ export interface PartnerApplicationsSelect<T extends boolean = true> {
   turnover?: T;
   gstin?: T;
   pan?: T;
+  territory?: T;
   regions?: T;
   contact?:
     | T
@@ -7077,7 +7082,7 @@ export interface PartnerSetting {
    */
   partnerTypes?: ('distributor' | 'integrationPartner' | 'var' | 'msp')[] | null;
   /**
-   * The K7 regions a partner can say it operates in (FR-REG-02).
+   * The K7 regions. The Channel Manager assigns one to each partner on approval; the applicant describes the territory in words.
    */
   regions?:
     | {

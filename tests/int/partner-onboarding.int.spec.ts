@@ -64,9 +64,10 @@ describe.skipIf(!enabled)('partner onboarding (database)', () => {
       draft,
       { legalName: `PP-TEST Onboarding ${stamp} Private Limited`, tradeName: 'PP-TEST', address: '1 Test Road', city: 'Chennai', state: 'Tamil Nadu', country: 'India', pin: '600001', website: 'example.com', yearOfIncorporation: 2015, size: '11-50', turnover: '1-5', gstin: '', pan: '' },
       { name: 'Test Admin', designation: 'Director', email, mobile: '9840000000' },
-      regions,
+      'Tamil Nadu and Kerala',
     )
     expect(withDetails.company.website).toBe('https://example.com')
+    expect(withDetails.territory).toBe('Tamil Nadu and Kerala')
     // Not verified yet: submission refuses.
     const refused = await submitApplication(withDetails, '2026-10')
     expect(refused.ok).toBe(false)
@@ -77,7 +78,7 @@ describe.skipIf(!enabled)('partner onboarding (database)', () => {
     const submitted = await submitApplication(verified, '2026-10')
     expect(submitted.ok).toBe(true)
     if (!submitted.ok) return
-    expect(submitted.app.number).toMatch(/^K7A-\d{5}$/)
+    expect(submitted.app.number).toMatch(/^K7PA-\d{5}$/)
     expect(submitted.app.status).toBe('submitted')
     expect(submitted.app.terms).toMatchObject({ version: '2026-10' })
     expect((await findByNumber(submitted.app.number))?.id).toBe(draft.id)
@@ -100,13 +101,15 @@ describe.skipIf(!enabled)('partner onboarding (database)', () => {
     expect((await decideApplication(again.app, 'reject', '', me)).ok).toBe(false)
     const taken = await assignApplication(again.app, me)
     expect(taken.status).toBe('underReview')
-    const approved = await approveApplication(taken, 'Welcome', me)
+    if (regions.length) expect((await approveApplication(taken, 'Welcome', me, '')).ok).toBe(false)
+    const approved = await approveApplication(taken, 'Welcome', me, regions[0] ?? '')
     expect(approved.ok).toBe(true)
     if (!approved.ok) return
     orgId = approved.org!.id
     expect(approved.org!.partnerId).toMatch(/^K7P-\d{5}$/)
     expect(approved.app.status).toBe('approved')
     expect(approved.app.orgId).toBe(orgId)
+    expect(approved.app.regions).toEqual(regions)
 
     const found = await findPartnerUserByEmail(email)
     expect(found).not.toBeNull()
@@ -115,6 +118,7 @@ describe.skipIf(!enabled)('partner onboarding (database)', () => {
     expect(found!.user.status).toBe('invited')
     expect(found!.org.partnerId).toBe(approved.org!.partnerId)
     expect(found!.org.status).toBe('approved')
+    expect(found!.org.regions).toEqual(regions)
 
     const jobs = await payload.find({ collection: 'partner-outbox', where: { orgId: { equals: orgId } }, depth: 0 })
     expect(jobs.docs.map((j) => j.kind)).toEqual(['account.create'])
@@ -122,7 +126,7 @@ describe.skipIf(!enabled)('partner onboarding (database)', () => {
     expect(['pending', 'skipped']).toContain(jobs.docs[0]!.state)
 
     // The same email cannot become the Partner Admin of a second organisation.
-    const second = await approveApplication({ ...taken, id: taken.id }, '', me)
+    const second = await approveApplication({ ...taken, id: taken.id }, '', me, regions[0] ?? '')
     expect(second.ok).toBe(false)
   })
 

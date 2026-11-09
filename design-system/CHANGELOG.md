@@ -2,6 +2,10 @@
 
 Newest first. Each entry names the rule, the reference CSS and the parts it touched, so the system describes the site as built (README.md, "Keeping it current"). Until 2026-10-15 the folder mirrored the Design System artifact unchanged (SOURCE.md).
 
+## 2026-11-09
+
+- **EnquiryForm and Section 10 · Partners, the partner tester round's form fixes** (testers on `/partners` and the join flow): Country lists every country and State follows it (a select where the country has a list, free text "State / province" otherwise, `src/lib/geo`), on the website's enquiry forms (`FormSheet` → `K7Form`), the report lead form, the join step and the organisation page; the partner enquiry requires the phone and asks Distributor, Integration Partner, Value Added Reseller, MSSP, Other. P9 reads the turnover in ₹ for India and US$ elsewhere, GSTIN and PAN only for an Indian company, the territory and the assigned K7 region; P10 gains the region select. No new CSS: the existing `field`, `control is-select` and `meta-rows`. EnquiryForm and PartnerParts READMEs.
+
 ## 2026-10-28
 
 - **Section 09 · Support, S30 the section heading, on both portals** (Navin: the settings page's heading rule on every page, not only settings): `sub-head` stands on a `line` hairline with a 32 × 2px `signal` segment at its start; over a block that opens on its own ink rule the hairline drops and the segment lies on that rule (`:has(+ …)`, the list in `portal.css`), so no page gets a double line; the KPI settings' `settings-section h2` takes the same rule. The settings-only rule in `partner.css` (`set-form`) is gone. The product desk's item lists drew their rule inline and now carry `item-rows`. Measured on every page the agent probe, the K7 desk and the test partner reach on a local dev server (59 workspace and desk pages, 21 partner pages): no heading keeps its own line over a ruled block; the customer case sheet and profile read from the source (their blocks are in the list). `portal.css`, `partner.css`; SupportParts S30, PartnerParts. No artboard: the portals have none.

@@ -2,12 +2,15 @@ import 'server-only'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-/* The portal's own identifiers (02-build-plan.md §5, P1): K7P-00001 for organisations, K7A-00001 for applications, K7D-00001
+/* The portal's own identifiers (02-build-plan.md §5, P1): K7P-00001 for organisations, K7PA-00001 for applications, K7D-00001
    for deals (M4). One counter row per kind in `partner-counters`, advanced with a compare-and-swap update (`where value = seen`),
    so two approvals at the same moment never share a number; the unique index on the target column is the last line. */
 
 export type IdKind = 'partner' | 'application' | 'deal'
-const PREFIX: Record<IdKind, string> = { partner: 'K7P-', application: 'K7A-', deal: 'K7D-' }
+const PREFIX: Record<IdKind, string> = { partner: 'K7P-', application: 'K7PA-', deal: 'K7D-' }
+
+/** An application number: K7PA-00001 since 2026-11-09 (tester round, "P for partner"); the K7A-00001 numbers given before stay valid. */
+export const isApplicationNumber = (n: string): boolean => /^K7P?A-\d{5}$/.test(n)
 
 export const formatId = (kind: IdKind, n: number): string => `${PREFIX[kind]}${String(n).padStart(5, '0')}`
 

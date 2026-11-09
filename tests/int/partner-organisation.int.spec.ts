@@ -29,13 +29,14 @@ describe('the legal identity', () => {
     expect(toLegalEdit({})).toBeNull()
     expect(toLegalEdit({ name: 'X', proposedAt: '2026-10-22T10:00:00.000Z', proposedBy: { id: 'u', name: 'P', email: 'p@x.in' }, reason: 'merger' })).toMatchObject({ name: 'X', gstin: '', pan: '', reason: 'merger', proposedBy: { email: 'p@x.in' } })
   })
-  it('validates the details with the regions from the settings', () => {
-    const d = { tradeName: '', address: '1 Road', city: 'Chennai', state: 'TN', country: 'India', pin: '600001', website: 'example.com', regions: ['S'] }
-    expect(validateDetails(d, [{ code: 'S' }])).toEqual({})
-    expect(validateDetails({ ...d, regions: ['X'] }, [{ code: 'S' }])).toHaveProperty('regions')
-    expect(validateDetails({ ...d, regions: [] }, [])).toEqual({})
-    expect(validateDetails({ ...d, website: 'not a site' }, [])).toHaveProperty('website')
-    expect(validateDetails({ ...d, address: '' }, [])).toHaveProperty('address')
+  it('validates the details, the state against its country (the region is K7’s, not here)', () => {
+    const d = { tradeName: '', address: '1 Road', city: 'Chennai', state: 'Tamil Nadu', country: 'India', pin: '600001', website: 'example.com' }
+    expect(validateDetails(d)).toEqual({})
+    expect(validateDetails({ ...d, state: 'TN' })).toHaveProperty('state')
+    expect(validateDetails({ ...d, country: 'Singapore', state: '' })).toEqual({})
+    expect(validateDetails({ ...d, country: 'United Arab Emirates', state: 'Tamil Nadu' })).toHaveProperty('state')
+    expect(validateDetails({ ...d, website: 'not a site' })).toHaveProperty('website')
+    expect(validateDetails({ ...d, address: '' })).toHaveProperty('address')
   })
 })
 

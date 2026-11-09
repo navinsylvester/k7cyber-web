@@ -77,7 +77,7 @@ export const PartnerSettings: GlobalConfig = {
               name: 'regions',
               type: 'array',
               labels: { singular: 'Region', plural: 'Regions' },
-              admin: { description: 'The K7 regions a partner can say it operates in (FR-REG-02).' },
+              admin: { description: 'The K7 regions. The Channel Manager assigns one to each partner on approval; the applicant describes the territory in words.' },
               fields: [{ type: 'row', fields: [{ name: 'code', type: 'text', required: true, admin: { width: '30%' } }, { name: 'name', type: 'text', required: true, admin: { width: '70%' } }] }],
             },
             {

@@ -20,7 +20,7 @@ export const PartnerApplications: CollectionConfig = {
     {
       type: 'row',
       fields: [
-        { name: 'number', type: 'text', unique: true, index: true, admin: { width: '25%', description: 'K7A-00001, given at submission.' } },
+        { name: 'number', type: 'text', unique: true, index: true, admin: { width: '25%', description: 'K7PA-00001, given at submission (K7A-00001 before 2026-11-09).' } },
         { name: 'type', type: 'select', options: PARTNER_TYPE_OPTIONS, required: true, admin: { width: '25%' } },
         {
           name: 'status',
@@ -62,7 +62,8 @@ export const PartnerApplications: CollectionConfig = {
       ],
     },
     { type: 'row', fields: [{ name: 'gstin', type: 'text', admin: { width: '50%' } }, { name: 'pan', type: 'text', admin: { width: '50%' } }] },
-    { name: 'regions', type: 'text', hasMany: true, admin: { description: 'Region codes from the settings.' } },
+    { name: 'territory', type: 'textarea', admin: { description: 'In the applicant’s words: which region(s) or territory the partnership should cover.' } },
+    { name: 'regions', type: 'text', hasMany: true, admin: { description: 'Region codes from the settings, assigned by the Channel Manager on approval.' } },
     {
       name: 'contact',
       type: 'group',

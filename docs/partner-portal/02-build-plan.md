@@ -925,3 +925,30 @@ change a line rather than write from nothing; each is either already true of the
   checked (theme set back to dark). Design system: SupportParts S30, PartnerParts, CHANGELOG, `design-system.json`.
   Rebuilt for testers: 00:03:46Z, serving 00:04:22Z (build `EPNxEy7fHr5weHHo8psLW`).
 
+- **2026-11-09 (26)** — **Tester round: the enquiry and join forms** (eight items from the testers on `/partners` and the join flow;
+  all eight checked on the tunnel first and found real; Navin's decisions: turnover in two currencies, K7 assigns the region on
+  approval, the type is called *Integration Partner*). (1) Country lists all 249 ISO countries (`src/lib/geo`, generated from ISO
+  3166 via pycountry's iso-codes data, sorted in English collation) on every form that asks: the website's enquiry, demo and quote
+  forms (`K7Form`), the report lead form, the join step and the organisation page. (2) State follows the country: a select where
+  the country has a list (India written to match the CRM's `k7_states` with the CRM's region per state; the UAE, Saudi Arabia,
+  Malaysia, the UK by hand; ten more from ISO), otherwise an optional free-text "State / province"; states match loosely
+  ("tamilnadu" is Tamil Nadu). The live forms 1, 2, 3 and 5 had a select of 14 Indian states: now the form builder's `state`
+  field. (3) The partner enquiry requires the phone; (4) its inquiry types are Distributor, Integration Partner, Value Added
+  Reseller, MSSP, Other (live form and seed). (5) Turnover bands in ₹ crore for India and US$ million elsewhere (at about ₹88,
+  rounded) on the same CRM values. (6) GSTIN and PAN only for an Indian company (dropped on save otherwise; the legal-identity form
+  hides them for a non-Indian organisation with none). (7) The region checkboxes are gone from the join step: the applicant writes
+  "Which region(s) or territory would you like your partnership to cover?" (`partner-applications.territory`, required); the
+  Channel Manager assigns the K7 region on the decide panel (required to approve, suggested from the CRM region of an Indian
+  state) and can change it on the partner's sheet (`setOrgRegion`, audited); the Partner Admin no longer edits it. Applications
+  filed on the old form show their ticks as the territory, "(ticked on the earlier form)", until approved. The CRM mirror looks
+  countries and states up by the CRM's spelling (`United Arab Emirates (UAE)`, `Pudhucherry (UT)`…). (8) New application numbers
+  are K7PA-00001 (the counter continues: the next is K7PA-00037); K7A numbers stay valid everywhere.
+  Checked: 256 partner tests with `PARTNER_DB_TESTS=1`; on the tunnel (production build): the enquiry form's 249 countries, the
+  state as Indian states, Singapore free text, the seven emirates, Phone and the five types enforced on an empty submit; the join
+  step switched to Singapore (US$ bands, GSTIN/PAN gone, Postal code) and saved (row: Singapore · Central · `6-10` · territory,
+  GSTIN empty; only the allowlist refusal for the example.com contact). On a local-only `next dev -p 3100` (probe door and
+  `AUTH_URL` set for that process only, stopped after): K7A-00036's decide panel suggests South from "tamilnadu"; K7P-00003's
+  region set to North and back to South (two `org.region-set` rows); as `pp-test@k7computing.com` the organisation page saved
+  unchanged keeps the region `S`. Served to testers: build `zQh0qj_5FhFQOp4Nvp-jF`, serving 03:26:46Z. Test data left: draft application 77 (*PP-TEST Tester Round Pte Ltd*). The settings' region
+  "West and Central" has no CRM `k7_regions` row of that name (the CRM has West and Central apart, and Middle East, ROW), so its
+  CRM region stays blank; partners outside India need regions added to the settings before they can be approved.

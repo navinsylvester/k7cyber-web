@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import React from 'react'
 
 import { K7Nav } from '@/components/partner/K7Nav'
-import { Field, Flash, LegalChanges, OrgStateTag, Pid, RoleTags, Strip, TypeTag, UserStateTag } from '@/components/partner/Parts'
+import { Field, Flash, LegalChanges, Options, OrgStateTag, Pid, RoleTags, Strip, TypeTag, UserStateTag } from '@/components/partner/Parts'
 import { Crumbs } from '@/components/support/Parts'
 import { orgAudit } from '@/lib/partner/audit'
 import { k7CertificateHref, K7_CERTIFICATES, orgStanding } from '@/lib/partner/certificates'
@@ -18,7 +18,7 @@ import { requireK7Role } from '@/lib/partner/session'
 import { getPartnerSettings, PARTNER_TYPE_LABEL } from '@/lib/partner/settings'
 import { dmy, dmyHm, relative } from '@/lib/support/format'
 
-import { decideLegalEditAction, setOrgStatusAction, setWaiverAction } from '../actions'
+import { decideLegalEditAction, setOrgStatusAction, setRegionAction, setWaiverAction } from '../actions'
 
 export const metadata: Metadata = { title: 'Partner' }
 
@@ -137,7 +137,7 @@ export default async function K7PartnerPage({ params, searchParams }: { params: 
                   <Row k="Trade name" v={org.tradeName} />
                   <Row k="Registered address" v={org.address ? `${org.address}, ${org.city}, ${org.state} ${org.pin}, ${org.country}` : ''} />
                   <Row k="Website" v={org.website ? <a href={org.website} rel="noreferrer" target="_blank">{org.website.replace(/^https?:\/\//, '')}</a> : ''} />
-                  <Row k="K7 regions" v={regions.join(', ')} />
+                  <Row k="K7 region" v={regions.join(', ')} />
                 </dl>
               </div>
             </div>
@@ -253,6 +253,27 @@ export default async function K7PartnerPage({ params, searchParams }: { params: 
                 )}
               </p>
             </div>
+            {settings.regions.length > 0 && (
+              <div>
+                <h2>K7 region</h2>
+                <p className="hint" style={{ margin: '0 0 12px' }}>
+                  Assigned by K7; it decides the collateral and schemes the partner sees{app?.territory ? `. The application asked for: ${app.territory}` : ''}.
+                </p>
+                <form action={setRegionAction} className="form-grid" style={{ gap: 12 }}>
+                  <input type="hidden" name="partnerId" value={org.partnerId} />
+                  <Field id="region" label="Region" span select>
+                    <select id="region" name="region" defaultValue={org.regions[0] ?? ''} required>
+                      <Options empty="Choose…" items={settings.regions.map((r) => ({ value: r.code, label: r.name }))} />
+                    </select>
+                  </Field>
+                  <div className="form-actions span-2">
+                    <button className="btn btn-line btn-sm" type="submit">
+                      Save the region
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
             <div>
               <h2>Certificate waiver</h2>
               <p className="hint" style={{ margin: '0 0 12px' }}>
