@@ -952,3 +952,15 @@ change a line rather than write from nothing; each is either already true of the
   unchanged keeps the region `S`. Served to testers: build `zQh0qj_5FhFQOp4Nvp-jF`, serving 03:26:46Z. Test data left: draft application 77 (*PP-TEST Tester Round Pte Ltd*). The settings' region
   "West and Central" has no CRM `k7_regions` row of that name (the CRM has West and Central apart, and Middle East, ROW), so its
   CRM region stays blank; partners outside India need regions added to the settings before they can be approved.
+- **2026-11-12 (27)** — **Tester round: the footers** (items 9–11, checked on the tunnel first and found real). (9, 10) The portal
+  footer named *K7 Computing Private Limited* and linked the site as *k7computing.com*: it now reads *K7 Enterprise Security Private
+  Limited · Chennai, India* and *k7cybersecurity.com*, on the partner portal and the support portal (the same line in
+  `(partner)/layout.tsx` and `(portal)/layout.tsx`). (11) The website footer's base line dropped *Chennai · Singapore · Dubai*:
+  the Footer global's `offices` set blank in the live database (legal, columns and socials untouched), no longer defaulted or
+  seeded; its stale `global_footer` entry removed from `.next/cache/fetch-cache` before the rebuild. Design system: SiteFooter
+  README and preview, the ten artboards with the footer and `designs/k7chrome.py`, CHANGELOG. Found on the way: the project's
+  Postgres container had stopped (exit 0) about 44 hours earlier, so the tunnel's database-backed pages were down; started again
+  with `docker compose up -d`. Served to testers: build `LhbjMQVbUVKiVZ4VVkXor`, serving 05:09:57Z; checked in Chrome on
+  `/partners/portal` and `/partners`, and by curl on `/support` and `/`. Not changed (not asked): the certificate's issuer default
+  and its PDF line (*K7 Computing Private Limited · … · k7computing.com/partners*), the notification signature and the
+  `@k7computing.com` mail addresses.

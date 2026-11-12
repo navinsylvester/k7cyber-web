@@ -2,6 +2,10 @@
 
 Newest first. Each entry names the rule, the reference CSS and the parts it touched, so the system describes the site as built (README.md, "Keeping it current"). Until 2026-10-15 the folder mirrored the Design System artifact unchanged (SOURCE.md).
 
+## 2026-11-12
+
+- **SiteFooter and the portals' footers, the company's names** (partner testers, items 9–11): the site footer's base line drops the offices (`Chennai · Singapore · Dubai`; the Footer global's `offices` is blank, no longer defaulted or seeded; offices live on Contact Us) and reads the legal and the print stamp; the support and partner portals' footer reads *K7 Enterprise Security Private Limited · Chennai, India* and links the site as *k7cybersecurity.com*. No CSS change. SiteFooter README and `preview.html`; the ten artboards with the footer and `designs/k7chrome.py`.
+
 ## 2026-11-09
 
 - **EnquiryForm and Section 10 · Partners, the partner tester round's form fixes** (testers on `/partners` and the join flow): Country lists every country and State follows it (a select where the country has a list, free text "State / province" otherwise, `src/lib/geo`), on the website's enquiry forms (`FormSheet` → `K7Form`), the report lead form, the join step and the organisation page; the partner enquiry requires the phone and asks Distributor, Integration Partner, Value Added Reseller, MSSP, Other. P9 reads the turnover in ₹ for India and US$ elsewhere, GSTIN and PAN only for an Indian company, the territory and the assigned K7 region; P10 gains the region select. No new CSS: the existing `field`, `control is-select` and `meta-rows`. EnquiryForm and PartnerParts READMEs.

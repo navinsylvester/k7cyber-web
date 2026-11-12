@@ -42,9 +42,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             </main>
             <footer className="site-footer g-paper" style={{ paddingTop: 28 }}>
               <div className="footer-base" style={{ marginTop: 0 }}>
-                <span className="label">K7 Computing Private Limited · Chennai, India</span>
+                <span className="label">K7 Enterprise Security Private Limited · Chennai, India</span>
                 <span className="label">
-                  <Link href="/research">K7 Labs</Link> · <Link href="/">k7computing.com</Link>
+                  <Link href="/research">K7 Labs</Link> · <Link href="/">k7cybersecurity.com</Link>
                 </span>
               </div>
             </footer>

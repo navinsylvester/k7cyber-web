@@ -117,7 +117,7 @@ export const footer = {
     { code: 'FB', name: 'Facebook', url: 'https://www.facebook.com/k7computing' },
   ],
   legal: '© 2026 K7 Enterprise Security Private Limited. All Rights Reserved.',
-  offices: 'Chennai · Singapore · Dubai',
+  offices: '',
 }
 
 export const seed = async ({ payload, req }: { payload: Payload; req: PayloadRequest }): Promise<void> => {

@@ -6745,6 +6745,9 @@ export interface Footer {
       }[]
     | null;
   legal?: string | null;
+  /**
+   * Optional line beside the legal one; left blank (the offices are on Contact Us).
+   */
   offices?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
