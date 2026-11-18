@@ -178,18 +178,26 @@ export const emailRegarding = async (auth: DataverseAuth, activityId: string): P
   return e._regardingobjectid_value ? String(e._regardingobjectid_value) : null
 }
 
-/* ---------- Email reply from the workspace (phase 1b) ---------- */
+/* ---------- Email reply from the workspace (phase 1b; formatting and attachments 2026-11-18) ---------- */
 
-export type EmailReply = { to: string; subject: string; text: string; fromUserId: string }
+export type EmailReply = {
+  to: string
+  subject: string
+  /** The body as HTML, already through cleanEmailHtml or textToEmailHtml and wrapped (email-html.ts). */
+  html: string
+  fromUserId: string
+  files?: FileBody[]
+}
 
-/** Creates an outgoing email activity on the case and asks Dataverse to send it. Where no mailbox is synced (UAT today)
-   the send fails and the email stays as a draft in the timeline; the caller tells the agent which happened. */
+/** Creates an outgoing email activity on the case, attaches the files, and asks Dataverse to send it. Where no mailbox is synced
+   (UAT today) the send fails and the email stays as a draft in the timeline; the caller tells the agent which happened. When an
+   attachment is refused the draft is deleted again, so a retry does not leave a half-built email behind. */
 export const sendEmailReply = async (auth: DataverseAuth, incidentId: string, m: EmailReply): Promise<{ id: string; sent: boolean; reason?: string }> => {
   const to = m.to.trim()
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(to)) throw new Error('Invalid recipient')
   const id = await create(auth, 'emails', {
     subject: m.subject.trim().slice(0, 200),
-    description: toNoteHtml(m.text),
+    description: m.html,
     directioncode: true,
     'regardingobjectid_incident_email@odata.bind': bind('incidents', incidentId),
     email_activity_parties: [
@@ -198,9 +206,49 @@ export const sendEmailReply = async (auth: DataverseAuth, incidentId: string, m:
     ],
   })
   try {
+    // One at a time: each body can be megabytes, and the order is the order the agent picked them in.
+    for (const f of m.files ?? []) {
+      await create(auth, 'activitymimeattachments', {
+        'objectid_activitypointer@odata.bind': bind('activitypointers', id),
+        objecttypecode: 'email',
+        filename: f.name.slice(0, 255),
+        mimetype: f.mime || 'application/octet-stream',
+        body: f.base64,
+      })
+    }
+  } catch (e) {
+    await callDataverse(auth, 'DELETE', entity('emails', id)).catch(() => undefined)
+    throw e
+  }
+  try {
     await callDataverse(auth, 'POST', `${entity('emails', id)}/Microsoft.Dynamics.CRM.SendEmail`, { body: { IssueSend: true, TrackingToken: '' } })
     return { id, sent: true }
   } catch (e) {
     return { id, sent: false, reason: (e as Error).message }
   }
+}
+
+/** The organisation's blocked attachment extensions (Settings → Email), lower case without the dot. Read with the agent's own
+   token and kept for an hour; when it cannot be read the list is empty and Dynamics' own refusal is what the agent sees. */
+let blockedCache: { at: number; list: string[] } | null = null
+export const blockedExtensions = async (auth: DataverseAuth): Promise<string[]> => {
+  if (blockedCache && Date.now() - blockedCache.at < 3_600_000) return blockedCache.list
+  try {
+    const p = await list<Row>(auth, buildQuery('organizations', { select: ['blockedattachments'], top: 1 }), 1)
+    const raw = String(p.value[0]?.blockedattachments ?? '')
+    const parsed = raw
+      .split(/[;,\s]+/)
+      .map((x) => x.trim().replace(/^\./, '').toLowerCase())
+      .filter(Boolean)
+    blockedCache = { at: Date.now(), list: parsed }
+    return parsed
+  } catch {
+    return []
+  }
+}
+
+/** The extension a file name ends in, lower case, without the dot ('' when it has none). */
+export const extensionOf = (name: string): string => {
+  const m = name.toLowerCase().match(/\.([a-z0-9]{1,12})$/)
+  return m ? m[1]! : ''
 }

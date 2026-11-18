@@ -56,6 +56,7 @@ export async function createCaseAction(form: FormData): Promise<void> {
         caseType: num(form, 'caseType'),
         consideredAs: num(form, 'consideredAs'),
         productVersion: str(form, 'productVersion') || undefined,
+        osVersion: str(form, 'osVersion') || undefined,
         serial: str(form, 'serial') || undefined,
         incidentId: str(form, 'incidentId') || undefined,
         module: str(form, 'module') || undefined,

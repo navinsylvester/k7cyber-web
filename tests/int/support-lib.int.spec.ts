@@ -121,7 +121,9 @@ describe('Formatting', () => {
     expect(s).not.toContain('onclick')
     expect(s).not.toContain('<img')
     expect(s).toContain('href="#"')
-    expect(s).toContain('href="https://k7computing.com"')
+    expect(s).toContain('href="https://k7computing.com/"')
+    // An address in an email stays a link in the timeline; data: and other schemes point nowhere.
+    expect(sanitizeHtml('<a href="mailto:care@k7computing.com">mail</a><a href="data:text/html,x">d</a>')).toBe('<a href="mailto:care@k7computing.com" rel="noopener nofollow" target="_blank">mail</a><a href="#" rel="noopener nofollow" target="_blank">d</a>')
     expect(productFamily('Total Security - 5U3Y')).toBe('Total Security')
     expect(productFamily('Mobile Security 1U6M')).toBe('Mobile Security')
     expect(productFamily('K7 Endpoint Security')).toBe('K7 Endpoint Security')

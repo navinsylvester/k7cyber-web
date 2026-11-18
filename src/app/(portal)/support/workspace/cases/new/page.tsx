@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
 
+import { SubmitButton } from '@/components/partner/SubmitButton.client'
 import { CategoryPicker, CustomerAutofill } from '@/components/support/CasePickers.client'
 import { Field, Flash, Options, PageHead, Req, RequiredNote } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
@@ -221,6 +222,9 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
             <Field id="productVersion" label="Product version">
               <input id="productVersion" name="productVersion" placeholder="16.0.1234" />
             </Field>
+            <Field id="osVersion" label="OS version">
+              <input id="osVersion" name="osVersion" maxLength={100} placeholder="Windows 11 23H2" />
+            </Field>
             <Field id="serial" label="Serial key">
               <input id="serial" name="serial" spellCheck={false} />
             </Field>
@@ -249,9 +253,10 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
             </Field>
 
             <div className="form-actions span-2">
-              <button className="btn btn-primary" type="submit">
+              {/* Dynamics takes several seconds to create a case; the button says so and cannot post twice. */}
+              <SubmitButton className="btn btn-primary" pendingLabel="Creating…">
                 Create case →
-              </button>
+              </SubmitButton>
               <Link className="link-u" href={`${WS}/cases`}>
                 Cancel
               </Link>

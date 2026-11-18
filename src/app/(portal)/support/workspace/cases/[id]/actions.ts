@@ -4,14 +4,16 @@ import { redirect } from 'next/navigation'
 
 import { userMessage } from '@/lib/dataverse/errors'
 import { isGuid } from '@/lib/dataverse/odata'
-import { addCaseToQueue, assignCase, cancelCase, getCase, reopenCase, resolveCase, setStatusReason, updateCase, type NewCase } from '@/lib/support/cases'
+import { addCaseToQueue, assignCase, cancelCase, getCase, getCaseByTicket, mergeCase, reopenCase, resolveCase, setStatusReason, updateCase, type CaseRow, type NewCase } from '@/lib/support/cases'
 import { asReason, asScore, closeFollowUp, csatForCase, inviteSurvey, recordResponse, snapshotOf } from '@/lib/support/csat'
 import { getSettings } from '@/lib/support/kpi-config'
 import { ACTIVE_STATUS_REASONS, STATE, STATUS } from '@/lib/support/options'
 import { EVIDENCE_MIME } from '@/collections/support/ProductEvidence'
 import { asCaseChoice, asKind, asSeverity, getItemById, linkCase, raiseItem, type EvidenceFile } from '@/lib/support/product'
 import { requireAgent } from '@/lib/support/session'
-import { addNote, addPhoneCall, addTask, NOTE_TO_CUSTOMER, sendEmailReply } from '@/lib/support/timeline'
+import { cleanEmailHtml, EMAIL_HTML_MAX, hasText, textToEmailHtml, wrapEmail } from '@/lib/support/email-html'
+import { EMAIL_FILES_MAX, EMAIL_TOTAL_MAX } from '@/lib/support/limits'
+import { addNote, addPhoneCall, addTask, blockedExtensions, extensionOf, NOTE_TO_CUSTOMER, sendEmailReply } from '@/lib/support/timeline'
 
 /* Every case action: validate, call the domain layer as the signed-in agent, then redirect back to the case with
    `?ok=` or `?error=`. `redirect` throws, so it is called outside the try blocks. */
@@ -358,6 +360,7 @@ export async function editAction(form: FormData): Promise<void> {
       text('productVersion', 'k7_productversion')
       text('serial', 'k7_2ndserialnumber')
       text('incidentId', 'k7_incidentid')
+      text('osVersion', 'new_linuxosversion')
       text('module', 'k7_module')
       text('submodule', 'k7_submodule')
       text('customerEmail', 'k7_customeremail')
@@ -389,21 +392,73 @@ export async function emailAction(form: FormData): Promise<void> {
   const id = caseId(form)
   const to = str(form, 'to')
   const subject = str(form, 'subject')
-  const text = str(form, 'text')
+  // The composer sends `html` (formatted) and `text` (its words, for the checks); without JavaScript only `text` arrives.
+  const rich = String(form.get('html') ?? '')
+  const body = rich.trim() ? cleanEmailHtml(rich) : textToEmailHtml(str(form, 'text'))
+  const picked = form.getAll('files').filter((f): f is File => f instanceof File && f.size > 0)
+  const total = picked.reduce((n, f) => n + f.size, 0)
   let msg: string | null = null
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(to)) msg = 'Enter a valid recipient address.'
   else if (!subject) msg = 'Give the email a subject.'
-  else if (text.length < 2) msg = 'Write the email first.'
+  else if (rich.length > EMAIL_HTML_MAX) msg = 'The email is too long. Attach long text as a file.'
+  else if (!hasText(body)) msg = 'Write the email first.'
+  else if (picked.length > EMAIL_FILES_MAX) msg = `${EMAIL_FILES_MAX} attachments at most on one email.`
+  else if (total > EMAIL_TOTAL_MAX) msg = `Attachments are limited to ${EMAIL_TOTAL_MAX / 1024 / 1024} MB in all on one email.`
+  if (!msg && picked.length) {
+    const blocked = await blockedExtensions(me.auth)
+    const bad = picked.find((f) => blocked.includes(extensionOf(f.name)))
+    if (bad) msg = `Dynamics does not accept .${extensionOf(bad.name)} files as attachments (${bad.name}).`
+  }
   if (msg) fail(id, msg)
   let sent = false
   try {
-    const r = await sendEmailReply(me.auth, id, { to, subject, text, fromUserId: me.userId })
+    const files = await Promise.all(
+      picked.map(async (f) => ({ name: f.name.replace(/[\\/:*?"<>|]/g, '_').slice(0, 200) || 'attachment', mime: f.type || 'application/octet-stream', base64: Buffer.from(await f.arrayBuffer()).toString('base64') })),
+    )
+    const r = await sendEmailReply(me.auth, id, { to, subject, html: wrapEmail(body), files, fromUserId: me.userId })
     sent = r.sent
   } catch (e) {
     msg = userMessage(e, 'agent')
   }
   if (msg) fail(id, msg)
   done(id, sent ? 'email' : 'email-draft')
+}
+
+/** Merge this case into another (the Hub's *Merge cases*): this one closes as Merged, its timeline moves to the other, and the
+    agent lands on the case that stays. The target is one of the customer's active cases picked in the panel, or a typed number. */
+export async function mergeAction(form: FormData): Promise<void> {
+  const me = await requireAgent()
+  const id = caseId(form)
+  const picked = str(form, 'target')
+  const number = str(form, 'ticket').toUpperCase()
+  // A listed case is picked by its radio; "Another case" (or no list at all) takes the typed number. Both at once is a doubt, and
+  // a merge cannot be undone, so it is asked rather than guessed.
+  const byNumber = !isGuid(picked)
+  let msg: string | null = null
+  if (!byNumber && number) msg = `You picked a listed case and typed ${number}. Pick "Another case" to use the number, or clear it.`
+  else if (byNumber && !number) msg = picked === 'number' ? 'Type the number of the case to merge into.' : 'Pick the case to merge into, or type its number.'
+  else if (byNumber && !/^[A-Z]+-[0-9A-Z-]{3,}$/.test(number)) msg = `${number} is not a case number. They read like CS-01194-B4N9.`
+  else if (form.get('confirm') !== '1') msg = 'Tick the box to confirm the merge.'
+  if (msg) fail(id, msg)
+  let from = ''
+  let target: CaseRow | null = null
+  try {
+    const c = await getCase(me.auth, id)
+    target = byNumber ? await getCaseByTicket(me.auth, number) : await getCase(me.auth, picked)
+    if (!c) msg = 'That case no longer exists.'
+    else if (c.statecode !== STATE.ACTIVE) msg = 'Only an active case can be merged.'
+    else if (!target) msg = byNumber ? `No case ${number} was found.` : 'That case no longer exists.'
+    else if (target.incidentid.toLowerCase() === c.incidentid.toLowerCase()) msg = 'A case cannot be merged into itself.'
+    else if (target.statecode !== STATE.ACTIVE) msg = `${target.ticketnumber} is not active. Merge only into an active case, or reopen it first.`
+    else {
+      await mergeCase(me.auth, id, target.incidentid)
+      from = c.ticketnumber
+    }
+  } catch (e) {
+    msg = userMessage(e, 'agent')
+  }
+  if (msg) fail(id, msg)
+  redirect(`${WS}/cases/${target!.incidentid}?ok=merged&from=${encodeURIComponent(from)}`)
 }
 
 /* ---------- Product desk (10-product-desk.md §4.1): raise an item or join an existing one, as the signed-in agent ---------- */

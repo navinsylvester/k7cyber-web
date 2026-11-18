@@ -21,7 +21,7 @@ const ERRORS: Record<string, string> = {
   failed: 'We could not open the case.',
 }
 
-type SP = { error?: string; message?: string; title?: string; description?: string; productId?: string; categoryId?: string; subcategoryId?: string; productVersion?: string; serial?: string }
+type SP = { error?: string; message?: string; title?: string; description?: string; productId?: string; categoryId?: string; subcategoryId?: string; productVersion?: string; osVersion?: string; serial?: string }
 
 /* The guided form: which product, what it is about, what happened. Everything else is optional and explained. */
 export default async function NewCasePage({ searchParams }: { searchParams: Promise<SP> }) {
@@ -59,6 +59,9 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
           </Field>
           <Field id="productVersion" label="Product version" hint="Optional. Found under About in the product.">
             <input id="productVersion" name="productVersion" defaultValue={sp.productVersion ?? ''} placeholder="16.0.1234" autoComplete="off" />
+          </Field>
+          <Field id="osVersion" label="Operating system" hint="Optional. With its version, as Windows shows it under Settings → System → About.">
+            <input id="osVersion" name="osVersion" defaultValue={sp.osVersion ?? ''} placeholder="Windows 11 Pro 23H2" maxLength={100} autoComplete="off" />
           </Field>
 
           <CategoryPicker categories={customerCats} subcategories={subcategories} initialCategory={sp.categoryId ?? ''} initialSubcategory={sp.subcategoryId ?? ''} mode="tiles" subLabel="More specifically (optional)" />

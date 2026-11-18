@@ -1,3 +1,5 @@
+import { safeHref } from './email-html'
+
 export { agoLabel, byline, bytes, daysAgo, dmy, initials, iso } from '@/lib/research/format'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -69,8 +71,9 @@ export const sanitizeHtml = (html?: string | null): string => {
     const allowed = ['p', 'br', 'b', 'strong', 'i', 'em', 'u', 'ul', 'ol', 'li', 'a', 'blockquote', 'pre', 'code', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'hr']
     if (!allowed.includes(t)) return ''
     if (t === 'a') {
-      const href = attrs.match(/href="([^"]*)"/i)?.[1] ?? ''
-      return m.startsWith('</') ? '</a>' : `<a href="${/^https?:\/\//i.test(href) ? href.replace(/"/g, '') : '#'}" rel="noopener nofollow" target="_blank">`
+      // http(s) and mailto links survive (an address in an email is a link, 2026-11-18); anything else points nowhere.
+      const href = safeHref(attrs.match(/href="([^"]*)"/i)?.[1] ?? '') ?? '#'
+      return m.startsWith('</') ? '</a>' : `<a href="${href.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" rel="noopener nofollow" target="_blank">`
     }
     return m.startsWith('</') ? `</${t}>` : `<${t}>`
   })

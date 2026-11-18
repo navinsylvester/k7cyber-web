@@ -3,7 +3,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
+import { SubmitButton } from '@/components/partner/SubmitButton.client'
 import { CategoryPicker } from '@/components/support/CasePickers.client'
+import { FilePick, RichText } from '@/components/support/EmailComposer.client'
 import { CareBand, CareTag, CauseTag, FollowUpTag, RateScale, ReasonSelect, ScoreTag } from '@/components/support/Csat'
 import { Empty, Field, Flash, MetaRows, Options, Sla, StatusTag, Tid } from '@/components/support/Parts'
 import { Pid, ProductBand, PRODUCT } from '@/components/support/Product'
@@ -11,20 +13,21 @@ import { AgentTimeline } from '@/components/support/Timeline'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { isGuid } from '@/lib/dataverse/odata'
 import { fv, lookup } from '@/lib/dataverse/types'
-import { getCase, getCaseParties } from '@/lib/support/cases'
+import { getCase, getCaseParties, otherActiveCases } from '@/lib/support/cases'
 import { careForCustomer, causeOf, csatForCase, followUpState, isUnhappy } from '@/lib/support/csat'
 import { dmy, dmyHm } from '@/lib/support/format'
 import { getSettings } from '@/lib/support/kpi-config'
+import { EMAIL_FILES_MAX, EMAIL_TOTAL_MAX } from '@/lib/support/limits'
 import { ACTIVE_STATUS_REASONS, CASE_TYPE, CATEGORY, CONSIDERED_AS, CUSTOMER_TYPE, ORIGIN, PRIORITY, STATE, STATUS, VERTICAL, label } from '@/lib/support/options'
 import { caseFacts, itemsForCase, KIND_LABEL, KINDS, productContext, SEVERITIES, SEVERITY_LABEL, STATE_LABEL, suggestItems, WITH_LABEL, withOf } from '@/lib/support/product'
 import { getAgents, getCategories, getProducts, getPublicQueues, getSubcategories, getTeams } from '@/lib/support/reference'
 import { defectsOfCase, rfesOfCase } from '@/lib/support/rfe'
 import { requireAgent } from '@/lib/support/session'
-import { getTimeline, type TimelineEntry } from '@/lib/support/timeline'
+import { blockedExtensions, getTimeline, type TimelineEntry } from '@/lib/support/timeline'
 import { caseStatusLabel } from '@/lib/support/status'
 
 import { answerAction, toldAction } from '../../../product/items/[number]/actions'
-import { addNoteAction, assignAction, callAction, cancelAction, csatFollowUpAction, csatInviteAction, csatRecordAction, editAction, emailAction, escalateAction, linkItemAction, queueAction, reopenAction, replyAction, resolveAction, statusAction, taskAction } from './actions'
+import { addNoteAction, assignAction, callAction, cancelAction, csatFollowUpAction, csatInviteAction, csatRecordAction, editAction, emailAction, escalateAction, linkItemAction, mergeAction, queueAction, reopenAction, replyAction, resolveAction, statusAction, taskAction } from './actions'
 
 export const metadata: Metadata = { title: 'Case' }
 
@@ -52,7 +55,7 @@ const OK: Record<string, string> = {
 }
 
 type Tab = 'timeline' | 'details' | 'related'
-type SP = { tab?: string; ok?: string; error?: string }
+type SP = { tab?: string; ok?: string; error?: string; from?: string }
 
 /* The case sheet: number and title, the facts on the right, the timeline in the middle, every action on the side. */
 export default async function CasePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<SP> }) {
@@ -64,7 +67,10 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   if (!c) notFound()
   const settings = await getSettings()
   const customerLookup = lookup(c, 'customerid')
-  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care, parties] = await Promise.all([
+  const active = c.statecode === STATE.ACTIVE
+  const merged = c.statuscode === STATUS.MERGED
+  const masterId = typeof c._masterid_value === 'string' && isGuid(c._masterid_value) ? c._masterid_value : null
+  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care, parties, others, blocked, master] = await Promise.all([
     getTimeline(me.auth, id, 'agent').catch(() => []),
     rfesOfCase(me.auth, id).catch(() => []),
     defectsOfCase(me.auth, id).catch(() => []),
@@ -77,6 +83,10 @@ export default async function CasePage({ params, searchParams }: { params: Promi
     settings.csat.enabled ? csatForCase(id) : Promise.resolve(null),
     settings.csat.enabled && customerLookup ? careForCustomer(customerLookup.id, settings) : Promise.resolve(null),
     getCaseParties(me.auth, id),
+    // The merge panel offers the customer's other active cases first (a duplicate is nearly always the same customer's).
+    active && customerLookup ? otherActiveCases(me.auth, customerLookup.id, id).catch(() => []) : Promise.resolve([]),
+    blockedExtensions(me.auth),
+    merged && masterId ? getCase(me.auth, masterId).catch(() => null) : Promise.resolve(null),
   ])
   const tab: Tab = sp.tab === 'details' || sp.tab === 'related' ? sp.tab : 'timeline'
   // The customer's rating sits in the timeline where it happened, as the one entry that is neither email nor note.
@@ -85,7 +95,6 @@ export default async function CasePage({ params, searchParams }: { params: Promi
       ? [...timeline, { id: `csat-${rating.id}`, kind: 'csat' as const, when: rating.respondedAt, subject: `Customer rated this case ${rating.score}/5`, html: '', text: rating.comment, preview: rating.comment ? rating.comment.slice(0, 160) : '', by: { id: rating.contactId, name: rating.customerName || 'Customer' }, attachments: [], customerVisible: true, fromCustomer: true, statusLabel: isUnhappy(rating.score, settings.csat) ? 'low' : 'ok' }].sort((a, b) => (a.when < b.when ? 1 : a.when > b.when ? -1 : 0))
       : timeline
   const fu = rating ? followUpState(rating, settings) : null
-  const active = c.statecode === STATE.ACTIVE
   const here = `${WS}/cases/${id}`
   // The product desk (10-product-desk.md §4.1): the items this case is linked to, and candidates to link to before raising a new one.
   const pctx = await productContext()
@@ -168,7 +177,11 @@ export default async function CasePage({ params, searchParams }: { params: Promi
             </li>
           </ol>
         </nav>
-        {sp.ok && <Flash>{OK[sp.ok] ?? sp.ok}</Flash>}
+        {sp.ok === 'merged' ? (
+          <Flash>{`${/^[A-Z]+-[0-9A-Z-]+$/.test(sp.from ?? '') ? sp.from : 'The other case'} was merged into this case: its notes, emails and activities are here now, and it is closed as Merged.`}</Flash>
+        ) : (
+          sp.ok && <Flash>{OK[sp.ok] ?? sp.ok}</Flash>
+        )}
         {sp.error && <Flash kind="error">{sp.error}</Flash>}
 
         <div className="case-head">
@@ -212,6 +225,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
               // The case's serial key; when it has none, the account's licence key, named as such (TR-10).
               { k: 'Serial key', v: serial },
               { k: 'Licence key', v: serial ? '' : parties.licenceKey },
+              { k: 'Merged into', v: merged && master ? <Link href={`${WS}/cases/${master.incidentid}`}>{master.ticketnumber}</Link> : '' },
               { k: 'Owner', v: owner?.name ?? '', sans: true },
               { k: 'Created', v: dmyHm(c.createdon) },
               { k: 'Modified', v: dmyHm(c.modifiedon) },
@@ -289,6 +303,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   <MetaRows
                     items={[
                       { k: 'Version', v: txt('k7_productversion') },
+                      { k: 'OS version', v: txt('new_linuxosversion') },
                       { k: 'Serial key', v: serial },
                       { k: 'Incident ID', v: incidentId },
                       { k: 'Module', v: txt('k7_module'), sans: true },
@@ -371,6 +386,9 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                     </Field>
                     <Field id="e-version" label="Product version">
                       <input id="e-version" name="productVersion" defaultValue={txt('k7_productversion')} />
+                    </Field>
+                    <Field id="e-os" label="OS version" hint="The customer's operating system and its version, e.g. Windows 11 23H2.">
+                      <input id="e-os" name="osVersion" defaultValue={txt('new_linuxosversion')} maxLength={100} />
                     </Field>
                     <Field id="e-serial" label="Serial key">
                       <input id="e-serial" name="serial" defaultValue={serial} spellCheck={false} />
@@ -518,23 +536,22 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   </form>
                 </details>
 
-                <details>
+                <details open={Boolean(sp.error && /recipient|the email|attachments|Dynamics does not accept/i.test(sp.error))}>
                   <summary>Email the customer</summary>
                   <form action={emailAction} className="act-body">
                     <input type="hidden" name="id" value={id} />
-                    <p>An outgoing email on the case, from you. It shows in the timeline and on the portal.</p>
+                    <p>An outgoing email on the case, from you. It shows in the timeline and on the portal, attachments too.</p>
                     <Field id="em-to" label="To" required>
                       <input id="em-to" name="to" type="email" required defaultValue={txt('k7_customeremail')} />
                     </Field>
                     <Field id="em-subject" label="Subject" required>
                       <input id="em-subject" name="subject" required defaultValue={`Re: ${txt('title')} | ${txt('ticketnumber')}`} />
                     </Field>
-                    <Field id="em-text" label="Message" required>
-                      <textarea id="em-text" name="text" rows={6} required />
-                    </Field>
-                    <button className="btn btn-line btn-sm" type="submit">
+                    <RichText id="em-text" label="Message" required hint="Web and email addresses become links." />
+                    <FilePick id="em-files" name="files" label="Attachments" hint={`Up to ${EMAIL_FILES_MAX} files, ${EMAIL_TOTAL_MAX / 1024 / 1024} MB in all.`} maxFiles={EMAIL_FILES_MAX} maxTotal={EMAIL_TOTAL_MAX} blocked={blocked} />
+                    <SubmitButton className="btn btn-line btn-sm" pendingLabel="Sending…">
                       Send email →
-                    </button>
+                    </SubmitButton>
                   </form>
                 </details>
 
@@ -866,6 +883,48 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   </form>
                 </details>
 
+                {active && (
+                  <details id="merge-panel" open={Boolean(sp.error && /merge|case number|No case|not active|itself|picked a listed|Type the number|Pick the case/i.test(sp.error))}>
+                    <summary>Merge into another case</summary>
+                    <form action={mergeAction} className="act-body">
+                      <input type="hidden" name="id" value={id} />
+                      <p>For a duplicate. {c.ticketnumber} closes as Merged and its notes, emails and activities move to the case you pick. A merge cannot be undone.</p>
+                      {others.length > 0 && (
+                        <fieldset className="merge-pick">
+                          <legend className="label">Into which case</legend>
+                          <div className="choice">
+                            {others.map((o) => (
+                              <label key={o.incidentid}>
+                                <input type="radio" name="target" value={o.incidentid} required />
+                                <span className="t">
+                                  <Tid ticket={o.ticketnumber} /> {o.title}
+                                </span>
+                                <span className="d">{[caseStatusLabel(o), `opened ${dmy(o.createdon)}`, lookup(o, 'ownerid')?.name].filter(Boolean).join(' · ')}</span>
+                              </label>
+                            ))}
+                            <label>
+                              <input type="radio" name="target" value="number" required />
+                              <span className="t">Another case</span>
+                              <span className="d">Type its number below</span>
+                            </label>
+                          </div>
+                        </fieldset>
+                      )}
+                      <Field id="mg-ticket" label={others.length ? 'Number of the other case' : 'Merge into case number'} required={others.length === 0}>
+                        <input id="mg-ticket" name="ticket" placeholder="CS-01194-B4N9" spellCheck={false} autoComplete="off" required={others.length === 0} pattern="[A-Za-z]+-[0-9A-Za-z\-]{3,}" title="A case number such as CS-01194-B4N9" />
+                      </Field>
+                      <label className="check">
+                        <input type="checkbox" name="confirm" value="1" required />
+                        <span>Yes, merge {c.ticketnumber} into that case</span>
+                      </label>
+                      {/* A merge moves the case's whole timeline and takes Dynamics 10 to 20 seconds; a second click would try again. */}
+                      <SubmitButton className="btn btn-line btn-sm" pendingLabel="Merging…">
+                        Merge case
+                      </SubmitButton>
+                    </form>
+                  </details>
+                )}
+
                 {active ? (
                   <details>
                     <summary>Cancel case</summary>
@@ -880,6 +939,25 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                         Cancel case
                       </button>
                     </form>
+                  </details>
+                ) : merged ? (
+                  <details open>
+                    <summary>Merged</summary>
+                    <div className="act-body">
+                      <p>
+                        {master ? (
+                          <>
+                            Merged into{' '}
+                            <Link className="link-u" href={`${WS}/cases/${master.incidentid}`}>
+                              {master.ticketnumber}
+                            </Link>
+                            . Its notes, emails and activities are on that case; work continues there.
+                          </>
+                        ) : (
+                          'This case was merged into another one. A merge cannot be undone.'
+                        )}
+                      </p>
+                    </div>
                   </details>
                 ) : (
                   <details open>

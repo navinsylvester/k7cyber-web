@@ -9,6 +9,10 @@ the work list that came out of it and the state across sessions.
 tester, were accepted on Navin's own review the same day. What stays open is outside this list's fixes and has an owner: D-1 to
 D-3 (support lead), D-4's Compact density (Navin, later), U-1 (UAT roles). The reply to testers is §4.
 
+**2026-11-18 (session 4): the later notes closed.** The testers kept sending notes after the round (24-10 to 16-11, §5b): TR-16 to
+TR-21. TR-17 was fixed on 2026-11-06; TR-18 to TR-21 were built and checked in Chrome through the tunnel on 2026-11-18; TR-16 is the
+design language's rule, not a defect.
+
 ## 0. Working across sessions
 - Take the next open item in §1 by priority (P1 first). Read its entry in §2 before touching code; the entry names
   the files, the cause and the check that closes it.
@@ -40,6 +44,12 @@ D-3 (support lead), D-4's Compact density (Navin, later), U-1 (UAT roles). The r
 | TR-13 | Field labels too small to read | design | P2 | done 2026-10-24 (accepted by Navin; density is D-4) |
 | TR-14 | Mandatory fields not clear | design | P2 | done 2026-10-24 |
 | TR-15 | Light mode looks inconsistent (colour, size, bold) | check | P3 | done 2026-10-24 (no defect; accepted by Navin) |
+| TR-16 | "CS" of the case number lighter than the rest | check | P3 | no defect: the prefix is dim by rule L1 (`splitTicket`, `.tid .pre`) |
+| TR-17 | New case on a contact fails with 0x8004f865 | bug | P1 | done 2026-11-06 (e68541e) |
+| TR-18 | Email: font, size, colour; links not highlighted | gap | P2 | done 2026-11-18 |
+| TR-19 | Email: attach files | gap | P2 | done 2026-11-18 |
+| TR-20 | Operating system version field | gap | P2 | done 2026-11-18 |
+| TR-21 | Merge one case into another | gap | P2 | done 2026-11-18 |
 | D-1 | Fill the customer and serial key from the registered mobile | request | — | decide |
 | D-2 | "Customer type: consumer or enterprise" on the case | request | — | decide |
 | D-3 | Rename field titles | request | — | decide |
@@ -290,6 +300,43 @@ contact customers whose contact has an account; 142 cases (22 active) owned by N
 fallback; 172 with an incident id; 5 with status reason 696720006. Chrome: dev chunks served with
 `Cache-Control: no-cache, must-revalidate` and a weak ETag, through the tunnel `cf-cache-status: DYNAMIC`.
 
+## 5b. Later notes (2026-10-24 to 2026-11-16)
+The testers' sheet kept growing after the round. Each entry was checked against the code on 2026-11-18.
+
+### TR-16 · "CS" lighter than the rest of the case number (P3, Imran, 24-10)
+**Verified:** on purpose. Identifiers read their unique part first (design rule L1): `splitTicket` splits `CS-`, and `Tid`
+renders it as `.pre` at 55% opacity (38% on the case head). **Reply:** the prefix is the same on every case, so it is dimmed to let
+the part that differs stand out. If the desk prefers it full, it is one line in `portal.css` plus the design-system update.
+
+### TR-17 · New case on a contact fails with 0x8004f865 (P1, Imran, 24-10)
+**Done 2026-11-06 (e68541e):** the agent's *New case* sent the customer contact as its own primary contact, which Dynamics refuses;
+the primary contact is now sent only for account cases. Checked again on 2026-11-18: CS-01217-D4L9 and CS-01218-X5C4 were created on
+the contact TEST TR06 from the form.
+
+### TR-18 · Email: font, size, colour; links not highlighted (P2, Farhin, 29-10)
+**Verified:** *Email the customer* was a plain textarea; its text was sent as `<p>` paragraphs with no link anywhere, and in the
+portal's timeline every link in an email or note body read as plain text (the CSS reset sets `text-decoration: inherit`, and the
+display cleaner turned `mailto:` into `#`). **Done 2026-11-18:** the composer (`EmailComposer.client.tsx`, SupportParts S31): bold,
+italic, underline, lists, link, clear, five fonts, four sizes and six colours, the message on light paper in the email's
+Arial; the server keeps an allowlist and links bare addresses (`src/lib/support/email-html.ts`, `tests/int/support-email.int.spec.ts`);
+the timeline underlines links, keeps `mailto:` and shows list bullets.
+
+### TR-19 · Email: attach files (P2, Farhin, 29-10)
+**Done 2026-11-18:** several files on one email (10, 15 MB in all), each an `activitymimeattachment` on the email before `SendEmail`;
+the organisation's blocked extensions, the count and the size are refused in the browser first, then by the server; a refused
+attachment deletes the draft again. Server actions and the proxy's body buffer take 16 MB (`next.config.ts`).
+
+### TR-20 · Operating system version (P2, Farhin, 31-10)
+**Verified:** the case already has the column `new_linuxosversion` ("Linux( O.S & Version)", 100 characters), used for any OS on the
+two UAT cases that carry it ("win8", "Ubuntu OS"). **Done 2026-11-18:** *OS version* on Details, in *Edit details* and on the agent's
+new case form; *Operating system* (optional) on the customer's. No schema change.
+
+### TR-21 · Merge one case into another (P2, Farhin, 16-11)
+**Done 2026-11-18:** *Merge into another case* (SupportParts S32) calls the platform's `Merge`; the merged case closes as Merged with
+`masterid` set and its timeline moves to the case that stays. Only active cases; nothing chosen by default; a picked case plus a typed
+number is asked, not guessed. A merged case shows *Merged into* and a *Merged* panel instead of *Reopen*; a customer's link to it
+lands on the surviving case.
+
 ## 6. Session log
 - **2026-10-24 (1)** — Tester notes triaged against code, UAT and the live portal. TR-01 and TR-02 found while
   checking the theme claim. CS-01194-B4N9 moved to In Progress-Support and back to In Progress-Lab to prove status
@@ -314,3 +361,25 @@ fallback; 172 with an incident id; 5 with status reason 696720006. Chrome: dev c
   Committed on `support-portal/planning` (not pushed). Then TR-02's check exactly as written: a fresh Chrome profile signed in
   with Microsoft by Navin on the tunnel; the workspace, a case and the new contact form hydrated, no console error.
   **Next:** send §4 to the testers with the new link; D-1 to D-3; U-1.
+- **2026-11-18 (4)** — The later notes (§5b). Built: the email composer with formatting and attachments, links and lists readable in
+  the timeline, the OS version field, case merge with the customer's redirect, pending labels on *Create case*, *Send email* and
+  *Merge case*. Verified in Chrome through the tunnel on the production build (Microsoft door, as Navin): CS-01217-D4L9 and
+  CS-01218-X5C4 created on TEST TR06 with an OS version (07:06Z, 07:07Z); OS version edited on CS-01217-D4L9; an empty message and a
+  blocked `.exe`, a 16 MB set and an unchosen merge target refused in the browser; a picked case plus a typed number refused by the
+  server; an email with bold, red, Georgia, a list, a bare URL, a bare address and an agent link plus two attachments sent from
+  CS-01218-X5C4 to `tr06.test@example.com` (07:10:48Z; Pending Send, UAT has no mailbox); CS-01218-X5C4 merged into CS-01217-D4L9
+  (07:14:05Z): Merged, `masterid` set, the email and its two attachments now on CS-01217-D4L9. Found in that pass and fixed: Size
+  then Font at the caret kept only the font (the composer re-set the selection, which drops the browser's pending style); the
+  editor's lists and every link and list in the timeline bodies had lost their markers to the CSS reset, and `mailto:` became `#`;
+  a 50-byte file read "0 KB"; *Create case* and *Merge case* took 10 to 20 s with no sign of it. After the rebuild: links underlined
+  and `mailto:` kept in the timeline and the customer's conversation, bullets and numbers shown; a second email on CS-01217-D4L9
+  (07:17:38Z) stored the 18px Georgia span; *Creating…*, *Sending…* and *Merging…* shown with the button disabled; CS-01219-T7R8
+  created (07:18:24Z) and merged into CS-01217-D4L9 by its typed number in lower case (07:18:54Z); the merged CS-01218-X5C4 shows
+  *Merged into* and the *Merged* panel. Customer side on a local-only second instance (127.0.0.1:3100, `AUTH_URL` and an empty
+  allowlist for it, stopped afterwards; the tunnel's allowlist does not cover example.com): TEST TR06 signed in with the code from
+  that instance's mail log, opened CS-01218-X5C4 and landed on CS-01217-D4L9 with the joined-cases line; CS-01220-W4G6 raised from
+  the customer form (07:21:25Z) stored "Ubuntu 22.04 LTS". Light theme: the message paper took a hairline frame (it was the page's
+  colour); at 390px in a frame nothing overflows. No console errors. The tester server was rebuilt three times (down 07:04:17 to
+  07:05:01Z, 07:15:40 to 07:16:15Z, 07:22:22 to 07:22:54Z). 111 support tests pass (`support-email` new), `tsc` and lint clean.
+  Left in UAT: CS-01217-D4L9 (open), CS-01218-X5C4 and CS-01219-T7R8 (Merged), CS-01220-W4G6 (open), the two Pending Send emails to
+  `tr06.test@example.com`. Not committed. **Next:** the reply to the testers for TR-16 to TR-21; D-1 to D-3; U-1.

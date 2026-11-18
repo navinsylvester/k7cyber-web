@@ -11,9 +11,10 @@ import { CUSTOMER_VISIBLE_FILTER } from './status'
 export const CASE_SELECT = [
   'incidentid', 'ticketnumber', 'title', 'description', 'statecode', 'statuscode', 'caseorigincode', 'prioritycode', 'casetypecode',
   'createdon', 'modifiedon', 'new_verticaltype', 'new_customertype', 'k7_caseconsideredas', 'new_category', 'k7_productversion',
-  'k7_2ndserialnumber', 'k7_incidentid', 'k7_customeremail', 'k7_module', 'k7_submodule', 'adx_resolution', 'adx_stepstoreproduce', 'adx_createdbyusername',
+  'k7_2ndserialnumber', 'k7_incidentid', 'new_linuxosversion', 'k7_customeremail', 'k7_module', 'k7_submodule', 'adx_resolution', 'adx_stepstoreproduce', 'adx_createdbyusername',
   '_customerid_value', '_primarycontactid_value', '_productid_value', '_new_issue_value', '_new_subcategory_value', '_ownerid_value',
   '_k7_rfe_value', '_k7_defectnew_value', '_createdby_value', '_modifiedby_value', 'firstresponseslastatus', 'resolvebyslastatus', 'escalatedon', 'followupby', 'cit_productcategory',
+  '_masterid_value',
 ] as const
 
 export const CASE_LIST_SELECT = ['incidentid', 'ticketnumber', 'title', 'statecode', 'statuscode', 'caseorigincode', 'prioritycode', 'createdon', 'modifiedon', '_customerid_value', '_productid_value', '_ownerid_value', '_new_issue_value'] as const
@@ -126,6 +127,9 @@ export type NewCase = {
   serial?: string
   /** Incident ID (`k7_incidentid`), free text the desk fills from another system. */
   incidentId?: string
+  /** The customer's operating system and its version, free text (`new_linuxosversion`, labelled "Linux( O.S & Version)" in the
+     Hub but used for any OS: "win8", "Ubuntu OS"). */
+  osVersion?: string
   module?: string
   submodule?: string
   customerEmail?: string
@@ -156,6 +160,7 @@ const caseBody = (c: Partial<NewCase>): Row => {
   if (c.productVersion !== undefined) b.k7_productversion = c.productVersion
   if (c.serial !== undefined) b.k7_2ndserialnumber = c.serial
   if (c.incidentId !== undefined) b.k7_incidentid = c.incidentId
+  if (c.osVersion !== undefined) b.new_linuxosversion = c.osVersion.slice(0, 100)
   if (c.module !== undefined) b.k7_module = c.module
   if (c.submodule !== undefined) b.k7_submodule = c.submodule
   if (c.customerEmail !== undefined) b.k7_customeremail = c.customerEmail
@@ -200,6 +205,34 @@ export const reopenCase = async (auth: DataverseAuth, id: string): Promise<void>
   await update(auth, entity('incidents', id), { statecode: STATE.ACTIVE, statuscode: STATUS.OPEN })
 }
 
+/** Merges one case into another through the platform's Merge message, as the Hub's *Merge cases* does: the subordinate is
+   closed as Merged (state Cancelled, status 2000) with `masterid` pointing at the target, and its notes, emails, activities and
+   child cases move to the target. It cannot be undone. `UpdateContent` is required by the message and ignored for cases. */
+export const mergeCase = async (auth: DataverseAuth, subordinateId: string, targetId: string): Promise<void> => {
+  if (guid(subordinateId) === guid(targetId)) throw new Error('A case cannot be merged into itself')
+  await action(auth, 'Merge', {
+    Target: { '@odata.type': 'Microsoft.Dynamics.CRM.incident', incidentid: guid(targetId) },
+    Subordinate: { '@odata.type': 'Microsoft.Dynamics.CRM.incident', incidentid: guid(subordinateId) },
+    UpdateContent: { '@odata.type': 'Microsoft.Dynamics.CRM.incident' },
+    PerformParentingChecks: false,
+  })
+}
+
+/** The customer's other active cases, newest first: the usual targets when a case turns out to be a duplicate. */
+export const otherActiveCases = async (auth: DataverseAuth, customerId: string, exceptId: string, top = 10): Promise<CaseRow[]> => {
+  const p = await list<CaseRow>(
+    auth,
+    buildQuery('incidents', {
+      select: [...CASE_LIST_SELECT],
+      filter: and(or(`_customerid_value eq ${guid(customerId)}`, `_primarycontactid_value eq ${guid(customerId)}`), `statecode eq ${STATE.ACTIVE}`, `incidentid ne ${guid(exceptId)}`),
+      orderby: 'createdon desc',
+      top,
+    }),
+    top,
+  )
+  return p.value
+}
+
 export const setStatusReason = async (auth: DataverseAuth, id: string, statuscode: number): Promise<void> => {
   await update(auth, entity('incidents', id), { statuscode })
 }
@@ -217,9 +250,12 @@ export const addCaseToQueue = async (auth: DataverseAuth, id: string, queueId: s
 
 export type CustomerScope = { contactId: string; accountId?: string | null; email: string }
 
+/** The customer's own cases, whatever their state: owned by the contact, by their account, or with them as primary contact. */
+const customerOwnFilter = (s: CustomerScope): string =>
+  or(`_customerid_value eq ${guid(s.contactId)}`, `_primarycontactid_value eq ${guid(s.contactId)}`, s.accountId ? `_customerid_value eq ${guid(s.accountId)}` : null)
+
 /** Every customer query carries this. Cases owned by the contact, by their account, or where they are the primary contact. */
-export const customerScopeFilter = (s: CustomerScope): string =>
-  and(or(`_customerid_value eq ${guid(s.contactId)}`, `_primarycontactid_value eq ${guid(s.contactId)}`, s.accountId ? `_customerid_value eq ${guid(s.accountId)}` : null), CUSTOMER_VISIBLE_FILTER)
+export const customerScopeFilter = (s: CustomerScope): string => and(customerOwnFilter(s), CUSTOMER_VISIBLE_FILTER)
 
 export const CUSTOMER_PAGE = 10
 
@@ -248,7 +284,7 @@ export const getCustomerCase = async (auth: DataverseAuth, scope: CustomerScope,
   return p.value[0] ?? null
 }
 
-export type CustomerNewCase = { title: string; description: string; productId?: string; categoryId?: string; subcategoryId?: string; productVersion?: string; serial?: string; vertical?: number }
+export type CustomerNewCase = { title: string; description: string; productId?: string; categoryId?: string; subcategoryId?: string; productVersion?: string; osVersion?: string; serial?: string; vertical?: number }
 
 /** A case raised from the portal: origin Web, case type Case (the saved views filter on it: a case without a type is invisible to
    agents), customer = the contact (or their account), attribution in adx_createdbyusername. */
@@ -265,12 +301,33 @@ export const createCustomerCase = async (auth: DataverseAuth, scope: CustomerSco
     categoryId: c.categoryId,
     subcategoryId: c.subcategoryId,
     productVersion: c.productVersion,
+    osVersion: c.osVersion,
     serial: c.serial,
     vertical: c.vertical,
     customerEmail: scope.email,
     createdBy: scope.email,
     status: STATUS.OPEN,
   })
+
+/** A merged case is hidden from customers, but their emails still link to it: the number of the case it was merged into, when
+   that case is theirs and visible (followed through up to three merges), else null. */
+export const customerMergedInto = async (auth: DataverseAuth, scope: CustomerScope, ticket: string): Promise<string | null> => {
+  let filter = and(customerOwnFilter(scope), `ticketnumber eq ${str(ticket.trim().toUpperCase())}`, `statuscode eq ${STATUS.MERGED}`)
+  for (let hop = 0; hop < 3; hop++) {
+    const p = await list<Row>(auth, buildQuery('incidents', { select: ['incidentid', '_masterid_value'], filter, top: 1 }), 1)
+    const masterId = p.value[0]?._masterid_value
+    if (!isGuid(masterId)) return null
+    const m = await list<CaseRow>(auth, buildQuery('incidents', { select: ['incidentid', 'ticketnumber', 'statuscode'], filter: and(customerOwnFilter(scope), `incidentid eq ${guid(masterId)}`), top: 1 }), 1)
+    const master = m.value[0]
+    if (!master) return null
+    if (master.statuscode !== STATUS.MERGED) {
+      const visible = await list<CaseRow>(auth, buildQuery('incidents', { select: ['ticketnumber'], filter: and(customerScopeFilter(scope), `incidentid eq ${guid(masterId)}`), top: 1 }), 1)
+      return visible.value[0]?.ticketnumber ?? null
+    }
+    filter = and(customerOwnFilter(scope), `incidentid eq ${guid(masterId)}`, `statuscode eq ${STATUS.MERGED}`)
+  }
+  return null
+}
 
 /** Customers may reopen a resolved case within the window; the check happens in the caller with canReopen(). */
 export const reopenCustomerCase = async (auth: DataverseAuth, scope: CustomerScope, ticket: string): Promise<CaseRow | null> => {

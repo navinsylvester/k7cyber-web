@@ -45,12 +45,16 @@ const nextConfig: NextConfig = {
     return webpackConfig
   },
   reactStrictMode: true,
-  // Support portal: case attachments travel through server actions (5 MB, Dataverse's default note limit) plus form overhead.
+  // Support portal: case attachments travel through server actions (5 MB a note, Dataverse's default note limit; 15 MB in all on
+  // an email from the case sheet, src/lib/support/limits.ts) plus form overhead.
   // The dev server reached through a Cloudflare quick tunnel (docs/support-portal/11-staging-readiness.md §7): the tunnel
   // rewrites Host to localhost:3000, so server-action posts arrive with a browser origin that differs from the host, and Next
   // blocks its own dev assets for any origin it was not started on; both need the tunnel's domain listed.
   experimental: {
-    serverActions: { bodySizeLimit: '6mb', allowedOrigins: ['*.trycloudflare.com'] },
+    serverActions: { bodySizeLimit: '16mb', allowedOrigins: ['*.trycloudflare.com'] },
+    // src/proxy.ts runs on /support and /partners/portal, and Next buffers a proxied request's body only up to 10 MB by default;
+    // past that the action receives a cut-off body. Kept equal to the action limit.
+    proxyClientMaxBodySize: '16mb',
   },
   allowedDevOrigins: ['*.trycloudflare.com'],
   redirects,

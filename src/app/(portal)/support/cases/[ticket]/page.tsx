@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import React from 'react'
 
 import { RateScale, ReasonSelect, ScoreTag } from '@/components/support/Csat'
 import { Field, Flash, MetaRows, StateTag, Tid, Track } from '@/components/support/Parts'
 import { Conversation } from '@/components/support/Timeline'
 import { fv } from '@/lib/dataverse/types'
-import { getCustomerCase } from '@/lib/support/cases'
+import { customerMergedInto, getCustomerCase } from '@/lib/support/cases'
 import { csatForCase } from '@/lib/support/csat'
 import { dmy, dmyHm, htmlToText } from '@/lib/support/format'
 import { getSettings } from '@/lib/support/kpi-config'
@@ -34,7 +34,7 @@ const ERRORS: Record<string, string> = {
   'not-closed': 'You can rate a case once it is closed.',
 }
 
-type SP = { created?: string; attach?: string; replied?: string; reopened?: string; rated?: string; error?: string; message?: string }
+type SP = { merged?: string; created?: string; attach?: string; replied?: string; reopened?: string; rated?: string; error?: string; message?: string }
 
 /* One case, as the customer sees it: where it stands, the conversation in order, and one place to reply. */
 export default async function CustomerCasePage({ params, searchParams }: { params: Promise<{ ticket: string }>; searchParams: Promise<SP> }) {
@@ -42,7 +42,12 @@ export default async function CustomerCasePage({ params, searchParams }: { param
   const ticket = decodeURIComponent(raw).toUpperCase()
   const ctx = await requireCustomer(`/support/cases/${encodeURIComponent(ticket)}`)
   const c = await getCustomerCase(ctx.auth, ctx.scope, ticket)
-  if (!c) notFound()
+  if (!c) {
+    // A case the desk merged into another (a duplicate) is hidden; a link to it from an old email lands on the one that stays.
+    const into = await customerMergedInto(ctx.auth, ctx.scope, ticket).catch(() => null)
+    if (into && into !== ticket) redirect(`/support/cases/${encodeURIComponent(into)}?merged=${encodeURIComponent(ticket)}`)
+    notFound()
+  }
   const [timeline, settings, rating] = await Promise.all([getTimeline(ctx.auth, c.incidentid, 'customer'), getSettings(), csatForCase(c.incidentid)])
   const canRate = settings.csat.enabled && c.statecode === STATE.RESOLVED
   const ratedLow = sp.rated === '1' && rating?.score !== null && rating?.score !== undefined && rating.score <= settings.csat.unhappyAtOrBelow
@@ -101,6 +106,7 @@ export default async function CustomerCasePage({ params, searchParams }: { param
             {sp.attach === 'failed' ? ' The attachment did not go through: add it again below.' : ''}
           </Flash>
         )}
+        {sp.merged && /^[A-Z]+-[0-9A-Z-]+$/.test(sp.merged) && <Flash>{`${sp.merged} was the same request as this case, so we joined them: everything from it is here now.`}</Flash>}
         {sp.replied === '1' && <Flash>Your reply is with the engineer.</Flash>}
         {sp.reopened === '1' && <Flash>The case is open again. An engineer will pick it up.</Flash>}
         {sp.rated === '1' && <Flash>{ratedLow ? 'Thank you for telling us. We are sorry we let you down; a support manager will be in touch.' : 'Thank you for your rating.'}</Flash>}
