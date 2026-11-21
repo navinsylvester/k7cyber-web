@@ -8,11 +8,11 @@ import { sendMail } from '@/lib/support/mail'
 import { partnerPublicUrl } from './public-url'
 
 import { audit, type Actor } from './audit'
-import { nextId } from './ids'
+import { isApplicationNumber, nextId } from './ids'
 import { enqueueOutbox } from './mirror'
 import { notify } from './notify'
 import { appVars } from './notify-model'
-import { clarificationNote, EMPTY_COMPANY, normaliseWebsite, readyToSubmit, type Application, type Company, type Contact, type DecisionRow } from './registration-model'
+import { clarificationNote, EMPTY_COMPANY, indianIds, normaliseWebsite, readyToSubmit, type Application, type Company, type Contact, type DecisionRow } from './registration-model'
 import type { K7Context } from './session'
 import { getPartnerSettings, PARTNER_TYPE_LABEL, PARTNER_TYPES, type PartnerType } from './settings'
 import { alreadyLine, APPLICATION_STATUS_LABEL, canMoveApplication, decisionPath, DECISION_TO, isRepeatedDecision, type ApplicationStatus, type Decision } from './status'
@@ -64,6 +64,7 @@ export const toApplication = (x: Doc): Application => {
       mobileVerifiedAt: d(c.mobileVerifiedAt),
       mobileVerification: c.mobileVerification === 'sms' ? 'sms' : c.mobileVerification === 'skipped' ? 'skipped' : 'none',
     },
+    territory: s(x.territory),
     regions: Array.isArray(x.regions) ? x.regions.map(String) : [],
     terms: { version: s(t.version), acceptedAt: d(t.acceptedAt) },
     assignee: { email: s(a.email).toLowerCase(), name: s(a.name) },
@@ -112,7 +113,7 @@ export const loadApplication = async (id: string): Promise<Application | null> =
 
 export const findByNumber = async (number: string): Promise<Application | null> => {
   const n = number.trim().toUpperCase()
-  if (!/^K7A-\d{5}$/.test(n)) return null
+  if (!isApplicationNumber(n)) return null
   const payload = await db()
   const r = await payload.find({ collection: 'partner-applications', where: { number: { equals: n } }, limit: 1, depth: 0, overrideAccess: true })
   const doc = r.docs[0] as unknown as Doc | undefined
@@ -125,7 +126,7 @@ export const editable = (a: Application): boolean => a.status === 'draft' || a.s
 export const saveType = (a: Application, type: PartnerType): Promise<Application> => update(a.id, { type })
 
 /** Step 2: the company and the contact. A changed contact email needs verifying again. */
-export const saveDetails = async (a: Application, company: Company, contact: Pick<Contact, 'name' | 'designation' | 'email' | 'mobile'>, regions: string[]): Promise<Application> => {
+export const saveDetails = async (a: Application, company: Company, contact: Pick<Contact, 'name' | 'designation' | 'email' | 'mobile'>, territory: string): Promise<Application> => {
   const email = contact.email.trim().toLowerCase()
   const emailChanged = email !== a.contact.email
   const mobileChanged = contact.mobile.trim() !== a.contact.mobile
@@ -141,9 +142,8 @@ export const saveDetails = async (a: Application, company: Company, contact: Pic
     yearOfIncorporation: company.yearOfIncorporation,
     size: company.size || null,
     turnover: company.turnover || null,
-    gstin: company.gstin.trim().toUpperCase(),
-    pan: company.pan.trim().toUpperCase(),
-    regions,
+    ...indianIds(company),
+    territory: territory.trim(),
     contact: {
       name: contact.name.trim(),
       designation: contact.designation.trim(),
@@ -184,8 +184,7 @@ const describe = (a: Application): string => `${a.company.legalName || 'Unnamed 
 /** Step 4: terms accepted, everything verified → Submitted (first time or after a clarification). Gives the number on the first
     submission, tells the Channel Managers, and emails the applicant the link they resume from. */
 export const submitApplication = async (a: Application, termsVersion: string): Promise<{ ok: true; app: Application } | { ok: false; errors: Record<string, string> }> => {
-  const settings = await getPartnerSettings()
-  const errors = readyToSubmit(a, settings.regions)
+  const errors = readyToSubmit(a)
   if (Object.keys(errors).length) return { ok: false, errors }
   if (!canMoveApplication(a.status, 'submitted')) return { ok: false, errors: { status: `An application that is ${APPLICATION_STATUS_LABEL[a.status].toLowerCase()} cannot be submitted.` } }
   const resubmit = a.status === 'clarification'
@@ -261,17 +260,21 @@ export const assignApplication = async (a: Application, me: K7Context, to: { ema
 export type DecideResult = { ok: true; app: Application; org?: { id: string; partnerId: string }; already?: string } | { ok: false; error: string }
 
 /** Approve, reject or send back. From Submitted the application is assigned to the decider first, so the trail shows both. */
-export const decideApplication = async (a: Application, decision: Decision, comment: string, me: K7Context): Promise<DecideResult> => {
+export const decideApplication = async (a: Application, decision: Decision, comment: string, me: K7Context, region = ''): Promise<DecideResult> => {
   if (isRepeatedDecision(a.status, decision)) return { ok: true, app: a, already: alreadyLine(decision, [...a.decisions].reverse().find((d) => d.to === DECISION_TO[decision])?.byName) }
   const path = decisionPath(a.status, decision)
   if (!path.length) return { ok: false, error: `${APPLICATION_STATUS_LABEL[a.status]} applications cannot be ${decision === 'approve' ? 'approved' : decision === 'reject' ? 'rejected' : 'sent back'}.` }
   const note = comment.trim()
   if (decision !== 'approve' && note.length < 3) return { ok: false, error: decision === 'reject' ? 'Give the applicant the reason.' : 'Tell the applicant what you need.' }
+  if (decision === 'approve') {
+    const missing = regionProblem((await getPartnerSettings()).regions, region)
+    if (missing) return { ok: false, error: missing }
+  }
   let app = a
   if (path[0] === 'underReview') app = await assignApplication(app, me)
   const to = DECISION_TO[decision]
   if (decision === 'approve') {
-    const r = await approveApplication(app, note, me)
+    const r = await approveApplication(app, note, me, region)
     return r
   }
   const now = new Date().toISOString()
@@ -282,9 +285,16 @@ export const decideApplication = async (a: Application, decision: Decision, comm
   return { ok: true, app }
 }
 
-/** Approval (FR-REG-06): the organisation with its partner ID, the primary contact as Partner Admin, the invitation, the CRM job. */
-export const approveApplication = async (a: Application, comment: string, me: K7Context): Promise<DecideResult> => {
+/** The region the Channel Manager assigns on approval must be one of the settings' (none needed while the settings list none). */
+const regionProblem = (allowed: { code: string }[], region: string): string => (allowed.length && !allowed.some((r) => r.code === region) ? 'Assign the K7 region before approving.' : '')
+
+/** Approval (FR-REG-06): the organisation with its partner ID and the K7 region the Channel Manager assigned, the primary contact as
+    Partner Admin, the invitation, the CRM job. */
+export const approveApplication = async (a: Application, comment: string, me: K7Context, region: string): Promise<DecideResult> => {
   if (!canMoveApplication(a.status, 'approved')) return { ok: false, error: `${APPLICATION_STATUS_LABEL[a.status]} applications cannot be approved.` }
+  const missing = regionProblem((await getPartnerSettings()).regions, region)
+  if (missing) return { ok: false, error: missing }
+  const regions = region ? [region] : []
   const email = a.contact.email
   if (!email) return { ok: false, error: 'The application has no contact email.' }
   const taken = await findPartnerUserByEmail(email)
@@ -312,7 +322,7 @@ export const approveApplication = async (a: Application, comment: string, me: K7
       country: a.company.country,
       pin: a.company.pin,
       website: a.company.website,
-      regions: a.regions,
+      regions,
     } as never,
   })
   const orgId = String(orgDoc.id)
@@ -323,7 +333,7 @@ export const approveApplication = async (a: Application, comment: string, me: K7
     data: { org: orgDoc.id, email, name: a.contact.name, designation: a.contact.designation, mobile: a.contact.mobile, roles: ['admin'], status: 'invited', invitedAt: now } as never,
   })
   const user = toUser(userDoc as unknown as Doc)
-  const app = await update(a.id, { status: 'approved', orgId, decidedAt: now, decisions: [...a.decisions, { to: 'approved', byName: me.name, byEmail: me.email, at: now, comment }] })
+  const app = await update(a.id, { status: 'approved', orgId, regions, decidedAt: now, decisions: [...a.decisions, { to: 'approved', byName: me.name, byEmail: me.email, at: now, comment }] })
   const actor = k7Actor(me)
   await audit({ actor, object: 'partner-applications', objectId: app.id, objectLabel: app.number, action: 'application.approved', from: 'underReview', to: 'approved', orgId, comment })
   await audit({ actor, object: 'partner-orgs', objectId: orgId, objectLabel: partnerId, action: 'org.created', to: 'approved', orgId, comment: `From application ${app.number}` })

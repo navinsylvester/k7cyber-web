@@ -51,9 +51,12 @@ export const SiteHeader: React.FC<{ data: Header }> = ({ data }) => {
 
   const cta = data?.cta
   const panel = open !== null ? items[open] : null
+  /* On the homepage (HomeLanding) the bar is the landing's: dark in either theme (the page has no light variant, so there is no
+     toggle), no primary action (the page carries its own), and the menu flush with the right edge of the landing's column (home.css). */
+  const home = pathname === '/'
 
   return (
-    <header className="site-header g-paper" ref={ref}>
+    <header className={`site-header g-paper${home ? ' is-home' : ''}`} ref={ref} {...(home ? { 'data-theme': 'dark' } : {})}>
       <div className="bar">
         <Link className="brand" href="/" aria-label="K7 CyberSecurity">
           <Logo />
@@ -74,7 +77,13 @@ export const SiteHeader: React.FC<{ data: Header }> = ({ data }) => {
                 {item.label} <i className="chev" />
               </button>
             ) : (
-              <Link key={item.id ?? i} href={navHref(item)} {...current}>
+              <Link
+                key={item.id ?? i}
+                href={navHref(item)}
+                // On the homepage Support is the bar's one action, the landing's orange cut button (home.css).
+                className={home && navHref(item).startsWith('/support') ? 'nav-cta' : undefined}
+                {...current}
+              >
                 {item.label}
               </Link>
             )
@@ -82,16 +91,18 @@ export const SiteHeader: React.FC<{ data: Header }> = ({ data }) => {
         </nav>
 
         <div className="hdr-tools">
-          <button
-            type="button"
-            className="theme-btn"
-            aria-label={theme === 'light' ? 'Theme: light. Switch to dark.' : 'Theme: dark. Switch to light.'}
-            title={theme === 'light' ? 'Switch to dark' : 'Switch to light'}
-            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-          >
-            <Icon name="theme" />
-          </button>
-          {cta?.label && (
+          {!home && (
+            <button
+              type="button"
+              className="theme-btn"
+              aria-label={theme === 'light' ? 'Theme: light. Switch to dark.' : 'Theme: dark. Switch to light.'}
+              title={theme === 'light' ? 'Switch to dark' : 'Switch to light'}
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            >
+              <Icon name="theme" />
+            </button>
+          )}
+          {!home && cta?.label && (
             <Link className="btn btn-primary btn-sm" href={linkHref(cta)}>
               {cta.label}
             </Link>

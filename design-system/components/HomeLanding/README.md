@@ -1,0 +1,33 @@
+# HomeLanding
+The homepage at `/`: the approved "K7 Seventh Sense Landing" (Claude Design, v2, 2026-11-20), *Monolith on black*: colossal condensed type, one orange, every edge cut at the angle of the 7. It is one designed page, as the Labs landing (L12) is for section 08, and it stands apart from the sheets on purpose. The site's menu stands above it, laid out as the artboard's header (SiteHeader's homepage variant: the older menu flush with the right edge of the landing's column, no theme toggle, Support as the orange cut button of the artboard's header in place of its Request Demo), so it reaches every other page (Support, K7 Labs, the partner portal) exactly as it does elsewhere; the artboard's own footer closes it, in place of SiteFooter.
+
+Since 2026-11-21; before it the homepage was the `home` page's blocks (`designs/home/Home.dc.html`).
+
+**Reference markup** is the artboard `designs/home/Seventh-Sense-Landing.html`, header aside: the site's menu replaces the artboard's (its seven anchors and Request Demo). Measured against the build at 1440 and 390 with reduced motion: every section the same height but Customers, whose first channel carries the longer approved quote.
+
+**Departures from 2.2, all scoped to `.ss`** (nothing leaks into a sheet, and no other page may borrow them):
+- Its own greys, not the four grounds: `ss-ink` #0B0C0D, `ss-black` #1B1D20 (the page), `ss-charcoal` #2B2E32, `ss-paper` #F4F3F0, and `logo-orange` (#EC6A23) as its one colour where the rest of the site uses `signal`. Dark in both themes, header included: a reader who chose light elsewhere gets it back on the next page.
+- Its own faces: Big Shoulders (900, optical size on) for the display, uppercase; Barlow for running text; IBM Plex Mono for the counted things, as everywhere. Both self-hosted by `next/font` and loaded on this page only.
+- Outlined words: the second clause of a headline is the ground's colour under a 4px `ss-paper` stroke (`m-out`, 6px on the hero, `m-out3`), the outline standing in for 2.2's dim clause.
+- Cuts and hatches at the 7: filled containers lose their lower right corner (`--ss-cut-s` 44 × 20px, `--ss-cut-l` 72 × 33px), buttons their right edge; seams between sections are hatches at 114.6° and 65.4°, a ruler, a halftone and a wire.
+- Motion everywhere, and all of it stops under reduced motion: the dot sweep on the hero, the feed bars, the nine shards that fuse into ONE, the falling pixels, the module switches, the marquee, the tuner's waves.
+
+**One right edge**: the menu's last item, the hero's meta line, the claim, its text and its second action (See how it works), and the feeds all end on the column's right edge. On desktop (from 1000px, where the claim's column stands beside the headline) the column is set flush right, the claim and the text ranged right and the two actions at their own widths, so the lines end on the boundary and the ragged left leaves air beside SEVENTH SENSE. Narrower, where the column drops under the headline (below ~975px), it is the artboard's layout: ranged left, the actions at their widths; on a phone (560px and under) each action takes the full width. The footer's rows sit on the same column (the artboard set them 56px inside it on wide screens).
+
+**Platform cards** (03): what each job covers is a row of tags, each the artboard's `m-tag` (a 1px box in paper around mono caps at 11px), where the artboard ran them as one dotted mono line. The cards sit on a subgrid, art and body as two rows, so the arts step up from one bottom line and the bodies share the tallest card's height at any width.
+
+**K7 Labs figures** (07): the mono note under each figure (*Multi-decade expertise* and the others) sits on a charcoal box, the award panel's grey, padded 8 × 12px, to break the run of ink; its measure is the artboard's 240px plus the padding, so it wraps where the artboard did.
+
+**Contact form** (09): Name and Work email, both required, then *I’m interested in* and Message, optional; the artboard's Company is left out, since the work email names the company. A required label carries an orange asterisk (`ss-req`), with no note to explain it; the privacy line stands beside the button. Text, email and select fields sit two to a row and the last of an odd number takes the row.
+
+**The topic list** (09): the homepage's select opens in the landing's terms over the general rules (Field, *The open list*): ink with a 2px paper frame, Barlow rows on hairlines, the hovered row inverted to paper, the chosen one marked by an 8px orange square, and a chevron at the field's end, which the artboard's select lacked.
+
+**Footer** (`HomeFooter`, `ss-foot`): the white logo with *Beyond the obvious · Answerable to you* (the artboard's Request Demo is left out: the page's contact sheet sits just above); one row per column of the `footer` global (the orange slash, the heading in the display face, the links on a 40px line), so the footer's links are the same as SiteFooter's and edited in one place; the outlined Seventh / Sense across the width; the legal line, the socials and Back to top on orange, each network as the design system's own drawn glyph (Icon, social) at 22px in a 32px frame of the base's ink that inverts on hover, its pixel in ink.
+
+**Sections** 00 hero (the six feeds and the seventh), 01 the puzzle, 02 how it works (8 sources → 3 stages → 1 verdict), 03 the platform (four jobs), 04 modules (core and the seven add-ons), 05 industries, 06 accountability, 07 K7 Labs, 08 customers (the tuner, one channel per quote), 09 contact.
+
+**Provide** the copy in `src/components/home/SeventhSense.tsx` (a designed page, not CMS blocks). The CMS keeps three things: the `home` page's SEO tab (title, description, share image); the *Homepage enquiry* form, whose fields, labels and topic list the contact form renders and posts to the form builder; and which industry pages and `why-k7` are published, since a card links its page once it exists and the form until then. Quotes are approved customer words only; a sample stays marked as one on the page.
+
+**Don't** reuse `.ss`, its greys, Big Shoulders or `logo-orange` outside this page; add a light variant without a design; put the artboard's header back, or bring back the theme toggle or a header action on this page; or ship the form unconnected.
+
+**Build** `src/app/(frontend)/page.tsx` renders `SeventhSenseHome` (the sections in `main`, then `HomeFooter`) and imports `home.css`, which also holds the header's homepage layout; `Customers.client.tsx` is the tuner (auto-advance every 6 s until touched, never under reduced motion; the needle at (2i + 1) / 2n), `ContactForm.client.tsx` the form. Anchors (`#how`, `#contact`) land below the sticky header (`scroll-margin-top`).

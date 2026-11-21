@@ -2,7 +2,8 @@ import Link from 'next/link'
 import React from 'react'
 
 import { JOIN } from '@/lib/partner/registration'
-import { SIZE_BANDS, TURNOVER_BANDS, type Application } from '@/lib/partner/registration-model'
+import { isIndia } from '@/lib/geo'
+import { SIZE_BANDS, turnoverLabel, type Application } from '@/lib/partner/registration-model'
 import { PARTNER_TYPE_LABEL } from '@/lib/partner/settings-model'
 import { dmy, dmyHm } from '@/lib/support/format'
 
@@ -41,6 +42,9 @@ export const JoinSteps: React.FC<{ current: JoinStep; done?: boolean }> = ({ cur
 
 const band = (list: readonly { key: string; label: string }[], key: string) => list.find((b) => b.key === key)?.label ?? '—'
 
+/** The territory in the applicant's words; an application filed on the earlier form (regions ticked, before 2026-11-09) reads its ticks. */
+export const territoryOf = (app: Pick<Application, 'territory' | 'status'>, regions: string[]): string => app.territory || (app.status !== 'approved' && regions.length ? `${regions.join(', ')} (ticked on the earlier form)` : '')
+
 const Row: React.FC<{ k: string; v: React.ReactNode; sans?: boolean }> = ({ k, v, sans = true }) => (
   <>
     <dt>{k}</dt>
@@ -48,7 +52,8 @@ const Row: React.FC<{ k: string; v: React.ReactNode; sans?: boolean }> = ({ k, v
   </>
 )
 
-/** P9 The application as filed facts: three groups of meta-rows, the same on the applicant's and the K7 side. `regions` are names. */
+/** P9 The application as filed facts: three groups of meta-rows, the same on the applicant's and the K7 side. `regions` are the names
+    of the K7 regions assigned on approval (none before); the territory is the applicant's own words. */
 export const ApplicationSummary: React.FC<{ app: Application; regions: string[]; edit?: boolean; k7?: boolean }> = ({ app, regions, edit, k7 }) => {
   const c = app.company
   const p = app.contact
@@ -66,10 +71,15 @@ export const ApplicationSummary: React.FC<{ app: Application; regions: string[];
           <Row k="Website" v={c.website ? <a href={c.website} rel="noreferrer" target="_blank">{c.website.replace(/^https?:\/\//, '')}</a> : ''} />
           <Row k="Incorporated" v={c.yearOfIncorporation ? String(c.yearOfIncorporation) : ''} sans={false} />
           <Row k="Company size" v={band(SIZE_BANDS, c.size)} />
-          <Row k="Annual turnover" v={band(TURNOVER_BANDS, c.turnover)} />
-          <Row k="GSTIN" v={c.gstin} sans={false} />
-          <Row k="PAN" v={c.pan} sans={false} />
-          <Row k="K7 regions" v={regions.join(', ')} />
+          <Row k="Annual turnover" v={turnoverLabel(c.turnover, c.country) || '—'} />
+          {(isIndia(c.country) || c.gstin || c.pan) && (
+            <>
+              <Row k="GSTIN" v={c.gstin} sans={false} />
+              <Row k="PAN" v={c.pan} sans={false} />
+            </>
+          )}
+          <Row k="Territory" v={territoryOf(app, regions)} />
+          {app.status === 'approved' && <Row k="K7 region" v={regions.join(', ')} />}
         </dl>
       </div>
       <div>

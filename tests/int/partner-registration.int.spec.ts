@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatId } from '@/lib/partner/ids'
-import { accountBody, clarificationNote, contactBody, normaliseWebsite, readyToSubmit, SIZE_BANDS, TURNOVER_BANDS, validateCompany, validateContact, validateRegions, yearsInBusinessBand, type Application, type Company } from '@/lib/partner/registration-model'
+import { formatId, isApplicationNumber } from '@/lib/partner/ids'
+import { accountBody, clarificationNote, contactBody, normaliseWebsite, indianIds, readyToSubmit, SIZE_BANDS, turnoverLabel, turnoverOptions, TURNOVER_BANDS, validateCompany, validateContact, validateTerritory, yearsInBusinessBand, type Application, type Company } from '@/lib/partner/registration-model'
 import { alreadyLine, canMoveApplication, canMoveOrg, decisionPath, isOpenApplication, isRepeatedDecision } from '@/lib/partner/status'
 
 /* The application's machine, validation and CRM mapping without a tenant (docs/partner-portal/04-portal-guide.md M2). */
@@ -46,17 +46,32 @@ describe('join validation (FR-REG-02, appendix 6)', () => {
   it('keeps GSTIN and PAN optional', () => {
     expect(validateCompany({ ...company, gstin: '', pan: '' }, 2026)).toEqual({})
   })
-  it('checks the contact and the regions', () => {
+  it('checks the contact and the territory (the K7 region is assigned on approval, not asked)', () => {
     expect(validateContact(contact)).toEqual({})
     expect(Object.keys(validateContact({ ...contact, email: 'not-an-email', mobile: '123' })).sort()).toEqual(['contactEmail', 'contactMobile'])
-    expect(validateRegions(['S'], [{ code: 'S' }, { code: 'N' }])).toEqual({})
-    expect(validateRegions(['X'], [{ code: 'S' }])).toHaveProperty('regions')
-    expect(validateRegions([], [])).toEqual({})
+    expect(validateTerritory('Tamil Nadu and Kerala')).toEqual({})
+    expect(validateTerritory(' ')).toHaveProperty('territory')
+  })
+  it('checks the state against the country: a listed state where there is a list, anything (or nothing) elsewhere', () => {
+    expect(validateCompany({ ...company, state: 'TN' }, 2026)).toHaveProperty('state')
+    expect(validateCompany({ ...company, country: 'United Arab Emirates', state: 'Dubai', gstin: '', pan: '' }, 2026)).toEqual({})
+    expect(validateCompany({ ...company, country: 'United Arab Emirates', state: 'Tamil Nadu' }, 2026)).toHaveProperty('state')
+    expect(validateCompany({ ...company, country: 'Singapore', state: '' }, 2026)).toEqual({})
+  })
+  it('asks turnover in rupees in India and US dollars elsewhere, on the same CRM bands', () => {
+    expect(turnoverLabel('6-10', 'India')).toBe('₹6–10 crore')
+    expect(turnoverLabel('6-10', 'Singapore')).toBe('US$ 0.6–1.2 million')
+    expect(turnoverOptions('Singapore').map((o) => o.value)).toEqual(TURNOVER_BANDS.map((b) => b.key))
+  })
+  it('keeps GSTIN and PAN for an Indian company only', () => {
+    expect(indianIds({ country: 'India', gstin: '33abcde1234f1z5', pan: 'abcde1234f' })).toEqual({ gstin: '33ABCDE1234F1Z5', pan: 'ABCDE1234F' })
+    expect(indianIds({ country: 'Malaysia', gstin: '33ABCDE1234F1Z5', pan: 'ABCDE1234F' })).toEqual({ gstin: '', pan: '' })
   })
   it('refuses to submit until the email is verified', () => {
-    const app = { company, contact: { ...contact, emailVerifiedAt: null, mobileVerifiedAt: null, mobileVerification: 'none' as const }, regions: ['S'] }
-    expect(readyToSubmit(app, [{ code: 'S' }])).toEqual({ emailVerified: 'The contact email has not been verified yet.' })
-    expect(readyToSubmit({ ...app, contact: { ...app.contact, emailVerifiedAt: '2026-10-22T10:00:00.000Z' } }, [{ code: 'S' }])).toEqual({})
+    const app = { company, contact: { ...contact, emailVerifiedAt: null, mobileVerifiedAt: null, mobileVerification: 'none' as const }, territory: 'South India' }
+    expect(readyToSubmit(app)).toEqual({ emailVerified: 'The contact email has not been verified yet.' })
+    expect(readyToSubmit({ ...app, contact: { ...app.contact, emailVerifiedAt: '2026-10-22T10:00:00.000Z' } })).toEqual({})
+    expect(readyToSubmit({ ...app, territory: '', contact: { ...app.contact, emailVerifiedAt: '2026-10-22T10:00:00.000Z' } })).toHaveProperty('territory')
   })
   it('normalises a website and reads the latest clarification note', () => {
     expect(normaliseWebsite('www.example.com')).toBe('https://www.example.com')
@@ -94,7 +109,10 @@ describe('CRM account mapping (03-dynamics-exploration.md §6)', () => {
   })
   it('formats the portal identifiers', () => {
     expect(formatId('partner', 1)).toBe('K7P-00001')
-    expect(formatId('application', 123)).toBe('K7A-00123')
+    expect(formatId('application', 123)).toBe('K7PA-00123')
+    expect(isApplicationNumber('K7PA-00123')).toBe(true)
+    expect(isApplicationNumber('K7A-00036')).toBe(true)
+    expect(isApplicationNumber('K7P-00001')).toBe(false)
     expect(formatId('deal', 99999)).toBe('K7D-99999')
   })
 })

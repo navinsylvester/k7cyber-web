@@ -4,7 +4,7 @@ Mirror of the Design canvas https://claude.ai/artifact/KAf1PvdASMjpvpANYVpqhF ("
 
 | Folder | Artboards | Template |
 |---|---|---|
-| `home/` | `Home.dc.html` (1440, desktop), `Home-Mobile.dc.html` (390, imports Home) | Home |
+| `home/` | `Seventh-Sense-Landing.html` (fluid, the homepage as built since 2026-11-21; a standalone page whose header the site replaces with its menu in the homepage layout; its footer is built, on the Footer global's links: `design-system/components/HomeLanding`); `Home.dc.html` (1440), `Home-Mobile.dc.html` (390) the earlier block-built home, kept for the record | Home |
 | `platform/` | `Platform.dc.html` (1440, mega menu open via the `menuOpen` tweak), `Platform-Mobile.dc.html` (390) | Platform overview |
 | `product/` | `Product-MDR.dc.html` (1440), `Product-MDR-Mobile.dc.html` (390) | Product (MDR worked example; XDR/EDR/EPS and network products reuse it) |
 | `addon/` | `Addon-DLP.dc.html`, `Addon-DLP-Mobile.dc.html` | Addon (DLP; the other six add-ons reuse it) |

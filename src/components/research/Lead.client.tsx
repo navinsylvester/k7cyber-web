@@ -2,6 +2,8 @@
 import Link from 'next/link'
 import React, { useRef, useState } from 'react'
 
+import { COUNTRIES } from '@/lib/geo'
+
 /* FR-TR-05: lead capture before a gated download. The route verifies the lead and returns the file URL. */
 export const LeadButton: React.FC<{ reportId: number; title: string; className?: string; label?: string }> = ({ reportId, title, className = 'btn btn-line btn-sm', label = 'Get the report' }) => {
   const ref = useRef<HTMLDialogElement>(null)
@@ -113,7 +115,7 @@ export const LeadButton: React.FC<{ reportId: number; title: string; className?:
               <span className="control is-select">
                 <select id={`l-country-${reportId}`} name="country" required defaultValue="">
                   <option value="">Select a country</option>
-                  {['India', 'Singapore', 'United Arab Emirates', 'Malaysia', 'Japan', 'United States', 'Other'].map((c) => (
+                  {COUNTRIES.map((c) => (
                     <option key={c}>{c}</option>
                   ))}
                 </select>

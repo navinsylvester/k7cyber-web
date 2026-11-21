@@ -29,11 +29,12 @@ export async function openCase(form: FormData): Promise<void> {
   const categoryId = str(form, 'categoryId', 36)
   const subcategoryId = str(form, 'subcategoryId', 36)
   const productVersion = str(form, 'productVersion', 100)
+  const osVersion = str(form, 'osVersion', 100)
   const serial = str(form, 'serial', 100)
   const file = form.get('file')
 
   const back = (err: string) => {
-    const u = new URLSearchParams({ error: err, title, description, productId, categoryId, subcategoryId, productVersion, serial })
+    const u = new URLSearchParams({ error: err, title, description, productId, categoryId, subcategoryId, productVersion, osVersion, serial })
     redirect(`/support/cases/new?${u.toString()}`)
   }
 
@@ -60,10 +61,11 @@ export async function openCase(form: FormData): Promise<void> {
       categoryId: categoryId || undefined,
       subcategoryId: subcategoryId || undefined,
       productVersion: productVersion || undefined,
+      osVersion: osVersion || undefined,
       serial: serial || undefined,
     })
   } catch (e) {
-    const u = new URLSearchParams({ error: 'failed', message: userMessage(e, 'customer'), title, description, productId, categoryId, subcategoryId, productVersion, serial })
+    const u = new URLSearchParams({ error: 'failed', message: userMessage(e, 'customer'), title, description, productId, categoryId, subcategoryId, productVersion, osVersion, serial })
     redirect(`/support/cases/new?${u.toString()}`)
   }
 

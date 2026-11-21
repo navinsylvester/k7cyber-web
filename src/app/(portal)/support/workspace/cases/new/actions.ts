@@ -44,7 +44,8 @@ export async function createCaseAction(form: FormData): Promise<void> {
         title,
         description: description || undefined,
         customer: { kind: kind as 'contact' | 'account', id: custId! },
-        primaryContactId: kind === 'contact' ? custId! : optGuid(form, 'primaryContactId'),
+        // Dynamics refuses a primary contact on a case whose customer is that same contact (0x8004f865); it belongs to account cases.
+        primaryContactId: kind === 'account' ? optGuid(form, 'primaryContactId') : undefined,
         origin: num(form, 'origin'),
         productId: optGuid(form, 'productId'),
         categoryId: optGuid(form, 'categoryId'),
@@ -55,6 +56,7 @@ export async function createCaseAction(form: FormData): Promise<void> {
         caseType: num(form, 'caseType'),
         consideredAs: num(form, 'consideredAs'),
         productVersion: str(form, 'productVersion') || undefined,
+        osVersion: str(form, 'osVersion') || undefined,
         serial: str(form, 'serial') || undefined,
         incidentId: str(form, 'incidentId') || undefined,
         module: str(form, 'module') || undefined,

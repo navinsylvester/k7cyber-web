@@ -131,7 +131,7 @@ export default async function K7SettingsPage({ searchParams }: { searchParams: P
                       </legend>
                       <div className="checks">{PARTNER_TYPES.map((t) => check(`type_${t}`, PARTNER_TYPE_LABEL[t], s.partnerTypes.includes(t)))}</div>
                     </fieldset>
-                    <Field id="regions" label="K7 regions" span hint="One per line: code, name. The applicant picks from these; the first one named goes to the CRM account's region.">
+                    <Field id="regions" label="K7 regions" span hint="One per line: code, name. The Channel Manager assigns one of these on approval; it goes to the CRM account's region, so name them as the CRM does.">
                       <textarea id="regions" name="regions" rows={5} defaultValue={s.regions.map((r) => `${r.code}, ${r.name}`).join('\n')} placeholder={'N, North\nS, South\nWCE, West and Central'} />
                     </Field>
                     <Field id="terms_version" label="Terms version" hint="Stored on every application with the time of acceptance.">

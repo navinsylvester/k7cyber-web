@@ -40,7 +40,7 @@ export const Footer: GlobalConfig = {
       type: 'row',
       fields: [
         { name: 'legal', type: 'text', defaultValue: '© 2026 K7 Enterprise Security Private Limited. All Rights Reserved.', admin: { width: '60%' } },
-        { name: 'offices', type: 'text', defaultValue: 'Chennai · Singapore · Dubai', admin: { width: '40%' } },
+        { name: 'offices', type: 'text', admin: { width: '40%', description: 'Optional line beside the legal one; left blank (the offices are on Contact Us).' } },
       ],
     },
   ],

@@ -121,6 +121,7 @@ The parts have the file's names, in the READMEs, the code comments and the CMS l
 | Parts | Rules | Reference CSS | React |
 | --- | --- | --- | --- |
 | Grounds, type, the pixel, sheets and tabs, the tab and filed containers (`Tab`), header, footer, buttons, tags, placeholders, rows, tables, forms, quotes, chips, prose, CTA sheet, icons | `components/<Name>/README.md` | `components/bundle.css` | `src/components/k7`, `src/blocks/k7`, `src/Header`, `src/Footer` |
+| The homepage, a designed page apart from the sheets | `components/HomeLanding/README.md` | `src/app/(frontend)/home.css` | `src/components/home`, `src/app/(frontend)/page.tsx` |
 | 08 · Labs, with the record rail | `components/LabsParts/README.md` | `src/app/(frontend)/research.css` | `src/components/research`, `src/app/(frontend)/research` |
 | 09 · Support | `components/SupportParts/README.md` | `src/app/(portal)/portal.css` | `src/components/support`, `src/app/(portal)/support` |
 | 10 · Partners | `components/PartnerParts/README.md` | `src/app/(partner)/partner.css` (over `portal.css`) | `src/components/partner`, `src/app/(partner)` |

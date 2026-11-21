@@ -126,6 +126,25 @@ helpers), `src/lib/support/` (one file per area; `session.ts` gives `requireAgen
 - The case head (`getCaseParties`, one expanded read) shows a contact customer's account, a callable number, and the case's
   *Serial key* or else the account's licence key. *Incident ID* (`k7_incidentid`) is on Details, in Edit details, on the new
   case form and in both searches; "-" reads as empty. A status reason the CRM no longer labels reads "Unknown status".
+- *OS version* (2026-11-18) is the case's `new_linuxosversion` (the Hub labels it "Linux( O.S & Version)"; 100 characters, used for
+  any OS, e.g. "win8", "Ubuntu OS"): on Details, in Edit details and on both new case forms (the customer's reads *Operating system*).
+  No schema change: production has the same column.
+- Email from the case sheet (2026-11-18, testers' notes of 29-10): the composer (`EmailComposer.client.tsx`) posts the formatted
+  body as `html` and its words as `text`; the server keeps only what `cleanEmailHtml` (`src/lib/support/email-html.ts`) allows
+  (paragraphs and line divs, bold, italic, underline, strike, lists, links to http(s) and mailto styled in Outlook's blue, and
+  colour, size and font re-written from checked values into spans), links every bare web or email address, and wraps it in Arial
+  14px. Without JavaScript the textarea's text becomes paragraphs with the same links. Attachments are `activitymimeattachments`
+  created on the email before `SendEmail`: up to 10 files, 15 MB in all (`src/lib/support/limits.ts`), refused when their extension
+  is in the organisation's `blockedattachments` (read with the agent's token, an hour's cache); a refused attachment deletes the
+  draft again. Server actions take 16 MB and `proxyClientMaxBodySize` matches it, because `src/proxy.ts` runs on `/support` and
+  Next buffers a proxied body only to 10 MB by default. The timeline shows the email's text, links and attachments; colour, size
+  and font stay in the email (the portal's `sanitizeHtml` drops styles).
+- Merge (2026-11-18): *Merge into another case* on an active case calls the platform's `Merge` message (`mergeCase`; `UpdateContent`
+  is required and ignored for cases, `PerformParentingChecks` false). The subordinate closes as Merged (state 2, status 2000) with
+  `masterid` set, and its notes, emails, activities and child cases move to the target. It cannot be undone, so the panel picks
+  nothing by default, needs the tick, and asks when a listed case and a typed number are both given. Only active cases on both
+  sides. A merged case shows *Merged into* and a *Merged* panel in place of *Reopen*. A customer opening a merged case's number
+  is sent to the surviving case when it is theirs and visible (`customerMergedInto`, up to three merges deep), with a flash.
 
 ## 4c. The manager view (built 2026-10-13)
 Who: agents holding one of the configured Dynamics security roles (defaults: System Administrator, K7 - System Admin, CSR Manager,
@@ -296,7 +315,8 @@ hint, the sample script, the engineering door (phases B and C of the design).
   cases from 13-10 were typed by hand.
 - Two Dataverse rules learnt the hard way: a case whose customer is a contact must not carry that contact as
   `primarycontactid` (0x8004f865), and UAT's create automation sets a new case's status reason itself (the
-  portal does not send one). Both are handled in `src/lib/support/cases.ts`.
+  portal does not send one). Both are handled in `src/lib/support/cases.ts`; the agent's *New case* action
+  (`workspace/cases/new/actions.ts`) sent the contact as its own primary contact until 2026-11-06 and failed on every contact case.
 - The test contact and case are real rows in UAT; delete them from the Customer Service Hub when the demo
   no longer needs them (mass deletes stay the CRM owner's call).
 
@@ -310,7 +330,8 @@ hint, the sample script, the engineering door (phases B and C of the design).
 - Entra admin consent for the agent app (needs a tenant admin); the service app registration and
   application user (§B); SMTP for the codes and notifications (`SMTP_URL`); the one-time-code
   attempt counter and send limiter are in memory (one server).
-- Merge, defect create, City/State/Region admin. (Email reply from the workspace exists; sending needs a synced mailbox.)
+- Defect create, City/State/Region admin. (Email from the workspace exists with formatting and attachments; sending needs a synced
+  mailbox, so on UAT it stays a draft.)
 - Approved page designs in `designs/` (the portal was built straight on the design system).
 - Production: `(Prod)` registrations, `DATAVERSE_URL` switch, read-only week, feature flags
   (`SUPPORT_PORTAL_WRITES` is read nowhere yet).

@@ -3,8 +3,9 @@ import type { Form as FormType } from '@/payload-types'
 import { RichText } from '@payloadcms/richtext-lexical/react'
 import { useRouter } from 'next/navigation'
 import React, { useCallback, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 
+import { COUNTRIES, DEFAULT_COUNTRY, statesOf } from '@/lib/geo'
 import { getClientSideURL } from '@/utilities/getURL'
 
 type AnyField = {
@@ -18,14 +19,18 @@ type AnyField = {
   message?: unknown
 }
 
-const COUNTRIES = ['India', 'Singapore', 'United Arab Emirates', 'Malaysia', 'Other']
-
 /* Field (design-system/components/Field): label in mono muted, a 2px ink underline that turns signal on focus,
-   19px input text, 18px square checkboxes. Errors in acc-ink under the field. */
+   19px input text, 18px square checkboxes. Errors in acc-ink under the field.
+   Country lists every country (src/lib/geo); a State field (the form builder's `state` block, or a select named `state`) follows
+   the country: a select where the country has a list, otherwise free text that may stay blank. */
 export const K7Form: React.FC<{ form: FormType; privacyUrl: string; maxWidth?: number }> = ({ form, privacyUrl, maxWidth }) => {
   const { id: formID, confirmationMessage, confirmationType, redirect, submitButtonLabel } = form
   const fields = (form.fields ?? []) as unknown as AnyField[]
-  const { register, handleSubmit, formState: { errors } } = useForm()
+  const { register, handleSubmit, setValue, control: formControl, formState: { errors } } = useForm()
+  const countryField = fields.find((f) => f.blockType === 'country')
+  const watched = useWatch({ control: formControl, name: countryField?.name ?? '_noCountry' }) as string | undefined
+  const country = countryField ? String(watched ?? DEFAULT_COUNTRY) : ''
+  const isState = (f: AnyField) => Boolean(countryField) && (f.blockType === 'state' || (f.blockType === 'select' && f.name === 'state'))
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -70,8 +75,10 @@ export const K7Form: React.FC<{ form: FormType; privacyUrl: string; maxWidth?: n
 
   const control = (f: AnyField) => {
     const id = `f-${f.name}`
-    const reg = register(f.name, { required: f.required ? 'This field is required' : false })
-    const star = f.required ? (
+    const states = isState(f) ? statesOf(country) : []
+    const required = Boolean(f.required) && (!isState(f) || states.length > 0)
+    const reg = register(f.name, { required: required ? 'This field is required' : false })
+    const star = required ? (
       <span className="req" aria-hidden="true">
         {' *'}
       </span>
@@ -90,7 +97,23 @@ export const K7Form: React.FC<{ form: FormType; privacyUrl: string; maxWidth?: n
     let input: React.ReactNode
     let select = false
     if (f.blockType === 'textarea') input = <textarea id={id} {...reg} />
-    else if (f.blockType === 'select') {
+    else if (isState(f)) {
+      if (states.length) {
+        select = true
+        input = (
+          <select id={id} key={`${id}-${country}`} {...reg} defaultValue="">
+            <option value="" disabled>
+              Select
+            </option>
+            {states.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        )
+      } else input = <input id={id} key={`${id}-${country}`} type="text" {...reg} defaultValue="" autoComplete="address-level1" />
+    } else if (f.blockType === 'select') {
       select = true
       input = (
         <select id={id} {...reg} defaultValue="">
@@ -107,7 +130,16 @@ export const K7Form: React.FC<{ form: FormType; privacyUrl: string; maxWidth?: n
     } else if (f.blockType === 'country') {
       select = true
       input = (
-        <select id={id} {...reg} defaultValue="India">
+        <select
+          id={id}
+          {...reg}
+          defaultValue={DEFAULT_COUNTRY}
+          onChange={(e) => {
+            void reg.onChange(e)
+            for (const s of fields.filter(isState)) setValue(s.name, '')
+          }}
+          autoComplete="country-name"
+        >
           {COUNTRIES.map((c) => (
             <option key={c}>{c}</option>
           ))}
@@ -122,7 +154,7 @@ export const K7Form: React.FC<{ form: FormType; privacyUrl: string; maxWidth?: n
     return (
       <div className={`field${wide}${invalid}`} key={f.name}>
         <label className="label" htmlFor={id}>
-          {f.label}
+          {isState(f) && !states.length ? 'State / province' : f.label}
           {star}
         </label>
         <div className={`control${select ? ' is-select' : ''}`}>{input}</div>

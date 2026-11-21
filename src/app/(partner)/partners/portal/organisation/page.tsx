@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
 
+import { CountryState } from '@/components/partner/CompanyFields.client'
 import { Field, Flash, LegalChanges, OrgStateTag, Pid, Strip, TypeTag } from '@/components/partner/Parts'
+import { isIndia } from '@/lib/geo'
 import { orgAudit } from '@/lib/partner/audit'
 import { listMembers } from '@/lib/partner/members'
 import { PARTNER_ORG, scopedOrg } from '@/lib/partner/organisation'
@@ -102,7 +104,7 @@ export default async function OrganisationPage({ searchParams }: { searchParams:
                 <Row k="Trade name" v={org.tradeName} />
                 <Row k="Registered address" v={org.address ? `${org.address}, ${org.city}, ${org.state} ${org.pin}, ${org.country}` : ''} />
                 <Row k="Website" v={org.website ? <a href={org.website} rel="noreferrer" target="_blank">{org.website.replace(/^https?:\/\//, '')}</a> : ''} />
-                <Row k="K7 regions" v={regionNames.join(', ')} />
+                <Row k="K7 region" v={regionNames.length ? `${regionNames.join(', ')} (assigned by K7)` : 'Not assigned yet'} />
               </dl>
             </div>
           </div>
@@ -125,30 +127,10 @@ export default async function OrganisationPage({ searchParams }: { searchParams:
                   <Field id="city" label="City" required>
                     <input id="city" name="city" type="text" defaultValue={org.city} required />
                   </Field>
-                  <Field id="state" label="State" required>
-                    <input id="state" name="state" type="text" defaultValue={org.state} required />
-                  </Field>
-                  <Field id="country" label="Country" required>
-                    <input id="country" name="country" type="text" defaultValue={org.country} required />
-                  </Field>
+                  <CountryState country={org.country} state={org.state} errors={{}} />
                   <Field id="pin" label="PIN or postal code" required>
-                    <input id="pin" name="pin" type="text" inputMode="numeric" defaultValue={org.pin} required />
+                    <input id="pin" name="pin" type="text" defaultValue={org.pin} required />
                   </Field>
-                  {settings.regions.length > 0 && (
-                    <fieldset className="field span-2" style={{ border: 0, padding: 0, margin: 0 }}>
-                      <legend className="label" style={{ marginBottom: 10 }}>
-                        K7 regions you operate in *
-                      </legend>
-                      <div className="checks">
-                        {settings.regions.map((r) => (
-                          <label className="check" key={r.code}>
-                            <input type="checkbox" name="regions" value={r.code} defaultChecked={org.regions.includes(r.code)} />
-                            <span>{r.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </fieldset>
-                  )}
                   <div className="form-actions span-2">
                     <button className="btn btn-primary" type="submit">
                       Save the details →
@@ -164,12 +146,16 @@ export default async function OrganisationPage({ searchParams }: { searchParams:
                     <Field id="name" label="Legal name" required span>
                       <input id="name" name="name" type="text" defaultValue={edit?.name ?? org.name} required />
                     </Field>
-                    <Field id="gstin" label="GSTIN" hint="15 characters; blank if not registered.">
-                      <input id="gstin" name="gstin" type="text" defaultValue={edit?.gstin ?? org.gstin} maxLength={15} style={{ textTransform: 'uppercase' }} />
-                    </Field>
-                    <Field id="pan" label="PAN" hint="10 characters.">
-                      <input id="pan" name="pan" type="text" defaultValue={edit?.pan ?? org.pan} maxLength={10} style={{ textTransform: 'uppercase' }} />
-                    </Field>
+                    {(isIndia(org.country) || org.gstin || org.pan) && (
+                      <>
+                        <Field id="gstin" label="GSTIN" hint="15 characters; blank if not registered.">
+                          <input id="gstin" name="gstin" type="text" defaultValue={edit?.gstin ?? org.gstin} maxLength={15} style={{ textTransform: 'uppercase' }} />
+                        </Field>
+                        <Field id="pan" label="PAN" hint="10 characters.">
+                          <input id="pan" name="pan" type="text" defaultValue={edit?.pan ?? org.pan} maxLength={10} style={{ textTransform: 'uppercase' }} />
+                        </Field>
+                      </>
+                    )}
                     <Field id="reason" label="Why it changes" required span hint="Read by the Channel Manager: a re-registration, a correction, a merger.">
                       <textarea id="reason" name="reason" rows={3} required />
                     </Field>

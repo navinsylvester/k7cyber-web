@@ -23,7 +23,7 @@ export default async function JoinTermsPage({ searchParams }: { searchParams: Pr
   if (!app) redirect(`${JOIN}?error=expired`)
   if (!editable(app)) redirect(`${JOIN}/status?a=${encodeURIComponent(app.number)}&k=${encodeURIComponent(app.resumeKey)}`)
   const settings = await getPartnerSettings()
-  const missing = readyToSubmit(app, settings.regions)
+  const missing = readyToSubmit(app)
   if (missing.emailVerified) redirect(`${JOIN}/verify`)
   const regions = settings.regions.filter((r) => app.regions.includes(r.code)).map((r) => r.name)
   const note = app.status === 'clarification' ? clarificationNote(app) : null

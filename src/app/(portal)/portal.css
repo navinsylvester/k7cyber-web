@@ -103,6 +103,14 @@
 .msg-body p:last-child { margin-bottom: 0; }
 .msg-body blockquote { margin: .8em 0; padding-left: 14px; border-left: 2px solid var(--ln); color: var(--mu); }
 .msg-body table { border-collapse: collapse; font-size: 14px; }
+/* Links and lists inside an email or note body (the customer's conversation and the agent's timeline): the reset strips both, so
+   a link read as plain text and a list as indented lines (testers, 2026-10-29: "hyperlinks are not being highlighted"). A link is
+   underlined like link-u, thinner, and takes the accent on hover. */
+:is(.msg-body, .tl-body) a { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+:is(.msg-body, .tl-body) a:hover { color: var(--acc); text-decoration-thickness: 2px; }
+:is(.msg-body, .tl-body) :is(ul, ol) { margin: .4em 0 .8em; padding-left: 1.4em; }
+:is(.msg-body, .tl-body) ul { list-style: disc; }
+:is(.msg-body, .tl-body) ol { list-style: decimal; }
 .msg-body td, .msg-body th { border: 1px solid var(--ln); padding: 4px 8px; }
 .msg.is-you .avatar { background: none; color: var(--fg); box-shadow: inset 0 0 0 1px var(--fg); }
 .msg-att { grid-column: 2; display: flex; flex-wrap: wrap; gap: 8px; }
@@ -157,6 +165,59 @@
 .acts .control input, .acts .control select, .acts .control textarea { font-size: 16px; padding: 4px 24px 8px 0; }
 .acts .control textarea { min-height: 72px; }
 .acts .btn-sm { align-self: flex-start; }
+
+/* S31 Email composer (case sheet, Email the customer): a formatting bar of hairline tiles over the message, toggles inverting
+   like seg-choice; the message itself sits on light paper in either theme (data-theme="light" on .rt-area) in the email's own
+   Arial 14px, because it shows the email as the customer reads it, where a chosen colour has to read. The six colour swatches
+   are the one place hues appear in the portal: they are content the agent writes, never the interface. */
+.rt-bar { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.rt-group { display: inline-flex; flex-wrap: wrap; gap: 1px; padding: 1px; }
+.rt-btn { min-width: 32px; height: 32px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center; background: var(--bg); color: var(--fg); border: 0; border-radius: 0; box-shadow: 0 0 0 1px var(--ln); font: 400 11px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: background .24s var(--ease), color .24s; }
+.rt-btn b, .rt-btn i, .rt-btn u { font: 400 15px/1 var(--font-sans); text-transform: none; }
+.rt-btn b { font-weight: 700; }
+.rt-btn i { font-style: italic; }
+.rt-btn:hover, .rt-btn[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.rt-btn[aria-pressed="true"]:hover { background: var(--signal); color: var(--on-signal); }
+.rt-btn:focus-visible, .rt-swatch:focus-visible, .rt-select:has(select:focus-visible) { outline: 2px solid var(--signal); outline-offset: 1px; position: relative; z-index: 1; }
+.rt-select { position: relative; display: inline-flex; box-shadow: 0 0 0 1px var(--ln); }
+.rt-select select { appearance: none; -webkit-appearance: none; background: transparent; color: inherit; border: 0; border-radius: 0; height: 32px; padding: 0 26px 0 10px; font: 400 11px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; outline: none; }
+.rt-select select option { background: var(--paper); color: var(--ink); text-transform: none; font-family: var(--font-sans); }
+/* The list drawn by bundle.css (Select) where the browser allows it; this rule's appearance: none would otherwise win. */
+@supports (appearance: base-select) { .rt-select select { appearance: base-select; } }
+.rt-select::after { content: ""; position: absolute; right: 11px; top: 11px; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); pointer-events: none; }
+.rt-colours { gap: 5px; padding: 0 0 0 2px; }
+.rt-swatch { width: 22px; height: 22px; padding: 0; border: 0; border-radius: 0; background: var(--sw); box-shadow: 0 0 0 1px var(--ln); cursor: pointer; transition: box-shadow .24s var(--ease); }
+.rt-swatch:hover { box-shadow: 0 0 0 2px var(--fg); }
+.rt-link { display: flex; flex-direction: column; gap: 10px; }
+.rt-link .actions { gap: 10px 18px; }
+.rt-link .field-error { display: block; }
+.rt-link.is-invalid .control { border-bottom-color: var(--acc); }
+/* The hairline frames the paper: in the light theme it is the page's own colour and would read as empty space. */
+.control.rt-area { display: block; background: var(--bg); color: var(--fg); padding: 10px 12px 12px; box-shadow: inset 0 0 0 1px var(--ln); }
+.rt-edit { min-height: 168px; max-height: 440px; overflow: auto; outline: none; font: 400 14px/1.5 Arial, Helvetica, sans-serif; letter-spacing: 0; overflow-wrap: anywhere; cursor: text; }
+.rt-edit p { margin: 0 0 .7em; }
+.rt-edit ul, .rt-edit ol { margin: .3em 0; padding-left: 1.6em; }
+.rt-edit ul { list-style: disc; }
+.rt-edit ol { list-style: decimal; }
+/* The email's link blue (LINK_STYLE in src/lib/support/email-html.ts) and the sizes the email is sent at, so the paper shows it. */
+.rt-edit a { color: #0563c1; text-decoration: underline; }
+.rt-edit font[size="1"] { font-size: 11px; }
+.rt-edit font[size="2"] { font-size: 12px; }
+.rt-edit font[size="3"] { font-size: 14px; }
+.rt-edit font[size="4"] { font-size: 18px; }
+.rt-edit font[size="5"] { font-size: 22px; }
+.rt-edit font[size="6"] { font-size: 28px; }
+.rt-edit font[size="7"] { font-size: 34px; }
+.composer.is-invalid .rt-area { border-bottom-color: var(--acc); }
+/* Several files for one email, listed with their sizes under the picker. */
+.file-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ln); }
+.file-list li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--ln); font-size: 13px; }
+.file-list .n { min-width: 0; overflow-wrap: anywhere; }
+.file-list .s { font: 400 12px/1.4 var(--font-mono); white-space: nowrap; color: var(--mu); }
+/* S32 Merge panel: the customer's other active cases as choice tiles, one column in the side panel. */
+.merge-pick { border: 0; margin: 0; padding: 0; min-width: 0; }
+.acts legend.label { font-size: 12px; color: var(--fg); padding: 0; margin-bottom: 10px; }
+.acts .choice .t .tid { margin-right: 6px; }
 
 /* ---------- Forms ---------- */
 .form-sheet { max-width: 880px; }

@@ -160,7 +160,7 @@ export const SAMPLE_VARS: Record<string, string> = {
   value: '₹12,00,000',
   closeDate: '15-02-2027',
   protectionEnds: '21-01-2027',
-  application: 'K7A-00017',
+  application: 'K7PA-00017',
   company: 'Example Systems Pvt Ltd',
   type: 'Value Added Reseller',
   contact: 'Asha Menon',

@@ -4,6 +4,8 @@ import { getPayload } from 'payload'
 
 import { bind, buildQuery, create, entity, list, ProductionWriteRefused, retrieve, str, update, WritesDisabled, type DataverseAuth, type Row } from '@/lib/dataverse'
 
+import { crmCountryName, crmStateName } from '@/lib/geo'
+
 import { audit, SYSTEM } from './audit'
 import { opportunityBodies, toDeal } from './deals-model'
 import { accountBody, contactBody, type SizeBand, type TurnoverBand } from './registration-model'
@@ -120,9 +122,9 @@ const createAccountJob = async (auth: DataverseAuth, job: OutboxJob): Promise<Re
   })
   const [regionId, stateId, cityId, countryId] = await Promise.all([
     byName(auth, 'k7_regions', 'k7_regionid', 'k7_name', regionName),
-    byName(auth, 'k7_states', 'k7_stateid', 'k7_state', org.state),
+    byName(auth, 'k7_states', 'k7_stateid', 'k7_state', crmStateName(org.country, org.state)),
     byName(auth, 'alletec_cities', 'alletec_cityid', 'alletec_name', org.city),
-    byName(auth, 'alletec_countries', 'alletec_countryid', 'alletec_name', org.country),
+    byName(auth, 'alletec_countries', 'alletec_countryid', 'alletec_name', crmCountryName(org.country)),
   ])
   const account: Row = { ...body }
   if (regionId) account['k7_Region@odata.bind'] = bind('k7_regions', regionId)

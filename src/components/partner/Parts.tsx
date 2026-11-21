@@ -105,8 +105,8 @@ export const AppStateTag: React.FC<{ status: ApplicationStatus; audience?: 'appl
 export const MobileVerifiedTag: React.FC<{ contact: { mobileVerifiedAt: string | null; mobileVerification: 'none' | 'sms' | 'skipped' } }> = ({ contact }) =>
   contact.mobileVerification === 'sms' && contact.mobileVerifiedAt ? <span className="tag tag-solid">Verified by SMS</span> : contact.mobileVerification === 'skipped' ? <span className="tag tag-quiet" title="No SMS gateway is configured; the number is as given.">Not verified · no SMS gateway</span> : <span className="tag tag-quiet">Not verified</span>
 
-/** The application number, K7A-00001, in the P1 shape. */
-export const Aid: React.FC<{ number: string; href?: string; display?: boolean }> = ({ number, href, display }) => <Pid id={number || 'K7A-—'} href={href} display={display} />
+/** The application number, K7PA-00001 (K7A- before 2026-11-09), in the P1 shape. */
+export const Aid: React.FC<{ number: string; href?: string; display?: boolean }> = ({ number, href, display }) => <Pid id={number || 'K7PA-—'} href={href} display={display} />
 
 /* ---------- M3: the organisation and its people ---------- */
 

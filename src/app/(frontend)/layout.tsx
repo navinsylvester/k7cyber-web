@@ -6,6 +6,7 @@ import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
 import { Footer } from '@/Footer/Component'
+import { NotOnHome } from '@/Footer/NotOnHome.client'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
@@ -54,7 +55,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="page">
             <Header />
             {children}
-            <Footer />
+            <NotOnHome>
+              <Footer />
+            </NotOnHome>
           </div>
         </Providers>
       </body>

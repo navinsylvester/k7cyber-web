@@ -1,16 +1,19 @@
+import { canonicalState, statesOf } from '@/lib/geo'
+
 import { isEmailAddress, isMobile, normaliseWebsite, validateCompany, type FieldErrors } from './registration-model'
 import { PARTNER_ROLES, type PartnerRole } from './settings-model'
 
 /* The organisation and its people as the code reads them (01-requirements.md §2, FR-REG-07; 02-build-plan.md M3), pure and tested
    without a tenant. The writers are organisation.ts and members.ts.
 
-   Two kinds of edit to a profile: the details (trade name, address, website, regions) the Partner Admin changes at once, and the
+   Two kinds of edit to a profile: the details (trade name, address, website) the Partner Admin changes at once, and the
    legal identity (legal name, GSTIN, PAN), which goes to a pending edit the Channel Manager approves or declines (FR-REG-07).
    One pending edit at a time; the organisation keeps its current identity until K7 agrees. */
 
 /* ---------- The profile ---------- */
 
-export type OrgDetails = { tradeName: string; address: string; city: string; state: string; country: string; pin: string; website: string; regions: string[] }
+/** What the Partner Admin edits at once. The K7 region is not among them: the Channel Manager assigns it (on approval, or on the partner's sheet). */
+export type OrgDetails = { tradeName: string; address: string; city: string; state: string; country: string; pin: string; website: string }
 export type LegalIdentity = { name: string; gstin: string; pan: string }
 export const LEGAL_FIELDS: readonly (keyof LegalIdentity)[] = ['name', 'gstin', 'pan']
 export const LEGAL_FIELD_LABEL: Record<keyof LegalIdentity, string> = { name: 'Legal name', gstin: 'GSTIN', pan: 'PAN' }
@@ -20,15 +23,14 @@ export type LegalEdit = LegalIdentity & { proposedAt: string; proposedBy: { id: 
 
 export const normaliseLegal = (l: LegalIdentity): LegalIdentity => ({ name: l.name.trim(), gstin: l.gstin.trim().toUpperCase(), pan: l.pan.trim().toUpperCase() })
 
-export const validateDetails = (d: OrgDetails, allowedRegions: { code: string }[]): FieldErrors => {
+export const validateDetails = (d: OrgDetails): FieldErrors => {
   const e: FieldErrors = {}
   if (d.address.trim().length < 4) e.address = 'Give the registered address.'
   if (!d.city.trim()) e.city = 'City is needed.'
-  if (!d.state.trim()) e.state = 'State is needed.'
   if (!d.country.trim()) e.country = 'Country is needed.'
+  else if (statesOf(d.country).length && !canonicalState(d.country, d.state)) e.state = 'Pick the state.'
   if (!d.pin.trim()) e.pin = 'PIN or postal code is needed.'
   if (d.website && !/^https?:\/\/[^\s/$.?#].[^\s]*$/i.test(normaliseWebsite(d.website))) e.website = 'That does not look like a web address.'
-  if (allowedRegions.length && !d.regions.some((r) => allowedRegions.some((a) => a.code === r))) e.regions = 'Pick at least one region you operate in.'
   return e
 }
 

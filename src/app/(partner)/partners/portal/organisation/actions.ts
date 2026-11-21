@@ -22,7 +22,6 @@ export async function saveDetailsAction(form: FormData): Promise<void> {
     country: f(form, 'country'),
     pin: f(form, 'pin'),
     website: f(form, 'website'),
-    regions: form.getAll('regions').map(String),
   })
   if (!r.ok) return back({ error: firstError(r.errors), tab: 'details' })
   back({ ok: 'Details saved.' })
