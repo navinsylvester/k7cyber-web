@@ -81,6 +81,21 @@ export const forms: FormData[] = [
     ],
   },
   {
+    /* The homepage's own form (09 · Contact on the Seventh Sense landing, src/components/home): found by this title, rendered
+       from these fields, so labels and the topic list can be edited in /admin. */
+    title: 'Homepage enquiry',
+    submitButtonLabel: 'Send Message',
+    confirmationType: 'message',
+    confirmationMessage: para('Thank you. A K7 specialist will get back to you within one business day.'),
+    fields: [
+      text('name', 'Name'),
+      email('email', 'Work email'),
+      text('company', 'Company'),
+      select('topic', 'I’m interested in', ['Platform', 'Solutions', 'Services', 'Partnership', 'Support'], true),
+      textarea('message', 'Message'),
+    ],
+  },
+  {
     title: 'Partner enquiry',
     submitButtonLabel: 'Submit',
     confirmationType: 'message',

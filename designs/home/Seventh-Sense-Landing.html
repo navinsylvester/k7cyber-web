@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K7 Seventh Sense Landing Page</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:opsz,wght@10..72,100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Monolith on black: colossal condensed type, one orange signal, every edge cut at the angle of the 7 */
+  --black:#1B1D20;
+  --charcoal:#2B2E32;
+  --ink:#0B0C0D;
+  --paper:#F4F3F0;
+  --signal:#EC6A23;
+  --font-display:'Big Shoulders','Barlow Condensed','Arial Narrow',sans-serif;
+  --font-body:'Barlow','Helvetica Neue',Arial,sans-serif;
+  color-scheme:dark;
+}
+html{scroll-behavior:smooth;background:var(--ink)}
+body{background:var(--ink)}
+h1,h2,h3{text-wrap:balance}
+img{max-width:100%}
+body{margin:0;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:0.2em}
+a:focus-visible,button:focus-visible{outline:2px solid #FFFFFF;box-shadow:0 0 0 5px #0B0908}
+.m-wrap{max-width:1328px;margin:0 auto;padding:0 clamp(20px,3.9vw,56px)}
+.m-d{font-family:'Big Shoulders','Barlow Condensed','Arial Narrow',sans-serif;font-weight:900;text-transform:uppercase;font-optical-sizing:auto}
+.m-mono{font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:500;line-height:1.3;letter-spacing:0.14em;text-transform:uppercase}
+.m-tag{font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.2;letter-spacing:0.1em;text-transform:uppercase;border:1px solid currentColor;padding:6px 10px}
+.m-out{-webkit-text-stroke:4px #F4F3F0;paint-order:stroke fill;letter-spacing:0.015em}
+.m-out3{-webkit-text-stroke:6px #F4F3F0;paint-order:stroke fill}
+.m-st{font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;fill:#F4F3F0}
+.m-sd{font-family:'Big Shoulders','Barlow Condensed','Arial Narrow',sans-serif;font-weight:800}
+.m-btn:hover{text-decoration:none;filter:brightness(1.12)}
+.m-card{transition:transform 240ms cubic-bezier(.7,0,.2,1)}
+.m-card:hover{text-decoration:none;transform:translate(-4px,-4px)}
+.m-sweep{background-image:linear-gradient(114.6deg,transparent 42%,currentColor 50%,transparent 58%);background-size:300% 100%;background-repeat:no-repeat;-webkit-mask-image:radial-gradient(circle,#000 1.6px,transparent 2.2px);mask-image:radial-gradient(circle,#000 1.6px,transparent 2.2px);-webkit-mask-size:22px 22px;mask-size:22px 22px;animation:m-sweep 8s linear infinite}
+@keyframes m-sweep{
+0%{background-position:82% 0}
+72%,100%{background-position:16% 0}
+}
+.m-blink{animation:m-blink 1.4s steps(1) infinite}
+@keyframes m-blink{
+50%{opacity:0.25}
+}
+.m-march{animation:m-march 0.9s linear infinite}
+@keyframes m-march{
+to{background-position:13.2px 0}
+}
+.m-pz{transform-box:fill-box;transform-origin:center;animation:m-asm 9s cubic-bezier(.7,0,.2,1) infinite}
+.m-pz1{--tx:-70px;--ty:-70px;--r:-14deg}
+.m-pz2{--tx:10px;--ty:-88px;--r:8deg}
+.m-pz3{--tx:84px;--ty:-62px;--r:17deg}
+.m-pz4{--tx:-88px;--ty:4px;--r:9deg}
+.m-pz5{--tx:16px;--ty:-8px;--r:-21deg}
+.m-pz6{--tx:92px;--ty:12px;--r:-11deg}
+.m-pz7{--tx:-62px;--ty:78px;--r:12deg}
+.m-pz8{--tx:-8px;--ty:92px;--r:-9deg}
+.m-pz9{--tx:72px;--ty:70px;--r:15deg}
+@keyframes m-asm{
+0%,10%{transform:translate(var(--tx),var(--ty)) rotate(var(--r))}
+34%,88%{transform:translate(0px,0px) rotate(0deg)}
+100%{transform:translate(var(--tx),var(--ty)) rotate(var(--r))}
+}
+.m-fuse{animation:m-fuse 9s linear infinite}
+@keyframes m-fuse{
+0%,52%{opacity:0}
+60%,84%{opacity:1}
+90%,100%{opacity:0}
+}
+.m-flow{stroke-dasharray:4 8;animation:m-dash 1.2s linear infinite}
+@keyframes m-dash{
+to{stroke-dashoffset:-12}
+}
+.m-l2{animation:m-l2 1.6s linear infinite}
+.m-l3{animation:m-l3 2.4s linear infinite}
+.m-l4{animation:m-l4 2.4s linear infinite}
+.m-dl1{animation-delay:-0.4s}
+.m-dl2{animation-delay:-0.8s}
+.m-dl3{animation-delay:-1.2s}
+@keyframes m-l2{
+0%{transform:translateX(0px);opacity:0}
+15%,80%{opacity:1}
+100%{transform:translateX(114px);opacity:0}
+}
+@keyframes m-l3{
+0%{transform:translateX(0px);opacity:0}
+15%,80%{opacity:1}
+100%{transform:translateX(140px);opacity:0}
+}
+@keyframes m-l4{
+0%{transform:translateX(0px);opacity:0}
+15%,85%{opacity:1}
+100%{transform:translateX(160px);opacity:0}
+}
+.m-scan{animation:m-scan 2.6s cubic-bezier(.7,0,.2,1) infinite}
+@keyframes m-scan{
+0%{transform:translateY(0px)}
+100%{transform:translateY(38px)}
+}
+.m-lock{animation:m-lock 3s cubic-bezier(.7,0,.2,1) infinite}
+@keyframes m-lock{
+0%,30%{transform:translateY(-3px)}
+40%,90%{transform:translateY(0px)}
+100%{transform:translateY(-3px)}
+}
+.m-drop{animation:m-drop 3s cubic-bezier(.7,0,.2,1) infinite}
+@keyframes m-drop{
+0%,20%{transform:translate(4px,-8px)}
+45%,85%{transform:translate(0px,0px)}
+100%{transform:translate(4px,-8px)}
+}
+.m-tick{stroke-dasharray:18;animation:m-tick 3s cubic-bezier(.7,0,.2,1) infinite}
+@keyframes m-tick{
+0%,20%{stroke-dashoffset:18}
+50%,90%{stroke-dashoffset:0}
+100%{stroke-dashoffset:18}
+}
+.m-on{animation:m-on 11s linear infinite}
+.m-o1{animation-delay:0s}
+.m-o2{animation-delay:1s}
+.m-o3{animation-delay:2s}
+.m-o4{animation-delay:3s}
+.m-o5{animation-delay:4s}
+.m-o6{animation-delay:5s}
+.m-o7{animation-delay:6s}
+@keyframes m-on{
+10%,76%{color:#F4F3F0}
+}
+.m-mq{display:flex;width:max-content;animation:m-mq 38s linear infinite}
+@keyframes m-mq{
+to{transform:translateX(-50%)}
+}
+.m-ring{transform-box:fill-box;transform-origin:center;animation:m-ring 3s cubic-bezier(.2,.7,.2,1) infinite}
+.m-rg2{animation-delay:-1s}
+.m-rg3{animation-delay:-2s}
+@keyframes m-ring{
+0%{transform:scale(0.15);opacity:1}
+100%{transform:scale(1);opacity:0}
+}
+.m-stream{background-image:repeating-linear-gradient(90deg,currentColor 0 6px,transparent 6px 22px);animation:m-stream 1.1s linear infinite}
+@keyframes m-stream{
+to{background-position:22px 0}
+}
+.m-flag{background-image:repeating-linear-gradient(90deg,currentColor 0 6px,transparent 6px 286px);animation:m-flag 14.3s linear infinite}
+@keyframes m-flag{
+to{background-position:286px 0}
+}
+.m-in{display:block;width:100%;box-sizing:border-box;margin-top:8px;padding:10px 0;border:0;border-bottom:2px solid #F4F3F0;border-radius:0;background:transparent;font:inherit;font-size:18px;line-height:1.3;color:#F4F3F0;-webkit-appearance:none;appearance:none}
+.m-in option{color:#0B0908}
+.m-in:focus-visible{outline:2px solid #FFFFFF;outline-offset:4px}
+.m-menu{display:none}
+.m-sk{fill:#0B0C0D}
+.m-fall{position:absolute;left:calc(50% - 3px);top:0;width:6px;height:6px;animation:m-fall 1.4s linear infinite}
+.m-fs{animation-name:m-falls}
+@keyframes m-falls{
+0%{transform:translateY(0px);opacity:0}
+15%,80%{opacity:1}
+100%{transform:translateY(22px);opacity:0}
+}
+.m-f1{animation-delay:-0.35s}
+.m-f2{animation-delay:-0.7s}
+.m-f3{animation-delay:-1.05s}
+@keyframes m-fall{
+0%{transform:translateY(0px);opacity:0}
+15%,80%{opacity:1}
+100%{transform:translateY(50px);opacity:0}
+}
+.m-sw{animation:m-sw 11s cubic-bezier(.7,0,.2,1) infinite}
+.m-w1{animation-delay:0s}
+.m-w2{animation-delay:1s}
+.m-w3{animation-delay:2s}
+.m-w4{animation-delay:3s}
+.m-w5{animation-delay:4s}
+.m-w6{animation-delay:5s}
+.m-w7{animation-delay:6s}
+@keyframes m-sw{
+0%,6%{transform:translateX(0px);opacity:0.4}
+10%,76%{transform:translateX(22px);opacity:1}
+82%,100%{transform:translateX(0px);opacity:0.4}
+}
+.m-tl{animation:m-tl 6s cubic-bezier(.7,0,.2,1) infinite}
+.m-tr{animation:m-tr 6s cubic-bezier(.7,0,.2,1) infinite}
+.m-bond{transform-box:fill-box;transform-origin:center;animation:m-bond 6s cubic-bezier(.7,0,.2,1) infinite}
+@keyframes m-tl{
+0%,12%{transform:translateX(-26px)}
+34%,88%{transform:translateX(0px)}
+100%{transform:translateX(-26px)}
+}
+@keyframes m-tr{
+0%,12%{transform:translateX(26px)}
+34%,88%{transform:translateX(0px)}
+100%{transform:translateX(26px)}
+}
+@keyframes m-bond{
+0%,36%{transform:scaleX(0)}
+48%,86%{transform:scaleX(1)}
+92%,100%{transform:scaleX(0)}
+}
+.m-rfa{animation:m-rfa 1.1s linear infinite}
+.m-rfb{animation:m-rfb 3.2s linear infinite}
+.m-rfc{animation:m-rfc 0.7s linear infinite}
+@keyframes m-rfa{
+to{transform:translateX(48px)}
+}
+@keyframes m-rfb{
+to{transform:translateX(-96px)}
+}
+@keyframes m-rfc{
+to{transform:translateX(32px)}
+}
+.m-src{grid-template-columns:repeat(4,minmax(0,1fr))}
+.m-feeds{grid-template-columns:repeat(7,minmax(0,1fr))}
+@media (max-width:1100px){
+.m-feeds{grid-template-columns:repeat(4,minmax(0,1fr))}
+.m-f7{grid-column:span 2}
+}
+@media (max-width:520px){
+.m-src,.m-feeds{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+.m-k2{animation-delay:-0.2s}
+.m-k3{animation-delay:-0.9s}
+.m-k4{animation-delay:-0.5s}
+.m-k5{animation-delay:-1.1s}
+.m-k6{animation-delay:-0.35s}
+.m-k7{animation-delay:-0.75s}
+.m-k8{animation-delay:-1.25s}
+.m-down{animation:m-down 0.8s linear infinite}
+@keyframes m-down{
+to{background-position:0 10px}
+}
+.m-needle{left:16.66%;transition:left 600ms cubic-bezier(.7,0,.2,1)}
+.m-c1 .m-needle{left:50%}
+.m-c2 .m-needle{left:83.33%}
+.m-slide{grid-area:1/1;visibility:hidden;opacity:0;transform:translateX(28px);transition:opacity 400ms cubic-bezier(.7,0,.2,1),transform 400ms cubic-bezier(.7,0,.2,1),visibility 0s linear 400ms}
+.m-car:not(.m-c1):not(.m-c2) .m-s0,.m-c1 .m-s1,.m-c2 .m-s2{visibility:visible;opacity:1;transform:translateX(0);transition:opacity 400ms cubic-bezier(.7,0,.2,1),transform 400ms cubic-bezier(.7,0,.2,1),visibility 0s}
+.m-chb{display:block;width:100%;box-sizing:border-box;min-height:56px;padding:12px 6px;border:0;border-top:4px solid transparent;background:transparent;color:#F4F3F0;text-align:center;cursor:pointer;opacity:0.6;font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:500;line-height:1.4;letter-spacing:0.1em;text-transform:uppercase}
+.m-chb:hover{opacity:1}
+.m-car:not(.m-c1):not(.m-c2) .m-ch0,.m-c1 .m-ch1,.m-c2 .m-ch2{opacity:1;border-top-color:#F4F3F0}
+.m-arrow{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;box-sizing:border-box;border:2px solid #F4F3F0;background:transparent;color:#F4F3F0;cursor:pointer}
+.m-arrow:hover{background:#F4F3F0;color:#0B0C0D}
+@keyframes m-needle{
+0%,26%{left:16.66%}
+33%,59%{left:50%}
+66%,92%{left:83.33%}
+100%{left:16.66%}
+}
+.m-rx{animation:m-rx 12s linear infinite}
+.m-rx2{animation-delay:-8s}
+.m-rx3{animation-delay:-4s}
+@keyframes m-rx{
+0%,26%{opacity:1}
+30%,96%{opacity:0.18}
+100%{opacity:1}
+}
+.m-in1{animation:m-in 0.8s cubic-bezier(.2,.7,.2,1) both}
+.m-in2{animation:m-in 0.8s cubic-bezier(.2,.7,.2,1) 0.15s both}
+@keyframes m-in{
+from{transform:translateY(0.3em);opacity:0}
+to{transform:translateY(0);opacity:1}
+}
+.m-slash{transform-origin:50% 100%;animation:m-slash 0.6s cubic-bezier(.7,0,.2,1) 0.5s both}
+@keyframes m-slash{
+from{transform:scaleY(0)}
+to{transform:scaleY(1)}
+}
+.m-scanx{position:absolute;left:0;top:0;color:transparent;-webkit-text-stroke:0 transparent;background-size:300% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;animation:m-scanx 4.5s cubic-bezier(.7,0,.2,1) 1.2s infinite}
+@keyframes m-scanx{
+0%{background-position:85% 0}
+60%,100%{background-position:15% 0}
+}
+.m-bar{display:block;height:100%;transform-origin:0 50%;animation:m-bar 2.6s ease-in-out infinite}
+.m-b2{animation-duration:3.3s;animation-delay:-1.1s}
+.m-b3{animation-duration:2.9s;animation-delay:-0.6s}
+.m-b4{animation-duration:3.7s;animation-delay:-2s}
+.m-b5{animation-duration:2.3s;animation-delay:-1.5s}
+.m-b6{animation-duration:3.1s;animation-delay:-0.3s}
+@keyframes m-bar{
+0%{transform:scaleX(0.2)}
+18%{transform:scaleX(0.78)}
+34%{transform:scaleX(0.36)}
+55%{transform:scaleX(0.92)}
+72%{transform:scaleX(0.28)}
+88%{transform:scaleX(0.64)}
+100%{transform:scaleX(0.2)}
+}
+.m-hold{animation:m-hold 2.4s ease-in-out infinite}
+@keyframes m-hold{
+50%{opacity:0.8}
+}
+@media (max-width:960px){
+.m-nav{display:none !important}
+.m-nav.m-open{display:flex !important;position:absolute;top:72px;left:0;right:0;z-index:20;flex-direction:column;gap:0 !important;padding:4px clamp(20px,3.9vw,56px) 20px;background:#0B0C0D;border-bottom:4px solid #F4F3F0}
+.m-nav.m-open a{padding:14px 0;border-top:1px solid rgba(244,243,240,0.25);font-size:18px}
+.m-menu{display:inline-flex}
+}
+@media (max-width:600px){
+.m-hcta{display:none !important}
+}
+@media (prefers-reduced-motion:reduce){
+*{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+<div style="background: #1B1D20; color: #F4F3F0; font-family: 'Barlow', 'Helvetica Neue', Arial, sans-serif; font-size: 18px; line-height: 1.55; display: flex; flex-direction: column; overflow-x: clip">
+
+<header style="position: relative; background: #0B0C0D">
+<div class="m-wrap" style="display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 72px">
+<a href="#top" style="display: flex; align-items: center"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjUyIDUyIDUzMiAxMzQiPgogIAogIDxnPgogICAgPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTI4MS42NCw3MS4wNGMtMy4yOS0yLjM3LTcuMTktMy41Mi0xMS42My0zLjUyLTkuNzEsMC0xNi42Nyw2Ljg4LTE2LjY3LDE2LjQ0LDAsMTAuODYsNy4xOSwxNy45NywxOC4yLDE3Ljk3LDMuNTksMCw2LjU4LS42MSwxMS4wOS0yLjM3bDEuNzYsOC4xMWMtMy4yMSwxLjQ1LTQuNTEsMS45MS02LjgxLDIuNDUtMi40NS41NC01LjEyLjg0LTguMTEuODQtNy44OCwwLTEzLjU0LTEuOTktMTguMjgtNi4yNy01LjM1LTQuODItOC40OS0xMi4zMS04LjQ5LTIwLjE5LDAtNy4zNCwyLjc1LTE0LDcuNzItMTguODksNS4wNS00Ljk3LDEwLjcxLTcuMDQsMTkuMDQtNy4wNCw2LjQyLDAsMTEuNDcsMS41MywxNS44Myw0LjgybC0zLjY3LDcuNjVaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMzEyLjIzLDg4LjMydjIxLjY1aC05LjY0di0yMS42NWwtMTUuMzctMjguODNoMTAuNTVsMTAuMSwxOS43MywxMC42My0xOS43M2gxMC41NWwtMTYuODMsMjguODNaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMzU2LjEyLDEwOS45NmgtMjAuNTd2LTUwLjQ4aDE4LjI4YzYuNTgsMCw5Ljg3Ljg0LDEyLjYyLDMuMzcsMi40NSwyLjE0LDMuOTgsNS43NCwzLjk4LDkuMDIsMCwyLjgzLTEuMDcsNS44MS0yLjkxLDcuOTUtMi4yMiwyLjUyLTQuMjgsMy40NC04LjI2LDMuNjcsNy42NS4xNSwxMi40Nyw1LjEzLDEyLjQ3LDEzLDAsOC43Mi01LjUxLDEzLjQ2LTE1LjYsMTMuNDZaTTM1MS45Miw2Ny4xM2gtNi4yN3YxM2g1Ljc0YzUuNDMsMCw4LjM0LTIuMjksOC4zNC02LjU4LDAtNC4wNS0yLjkxLTYuNDItNy44LTYuNDJaTTM1MS45Miw4OC4zMmgtNi4yN3YxMy45Mmg2LjI3YzIuOTgsMCw0LjM2LS4yMyw1LjgxLS45MiwyLjE0LTEuMDcsMy40NC0zLjI5LDMuNDQtNS44OSwwLTQuNTktMy4yOS03LjExLTkuMjUtNy4xMVoiPjwvcGF0aD4KICAgIDxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0zODEuMjEsMTA5Ljk2di01MC40OGgzMC43NXY4LjE5aC0yMS4xMXYxMi40N2gxNy4yOXY4LjE4aC0xNy4yOXYxMy40NmgyMi4xdjguMThoLTMxLjc0WiI+PC9wYXRoPgogICAgPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTQ0OC40MywxMDkuOTZsLTExLjU1LTIwLjE5aC00LjgydjIwLjE5aC05LjY0di01MC40OGgxNi44M2M3LjM0LDAsMTAuNzEuOTIsMTMuNjksMy43NSwyLjc1LDIuNTIsNC4xMyw2LjE5LDQuMTMsMTAuOTQsMCwzLjktLjkyLDcuMDQtMi43NSw5LjQ4LTEuOTEsMi40NS0zLjY3LDMuNTItNy44OCw0LjY2bDEyLjU0LDIxLjY1aC0xMC41NVpNNDM4LjMzLDY3LjY3aC02LjI3djEzLjkyaDYuMjdjNi4xMiwwLDguOC0yLjE0LDguOC03LjE5cy0yLjUyLTYuNzMtOC44LTYuNzNaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMjc1LjYsMTM1Ljg2Yy01LjM1LTIuMzctOS43MS0zLjYtMTMuMDgtMy42LTQuNTEsMC03LjQyLDEuODQtNy40Miw0LjY3LDAsMi4xNCwxLjIyLDMuNDQsNC44Miw1LjM1LDcuNzIsNC4xMywxMi43Nyw3LjM0LDE1LjE0LDkuNzEsMi4xNCwyLjE0LDMuNDQsNS41MSwzLjQ0LDkuMDIsMCw5LjAzLTYuNTgsMTQuMy0xNy43NCwxNC4zLTEuNTMsMC0zLjA2LS4wOC00LjUxLS4zMS0zLjU5LS40Ni01LjI4LTEuMDctMTAuNTUtMy41Mi0uNjktLjMxLTEuODQtLjg0LTMuMjktMS41M2w0LjA1LTguODdjMy42NywxLjk5LDUuMiwyLjc1LDcuMTksMy41MiwyLjUyLjkyLDUuMjgsMS40NSw3LjI3LDEuNDUsNC40NCwwLDcuMzQtMS45OSw3LjM0LTUuMDUsMC0yLjE0LTEuMTUtMy41OS00LjQ0LTUuNDNsLTcuOC00LjQ0Yy04Ljk1LTUuMTMtMTEuNy04LjQ5LTExLjctMTQsMC0yLjUyLjc2LTUuMTIsMS45OS03LjA0Ljg0LTEuMywyLjE0LTIuNiwzLjc1LTMuNzUsMy42Ny0yLjUyLDYuODEtMy4zNiwxMi43LTMuMzYsMy4zNiwwLDYuMzUuMzgsOS40OCwxLjMsMi40NS43NywzLjgyLDEuMyw3LjE5LDIuOTFsLTMuODIsOC42NFoiPjwvcGF0aD4KICAgIDxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0yODguNTIsMTc0LjMzdi01MC40OGgzMC43NXY4LjE5aC0yMS4xMXYxMi40N2gxNy4yOXY4LjE4aC0xNy4yOXYxMy40NmgyMi4xdjguMThoLTMxLjc0WiI+PC9wYXRoPgogICAgPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTM2My43LDEzNS40Yy0zLjI5LTIuMzctNy4xOS0zLjUyLTExLjYzLTMuNTItOS43MSwwLTE2LjY3LDYuODgtMTYuNjcsMTYuNDQsMCwxMC44Niw3LjE5LDE3Ljk3LDE4LjIsMTcuOTcsMy41OSwwLDYuNTgtLjYxLDExLjA5LTIuMzdsMS43Niw4LjExYy0zLjIxLDEuNDUtNC41MSwxLjkxLTYuODEsMi40NS0yLjQ1LjU0LTUuMTIuODQtOC4xMS44NC03Ljg4LDAtMTMuNTQtMS45OS0xOC4yOC02LjI3LTUuMzUtNC44Mi04LjQ5LTEyLjMxLTguNDktMjAuMTksMC03LjM0LDIuNzUtMTQsNy43Mi0xOC44OSw1LjA1LTQuOTcsMTAuNzEtNy4wNCwxOS4wNC03LjA0LDYuNDIsMCwxMS40NywxLjUzLDE1LjgzLDQuODJsLTMuNjcsNy42NVoiPjwvcGF0aD4KICAgIDxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik00MTAuMTIsMTcxLjY2Yy0zLjY3LDIuNTItNy45NSwzLjY3LTE0LjIzLDMuNjdzLTEwLjQ4LTEuMDctMTQuMy0zLjY3Yy01LjItMy42LTYuODgtNy44LTYuODgtMTcuMDZ2LTMwLjc1aDkuNTZ2MzEuMjhjMCw3LjUsMy45LDExLjI1LDExLjkzLDExLjI1LDcuMzQsMCwxMS4yNC0zLjk4LDExLjI0LTExLjI1di0zMS4yOGg5LjY0djMwLjc1YzAsOS4yNS0xLjY4LDEzLjM4LTYuOTYsMTcuMDZaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNDU1LjU0LDE3NC4zM2wtMTEuNTUtMjAuMTloLTQuODJ2MjAuMTloLTkuNjR2LTUwLjQ4aDE2LjgzYzcuMzQsMCwxMC43MS45MiwxMy42OSwzLjc1LDIuNzUsMi41Miw0LjEzLDYuMTksNC4xMywxMC45NCwwLDMuOS0uOTIsNy4wNC0yLjc1LDkuNDgtMS45MSwyLjQ1LTMuNjcsMy41Mi03Ljg4LDQuNjZsMTIuNTQsMjEuNjVoLTEwLjU1Wk00NDUuNDUsMTMyLjA0aC02LjI3djEzLjkyaDYuMjdjNi4xMiwwLDguOC0yLjE0LDguOC03LjE5cy0yLjUyLTYuNzMtOC44LTYuNzNaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNDczLjk3LDE3NC4zM3YtNTAuNDhoOS42NHY1MC40OGgtOS42NFoiPjwvcGF0aD4KICAgIDxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik01MTUuNjUsMTMyLjA0djQyLjI5aC05LjY0di00Mi4yOWgtMTUuMTR2LTguMTloMzkuOTJ2OC4xOWgtMTUuMTRaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNTU2LjY0LDE1Mi42OXYyMS42NWgtOS42NHYtMjEuNjVsLTE1LjM3LTI4LjgzaDEwLjU1bDEwLjEsMTkuNzMsMTAuNjMtMTkuNzNoMTAuNTVsLTE2LjgzLDI4LjgzWiI+PC9wYXRoPgogIDwvZz4KICA8Zz4KICAgIDxwb2x5Z29uIGZpbGw9IiNFQzZBMjMiIHBvaW50cz0iMTQ5Ljc2IDg1LjI1IDE2Ny45NiA1Ny45NCAyMzQuNjcgNTcuOTUgMTc4LjYgMTgwLjM4IDE1OS4wMiAxNTEuOTcgMTg5LjMzIDg1LjA0IDE0OS43NiA4NS4yNSI+PC9wb2x5Z29uPgogICAgPHBvbHlnb24gZmlsbD0iI0ZGRkZGRiIgcG9pbnRzPSIxNjcuODYgMTc1LjY4IDEyNC43MiAxMTMuMDMgMTYxLjI3IDU3Ljk3IDEyNS4yOSA1Ny45NyA5MS44NiAxMDcuMDMgOTEuODYgNTcuOTIgNTcuNTEgNTcuOTIgNTcuNTEgMTc1LjY4IDkxLjg2IDE3NS42OCA5MS44NiAxMTkuMiAxMjkuNTYgMTc1LjY4IDE2Ny44NiAxNzUuNjgiPjwvcG9seWdvbj4KICA8L2c+Cjwvc3ZnPg==" alt="K7 CyberSecurity" style="height: 36px; width: auto; display: block"></a>
+<nav class="m-nav" id="m-nav" aria-label="Primary" style="display: flex; gap: 30px; font-size: 15px; font-weight: 500">
+<a href="#platform">Platform</a>
+<a href="#industries">Solutions</a>
+<a href="#contact">Services</a>
+<a href="#contact">Partners</a>
+<a href="#labs">Resources</a>
+<a href="#accountability">Why K7</a>
+<a href="#accountability">About Us</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 12px">
+<button class="m-menu m-btn" id="m-menu" type="button" aria-controls="m-nav" aria-expanded="false" style="align-items: center; height: 44px; padding: 0 16px; box-sizing: border-box; border: 2px solid #F4F3F0; background: transparent; color: #F4F3F0; font-family: inherit; font-weight: 700; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer">Menu</button>
+<a class="m-btn m-hcta" href="#contact" style="display: inline-flex; align-items: center; height: 44px; padding: 0 36px 0 20px; background: #EC6A23; color: #0B0908; font-weight: 700; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; clip-path: polygon(0 0, 100% 0, calc(100% - 20px) 100%, 0 100%)">Request Demo</a>
+</div>
+</div>
+</header>
+
+<section id="top" style="position: relative; background-image: radial-gradient(circle, rgba(244,243,240,0.2) 1.2px, transparent 1.8px); background-size: 22px 22px">
+<div class="m-sweep" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; color: #EC6A23"></div>
+<div class="m-wrap" style="position: relative; padding-top: 24px; padding-bottom: 28px">
+<div class="m-mono" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px">
+<span>K7 Seventh Sense · Unified Endpoint-To-SOC Security Platform</span>
+<span style="display: inline-flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="display: inline-flex; gap: 4px">
+<span style="width: 8px; height: 8px; background: rgba(244,243,240,0.45)"></span>
+<span style="width: 8px; height: 8px; background: rgba(244,243,240,0.45)"></span>
+<span style="width: 8px; height: 8px; background: rgba(244,243,240,0.45)"></span>
+<span style="width: 8px; height: 8px; background: rgba(244,243,240,0.45)"></span>
+<span style="width: 8px; height: 8px; background: rgba(244,243,240,0.45)"></span>
+<span style="width: 8px; height: 8px; background: rgba(244,243,240,0.45)"></span>
+<span class="m-blink" style="width: 8px; height: 8px; background: #EC6A23"></span>
+</span>
+The seventh is live
+</span>
+</div>
+<div style="margin-top: 16px; display: flex; flex-wrap: wrap; align-items: stretch; justify-content: space-between; gap: 24px 48px">
+<h1 class="m-d" style="margin: 0; font-size: clamp(84px, 17.4vw, 252px); line-height: 0.8; letter-spacing: -0.01em">
+<span class="m-in1" style="display: block">Seventh</span>
+<span class="m-in2" style="display: flex; align-items: baseline; gap: 0.05em">
+<svg class="m-slash" viewBox="0 0 48 73" aria-hidden="true" style="width: 0.47em; height: 0.71em; flex: none"><polygon points="33.5,0 48,0 14.5,73 0,73" fill="#EC6A23"></polygon></svg>
+<span class="m-out3" style="position: relative; color: #1B1D20">Sense<span class="m-scanx" aria-hidden="true" style="background-image: linear-gradient(114.6deg, transparent 40%, #EC6A23 46%, #F4F3F0 50%, transparent 55%)">Sense</span></span>
+</span>
+</h1>
+<div style="flex: 1 1 320px; max-width: 480px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; padding: 12px 0 8px">
+<p class="m-d" style="margin: 0; font-weight: 800; font-size: clamp(34px, 3.9vw, 56px); line-height: 0.94">Your tools see events. Seventh Sense sees the attack.</p>
+<div>
+<p style="margin: 0; font-size: 17px; line-height: 1.5">One sensor, one platform and one agentic SOC that read endpoints, identities, data, vulnerabilities and behaviour together, so your team sees past the obvious.</p>
+<div style="margin-top: 18px; display: flex; flex-wrap: wrap; gap: 12px">
+<a class="m-btn" href="#contact" style="display: inline-flex; align-items: center; gap: 12px; height: 52px; padding: 0 44px 0 22px; background: #EC6A23; color: #0B0908; font-weight: 700; font-size: 15px; letter-spacing: 0.05em; text-transform: uppercase; clip-path: polygon(0 0, 100% 0, calc(100% - 24px) 100%, 0 100%)">Request Demo<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0B0908" stroke-width="3" stroke-linecap="square" aria-hidden="true"><path d="M4 12h14M13 6l6 6-6 6"></path></svg></a>
+<a class="m-btn" href="#how" style="display: inline-flex; align-items: center; height: 52px; padding: 0 22px; box-sizing: border-box; border: 2px solid #F4F3F0; font-weight: 700; font-size: 15px; letter-spacing: 0.05em; text-transform: uppercase">See how it works</a>
+</div>
+</div>
+</div>
+</div>
+<div class="m-feeds" role="img" aria-label="Six signal feeds flicker while the seventh, Seventh Sense, holds steady" style="margin-top: 24px; display: grid; gap: 2px; border: 2px solid #F4F3F0; background: #F4F3F0">
+<div style="box-sizing: border-box; padding: 10px 12px 12px; background: #1B1D20"><div class="m-mono" style="font-size: 10px">Endpoints</div><div style="margin-top: 8px; height: 8px; background: rgba(244,243,240,0.18)"><span class="m-bar" style="background: #F4F3F0"></span></div></div>
+<div style="box-sizing: border-box; padding: 10px 12px 12px; background: #1B1D20"><div class="m-mono" style="font-size: 10px">Servers</div><div style="margin-top: 8px; height: 8px; background: rgba(244,243,240,0.18)"><span class="m-bar m-b2" style="background: #F4F3F0"></span></div></div>
+<div style="box-sizing: border-box; padding: 10px 12px 12px; background: #1B1D20"><div class="m-mono" style="font-size: 10px">OT</div><div style="margin-top: 8px; height: 8px; background: rgba(244,243,240,0.18)"><span class="m-bar m-b3" style="background: #F4F3F0"></span></div></div>
+<div style="box-sizing: border-box; padding: 10px 12px 12px; background: #1B1D20"><div class="m-mono" style="font-size: 10px">Network</div><div style="margin-top: 8px; height: 8px; background: rgba(244,243,240,0.18)"><span class="m-bar m-b4" style="background: #F4F3F0"></span></div></div>
+<div style="box-sizing: border-box; padding: 10px 12px 12px; background: #1B1D20"><div class="m-mono" style="font-size: 10px">Mobile</div><div style="margin-top: 8px; height: 8px; background: rgba(244,243,240,0.18)"><span class="m-bar m-b5" style="background: #F4F3F0"></span></div></div>
+<div style="box-sizing: border-box; padding: 10px 12px 12px; background: #1B1D20"><div class="m-mono" style="font-size: 10px">Cloud</div><div style="margin-top: 8px; height: 8px; background: rgba(244,243,240,0.18)"><span class="m-bar m-b6" style="background: #F4F3F0"></span></div></div>
+<div class="m-f7" style="box-sizing: border-box; padding: 10px 12px 12px; background: #1B1D20"><div class="m-mono" style="font-size: 10px">The 7th · Seventh Sense</div><div class="m-hold" style="margin-top: 8px; height: 8px; background: #EC6A23"></div></div>
+</div>
+</div>
+</section>
+
+<div aria-hidden="true" style="position: relative; height: 72px; background: #1B1D20">
+<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #2B2E32; clip-path: polygon(0 0, calc(62% + 33px) 0, 62% 100%, 0 100%)"></div>
+<div style="position: absolute; top: 0; left: calc(62% + 10px); width: 47px; height: 100%; background: #EC6A23; clip-path: polygon(33px 0, 47px 0, 14px 100%, 0 100%)"></div>
+</div>
+
+<section id="puzzle" style="background: #2B2E32">
+<div class="m-wrap" style="padding-top: 56px; padding-bottom: 64px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(480px, 100%), 1fr)); gap: 48px 72px; align-items: center">
+<div>
+<div class="m-mono">01 · The puzzle</div>
+<h2 class="m-d" style="margin: 20px 0 0; font-size: clamp(44px, 5.6vw, 80px); line-height: 0.86">
+<span style="display: block">Too many tools.</span>
+<span class="m-out" style="display: block; color: #2B2E32">Not enough people.</span>
+</h2>
+<p style="margin: 28px 0 0; max-width: 30em; font-size: 18px; line-height: 1.5">Security got lost in its own puzzle: a console for every problem, a report for every console, and never enough people to read them.</p>
+<p style="margin: 16px 0 0; max-width: 30em; font-size: 18px; line-height: 1.5; font-weight: 600">K7 Seventh Sense was built to finish the puzzle, not to add another piece.</p>
+</div>
+<div style="width: 100%; max-width: 500px; margin: 0 auto">
+<svg viewBox="70 72 420 276" role="img" aria-label="Nine shards, one for each separate security tool, drift apart, then lock together into one slab that reads ONE" style="display: block; width: 100%; height: auto; overflow: visible">
+<g class="m-pz m-pz1"><polygon points="100,102 230,102 197,174 100,174" fill="#F4F3F0" stroke="#2B2E32" stroke-width="2"></polygon><text x="150" y="143" text-anchor="middle" class="m-st m-sk">EPP</text></g>
+<g class="m-pz m-pz2"><polygon points="230,102 350,102 317,174 197,174" fill="#8E9296" stroke="#2B2E32" stroke-width="2"></polygon><text x="273" y="143" text-anchor="middle" class="m-st m-sk">EDR</text></g>
+<g class="m-pz m-pz3"><polygon points="350,102 460,102 427,174 317,174" fill="#0B0C0D" stroke="#2B2E32" stroke-width="2"></polygon><text x="388" y="143" text-anchor="middle" class="m-st">XDR</text></g>
+<g class="m-pz m-pz4"><polygon points="100,174 170,174 137,246 100,246" fill="#EC6A23" stroke="#2B2E32" stroke-width="2"></polygon><text x="126" y="215" text-anchor="middle" class="m-st m-sk">DLP</text></g>
+<g class="m-pz m-pz5"><polygon points="170,174 300,174 267,246 137,246" fill="#0B0C0D" stroke="#2B2E32" stroke-width="2"></polygon><text x="218" y="215" text-anchor="middle" class="m-st">IAM</text></g>
+<g class="m-pz m-pz6"><polygon points="300,174 427,174 394,246 267,246" fill="#F4F3F0" stroke="#2B2E32" stroke-width="2"></polygon><text x="347" y="215" text-anchor="middle" class="m-st m-sk">PATCH</text></g>
+<g class="m-pz m-pz7"><polygon points="100,246 220,246 187,318 100,318" fill="#B9BCBF" stroke="#2B2E32" stroke-width="2"></polygon><text x="150" y="287" text-anchor="middle" class="m-st m-sk">LOGS</text></g>
+<g class="m-pz m-pz8"><polygon points="220,246 310,246 277,318 187,318" fill="#FF945A" stroke="#2B2E32" stroke-width="2"></polygon><text x="248" y="287" text-anchor="middle" class="m-st m-sk">FIM</text></g>
+<g class="m-pz m-pz9"><polygon points="310,246 394,246 361,318 277,318" fill="#5E6266" stroke="#2B2E32" stroke-width="2"></polygon><text x="335" y="287" text-anchor="middle" class="m-st">MDR</text></g>
+<g class="m-fuse">
+<polygon points="99,101 461,101 361,319 99,319" fill="#F4F3F0"></polygon>
+<polygon points="421,101 461,101 361,319 321,319" fill="#EC6A23"></polygon>
+<text x="122" y="136" class="m-st m-sk">K7 SEVENTH SENSE</text>
+<text x="118" y="286" class="m-sd" font-size="150" font-weight="900" fill="#0B0C0D">ONE</text>
+</g>
+</svg>
+<div class="m-mono" style="display: flex; justify-content: space-between; gap: 16px; padding-top: 4px">
+<span>Nine consoles in</span>
+<span>One platform out</span>
+</div>
+</div>
+</div>
+</section>
+
+<div class="m-march" aria-hidden="true" style="height: 40px; background-color: #1B1D20; background-image: repeating-linear-gradient(114.6deg, rgba(244,243,240,0.5) 0 2px, transparent 2px 12px)"></div>
+
+<section id="how">
+<div class="m-wrap" style="padding-top: 56px; padding-bottom: 64px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 40px 72px; align-items: stretch">
+<div style="display: flex; flex-direction: column; justify-content: space-between; gap: 32px">
+<div>
+<div class="m-mono">02 · How it works</div>
+<h2 class="m-d" style="margin: 16px 0 0; font-size: clamp(44px, 5.6vw, 80px); line-height: 0.86">
+<span style="display: block">Endpoint to SOC.</span>
+<span class="m-out" style="display: block; color: #1B1D20">One line of sight.</span>
+</h2>
+<p style="margin: 20px 0 0; max-width: 28em; font-size: 18px; line-height: 1.5">Raw signals go in at the top. One clear verdict comes out at the bottom. Everything in between happens in one place.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 18px; padding-top: 20px; border-top: 4px solid #F4F3F0">
+<div>
+<div class="m-d" style="font-size: clamp(52px, 7.2vw, 104px); line-height: 0.8">8</div>
+<div class="m-mono" style="margin-top: 10px">Sources</div>
+</div>
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#F4F3F0" stroke-width="3" stroke-linecap="square" aria-hidden="true" style="flex: none; margin-bottom: 36px"><path d="M4 12h14M13 6l6 6-6 6"></path></svg>
+<div>
+<div class="m-d" style="font-size: clamp(52px, 7.2vw, 104px); line-height: 0.8">3</div>
+<div class="m-mono" style="margin-top: 10px">Stages</div>
+</div>
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#F4F3F0" stroke-width="3" stroke-linecap="square" aria-hidden="true" style="flex: none; margin-bottom: 36px"><path d="M4 12h14M13 6l6 6-6 6"></path></svg>
+<div>
+<div class="m-d" style="font-size: clamp(52px, 7.2vw, 104px); line-height: 0.8; color: #EC6A23">1</div>
+<div class="m-mono" style="margin-top: 10px">Verdict</div>
+</div>
+</div>
+</div>
+<div>
+<div class="m-mono" style="display: flex; justify-content: space-between; gap: 16px; margin-bottom: 8px"><span>Raw signals in</span><span>8 sources</span></div>
+<div class="m-src" style="display: grid; gap: 2px; border: 2px solid #F4F3F0; background: #F4F3F0">
+<div style="display: flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 6px 10px; background: #1B1D20"><span class="m-blink" aria-hidden="true" style="width: 8px; height: 8px; flex: none; background: #F4F3F0"></span><span class="m-mono" style="font-size: 11px">Endpoints</span></div>
+<div style="display: flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 6px 10px; background: #1B1D20"><span class="m-blink m-k2" aria-hidden="true" style="width: 8px; height: 8px; flex: none; background: #F4F3F0"></span><span class="m-mono" style="font-size: 11px">Servers</span></div>
+<div style="display: flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 6px 10px; background: #1B1D20"><span class="m-blink m-k3" aria-hidden="true" style="width: 8px; height: 8px; flex: none; background: #F4F3F0"></span><span class="m-mono" style="font-size: 11px">OT</span></div>
+<div style="display: flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 6px 10px; background: #1B1D20"><span class="m-blink m-k4" aria-hidden="true" style="width: 8px; height: 8px; flex: none; background: #F4F3F0"></span><span class="m-mono" style="font-size: 11px">Network</span></div>
+<div style="display: flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 6px 10px; background: #1B1D20"><span class="m-blink m-k5" aria-hidden="true" style="width: 8px; height: 8px; flex: none; background: #F4F3F0"></span><span class="m-mono" style="font-size: 11px">Mobile</span></div>
+<div style="display: flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 6px 10px; background: #1B1D20"><span class="m-blink m-k6" aria-hidden="true" style="width: 8px; height: 8px; flex: none; background: #F4F3F0"></span><span class="m-mono" style="font-size: 11px">Cloud</span></div>
+<div style="display: flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 6px 10px; background: #1B1D20"><span class="m-blink m-k7" aria-hidden="true" style="width: 8px; height: 8px; flex: none; background: #F4F3F0"></span><span class="m-mono" style="font-size: 11px">Identities</span></div>
+<div style="display: flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 6px 10px; background: #1B1D20"><span class="m-blink m-k8" aria-hidden="true" style="width: 8px; height: 8px; flex: none; background: #F4F3F0"></span><span class="m-mono" style="font-size: 11px">Data</span></div>
+</div>
+<div class="m-down" aria-hidden="true" style="height: 32px; clip-path: polygon(0 0, 100% 0, calc(50% + 14px) 100%, calc(50% - 14px) 100%); background-image: repeating-linear-gradient(180deg, rgba(244,243,240,0.5) 0 2px, transparent 2px 10px)"></div>
+
+<div style="box-sizing: border-box; width: 100%; margin: 0 auto; padding: 12px 44px 14px 18px; background: #2B2E32; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px">
+<div style="display: flex; align-items: baseline; gap: 10px; flex: 0 0 auto; min-width: min(190px, 100%)"><span class="m-mono">01</span><span class="m-d" style="font-weight: 800; font-size: clamp(28px, 2.4vw, 34px); line-height: 1">Sensor</span></div>
+<p style="margin: 0; flex: 1 1 240px; font-size: 15px; line-height: 1.45">Proprietary and unified. One agent on the endpoint instead of a stack of them.</p>
+</div>
+<div aria-hidden="true" style="position: relative; height: 28px">
+<span style="position: absolute; left: calc(50% - 1px); top: 0; width: 2px; height: 100%; background: rgba(244,243,240,0.35)"></span>
+<span class="m-fall m-fs" style="background: #F4F3F0"></span>
+<span class="m-fall m-fs m-f1" style="background: #F4F3F0"></span>
+<span class="m-fall m-fs m-f2" style="background: #F4F3F0"></span>
+<span class="m-fall m-fs m-f3" style="background: #F4F3F0"></span>
+<span class="m-mono" style="position: absolute; left: calc(50% + 16px); top: 7px">Raw</span>
+</div>
+<div style="box-sizing: border-box; width: max(90%, min(100%, 300px)); margin: 0 auto; padding: 12px 44px 14px 18px; background: #F4F3F0; color: #0B0C0D; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px">
+<div style="display: flex; align-items: baseline; gap: 10px; flex: 0 0 auto; min-width: min(190px, 100%)"><span class="m-mono">02</span><span class="m-d" style="font-weight: 800; font-size: clamp(28px, 2.4vw, 34px); line-height: 1">Platform</span></div>
+<p style="margin: 0; flex: 1 1 240px; font-size: 15px; line-height: 1.45">Where it all lives. Every signal read together, not one report at a time.</p>
+</div>
+<div aria-hidden="true" style="position: relative; height: 28px">
+<span style="position: absolute; left: calc(50% - 1px); top: 0; width: 2px; height: 100%; background: rgba(244,243,240,0.35)"></span>
+<span class="m-fall m-fs" style="background: #F4F3F0"></span>
+<span class="m-fall m-fs m-f2" style="background: #EC6A23"></span>
+<span class="m-mono" style="position: absolute; left: calc(50% + 16px); top: 7px">Correlated</span>
+</div>
+<div style="box-sizing: border-box; width: max(80%, min(100%, 300px)); margin: 0 auto; padding: 12px 44px 14px 18px; background: #EC6A23; color: #0B0908; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px">
+<div style="display: flex; align-items: baseline; gap: 10px; flex: 0 0 auto; min-width: min(190px, 100%)"><span class="m-mono">03</span><span class="m-d" style="font-weight: 800; font-size: clamp(28px, 2.4vw, 34px); line-height: 1">Agentic SOC</span></div>
+<p style="margin: 0; flex: 1 1 240px; font-size: 15px; line-height: 1.45; font-weight: 500">Cybersecurity, simplified. The sorting is done, so your people decide instead of dig.</p>
+</div>
+<div aria-hidden="true" style="position: relative; height: 28px">
+<span style="position: absolute; left: calc(50% - 1px); top: 0; width: 2px; height: 100%; background: rgba(244,243,240,0.35)"></span>
+<span class="m-fall m-fs" style="background: #EC6A23"></span>
+<span class="m-mono" style="position: absolute; left: calc(50% + 16px); top: 7px">Decided</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: center; gap: 14px; padding-left: 0">
+<span class="m-blink" aria-hidden="true" style="width: 22px; height: 22px; flex: none; background: #EC6A23"></span>
+<span class="m-d" style="font-weight: 800; font-size: clamp(28px, 2.6vw, 38px); line-height: 1">One clear verdict</span>
+</div>
+</div>
+</div>
+</section>
+
+<div aria-hidden="true" style="height: 48px; background-color: #1B1D20; background-image: repeating-linear-gradient(114.6deg, #0B0C0D 0 16px, transparent 16px 40px)"></div>
+
+<section id="platform" style="background: #0B0C0D">
+<div class="m-wrap" style="padding-top: 56px; padding-bottom: 64px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 48px">
+<div>
+<div class="m-mono">03 · The platform</div>
+<h2 class="m-d" style="margin: 16px 0 0; font-size: clamp(44px, 5.6vw, 80px); line-height: 0.86">Four jobs. <span class="m-out" style="color: #0B0C0D">One platform.</span></h2>
+</div>
+<p style="margin: 0; max-width: 22em; font-size: 18px; line-height: 1.5">Infrastructure, data, patching and compliance, protected from one place.</p>
+</div>
+<div style="margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px; align-items: end">
+
+<div>
+<div aria-hidden="true" style="position: relative; height: 80px; background: #FFC9A9; clip-path: polygon(0 0, calc(100% - 37px) 0, 100% 80px, 100% 100%, 0 100%)">
+<svg width="100%" height="100%" style="position: absolute; top: 0; left: 0"><defs><pattern id="m-pn" width="20" height="20" patternUnits="userSpaceOnUse"><rect x="7" y="7" width="6" height="6" fill="#0B0C0D"></rect></pattern></defs><rect width="100%" height="100%" fill="url(#m-pn)"></rect></svg>
+</div>
+<div style="box-sizing: border-box; min-height: 292px; padding: 16px 20px 28px; background: #2B2E32; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<span class="m-mono">01 · Infrastructure</span>
+<svg viewBox="0 0 32 32" width="44" height="44" aria-hidden="true" style="flex: none"><defs><clipPath id="m-cs"><path d="M16 2 28 6V17L16 30 4 17V6Z"></path></clipPath></defs><path d="M16 2 28 6V17L16 30 4 17V6Z" fill="#F4F3F0"></path><g clip-path="url(#m-cs)"><rect class="m-scan" x="0" y="-4" width="32" height="4" fill="#EC6A23"></rect></g></svg>
+</div>
+<h3 class="m-d" style="margin: 6px 0 0; font-size: clamp(28px, 2.3vw, 32px); line-height: 0.96">Guard everything that computes</h3>
+<p style="margin: 10px 0 0; font-size: 15px; line-height: 1.45">Prevention, detection and response, from the laptop to the plant floor.</p>
+<p class="m-mono" style="margin: 12px 0 0; font-size: 11px; line-height: 1.5">Endpoints · Servers · OT · Network · Mobile · Cloud</p>
+</div>
+</div>
+
+<div>
+<div aria-hidden="true" style="position: relative; height: 112px; background: #FF945A; clip-path: polygon(0 0, calc(100% - 37px) 0, 100% 80px, 100% 100%, 0 100%)">
+<svg width="100%" height="100%" style="position: absolute; top: 0; left: 0"><defs><pattern id="m-pv" width="56" height="56" patternUnits="userSpaceOnUse"><rect x="7" y="7" width="42" height="42" fill="none" stroke="#0B0C0D" stroke-width="5"></rect><rect x="21" y="21" width="14" height="14" fill="#0B0C0D"></rect></pattern></defs><rect width="100%" height="100%" fill="url(#m-pv)"></rect></svg>
+</div>
+<div style="box-sizing: border-box; min-height: 292px; padding: 16px 20px 28px; background: #2B2E32; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<span class="m-mono">02 · Data</span>
+<svg viewBox="0 0 32 32" width="44" height="44" aria-hidden="true" style="flex: none"><path d="M6 2h13l7 7v21H6Z" fill="#F4F3F0"></path><path class="m-lock" d="M13 17v-4h6v4" fill="none" stroke="#2B2E32" stroke-width="2"></path><rect x="11" y="17" width="10" height="9" fill="#2B2E32"></rect><rect x="14.5" y="20" width="3" height="3" fill="#EC6A23"></rect></svg>
+</div>
+<h3 class="m-d" style="margin: 6px 0 0; font-size: clamp(28px, 2.3vw, 32px); line-height: 0.96">Know where your data goes</h3>
+<p style="margin: 10px 0 0; font-size: 15px; line-height: 1.45">Control over where sensitive data lives and moves, with the reports auditors ask for.</p>
+<p class="m-mono" style="margin: 12px 0 0; font-size: 11px; line-height: 1.5">Data Loss Prevention · Compliance reporting</p>
+</div>
+</div>
+
+<div>
+<div aria-hidden="true" style="position: relative; height: 144px; background: #EC6A23; clip-path: polygon(0 0, calc(100% - 37px) 0, 100% 80px, 100% 100%, 0 100%)">
+<svg width="100%" height="100%" style="position: absolute; top: 0; left: 0"><defs><pattern id="m-ph" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(24.6)"><rect x="0" y="0" width="5" height="18" fill="#0B0C0D"></rect></pattern></defs><rect width="100%" height="100%" fill="url(#m-ph)"></rect></svg>
+<span style="position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; background: #F4F3F0; outline: 12px solid #EC6A23"></span>
+</div>
+<div style="box-sizing: border-box; min-height: 292px; padding: 16px 20px 28px; background: #2B2E32; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<span class="m-mono">03 · Patching</span>
+<svg viewBox="0 0 32 32" width="44" height="44" aria-hidden="true" style="flex: none; overflow: visible"><path d="M3 9h15v7h7v14H3Z" fill="#F4F3F0"></path><rect class="m-drop" x="18" y="9" width="7" height="7" fill="#EC6A23"></rect></svg>
+</div>
+<h3 class="m-d" style="margin: 6px 0 0; font-size: clamp(28px, 2.3vw, 32px); line-height: 0.96">Close the gap before it is found</h3>
+<p style="margin: 10px 0 0; font-size: 15px; line-height: 1.45">Vulnerabilities found and patched automatically, on every operating system you run.</p>
+<p class="m-mono" style="margin: 12px 0 0; font-size: 11px; line-height: 1.5">Vulnerability identification · Automated patching</p>
+</div>
+</div>
+
+<div>
+<div aria-hidden="true" style="position: relative; height: 176px; background: #B8430C; clip-path: polygon(0 0, calc(100% - 37px) 0, 100% 80px, 100% 100%, 0 100%)">
+<svg width="100%" height="100%" style="position: absolute; top: 0; left: 0"><defs><pattern id="m-pl" width="640" height="30" patternUnits="userSpaceOnUse"><rect x="20" y="8" width="14" height="14" fill="#F4F3F0"></rect><path d="M23 15l3 3 5-6" fill="none" stroke="#0B0C0D" stroke-width="2.5"></path><rect x="46" y="12" width="170" height="6" fill="#F4F3F0"></rect></pattern></defs><rect y="26" width="100%" height="150" fill="url(#m-pl)"></rect></svg>
+</div>
+<div style="box-sizing: border-box; min-height: 292px; padding: 16px 20px 28px; background: #2B2E32; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<span class="m-mono">04 · Compliance</span>
+<svg viewBox="0 0 32 32" width="44" height="44" aria-hidden="true" style="flex: none"><path d="M5 5h6V2h10v3h6v25H5Z" fill="#F4F3F0"></path><path class="m-tick" d="M10 17l4 4 8-9" fill="none" stroke="#EC6A23" stroke-width="4"></path></svg>
+</div>
+<h3 class="m-d" style="margin: 6px 0 0; font-size: clamp(28px, 2.3vw, 32px); line-height: 0.96">Stay audit-ready, every day</h3>
+<p style="margin: 10px 0 0; font-size: 15px; line-height: 1.45">Continuous, auditable, and mapped to the frameworks that matter to you.</p>
+<p class="m-mono" style="margin: 12px 0 0; font-size: 11px; line-height: 1.5">DPDP · PCI DSS · ISO 27001 · GDPR · CBUAE · ADHICS</p>
+</div>
+</div>
+
+</div>
+</div>
+</section>
+
+<div aria-hidden="true" style="height: 28px; background-color: #0B0C0D; background-image: repeating-linear-gradient(90deg, rgba(244,243,240,0.6) 0 1px, transparent 1px 12px), repeating-linear-gradient(90deg, rgba(244,243,240,0.6) 0 1px, transparent 1px 60px); background-size: 100% 10px, 100% 24px; background-repeat: no-repeat; background-position: 0 100%, 0 100%"></div>
+
+<section id="modules" style="background-image: repeating-linear-gradient(114.6deg, rgba(244,243,240,0.06) 0 1px, transparent 1px 16px)">
+<div class="m-wrap" style="padding-top: 56px; padding-bottom: 64px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 48px">
+<div>
+<div class="m-mono">04 · Modules</div>
+<h2 class="m-d" style="margin: 16px 0 0; font-size: clamp(44px, 5.6vw, 80px); line-height: 0.86">
+<span style="display: block">Start with four.</span>
+<span class="m-out" style="display: block; color: #1B1D20">Switch on the rest.</span>
+</h2>
+</div>
+<p style="margin: 0; max-width: 20em; font-size: 18px; line-height: 1.5">Every capability is managed from the same console. Switch one on the day you need it.</p>
+</div>
+<div style="margin-top: 28px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 16px">
+
+<div style="flex: 1 1 340px; box-sizing: border-box; padding: 20px 24px 36px; background: #F4F3F0; color: #0B0C0D; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 72px), calc(100% - 33px) 100%, 0 100%)">
+<div class="m-mono" style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 4px solid #0B0C0D"><span>Core · on from day one</span><span>4</span></div>
+<div style="margin-top: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px">
+<div>
+<div class="m-d" style="font-size: clamp(48px, 4.4vw, 64px); line-height: 0.85">EPP</div>
+<div class="m-mono" style="margin-top: 8px; font-size: 10px">Endpoint Protection Platform</div>
+</div>
+<div>
+<div class="m-d" style="font-size: clamp(48px, 4.4vw, 64px); line-height: 0.85">EDR</div>
+<div class="m-mono" style="margin-top: 8px; font-size: 10px">Endpoint Detection and Response</div>
+</div>
+<div>
+<div class="m-d" style="font-size: clamp(48px, 4.4vw, 64px); line-height: 0.85">XDR</div>
+<div class="m-mono" style="margin-top: 8px; font-size: 10px">Extended Detection and Response</div>
+</div>
+<div>
+<div class="m-d" style="font-size: clamp(48px, 4.4vw, 64px); line-height: 0.85">MDR</div>
+<div class="m-mono" style="margin-top: 8px; font-size: 10px">Managed Detection and Response</div>
+</div>
+</div>
+</div>
+
+<div style="flex: 1.6 1 460px; box-sizing: border-box; padding: 20px 24px 36px; background: #2B2E32; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 72px), calc(100% - 33px) 100%, 0 100%)">
+<div class="m-mono" style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 4px solid #F4F3F0"><span>Add-ons · switch on when you need them</span><span>7</span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 0 32px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; border-bottom: 1px solid rgba(244,243,240,0.25)">
+<span class="m-d" style="font-weight: 800; font-size: 22px; line-height: 1.05">Data Loss Protection</span>
+<span aria-hidden="true" style="position: relative; flex: none; width: 46px; height: 24px; box-sizing: border-box; border: 2px solid #F4F3F0"><span class="m-sw m-w1" style="position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; background: #EC6A23"></span></span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; border-bottom: 1px solid rgba(244,243,240,0.25)">
+<span class="m-d" style="font-weight: 800; font-size: 22px; line-height: 1.05">Identity &amp; Access Management</span>
+<span aria-hidden="true" style="position: relative; flex: none; width: 46px; height: 24px; box-sizing: border-box; border: 2px solid #F4F3F0"><span class="m-sw m-w2" style="position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; background: #EC6A23"></span></span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; border-bottom: 1px solid rgba(244,243,240,0.25)">
+<span class="m-d" style="font-weight: 800; font-size: 22px; line-height: 1.05">Patch Management</span>
+<span aria-hidden="true" style="position: relative; flex: none; width: 46px; height: 24px; box-sizing: border-box; border: 2px solid #F4F3F0"><span class="m-sw m-w3" style="position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; background: #EC6A23"></span></span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; border-bottom: 1px solid rgba(244,243,240,0.25)">
+<span class="m-d" style="font-weight: 800; font-size: 22px; line-height: 1.05">Advanced Endpoint Management</span>
+<span aria-hidden="true" style="position: relative; flex: none; width: 46px; height: 24px; box-sizing: border-box; border: 2px solid #F4F3F0"><span class="m-sw m-w4" style="position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; background: #EC6A23"></span></span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; border-bottom: 1px solid rgba(244,243,240,0.25)">
+<span class="m-d" style="font-weight: 800; font-size: 22px; line-height: 1.05">Agentic SOC</span>
+<span aria-hidden="true" style="position: relative; flex: none; width: 46px; height: 24px; box-sizing: border-box; border: 2px solid #F4F3F0"><span class="m-sw m-w5" style="position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; background: #EC6A23"></span></span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; border-bottom: 1px solid rgba(244,243,240,0.25)">
+<span class="m-d" style="font-weight: 800; font-size: 22px; line-height: 1.05">Log Retention</span>
+<span aria-hidden="true" style="position: relative; flex: none; width: 46px; height: 24px; box-sizing: border-box; border: 2px solid #F4F3F0"><span class="m-sw m-w6" style="position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; background: #EC6A23"></span></span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; border-bottom: 1px solid rgba(244,243,240,0.25)">
+<span class="m-d" style="font-weight: 800; font-size: 22px; line-height: 1.05">File Security Monitoring</span>
+<span aria-hidden="true" style="position: relative; flex: none; width: 46px; height: 24px; box-sizing: border-box; border: 2px solid #F4F3F0"><span class="m-sw m-w7" style="position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; background: #EC6A23"></span></span>
+</div>
+</div>
+</div>
+
+</div>
+<div class="m-mono" style="margin-top: 16px">11 modules · one console</div>
+</div>
+</section>
+
+<div aria-hidden="true" style="background: #2B2E32; border-top: 4px solid #0B0C0D; overflow: hidden; padding: 18px 0 10px">
+<div class="m-mq m-d" style="font-size: clamp(48px, 5.8vw, 84px); line-height: 0.9; white-space: nowrap">
+<span class="m-out" style="flex: none; padding-right: 0.3em; color: #2B2E32">BFSI / Education / Government / Healthcare / Manufacturing / IT·ITES / Retail /</span>
+<span class="m-out" style="flex: none; padding-right: 0.3em; color: #2B2E32">BFSI / Education / Government / Healthcare / Manufacturing / IT·ITES / Retail /</span>
+</div>
+</div>
+
+<section id="industries" style="background: #2B2E32">
+<div class="m-wrap" style="padding-top: 40px; padding-bottom: 64px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 48px">
+<div>
+<div class="m-mono">05 · Industries</div>
+<h2 class="m-d" style="margin: 20px 0 0; font-size: clamp(40px, 5vw, 72px); line-height: 0.86">Security that speaks your sector</h2>
+</div>
+<p style="margin: 0; max-width: 20em; font-size: 18px; line-height: 1.5">Every sector has its own regulator, its own estate and its own bad day. We start from yours.</p>
+</div>
+<div style="margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px">
+
+<a class="m-card" href="#contact" style="display: flex; flex-direction: column; gap: 8px; min-height: 150px; box-sizing: border-box; padding: 16px 18px 22px; background: #1B1D20; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<svg viewBox="0 0 32 32" width="32" height="32" fill="#F4F3F0" aria-hidden="true" style="flex: none; filter: drop-shadow(3px 3px 0 #EC6A23)"><path d="M16 2 30 10H2ZM5 13h4v11H5ZM14 13h4v11h-4ZM23 13h4v11h-4ZM2 26h28v4H2Z"></path></svg>
+<span class="m-d" style="font-weight: 800; font-size: 28px; line-height: 1">BFSI</span>
+<span style="font-size: 14px; line-height: 1.45">Branches, core banking and payments, with reporting mapped to PCI DSS and CBUAE.</span>
+</a>
+
+<a class="m-card" href="#contact" style="display: flex; flex-direction: column; gap: 8px; min-height: 150px; box-sizing: border-box; padding: 16px 18px 22px; background: #1B1D20; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<svg viewBox="0 0 32 32" width="32" height="32" fill="#F4F3F0" aria-hidden="true" style="flex: none; filter: drop-shadow(3px 3px 0 #EC6A23)"><path d="M16 3 31 10 16 17 1 10ZM7 15.6V23l9 5 9-5v-7.4L16 20ZM28 11h2v9h-2Z"></path></svg>
+<span class="m-d" style="font-weight: 800; font-size: 28px; line-height: 1">Education</span>
+<span style="font-size: 14px; line-height: 1.45">Campus labs, staff devices and student data, managed centrally across every site.</span>
+</a>
+
+<a class="m-card" href="#contact" style="display: flex; flex-direction: column; gap: 8px; min-height: 150px; box-sizing: border-box; padding: 16px 18px 22px; background: #1B1D20; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<svg viewBox="0 0 32 32" width="32" height="32" fill="#F4F3F0" aria-hidden="true" style="flex: none; filter: drop-shadow(3px 3px 0 #EC6A23)"><path fill-rule="evenodd" d="M6 12h20v12H6ZM10 15h3v6h-3ZM14.5 15h3v6h-3ZM19 15h3v6h-3Z"></path><path d="M2 26h28v4H2ZM11 6h10v4H11ZM15 1h2v5h-2Z"></path><rect x="17" y="1" width="5" height="3" fill="#EC6A23"></rect></svg>
+<span class="m-d" style="font-weight: 800; font-size: 28px; line-height: 1">Government</span>
+<span style="font-size: 14px; line-height: 1.45">Citizen data kept sovereign: locally supported and aligned to DPDP.</span>
+</a>
+
+<a class="m-card" href="#contact" style="display: flex; flex-direction: column; gap: 8px; min-height: 150px; box-sizing: border-box; padding: 16px 18px 22px; background: #1B1D20; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<svg viewBox="0 0 32 32" width="32" height="32" fill="#F4F3F0" aria-hidden="true" style="flex: none; filter: drop-shadow(3px 3px 0 #EC6A23)"><path d="M12 3h8v9h9v8h-9v9h-8v-9H3v-8h9Z"></path><rect x="14.5" y="14.5" width="3" height="3" fill="#EC6A23"></rect></svg>
+<span class="m-d" style="font-weight: 800; font-size: 28px; line-height: 1">Healthcare</span>
+<span style="font-size: 14px; line-height: 1.45">Clinical endpoints and patient records, with DLP and ADHICS-ready reporting.</span>
+</a>
+
+<a class="m-card" href="#contact" style="display: flex; flex-direction: column; gap: 8px; min-height: 150px; box-sizing: border-box; padding: 16px 18px 22px; background: #1B1D20; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<svg viewBox="0 0 32 32" width="32" height="32" fill="#F4F3F0" aria-hidden="true" style="flex: none; filter: drop-shadow(3px 3px 0 #EC6A23)"><path fill-rule="evenodd" d="M2 30V15l9 5v-5l9 5V5h7v25ZM6 23h3v3H6ZM13 23h3v3h-3Z"></path></svg>
+<span class="m-d" style="font-weight: 800; font-size: 28px; line-height: 1">Manufacturing</span>
+<span style="font-size: 14px; line-height: 1.45">From office IT to plant-floor OT, without stopping the line.</span>
+</a>
+
+<a class="m-card" href="#contact" style="display: flex; flex-direction: column; gap: 8px; min-height: 150px; box-sizing: border-box; padding: 16px 18px 22px; background: #1B1D20; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<svg viewBox="0 0 32 32" width="32" height="32" fill="#F4F3F0" aria-hidden="true" style="flex: none; filter: drop-shadow(3px 3px 0 #EC6A23)"><path fill-rule="evenodd" d="M8 8h16v16H8ZM13 13h6v6h-6Z"></path><path d="M11 3h2v4h-2ZM15 3h2v4h-2ZM19 3h2v4h-2ZM11 25h2v4h-2ZM15 25h2v4h-2ZM19 25h2v4h-2ZM3 11h4v2H3ZM3 15h4v2H3ZM3 19h4v2H3ZM25 11h4v2h-4ZM25 15h4v2h-4ZM25 19h4v2h-4Z"></path><rect x="14.5" y="14.5" width="3" height="3" fill="#EC6A23"></rect></svg>
+<span class="m-d" style="font-weight: 800; font-size: 28px; line-height: 1">IT/ITES</span>
+<span style="font-size: 14px; line-height: 1.45">Identity, data loss and patch controls for hybrid teams working to strict SLAs.</span>
+</a>
+
+<a class="m-card" href="#contact" style="display: flex; flex-direction: column; gap: 8px; min-height: 150px; box-sizing: border-box; padding: 16px 18px 22px; background: #1B1D20; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<svg viewBox="0 0 32 32" width="32" height="32" fill="#F4F3F0" aria-hidden="true" style="flex: none; filter: drop-shadow(3px 3px 0 #EC6A23)"><path fill-rule="evenodd" d="M5 10h5V3h12v7h5l2 20H3ZM13 10h6V6h-6Z"></path></svg>
+<span class="m-d" style="font-weight: 800; font-size: 28px; line-height: 1">Retail</span>
+<span style="font-size: 14px; line-height: 1.45">Stores, POS terminals and warehouses, protected the same way from one console.</span>
+</a>
+
+<a class="m-card" href="#contact" style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px; min-height: 150px; box-sizing: border-box; padding: 16px 18px 22px; background: #EC6A23; color: #0B0908; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), calc(100% - 20px) 100%, 0 100%)">
+<span class="m-d" style="font-weight: 800; font-size: 28px; line-height: 1">Not on the list?</span>
+<span style="display: inline-flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700">Talk to us<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0B0908" stroke-width="3" stroke-linecap="square" aria-hidden="true"><path d="M4 12h14M13 6l6 6-6 6"></path></svg></span>
+</a>
+
+</div>
+</div>
+</section>
+
+<div aria-hidden="true" style="background: #1B1D20">
+<div style="height: 14px; background-image: radial-gradient(circle, #2B2E32 6.6px, transparent 7.1px); background-size: 14px 14px"></div>
+<div style="height: 14px; background-image: radial-gradient(circle, #2B2E32 5.2px, transparent 5.7px); background-size: 14px 14px"></div>
+<div style="height: 14px; background-image: radial-gradient(circle, #2B2E32 3.9px, transparent 4.4px); background-size: 14px 14px"></div>
+<div style="height: 14px; background-image: radial-gradient(circle, #2B2E32 2.6px, transparent 3.1px); background-size: 14px 14px"></div>
+<div style="height: 14px; background-image: radial-gradient(circle, #2B2E32 1.3px, transparent 1.8px); background-size: 14px 14px"></div>
+</div>
+
+<section id="accountability">
+<div class="m-wrap" style="padding-top: 56px; padding-bottom: 64px">
+<div class="m-mono">06 · Accountability</div>
+<h2 class="m-d" style="margin: 20px 0 0; font-size: clamp(44px, 5.6vw, 80px); line-height: 0.86">
+<span style="display: block">You don’t buy security.</span>
+<span class="m-out" style="display: block; color: #1B1D20">You trust someone with it.</span>
+</h2>
+<div style="margin-top: 28px; padding-top: 24px; border-top: 4px solid #F4F3F0; display: flex; flex-wrap: wrap; align-items: center; gap: 24px 56px">
+<div style="flex: 0 1 360px">
+<svg viewBox="-20 0 360 220" role="img" aria-label="Two blocks, yours and K7’s, slide together and lock around a single orange bond" style="display: block; width: 100%; height: auto">
+<g class="m-tl"><path d="M20 40h180v60h-80v80H20Z" fill="#F4F3F0"></path><text x="70" y="160" text-anchor="middle" class="m-sd" font-size="36" fill="#0B0C0D">YOU</text></g>
+<g class="m-tr"><path d="M300 180H120v-60h80V40h67l33 72Z" fill="#0B0C0D"></path><text x="250" y="160" text-anchor="middle" class="m-sd" font-size="36" fill="#F4F3F0">K7</text></g>
+<rect class="m-bond" x="120" y="100" width="80" height="20" fill="#EC6A23"></rect>
+</svg>
+<div class="m-mono" style="margin-top: 6px; text-align: center">Locked in · one bond</div>
+</div>
+<div style="flex: 1 1 300px">
+<p class="m-d" style="margin: 0; font-weight: 800; font-size: clamp(32px, 3.1vw, 44px); line-height: 0.98">One accountable partner. There when it matters most.</p>
+</div>
+<div style="flex: 1 1 340px">
+<p style="margin: 0">Your data, operations, reputation and business continuity sit behind whoever you choose. We build cybersecurity around one responsibility: protecting our customers and being there when security matters most.</p>
+<a class="m-btn" href="#contact" style="margin-top: 24px; display: inline-flex; align-items: center; height: 52px; padding: 0 24px; box-sizing: border-box; border: 2px solid #F4F3F0; font-weight: 700; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase">Why K7</a>
+</div>
+</div>
+</div>
+</section>
+
+<div aria-hidden="true" style="position: relative; height: 56px; background: #0B0C0D; overflow: hidden">
+<div class="m-flag" style="position: absolute; left: 0; top: 16px; width: 100%; height: 6px; color: #EC6A23"></div>
+<div class="m-stream" style="position: absolute; left: 0; top: 30px; width: 100%; height: 6px; color: rgba(244,243,240,0.55)"></div>
+</div>
+
+<section id="labs" style="background: #0B0C0D">
+<div class="m-wrap" style="padding-top: 40px; padding-bottom: 64px">
+<div class="m-mono">07 · K7 Labs</div>
+<h2 class="m-d" style="margin: 20px 0 0; font-size: clamp(44px, 5.6vw, 80px); line-height: 0.86">Hundreds of thousands of samples. <span class="m-out" style="color: #0B0C0D">Every day.</span></h2>
+<div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(480px, 100%), 1fr)); gap: 20px 72px; align-items: start">
+<p style="margin: 0; max-width: 30em; font-size: 18px; line-height: 1.5">K7 Labs is one of the world’s leading antimalware research and threat intelligence centres. Every sample it takes apart is one your team never has to meet.</p>
+<div style="padding: 18px 44px 18px 20px; background: #2B2E32; display: flex; gap: 18px; align-items: center; clip-path: polygon(0 0, 100% 0, calc(100% - 40px) 100%, 0 100%)">
+<svg viewBox="0 0 32 32" width="56" height="56" fill="#F4F3F0" role="img" aria-label="Award" style="flex: none; filter: drop-shadow(3px 3px 0 #0B0C0D)"><path d="M12 2h8l6 6v8l-6 6h-8l-6-6V8Z"></path><path d="M9 21l5 2.5-2 7.5-2.5-3L6 30Z"></path><path d="M23 21l-5 2.5 2 7.5 2.5-3L26 30Z"></path><path d="M17 7h3l-4.6 10h-3Z" fill="#EC6A23"></path></svg>
+<span style="display: block"><span class="m-mono" style="display: block; margin-bottom: 4px">Award</span><strong style="display: block; font-size: 18px; line-height: 1.3">Real Time Threat List Contributor of the Year</strong><span style="display: block; font-size: 15px">Anti-Malware Testing Standards Organization</span></span>
+</div>
+</div>
+<div style="margin-top: 36px; padding-top: 24px; border-top: 4px solid #F4F3F0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px 56px">
+<div>
+<div class="m-d" style="font-size: clamp(72px, 8.4vw, 120px); line-height: 0.8">30+</div>
+<div class="m-d" style="margin-top: 14px; font-weight: 800; font-size: 30px; line-height: 1">Years</div>
+<div class="m-mono" style="margin-top: 8px; max-width: 240px">Multi-decade expertise</div>
+</div>
+<div>
+<div class="m-d" style="font-size: clamp(72px, 8.4vw, 120px); line-height: 0.8">Millions</div>
+<div class="m-d" style="margin-top: 14px; font-weight: 800; font-size: 30px; line-height: 1">of Devices</div>
+<div class="m-mono" style="margin-top: 8px; max-width: 240px">Extensive sources of telemetry</div>
+</div>
+<div>
+<div class="m-d" style="font-size: clamp(72px, 8.4vw, 120px); line-height: 0.8">27</div>
+<div class="m-d" style="margin-top: 14px; font-weight: 800; font-size: 30px; line-height: 1">Countries</div>
+<div class="m-mono" style="margin-top: 8px; max-width: 240px">Geographically distributed threat intelligence</div>
+</div>
+</div>
+</div>
+</section>
+
+<div aria-hidden="true" style="height: 48px; background-color: #1B1D20; background-image: repeating-linear-gradient(65.4deg, #0B0C0D 0 16px, transparent 16px 40px)"></div>
+
+<section id="customers">
+<div class="m-wrap" style="padding-top: 56px; padding-bottom: 64px">
+<div class="m-car m-c0" id="m-car" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 28px 56px; align-items: stretch">
+<div style="display: flex; flex-direction: column; justify-content: space-between; gap: 28px">
+<div>
+<div class="m-mono">08 · Customers</div>
+<h2 class="m-d" style="margin: 16px 0 0; font-size: clamp(44px, 5.6vw, 80px); line-height: 0.86">
+<span style="display: block">Don’t take our word.</span>
+<span class="m-out" style="display: block; color: #1B1D20">Tune in to theirs.</span>
+</h2>
+</div>
+<div>
+<div aria-hidden="true" style="position: relative">
+<svg width="100%" height="72" style="display: block">
+<defs>
+<pattern id="m-rf1" width="48" height="72" patternUnits="userSpaceOnUse"><path d="M0 36q12 -56 24 0t24 0" fill="none" stroke="#F4F3F0" stroke-width="2"></path></pattern>
+<pattern id="m-rf2" width="96" height="72" patternUnits="userSpaceOnUse"><path d="M0 36q24 -66 48 0t48 0" fill="none" stroke="#F4F3F0" stroke-opacity="0.35" stroke-width="1.5"></path></pattern>
+<pattern id="m-rf3" width="32" height="72" patternUnits="userSpaceOnUse"><path d="M0 36q8 -28 16 0t16 0" fill="none" stroke="#EC6A23" stroke-width="2.5"></path></pattern>
+</defs>
+<rect class="m-rfb" x="-200" y="0" width="4400" height="72" fill="url(#m-rf2)"></rect>
+<rect class="m-rfa" x="-200" y="0" width="4400" height="72" fill="url(#m-rf1)"></rect>
+<rect class="m-rfc" x="-200" y="0" width="4400" height="72" fill="url(#m-rf3)"></rect>
+</svg>
+<div style="height: 26px; border-top: 2px solid #F4F3F0; background-image: repeating-linear-gradient(90deg, rgba(244,243,240,0.6) 0 1px, transparent 1px 12px), repeating-linear-gradient(90deg, rgba(244,243,240,0.6) 0 1px, transparent 1px 60px); background-size: 100% 9px, 100% 20px; background-repeat: no-repeat"></div>
+<div class="m-needle" style="position: absolute; top: 0; width: 3px; height: 100%; margin-left: -1px; background: #EC6A23"></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr))">
+<button class="m-chb m-ch0" type="button" data-ch="0">CH 01<br>Private Bank</button>
+<button class="m-chb m-ch1" type="button" data-ch="1">CH 02<br>Healthcare Group</button>
+<button class="m-chb m-ch2" type="button" data-ch="2">CH 03<br>Manufacturing</button>
+</div>
+</div>
+</div>
+<div style="box-sizing: border-box; padding: 22px 24px 52px; background: #2B2E32; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 72px), calc(100% - 33px) 100%, 0 100%)">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+<span class="m-mono" style="display: inline-flex; align-items: center; gap: 10px"><span class="m-blink" aria-hidden="true" style="width: 8px; height: 8px; flex: none; background: #EC6A23"></span>Now receiving</span>
+<span style="display: flex; gap: 8px">
+<button class="m-arrow" type="button" aria-label="Previous testimonial" data-step="-1"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square" aria-hidden="true"><path d="M20 12H6M11 6l-6 6 6 6"></path></svg></button>
+<button class="m-arrow" type="button" aria-label="Next testimonial" data-step="1"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square" aria-hidden="true"><path d="M4 12h14M13 6l6 6-6 6"></path></svg></button>
+</span>
+</div>
+<div style="margin-top: 18px; display: grid">
+<figure class="m-slide m-s0" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 22px">
+<blockquote style="margin: 0; font-size: clamp(20px, 1.8vw, 26px); line-height: 1.3; font-weight: 500">K7 replaced three separate tools for us. Our team now sees endpoint alerts, patch status and DLP events in one console, and the MDR analysts escalate only what genuinely needs our attention.</blockquote>
+<figcaption style="padding-top: 14px; border-top: 2px solid #F4F3F0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; padding-right: 28px"><span class="m-d" style="font-weight: 800; font-size: 26px; line-height: 1.1">[Customer name]</span><span class="m-mono">Head of IT Security, Private Bank</span></figcaption>
+</figure>
+<figure class="m-slide m-s1" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 22px">
+<blockquote style="margin: 0; font-size: clamp(20px, 1.8vw, 26px); line-height: 1.3; font-weight: 500">We have hospitals across four cities. Rolling out K7 took weeks, not months, and the compliance reports have made our ADHICS audits far less painful.</blockquote>
+<figcaption style="padding-top: 14px; border-top: 2px solid #F4F3F0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; padding-right: 28px"><span class="m-d" style="font-weight: 800; font-size: 26px; line-height: 1.1">[Customer name]</span><span class="m-mono">CIO, Healthcare Group</span></figcaption>
+</figure>
+<figure class="m-slide m-s2" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 22px">
+<blockquote style="margin: 0; font-size: clamp(20px, 1.8vw, 26px); line-height: 1.3; font-weight: 500">What stood out was accountability. When we had an incident at 2 a.m., the K7 team was already on it before we called.</blockquote>
+<figcaption style="padding-top: 14px; border-top: 2px solid #F4F3F0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; padding-right: 28px"><span class="m-d" style="font-weight: 800; font-size: 26px; line-height: 1.1">[Customer name]</span><span class="m-mono">IT Director, Manufacturing Company</span></figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p class="m-mono" style="margin: 16px 0 0">Sample copy for layout · replace with approved quotes</p>
+</div>
+</section>
+
+<div aria-hidden="true" style="position: relative; height: 72px; background: #1B1D20">
+<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #EC6A23; clip-path: polygon(0 0, calc(34% + 33px) 0, 34% 100%, 0 100%)"></div>
+<div style="position: absolute; top: 0; left: calc(34% + 10px); width: 47px; height: 100%; background: #F4F3F0; clip-path: polygon(33px 0, 47px 0, 14px 100%, 0 100%)"></div>
+</div>
+
+<section id="contact" style="background: #EC6A23; background-image: repeating-linear-gradient(114.6deg, rgba(11,9,8,0.12) 0 2px, transparent 2px 20px); color: #0B0908">
+<div class="m-wrap" style="padding-top: 56px; padding-bottom: 64px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(460px, 100%), 1fr)); gap: 48px 72px; align-items: start">
+<div>
+<div class="m-mono">09 · Contact</div>
+<h2 class="m-d" style="margin: 20px 0 0; font-size: clamp(44px, 5.6vw, 80px); line-height: 0.86">Talk to a K7 specialist</h2>
+<div style="margin-top: 40px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px 48px">
+<p style="margin: 0; max-width: 26em; font-size: 22px; font-weight: 500; line-height: 1.35">Tell us what you need to protect. A specialist will get back to you within one business day.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<a class="m-btn" href="#contact" style="display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 48px 0 24px; background: #0B0908; color: #F4F3F0; font-weight: 700; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase; clip-path: polygon(0 0, 100% 0, calc(100% - 26px) 100%, 0 100%)">Request Demo<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#EC6A23" stroke-width="3" stroke-linecap="square" aria-hidden="true"><path d="M4 12h14M13 6l6 6-6 6"></path></svg></a></div>
+</div>
+</div>
+<form id="m-form" style="box-sizing: border-box; padding: 32px 32px 48px; background: #0B0C0D; color: #F4F3F0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 24px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 72px), calc(100% - 33px) 100%, 0 100%)">
+<div><label class="m-mono" for="m-name">Name</label><input class="m-in" id="m-name" name="name" type="text"></div>
+<div><label class="m-mono" for="m-email">Work email</label><input class="m-in" id="m-email" name="email" type="email"></div>
+<div><label class="m-mono" for="m-company">Company</label><input class="m-in" id="m-company" name="company" type="text"></div>
+<div><label class="m-mono" for="m-topic">I’m interested in</label><select class="m-in" id="m-topic" name="topic"><option>Platform</option><option>Solutions</option><option>Services</option><option>Partnership</option><option>Support</option></select></div>
+<div style="grid-column: 1 / -1"><label class="m-mono" for="m-msg">Message</label><textarea class="m-in" id="m-msg" name="message" rows="3"></textarea></div>
+<div style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-right: 24px">
+<span style="font-size: 14px">By submitting, you agree to our Privacy Policy.</span>
+<button class="m-btn" id="m-send" type="button" style="display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 48px 0 24px; border: 0; background: #EC6A23; color: #0B0908; font-family: inherit; font-weight: 700; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; clip-path: polygon(0 0, 100% 0, calc(100% - 26px) 100%, 0 100%)">Send Message<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0B0908" stroke-width="3" stroke-linecap="square" aria-hidden="true"><path d="M4 12h14M13 6l6 6-6 6"></path></svg></button>
+</div>
+<p class="m-mono" id="m-status" role="status" style="grid-column: 1 / -1; margin: 0; padding-right: 40px; display: none">Prototype only · this form is not connected yet, so nothing was sent.</p>
+</form>
+</div>
+</section>
+
+<div aria-hidden="true" style="height: 24px; background-color: #EC6A23; background-image: repeating-linear-gradient(114.6deg, #0B0C0D 0 16px, transparent 16px 40px)"></div>
+
+<footer style="position: relative; flex: 1 0 auto; display: flex; flex-direction: column; overflow: hidden; background-color: #0B0C0D; background-image: radial-gradient(circle, rgba(244,243,240,0.12) 1.2px, transparent 1.8px); background-size: 22px 22px">
+<div class="m-wrap" style="position: relative; box-sizing: border-box; width: 100%; padding-top: 64px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px 40px; padding-bottom: 32px">
+<img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjUyIDUyIDUzMiAxMzQiPgogIAogIDxnPgogICAgPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTI4MS42NCw3MS4wNGMtMy4yOS0yLjM3LTcuMTktMy41Mi0xMS42My0zLjUyLTkuNzEsMC0xNi42Nyw2Ljg4LTE2LjY3LDE2LjQ0LDAsMTAuODYsNy4xOSwxNy45NywxOC4yLDE3Ljk3LDMuNTksMCw2LjU4LS42MSwxMS4wOS0yLjM3bDEuNzYsOC4xMWMtMy4yMSwxLjQ1LTQuNTEsMS45MS02LjgxLDIuNDUtMi40NS41NC01LjEyLjg0LTguMTEuODQtNy44OCwwLTEzLjU0LTEuOTktMTguMjgtNi4yNy01LjM1LTQuODItOC40OS0xMi4zMS04LjQ5LTIwLjE5LDAtNy4zNCwyLjc1LTE0LDcuNzItMTguODksNS4wNS00Ljk3LDEwLjcxLTcuMDQsMTkuMDQtNy4wNCw2LjQyLDAsMTEuNDcsMS41MywxNS44Myw0LjgybC0zLjY3LDcuNjVaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMzEyLjIzLDg4LjMydjIxLjY1aC05LjY0di0yMS42NWwtMTUuMzctMjguODNoMTAuNTVsMTAuMSwxOS43MywxMC42My0xOS43M2gxMC41NWwtMTYuODMsMjguODNaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMzU2LjEyLDEwOS45NmgtMjAuNTd2LTUwLjQ4aDE4LjI4YzYuNTgsMCw5Ljg3Ljg0LDEyLjYyLDMuMzcsMi40NSwyLjE0LDMuOTgsNS43NCwzLjk4LDkuMDIsMCwyLjgzLTEuMDcsNS44MS0yLjkxLDcuOTUtMi4yMiwyLjUyLTQuMjgsMy40NC04LjI2LDMuNjcsNy42NS4xNSwxMi40Nyw1LjEzLDEyLjQ3LDEzLDAsOC43Mi01LjUxLDEzLjQ2LTE1LjYsMTMuNDZaTTM1MS45Miw2Ny4xM2gtNi4yN3YxM2g1Ljc0YzUuNDMsMCw4LjM0LTIuMjksOC4zNC02LjU4LDAtNC4wNS0yLjkxLTYuNDItNy44LTYuNDJaTTM1MS45Miw4OC4zMmgtNi4yN3YxMy45Mmg2LjI3YzIuOTgsMCw0LjM2LS4yMyw1LjgxLS45MiwyLjE0LTEuMDcsMy40NC0zLjI5LDMuNDQtNS44OSwwLTQuNTktMy4yOS03LjExLTkuMjUtNy4xMVoiPjwvcGF0aD4KICAgIDxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0zODEuMjEsMTA5Ljk2di01MC40OGgzMC43NXY4LjE5aC0yMS4xMXYxMi40N2gxNy4yOXY4LjE4aC0xNy4yOXYxMy40NmgyMi4xdjguMThoLTMxLjc0WiI+PC9wYXRoPgogICAgPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTQ0OC40MywxMDkuOTZsLTExLjU1LTIwLjE5aC00LjgydjIwLjE5aC05LjY0di01MC40OGgxNi44M2M3LjM0LDAsMTAuNzEuOTIsMTMuNjksMy43NSwyLjc1LDIuNTIsNC4xMyw2LjE5LDQuMTMsMTAuOTQsMCwzLjktLjkyLDcuMDQtMi43NSw5LjQ4LTEuOTEsMi40NS0zLjY3LDMuNTItNy44OCw0LjY2bDEyLjU0LDIxLjY1aC0xMC41NVpNNDM4LjMzLDY3LjY3aC02LjI3djEzLjkyaDYuMjdjNi4xMiwwLDguOC0yLjE0LDguOC03LjE5cy0yLjUyLTYuNzMtOC44LTYuNzNaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMjc1LjYsMTM1Ljg2Yy01LjM1LTIuMzctOS43MS0zLjYtMTMuMDgtMy42LTQuNTEsMC03LjQyLDEuODQtNy40Miw0LjY3LDAsMi4xNCwxLjIyLDMuNDQsNC44Miw1LjM1LDcuNzIsNC4xMywxMi43Nyw3LjM0LDE1LjE0LDkuNzEsMi4xNCwyLjE0LDMuNDQsNS41MSwzLjQ0LDkuMDIsMCw5LjAzLTYuNTgsMTQuMy0xNy43NCwxNC4zLTEuNTMsMC0zLjA2LS4wOC00LjUxLS4zMS0zLjU5LS40Ni01LjI4LTEuMDctMTAuNTUtMy41Mi0uNjktLjMxLTEuODQtLjg0LTMuMjktMS41M2w0LjA1LTguODdjMy42NywxLjk5LDUuMiwyLjc1LDcuMTksMy41MiwyLjUyLjkyLDUuMjgsMS40NSw3LjI3LDEuNDUsNC40NCwwLDcuMzQtMS45OSw3LjM0LTUuMDUsMC0yLjE0LTEuMTUtMy41OS00LjQ0LTUuNDNsLTcuOC00LjQ0Yy04Ljk1LTUuMTMtMTEuNy04LjQ5LTExLjctMTQsMC0yLjUyLjc2LTUuMTIsMS45OS03LjA0Ljg0LTEuMywyLjE0LTIuNiwzLjc1LTMuNzUsMy42Ny0yLjUyLDYuODEtMy4zNiwxMi43LTMuMzYsMy4zNiwwLDYuMzUuMzgsOS40OCwxLjMsMi40NS43NywzLjgyLDEuMyw3LjE5LDIuOTFsLTMuODIsOC42NFoiPjwvcGF0aD4KICAgIDxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik0yODguNTIsMTc0LjMzdi01MC40OGgzMC43NXY4LjE5aC0yMS4xMXYxMi40N2gxNy4yOXY4LjE4aC0xNy4yOXYxMy40NmgyMi4xdjguMThoLTMxLjc0WiI+PC9wYXRoPgogICAgPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTM2My43LDEzNS40Yy0zLjI5LTIuMzctNy4xOS0zLjUyLTExLjYzLTMuNTItOS43MSwwLTE2LjY3LDYuODgtMTYuNjcsMTYuNDQsMCwxMC44Niw3LjE5LDE3Ljk3LDE4LjIsMTcuOTcsMy41OSwwLDYuNTgtLjYxLDExLjA5LTIuMzdsMS43Niw4LjExYy0zLjIxLDEuNDUtNC41MSwxLjkxLTYuODEsMi40NS0yLjQ1LjU0LTUuMTIuODQtOC4xMS44NC03Ljg4LDAtMTMuNTQtMS45OS0xOC4yOC02LjI3LTUuMzUtNC44Mi04LjQ5LTEyLjMxLTguNDktMjAuMTksMC03LjM0LDIuNzUtMTQsNy43Mi0xOC44OSw1LjA1LTQuOTcsMTAuNzEtNy4wNCwxOS4wNC03LjA0LDYuNDIsMCwxMS40NywxLjUzLDE1LjgzLDQuODJsLTMuNjcsNy42NVoiPjwvcGF0aD4KICAgIDxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik00MTAuMTIsMTcxLjY2Yy0zLjY3LDIuNTItNy45NSwzLjY3LTE0LjIzLDMuNjdzLTEwLjQ4LTEuMDctMTQuMy0zLjY3Yy01LjItMy42LTYuODgtNy44LTYuODgtMTcuMDZ2LTMwLjc1aDkuNTZ2MzEuMjhjMCw3LjUsMy45LDExLjI1LDExLjkzLDExLjI1LDcuMzQsMCwxMS4yNC0zLjk4LDExLjI0LTExLjI1di0zMS4yOGg5LjY0djMwLjc1YzAsOS4yNS0xLjY4LDEzLjM4LTYuOTYsMTcuMDZaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNDU1LjU0LDE3NC4zM2wtMTEuNTUtMjAuMTloLTQuODJ2MjAuMTloLTkuNjR2LTUwLjQ4aDE2LjgzYzcuMzQsMCwxMC43MS45MiwxMy42OSwzLjc1LDIuNzUsMi41Miw0LjEzLDYuMTksNC4xMywxMC45NCwwLDMuOS0uOTIsNy4wNC0yLjc1LDkuNDgtMS45MSwyLjQ1LTMuNjcsMy41Mi03Ljg4LDQuNjZsMTIuNTQsMjEuNjVoLTEwLjU1Wk00NDUuNDUsMTMyLjA0aC02LjI3djEzLjkyaDYuMjdjNi4xMiwwLDguOC0yLjE0LDguOC03LjE5cy0yLjUyLTYuNzMtOC44LTYuNzNaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNDczLjk3LDE3NC4zM3YtNTAuNDhoOS42NHY1MC40OGgtOS42NFoiPjwvcGF0aD4KICAgIDxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik01MTUuNjUsMTMyLjA0djQyLjI5aC05LjY0di00Mi4yOWgtMTUuMTR2LTguMTloMzkuOTJ2OC4xOWgtMTUuMTRaIj48L3BhdGg+CiAgICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNTU2LjY0LDE1Mi42OXYyMS42NWgtOS42NHYtMjEuNjVsLTE1LjM3LTI4LjgzaDEwLjU1bDEwLjEsMTkuNzMsMTAuNjMtMTkuNzNoMTAuNTVsLTE2LjgzLDI4LjgzWiI+PC9wYXRoPgogIDwvZz4KICA8Zz4KICAgIDxwb2x5Z29uIGZpbGw9IiNFQzZBMjMiIHBvaW50cz0iMTQ5Ljc2IDg1LjI1IDE2Ny45NiA1Ny45NCAyMzQuNjcgNTcuOTUgMTc4LjYgMTgwLjM4IDE1OS4wMiAxNTEuOTcgMTg5LjMzIDg1LjA0IDE0OS43NiA4NS4yNSI+PC9wb2x5Z29uPgogICAgPHBvbHlnb24gZmlsbD0iI0ZGRkZGRiIgcG9pbnRzPSIxNjcuODYgMTc1LjY4IDEyNC43MiAxMTMuMDMgMTYxLjI3IDU3Ljk3IDEyNS4yOSA1Ny45NyA5MS44NiAxMDcuMDMgOTEuODYgNTcuOTIgNTcuNTEgNTcuOTIgNTcuNTEgMTc1LjY4IDkxLjg2IDE3NS42OCA5MS44NiAxMTkuMiAxMjkuNTYgMTc1LjY4IDE2Ny44NiAxNzUuNjgiPjwvcG9seWdvbj4KICA8L2c+Cjwvc3ZnPg==" alt="K7 CyberSecurity" style="height: 44px; width: auto; display: block">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px">
+<span class="m-mono">Beyond the obvious · Answerable to you</span>
+<a class="m-btn" href="#contact" style="display: inline-flex; align-items: center; gap: 12px; height: 52px; padding: 0 44px 0 22px; background: #EC6A23; color: #0B0908; font-weight: 700; font-size: 15px; letter-spacing: 0.05em; text-transform: uppercase; clip-path: polygon(0 0, 100% 0, calc(100% - 24px) 100%, 0 100%)">Request Demo<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0B0908" stroke-width="3" stroke-linecap="square" aria-hidden="true"><path d="M4 12h14M13 6l6 6-6 6"></path></svg></a>
+</div>
+</div>
+<nav aria-label="Platform" style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 32px; padding: 14px 0; border-top: 4px solid #F4F3F0">
+<span class="m-d" style="flex: 0 0 200px; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 28px; line-height: 1.2"><svg viewBox="0 0 48 73" width="11" height="17" aria-hidden="true" style="flex: none"><polygon points="33.5,0 48,0 14.5,73 0,73" fill="#EC6A23"></polygon></svg>Platform</span>
+<span style="flex: 1 1 320px; display: flex; flex-wrap: wrap; gap: 0 28px; font-size: 16px">
+<a href="#platform" style="display: inline-flex; align-items: center; min-height: 40px">K7 Seventh Sense MDR</a>
+<a href="#platform" style="display: inline-flex; align-items: center; min-height: 40px">K7 Seventh Sense XDR</a>
+<a href="#platform" style="display: inline-flex; align-items: center; min-height: 40px">K7 Seventh Sense EDR</a>
+<a href="#platform" style="display: inline-flex; align-items: center; min-height: 40px">K7 Seventh Sense EPP</a>
+<a href="#modules" style="display: inline-flex; align-items: center; min-height: 40px">All add-ons</a>
+</span>
+</nav>
+<nav aria-label="Solutions" style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 32px; padding: 14px 0; border-top: 1px solid rgba(244,243,240,0.3)">
+<span class="m-d" style="flex: 0 0 200px; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 28px; line-height: 1.2"><svg viewBox="0 0 48 73" width="11" height="17" aria-hidden="true" style="flex: none"><polygon points="33.5,0 48,0 14.5,73 0,73" fill="#EC6A23"></polygon></svg>Solutions</span>
+<span style="flex: 1 1 320px; display: flex; flex-wrap: wrap; gap: 0 28px; font-size: 16px">
+<a href="#industries" style="display: inline-flex; align-items: center; min-height: 40px">Compliance Solutions</a>
+<a href="#industries" style="display: inline-flex; align-items: center; min-height: 40px">Industry Solutions</a>
+<a href="#industries" style="display: inline-flex; align-items: center; min-height: 40px">Network Security Solutions</a>
+</span>
+</nav>
+<nav aria-label="Services" style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 32px; padding: 14px 0; border-top: 1px solid rgba(244,243,240,0.3)">
+<span class="m-d" style="flex: 0 0 200px; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 28px; line-height: 1.2"><svg viewBox="0 0 48 73" width="11" height="17" aria-hidden="true" style="flex: none"><polygon points="33.5,0 48,0 14.5,73 0,73" fill="#EC6A23"></polygon></svg>Services</span>
+<span style="flex: 1 1 320px; display: flex; flex-wrap: wrap; gap: 0 28px; font-size: 16px">
+<a href="#contact" style="display: inline-flex; align-items: center; min-height: 40px">Consulting Services</a>
+<a href="#contact" style="display: inline-flex; align-items: center; min-height: 40px">Security Assessment Services</a>
+<a href="#contact" style="display: inline-flex; align-items: center; min-height: 40px">Managed &amp; AI Security</a>
+</span>
+</nav>
+<nav aria-label="Company" style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 32px; padding: 14px 0; border-top: 1px solid rgba(244,243,240,0.3); border-bottom: 1px solid rgba(244,243,240,0.3)">
+<span class="m-d" style="flex: 0 0 200px; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 28px; line-height: 1.2"><svg viewBox="0 0 48 73" width="11" height="17" aria-hidden="true" style="flex: none"><polygon points="33.5,0 48,0 14.5,73 0,73" fill="#EC6A23"></polygon></svg>Company</span>
+<span style="flex: 1 1 320px; display: flex; flex-wrap: wrap; gap: 0 28px; font-size: 16px">
+<a href="#contact" style="display: inline-flex; align-items: center; min-height: 40px">Partners</a>
+<a href="#labs" style="display: inline-flex; align-items: center; min-height: 40px">Resources</a>
+<a href="#accountability" style="display: inline-flex; align-items: center; min-height: 40px">Why K7</a>
+<a href="#accountability" style="display: inline-flex; align-items: center; min-height: 40px">About Us</a>
+<a href="#contact" style="display: inline-flex; align-items: center; min-height: 40px">Contact Us</a>
+</span>
+</nav>
+</div>
+<div class="m-d" aria-hidden="true" style="position: relative; margin-top: auto; padding: 72px clamp(20px, 3.9vw, 56px) 0; display: flex; align-items: baseline; justify-content: center; gap: 0.05em; font-size: clamp(50px, 14.4vw, 212px); line-height: 0.74; white-space: nowrap; margin-bottom: -0.09em">
+<span class="m-out" style="color: #0B0C0D">Seventh</span>
+<svg viewBox="0 0 48 73" style="width: 0.47em; height: 0.71em; flex: none"><polygon points="33.5,0 48,0 14.5,73 0,73" fill="#EC6A23"></polygon></svg>
+<span class="m-out" style="color: #0B0C0D">Sense</span>
+</div>
+<div style="position: relative; background: #EC6A23; color: #0B0908">
+<div class="m-wrap m-mono" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 32px; padding-top: 16px; padding-bottom: 16px">
+<span>© 2026 K7 Enterprise Security Private Limited. All Rights Reserved.</span>
+<span style="display: flex; flex-wrap: wrap; gap: 8px 24px"><a href="#top">Privacy Policy</a><a href="#top">EULA</a><a href="#top">Back to top ↑</a></span>
+</div>
+</div>
+</footer>
+
+</div>
+<script>
+(function () {
+  var nav = document.getElementById('m-nav'), btn = document.getElementById('m-menu');
+  if (nav && btn) {
+    btn.addEventListener('click', function () {
+      var open = nav.classList.toggle('m-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    nav.addEventListener('click', function (e) {
+      if (e.target.closest('a')) { nav.classList.remove('m-open'); btn.setAttribute('aria-expanded', 'false'); }
+    });
+  }
+  var form = document.getElementById('m-form'), send = document.getElementById('m-send'), status = document.getElementById('m-status');
+  if (form) form.addEventListener('submit', function (e) { e.preventDefault(); });
+  if (send && status) send.addEventListener('click', function () { status.style.display = 'block'; });
+  var car = document.getElementById('m-car'), ch = 0, timer = null;
+  function tune(i) { ch = (i + 3) % 3; car.className = car.className.replace(/m-c\d/, 'm-c' + ch); }
+  if (car) {
+    car.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-ch],[data-step]');
+      if (!b) return;
+      if (timer) { clearInterval(timer); timer = null; }
+      if (b.hasAttribute('data-ch')) tune(+b.getAttribute('data-ch')); else tune(ch + (+b.getAttribute('data-step')));
+    });
+    if (!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      timer = setInterval(function () { tune(ch + 1); }, 6000);
+    }
+  }
+})();
+</script>
+</body>
+</html>

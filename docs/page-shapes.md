@@ -6,7 +6,7 @@ Source: `content/source/k7-enterprise-website-content.md` (export of the "K7 Ent
 
 | Template | Pages | Sections in order (→ block) |
 |---|---|---|
-| Home | Home | Hero (2 CTAs) → Intro copy with 3 pillars → Capability tiles with hover cards → Modular-by-design chip grid → Industry grid → "Security That Answers To You" copy + link → Research proof (award, report, stats row) → Testimonial carousel |
+| Home | Home | Since 2026-11-21 a designed page in code, not blocks (`src/components/home`, `design-system/components/HomeLanding`): hero → the puzzle → how it works → the platform → modules → industries → accountability → K7 Labs → customers → contact form. The `home` page document keeps only its SEO tab; its blocks (Hero → Intro → Capability tiles → Modular chip grid → Industry grid → "Security That Answers To You" → Research proof → Testimonials) no longer render. |
 | Platform overview | K7 Seventh Sense | PageBanner → Animation/media + copy + brochure link → Modular grid (Solutions / Addons) with expansion → Industry focus with expansion → Insight cards |
 | Product | MDR, XDR, EDR, EPS; SD-WAN, NGFW, VPN Concentrator, Connect 500, AAA | PageBanner (Enquire / Request Quote + Brochure) → Intro copy → Architecture/coverage strip (MDR only) → Highlights tiles → Benefits tiles → CTA → Feature matrix (✔ table) → Related products (network) |
 | Addon | DLP, IAM, Patch Mgmt, Advanced Endpoint Mgmt, Agentic SOC, Log Retention, File Security Monitoring | PageBanner (Enquire) → Intro copy → Highlights 2×2 → Benefits 2×2 → CTA |
