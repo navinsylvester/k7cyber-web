@@ -87,11 +87,11 @@ export const forms: FormData[] = [
     submitButtonLabel: 'Send Message',
     confirmationType: 'message',
     confirmationMessage: para('Thank you. A K7 specialist will get back to you within one business day.'),
+    // Name and work email are the only required fields; the work email already says which company.
     fields: [
       text('name', 'Name'),
       email('email', 'Work email'),
-      text('company', 'Company'),
-      select('topic', 'I’m interested in', ['Platform', 'Solutions', 'Services', 'Partnership', 'Support'], true),
+      select('topic', 'I’m interested in', ['Platform', 'Solutions', 'Services', 'Partnership', 'Support']),
       textarea('message', 'Message'),
     ],
   },

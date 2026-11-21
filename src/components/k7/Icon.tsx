@@ -34,7 +34,7 @@ export const icons = {
 
 export type IconName = keyof typeof icons
 
-/* The five social glyphs for SiteFooter, on the same rules. The pixel is the dot of the i, the tip of a stroke,
+/* The five social glyphs for SiteFooter and the homepage's footer, on the same rules. The pixel is the dot of the i, the tip of a stroke,
    the record light, the flash, and the end of the f's arm. Not offered in the content icon picker. */
 export const social = {
   linkedin: { d: 'M9 14v12 M15 26V14h9v12', px: [7.5, 8] },

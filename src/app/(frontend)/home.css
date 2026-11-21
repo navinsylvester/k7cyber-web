@@ -42,7 +42,8 @@
    and gutter, the logo on its left edge and the menu flush with its right edge, the line the hero's meta, actions and feeds
    end on. Dark in either theme (the header carries data-theme="dark"), no theme toggle and no primary action. The menu's gaps
    close from 30px to the bar's 22px as the page narrows, keeping all eight items beside the logo down to 1040px. */
-.site-header.is-home .bar { box-sizing: content-box; max-width: 1328px; height: 72px; margin: 0 auto; padding: 0 clamp(20px, 3.9vw, 56px); }
+.site-header.is-home { --header-h: 72px; }
+.site-header.is-home .bar { box-sizing: content-box; max-width: 1328px; margin: 0 auto; padding: 0 clamp(20px, 3.9vw, 56px); }
 .site-header.is-home .main-nav { gap: clamp(22px, 2.1vw, 30px); }
 /* Only the Menu button lives here on this page: out of the bar while the menu shows, so the menu reaches the edge. */
 .site-header.is-home .hdr-tools { display: none; }
@@ -203,8 +204,12 @@
 /* ---------- 03 · The platform ---------- */
 .ss .ss-platform { --ss-bg: var(--ss-ink); background: var(--ss-ink); }
 .ss .ss-platform .ss-lede { max-width: 22em; }
-.ss .ss-jobs { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px; align-items: end; }
-.ss .ss-job-art { position: relative; clip-path: polygon(0 0, calc(100% - 37px) 0, 100% 80px, 100% 100%, 0 100%); }
+/* Each card spans two rows of the grid, its art and its body, on a subgrid: the arts of a row step up from one bottom line
+   and the bodies share one height, the tallest card's, so their tops stay level whatever their tags take. The 16px between
+   rows of cards (when they wrap) is each card's bottom margin, taken back under the last row. */
+.ss .ss-jobs { margin: 28px 0 -16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); column-gap: 16px; row-gap: 0; }
+.ss .ss-jobs > div { grid-row: span 2; display: grid; grid-template-rows: subgrid; margin-bottom: 16px; }
+.ss .ss-job-art { align-self: end; position: relative; clip-path: polygon(0 0, calc(100% - 37px) 0, 100% 80px, 100% 100%, 0 100%); }
 .ss .ss-job-art > svg { position: absolute; top: 0; left: 0; }
 .ss .ss-job-art > span { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; background: var(--ss-paper); outline: 12px solid var(--ss-orange); }
 .ss .ss-job { min-height: 292px; padding: 16px 20px 28px; background: var(--ss-charcoal); clip-path: var(--ss-cut-s); }
@@ -212,7 +217,9 @@
 .ss .ss-job-head > svg { flex: none; }
 .ss .ss-job h3 { margin: 6px 0 0; font-size: clamp(28px, 2.3vw, 32px); line-height: 0.96; }
 .ss .ss-job p { margin: 10px 0 0; font-size: 15px; line-height: 1.45; }
-.ss .ss-job p.m-mono { margin-top: 12px; font-size: 11px; line-height: 1.5; }
+/* What each job covers, one tag each: the artboard's m-tag, a 1px box in paper around mono caps. */
+.ss .ss-tags { margin: 14px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.ss .m-tag { font-family: var(--ss-mono); font-size: 11px; font-weight: 500; line-height: 1.2; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid currentColor; padding: 5px 8px; }
 
 /* ---------- 04 · Modules ---------- */
 .ss .ss-modules { background-image: repeating-linear-gradient(114.6deg, rgba(244, 243, 240, 0.06) 0 1px, transparent 1px 16px); }
@@ -272,7 +279,9 @@
 .ss .ss-stats { margin-top: 36px; padding-top: 24px; border-top: 4px solid var(--ss-paper); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 40px 56px; }
 .ss .ss-stat-n { font-size: clamp(72px, 8.4vw, 120px); line-height: 0.8; }
 .ss .ss-stat-u { margin-top: 14px; font-weight: 800; font-size: 30px; line-height: 1; }
-.ss .ss-stat .m-mono { margin-top: 8px; max-width: 240px; }
+/* The note under each figure on a charcoal box, the award panel's grey, to break the run of ink; its measure is the
+   artboard's 240px plus the padding, so it wraps where it did. */
+.ss .ss-stat .m-mono { width: fit-content; max-width: 264px; margin-top: 12px; padding: 8px 12px; background: var(--ss-charcoal); }
 
 /* ---------- 08 · Customers: a tuner, three channels ---------- */
 .ss .ss-car { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 28px 56px; align-items: stretch; }
@@ -308,12 +317,25 @@
 .ss .ss-contact-row p { margin: 0; max-width: 26em; font-size: 22px; font-weight: 500; line-height: 1.35; }
 .ss .ss-form { padding: 32px 32px 48px; background: var(--ss-ink); color: var(--ss-paper); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 24px; clip-path: var(--ss-cut-l); }
 .ss .ss-form .is-wide { grid-column: 1 / -1; }
+.ss .ss-req { color: var(--ss-orange); }
 .ss .m-in { display: block; width: 100%; margin-top: 8px; padding: 10px 0; border: 0; border-bottom: 2px solid var(--ss-paper); border-radius: 0; background: transparent; font: inherit; font-size: 18px; line-height: 1.3; color: var(--ss-paper); -webkit-appearance: none; appearance: none; }
 .ss textarea.m-in { resize: vertical; }
-.ss .m-in option { color: var(--ss-on-orange); }
+/* The select's list in the landing's terms (the general rules are bundle.css, Select): ink, a 2px paper frame, Barlow rows on
+   hairlines, the hovered row inverted to paper, the chosen one marked by an 8px orange square, the chevron at the field's end.
+   Where the browser keeps its own list, ink with paper text. */
+.ss .m-in option { background: var(--ss-ink); color: var(--ss-paper); }
+@supports (appearance: base-select) {
+  .ss select.m-in { appearance: base-select; position: relative; padding-inline-end: 28px; }
+  .ss .m-in::picker-icon { inset-inline-end: 4px; top: calc(50% - 7px); width: 9px; height: 9px; border-right-width: 2px; border-bottom-width: 2px; }
+  .ss .m-in::picker(select) { border: 2px solid var(--ss-paper); background: var(--ss-ink); color: var(--ss-paper); font: 500 17px/1.3 var(--ss-body); letter-spacing: 0; }
+  .ss .m-in option { min-block-size: 48px; padding: 12px 16px; border-bottom-color: rgba(244, 243, 240, 0.25); }
+  .ss .m-in option:hover:not(:disabled), .ss select.m-in:not(:has(option:hover)) option:focus-visible:not(:disabled) { background: var(--ss-paper); color: var(--ss-ink); }
+  .ss .m-in option::checkmark { width: 8px; height: 8px; background: var(--ss-orange); }
+}
 .ss .m-in:focus-visible { outline: 2px solid #fff; outline-offset: 4px; box-shadow: none; }
 .ss .ss-form-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-right: 24px; }
-.ss .ss-form-foot > span { font-size: 14px; }
+/* The privacy line beside the button, as on the artboard; on a phone the button drops under it. */
+.ss .ss-form-foot > span { flex: 1 1 260px; font-size: 14px; }
 .ss .ss-form-foot a { text-decoration: underline; text-underline-offset: 0.2em; }
 .ss .ss-status { margin: 0; padding-right: 40px; }
 .ss .ss-status:empty { display: none; }
@@ -338,8 +360,15 @@
 .ss .ss-foot-mark { position: relative; margin-top: auto; margin-bottom: -0.09em; padding: 72px var(--ss-gutter) 0; display: flex; align-items: baseline; justify-content: center; gap: 0.05em; font-size: clamp(50px, 14.4vw, 212px); line-height: 0.74; white-space: nowrap; }
 .ss .ss-foot-mark svg { width: 0.47em; height: 0.71em; flex: none; }
 .ss .ss-foot-base { position: relative; background: var(--ss-orange); color: var(--ss-on-orange); }
-.ss .ss-foot-base > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 32px; padding-top: 16px; padding-bottom: 16px; }
-.ss .ss-foot-base nav { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.ss .ss-foot-base > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 32px; padding-top: 8px; padding-bottom: 8px; }
+.ss .ss-foot-base nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
+/* The networks as the design system's drawn glyphs (Icon, social: 2px lines on the 32px grid, one pixel each), 22px in a
+   32px frame of the base's ink that inverts on hover, as SiteFooter's do; the pixel in ink too, since signal vanishes on orange. */
+.ss .ss-socials { display: flex; gap: 2px; }
+.ss .ss-social { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px currentColor; transition: background .24s cubic-bezier(.7, 0, .2, 1), color .24s cubic-bezier(.7, 0, .2, 1); }
+.ss .ss-social:hover { background: var(--ss-on-orange); color: var(--ss-orange); text-decoration: none; }
+.ss .ss-social .licon { width: 22px; height: 22px; }
+.ss .ss-foot-base .licon rect { fill: currentColor; }
 
 /* ---------- Motion (the design's, verbatim) ---------- */
 .ss .m-sweep { background-image: linear-gradient(114.6deg, transparent 42%, currentColor 50%, transparent 58%); background-size: 300% 100%; background-repeat: no-repeat; -webkit-mask-image: radial-gradient(circle, #000 1.6px, transparent 2.2px); mask-image: radial-gradient(circle, #000 1.6px, transparent 2.2px); -webkit-mask-size: 22px 22px; mask-size: 22px 22px; animation: m-sweep 8s linear infinite; }

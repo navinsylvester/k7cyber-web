@@ -108,6 +108,9 @@ button { font: inherit; color: inherit; }
 
 /* Mega menu (enterprise addition): a panel sheet under the bar, columns per sub menu */
 .mega { border-top: 1px solid var(--ln); padding: 28px var(--pad-fluid) 36px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 28px clamp(24px, 3cqw, 56px); }
+/* The mega panel and the mobile list open over the page, under the bar, instead of pushing it down: absolute in the sticky
+   header (top: 100% is the header's padding edge, so the panel's hairline lies on the header's), never taller than the rest of the viewport and scrolling inside, closed off by an ink rule. */
+.mega, .mobile-nav { position: absolute; left: 0; right: 0; top: 100%; max-height: calc(100dvh - var(--header-h)); overflow-y: auto; overscroll-behavior: contain; border-bottom: 1px solid var(--fg); }
 .mega-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .mega-col > .label { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--fg); display: flex; justify-content: space-between; }
 .mega-col a { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 0; font-size: 15px; text-decoration: none; border-bottom: 1px solid var(--ln); transition: padding .24s var(--ease), background .24s var(--ease), color .24s; }
@@ -392,9 +395,42 @@ a.tag:hover, button.tag:hover { background: var(--t-fg, var(--fg)); color: var(-
 .control input, .control select, .control textarea { appearance: none; -webkit-appearance: none; flex: 1; min-width: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; font-size: 19px; letter-spacing: -.015em; padding: 6px 28px 10px 0; outline: none; }
 .control textarea { resize: vertical; min-height: 96px; padding-right: 0; }
 .control input::placeholder, .control textarea::placeholder { color: var(--mu); opacity: 1; }
-.control select option { background: var(--paper); color: var(--ink); }
 .control:focus-within { border-bottom-color: var(--signal); }
 .control.is-select::after { content: ""; position: absolute; right: 4px; top: 12px; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); pointer-events: none; }
+
+/* ---------- Select: the open list (Field) ----------
+   Every select's list, on the site and both portals. Where the browser lets the list be drawn (appearance: base-select,
+   Chromium 135 and later) it is a panel in the language: the select's own ground, a 1px ink frame, square, no shadow; one
+   option per row on a hairline in Archivo; the hovered or keyboard-focused row inverts on the 240ms curve, as every row does;
+   the chosen one carries the signal pixel. Elsewhere (Firefox, Safari) the browser keeps its own list, in the ground's
+   colours and the theme's color-scheme. A select with its own chevron (Field's is-select, the composer's rt-select) hides the
+   browser's; any other select gets the same chevron, turning over while the list is open. In this mode a select is as wide
+   as its current choice, not its longest option; a grid or a width sets it where the layout needs a fixed one. */
+select option { background: var(--bg, var(--paper)); color: var(--fg, var(--ink)); }
+@supports (appearance: base-select) {
+  /* .control select is named because the Field rule above sets appearance: none at that weight. */
+  select, .control select, ::picker(select) { appearance: base-select; }
+  /* The choice stays on one line. In Field, whose width the form sets, it is cut where its text box ends, clear of the
+     control's chevron, as the browser's own select does. */
+  select { border-radius: 0; white-space: nowrap; }
+  .control select { overflow: clip; overflow-clip-margin: content-box; }
+  .control select::picker-icon, .rt-select select::picker-icon { display: none; }
+  /* Any other select is as wide as its choice (the caps meant for the browser's select are lifted, so nothing spills) and
+     draws the chevron at its end, in room kept for it. */
+  select:not(.control select):not(.rt-select select):not(.m-in) { position: relative; padding-inline-end: 20px; max-inline-size: none; }
+  select::picker-icon { content: ""; position: absolute; inset-inline-end: 3px; top: calc(50% - 6px); width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); transition: rotate .24s var(--ease); }
+  ::picker(select) { margin: 4px 0; padding: 0; border: 1px solid var(--fg, var(--ink)); border-radius: 0; box-shadow: none; background: var(--bg, var(--paper)); color: var(--fg, var(--ink)); font: 400 16px/1.35 var(--font-sans); letter-spacing: -.01em; text-transform: none; max-block-size: min(60vh, 440px); }
+  select option { display: flex; align-items: center; gap: 12px; min-block-size: 44px; padding: 10px 14px; border-bottom: 1px solid var(--ln, var(--line)); font-weight: 400; cursor: pointer; transition: background .24s var(--ease), color .24s var(--ease); }
+  select option:last-of-type { border-bottom: 0; }
+  /* One active row: the hovered one, or the keyboard's while the pointer is off the list. */
+  select option:hover:not(:disabled), select:not(:has(option:hover)) option:focus-visible:not(:disabled) { background: var(--fg, var(--ink)); color: var(--bg, var(--paper)); }
+  select option:focus-visible { outline: none; }
+  select option::checkmark { content: ""; flex: none; width: var(--pixel); height: var(--pixel); background: var(--signal); }
+  .g-signal select option::checkmark { background: var(--on-signal); }
+  select option:disabled { color: var(--mu, var(--muted)); cursor: default; }
+  /* A placeholder (an empty, disabled first choice: Select, Font, Size) names the field when closed and is not a row in the list. */
+  select option[value='']:disabled { display: none; }
+}
 .check { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.45; cursor: pointer; }
 .check input { appearance: none; -webkit-appearance: none; flex: none; width: 18px; height: 18px; margin: 1px 0 0; border: 1px solid var(--fg); cursor: pointer; background: none; }
 .check input:checked { background: var(--signal); border-color: var(--signal); box-shadow: inset 0 0 0 4px var(--bg); }

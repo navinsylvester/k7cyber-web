@@ -101,7 +101,7 @@ const JOBS: {
   job: string
   title: string
   text: string
-  tags: string
+  tags: string[]
   art: React.ReactNode
   icon: React.ReactNode
 }[] = [
@@ -110,7 +110,7 @@ const JOBS: {
     job: 'Infrastructure',
     title: 'Guard everything that computes',
     text: 'Prevention, detection and response, from the laptop to the plant floor.',
-    tags: 'Endpoints · Servers · OT · Network · Mobile · Cloud',
+    tags: ['Endpoints', 'Servers', 'OT', 'Network', 'Mobile', 'Cloud'],
     art: (
       <div className="ss-job-art" aria-hidden="true" style={{ height: 80, background: '#FFC9A9' }}>
         <svg width="100%" height="100%">
@@ -142,7 +142,7 @@ const JOBS: {
     job: 'Data',
     title: 'Know where your data goes',
     text: 'Control over where sensitive data lives and moves, with the reports auditors ask for.',
-    tags: 'Data Loss Prevention · Compliance reporting',
+    tags: ['Data Loss Prevention', 'Compliance reporting'],
     art: (
       <div className="ss-job-art" aria-hidden="true" style={{ height: 112, background: '#FF945A' }}>
         <svg width="100%" height="100%">
@@ -178,7 +178,7 @@ const JOBS: {
     job: 'Patching',
     title: 'Close the gap before it is found',
     text: 'Vulnerabilities found and patched automatically, on every operating system you run.',
-    tags: 'Vulnerability identification · Automated patching',
+    tags: ['Vulnerability identification', 'Automated patching'],
     art: (
       <div className="ss-job-art" aria-hidden="true" style={{ height: 144, background: '#EC6A23' }}>
         <svg width="100%" height="100%">
@@ -216,7 +216,7 @@ const JOBS: {
     job: 'Compliance',
     title: 'Stay audit-ready, every day',
     text: 'Continuous, auditable, and mapped to the frameworks that matter to you.',
-    tags: 'DPDP · PCI DSS · ISO 27001 · GDPR · CBUAE · ADHICS',
+    tags: ['DPDP', 'PCI DSS', 'ISO 27001', 'GDPR', 'CBUAE', 'ADHICS'],
     art: (
       <div className="ss-job-art" aria-hidden="true" style={{ height: 176, background: '#B8430C' }}>
         <svg width="100%" height="100%">
@@ -630,7 +630,13 @@ export async function SeventhSenseHome() {
                     </div>
                     <h3 className="m-d">{j.title}</h3>
                     <p>{j.text}</p>
-                    <p className="m-mono">{j.tags}</p>
+                    <ul className="ss-tags">
+                      {j.tags.map((t) => (
+                        <li className="m-tag" key={t}>
+                          {t}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
               ))}

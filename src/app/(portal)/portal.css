@@ -182,6 +182,8 @@
 .rt-select { position: relative; display: inline-flex; box-shadow: 0 0 0 1px var(--ln); }
 .rt-select select { appearance: none; -webkit-appearance: none; background: transparent; color: inherit; border: 0; border-radius: 0; height: 32px; padding: 0 26px 0 10px; font: 400 11px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; outline: none; }
 .rt-select select option { background: var(--paper); color: var(--ink); text-transform: none; font-family: var(--font-sans); }
+/* The list drawn by bundle.css (Select) where the browser allows it; this rule's appearance: none would otherwise win. */
+@supports (appearance: base-select) { .rt-select select { appearance: base-select; } }
 .rt-select::after { content: ""; position: absolute; right: 11px; top: 11px; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); pointer-events: none; }
 .rt-colours { gap: 5px; padding: 0 0 0 2px; }
 .rt-swatch { width: 22px; height: 22px; padding: 0; border: 0; border-radius: 0; background: var(--sw); box-shadow: 0 0 0 1px var(--ln); cursor: pointer; transition: box-shadow .24s var(--ease); }

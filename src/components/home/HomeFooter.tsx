@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import React from 'react'
 
+import { Icon, socialGlyph } from '@/components/k7/Icon'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import { navHref } from '@/utilities/linkHref'
 
@@ -12,7 +13,8 @@ const Slash: React.FC = () => (
 
 /* The homepage's footer: the artboard's (designs/home/Seventh-Sense-Landing.html) in place of SiteFooter, which layout.tsx leaves
    out on `/`. Its links are the Footer global's, the same ones SiteFooter shows elsewhere (Support, Research, the partner portal
-   among them), one row per column; the socials and the legal line sit on the orange base. Styles: home.css (`ss-foot`). */
+   among them), one row per column; the legal line and the socials sit on the orange base, each network as the design
+   system's own drawn glyph (Icon, social) in a small frame. Styles: home.css (`ss-foot`). */
 export async function HomeFooter() {
   const data = await getCachedGlobal('footer', 1)()
   const columns = (data?.columns ?? []).filter((c) => (c.links?.length ?? 0) > 0)
@@ -49,11 +51,16 @@ export async function HomeFooter() {
         <div className="m-wrap m-mono">
           <span>{data?.legal}</span>
           <nav aria-label="Elsewhere">
-            {(data?.socials ?? []).map((s, i) => (
-              <a href={s.url} key={s.id ?? i} rel="noopener noreferrer" target="_blank">
-                {s.name}
-              </a>
-            ))}
+            <span className="ss-socials">
+              {(data?.socials ?? []).map((s, i) => {
+                const glyph = socialGlyph(s.name)
+                return (
+                  <a className="ss-social" href={s.url} key={s.id ?? i} aria-label={s.name} title={s.name} rel="noopener noreferrer" target="_blank">
+                    {glyph ? <Icon name={glyph} /> : s.code}
+                  </a>
+                )
+              })}
+            </span>
             <a href="#top">Back to top ↑</a>
           </nav>
         </div>

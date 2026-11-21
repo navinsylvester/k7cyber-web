@@ -13,7 +13,8 @@ export type HomeFormField = {
 const AUTOCOMPLETE: Record<string, string> = { name: 'name', email: 'email', company: 'organization' }
 
 /* 09 · Contact: the design's underlined fields on ink, posted to the form builder (the "Homepage enquiry" form in /admin, whose
-   fields, labels and options it renders). Text and email sit two to a row; a textarea takes the full width. */
+   fields, labels, options and required flags it renders). Text, email and select sit two to a row, the last of an odd number
+   on a row of its own; a textarea takes the full width. A required field's label carries an orange asterisk. */
 export const ContactForm: React.FC<{ formId: number | string; fields: HomeFormField[]; submitLabel: string; thanks: string }> = ({
   formId,
   fields,
@@ -52,16 +53,25 @@ export const ContactForm: React.FC<{ formId: number | string; fields: HomeFormFi
     }
   }
 
+  const paired = fields.filter((f) => ['text', 'email', 'select'].includes(f.blockType))
+  const lone = paired.length % 2 === 1 ? paired[paired.length - 1] : undefined
+
   return (
     <form className="ss-form" id="ss-form" onSubmit={onSubmit} aria-label="Talk to a K7 specialist">
       {fields.map((f) => {
         const id = `ss-${f.name}`
+        const required = Boolean(f.required)
         const label = (
           <label className="m-mono" htmlFor={id}>
             {f.label || f.name}
+            {required && (
+              <span className="ss-req" aria-hidden="true">
+                {' *'}
+              </span>
+            )}
           </label>
         )
-        const required = Boolean(f.required)
+        const wide = f === lone ? 'is-wide' : undefined
         if (f.blockType === 'textarea')
           return (
             <div className="is-wide" key={f.name}>
@@ -71,7 +81,7 @@ export const ContactForm: React.FC<{ formId: number | string; fields: HomeFormFi
           )
         if (f.blockType === 'select')
           return (
-            <div key={f.name}>
+            <div className={wide} key={f.name}>
               {label}
               <select className="m-in" id={id} name={f.name} required={required}>
                 {(f.options ?? []).map((o) => (
@@ -84,7 +94,7 @@ export const ContactForm: React.FC<{ formId: number | string; fields: HomeFormFi
           )
         if (f.blockType === 'text' || f.blockType === 'email')
           return (
-            <div key={f.name}>
+            <div className={wide} key={f.name}>
               {label}
               <input
                 className="m-in"

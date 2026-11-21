@@ -5,6 +5,8 @@ The sticky 60px bar with the logo at 36px (until 2026-10-21 it was a 26px box of
 
 **Provide** the nav tree (from the Payload `header` global), the current path, the primary CTA (Request demo), and the two logo files: the white variant in dark, the full-colour variant in light. The theme toggle writes `data-theme` on `<html>` and stores it under `k7-theme`.
 
+**Open over the page** (since 2026-11-21): the mega panel and the mobile list (the site's and the support portal's) lie over the page under the bar, never pushing it down: absolute in the sticky header, their hairline on the header's, at most the rest of the viewport tall and scrolling inside, closed off by a 1px `ink` rule, so they open under the bar wherever the page is scrolled.
+
 **Don't** show more than one panel, add icons to nav items, or shrink the logo under 36px (28px under 520px, where the bar keeps only the action and the Menu button). Below 1040px the nav collapses behind a Menu button and opens the mobile list (24px rows with a pixel on the current page).
 
 **Build** `src/Header/Component.client.tsx` from the `header` global: the bar, the mega panel on `g-panel`, the mobile list behind the Menu button, and the theme toggle as one button (`theme-btn`, Icon `theme`) that flips `data-theme`; no menu library.
