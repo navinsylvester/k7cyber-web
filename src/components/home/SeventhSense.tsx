@@ -653,7 +653,7 @@ export async function SeventhSenseHome() {
               <div>
                 <div className="m-mono ss-kicker">04 · Modules</div>
                 <h2 className="m-d ss-h2 ss-lines">
-                  <span>Start with four.</span>
+                  <span>Start with core.</span>
                   <span className="m-out">Switch on the rest.</span>
                 </h2>
               </div>
