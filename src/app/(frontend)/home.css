@@ -41,10 +41,17 @@
    The older menu (its type, chevrons, mega panels and mobile list), laid out on the landing's column: 72px, the 1328px column
    and gutter, the logo on its left edge and the menu flush with its right edge, the line the hero's meta, actions and feeds
    end on. Dark in either theme (the header carries data-theme="dark"), no theme toggle and no primary action. The menu's gaps
-   close from 30px to the bar's 22px as the page narrows, keeping all eight items beside the logo down to 1040px. */
+   close from 30px to 18px as the page narrows, keeping all eight items (Support the cut button) beside the logo down to
+   1040px, where the Menu button takes over. */
 .site-header.is-home { --header-h: 72px; }
 .site-header.is-home .bar { box-sizing: content-box; max-width: 1328px; margin: 0 auto; padding: 0 clamp(20px, 3.9vw, 56px); }
-.site-header.is-home .main-nav { gap: clamp(22px, 2.1vw, 30px); }
+.site-header.is-home .main-nav { align-items: center; gap: clamp(18px, calc(2.9vw - 12px), 30px); }
+/* Support, the menu's last item, is the bar's one action here: the artboard header's orange cut button (44px, the right edge
+   cut at the 7's angle), its cut on the column's right edge. The clip would cut an outline, so focus is a ring inside. */
+.site-header.is-home .main-nav .nav-cta { height: 44px; padding: 0 36px 0 20px; background: var(--logo-orange); color: #0b0908; font-weight: 700; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; clip-path: polygon(0 0, 100% 0, calc(100% - 20px) 100%, 0 100%); }
+.site-header.is-home .main-nav .nav-cta:hover { color: #0b0908; filter: brightness(1.12); }
+.site-header.is-home .main-nav .nav-cta::after { display: none; }
+.site-header.is-home .main-nav .nav-cta:focus-visible { outline: 2px solid #0b0908; outline-offset: -6px; }
 /* Only the Menu button lives here on this page: out of the bar while the menu shows, so the menu reaches the edge. */
 .site-header.is-home .hdr-tools { display: none; }
 @container (max-width: 1040px) {

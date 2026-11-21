@@ -77,7 +77,13 @@ export const SiteHeader: React.FC<{ data: Header }> = ({ data }) => {
                 {item.label} <i className="chev" />
               </button>
             ) : (
-              <Link key={item.id ?? i} href={navHref(item)} {...current}>
+              <Link
+                key={item.id ?? i}
+                href={navHref(item)}
+                // On the homepage Support is the bar's one action, the landing's orange cut button (home.css).
+                className={home && navHref(item).startsWith('/support') ? 'nav-cta' : undefined}
+                {...current}
+              >
                 {item.label}
               </Link>
             )
