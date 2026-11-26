@@ -7,6 +7,7 @@ import { userMessage } from '@/lib/dataverse/errors'
 import { isGuid } from '@/lib/dataverse/odata'
 import { bind, entity, update } from '@/lib/dataverse'
 import { getCase } from '@/lib/support/cases'
+import { notSaved } from '@/lib/support/field-security-model'
 import { createRfe } from '@/lib/support/rfe'
 import { requireAgent } from '@/lib/support/session'
 
@@ -37,14 +38,17 @@ export async function createRfeAction(form: FormData): Promise<void> {
     vertical = typeof c!.new_verticaltype === 'number' ? c!.new_verticaltype : undefined
   }
   let id = ''
+  let skipped: string[] = []
   let error: string | null = null
   try {
-    id = await createRfe(me.auth, { title, type, status: Number.isFinite(status) && status > 0 ? status : undefined, yodizId: yodizId || undefined, users: users || undefined, serial: serial || undefined, caseId, productId, accountId, vertical })
+    const made = await createRfe(me.auth, { title, type, status: Number.isFinite(status) && status > 0 ? status : undefined, yodizId: yodizId || undefined, users: users || undefined, serial: serial || undefined, caseId, productId, accountId, vertical })
+    id = made.id
+    skipped = made.skipped
     // The case's own RFE lookup (incident.k7_rfe, navigation k7_RFE) points back so the case page lists it.
     if (caseId) await update(me.auth, entity('incidents', caseId), { 'k7_RFE@odata.bind': bind('k7_rfes', id) }).catch(() => undefined)
   } catch (e) {
     error = userMessage(e)
   }
   if (error || !id) back(error ?? 'Could not create the RFE.')
-  redirect(`${WS}/rfe/${id}?ok=${encodeURIComponent('RFE created.')}`)
+  redirect(`${WS}/rfe/${id}?ok=${encodeURIComponent(['RFE created.', notSaved(skipped)].filter(Boolean).join(' '))}`)
 }

@@ -6,6 +6,8 @@ import { userMessage } from '@/lib/dataverse/errors'
 import { isGuid } from '@/lib/dataverse/odata'
 import { addCaseToQueue, assignCase, cancelCase, getCase, getCaseByTicket, mergeCase, reopenCase, resolveCase, setStatusReason, updateCase, type CaseRow, type NewCase } from '@/lib/support/cases'
 import { asReason, asScore, closeFollowUp, csatForCase, inviteSurvey, recordResponse, snapshotOf } from '@/lib/support/csat'
+import { columnRights } from '@/lib/support/field-security'
+import { may } from '@/lib/support/field-security-model'
 import { getSettings } from '@/lib/support/kpi-config'
 import { ACTIVE_STATUS_REASONS, STATE, STATUS } from '@/lib/support/options'
 import { EVIDENCE_MIME } from '@/collections/support/ProductEvidence'
@@ -327,21 +329,25 @@ export async function taskAction(form: FormData): Promise<void> {
   done(id, 'task')
 }
 
-/** Edit details: only the fields whose submitted value differs from the record are sent. */
+/** Edit details: only the fields whose submitted value differs from the record are sent. A text field the form did not send (one
+    locked by Dynamics field security is disabled, so it never is) is left alone, never read as cleared; a lookup or choice the
+    form disables (the sub category without a category) still reads as cleared, as before. */
 export async function editAction(form: FormData): Promise<void> {
   const me = await requireAgent()
   const id = caseId(form)
   let msg: string | null = null
+  let skipped: string[] = []
   const title = str(form, 'title')
   if (title.length < 3) msg = 'The title needs at least three characters.'
   if (msg) fail(id, msg, 'details')
   try {
-    const c = await getCase(me.auth, id)
+    const [c, rights] = await Promise.all([getCase(me.auth, id), columnRights(me.auth, me.userId, 'incident')])
     if (!c) msg = 'That case no longer exists.'
     else {
       const patch: Partial<NewCase> = {}
       const cur = (k: string) => (c[k] === null || c[k] === undefined ? '' : String(c[k]))
       const text = (k: keyof NewCase, col: string) => {
+        if (!form.has(k as string) || !may(rights, col, 'update')) return
         const v = str(form, k as string)
         if (v !== cur(col)) (patch as Record<string, unknown>)[k] = v
       }
@@ -378,12 +384,13 @@ export async function editAction(form: FormData): Promise<void> {
       // an empty string and caseBody sends it as null, which clears it.
       for (const k of Object.keys(patch)) if ((patch as Record<string, unknown>)[k] === null) delete (patch as Record<string, unknown>)[k]
       if (Object.keys(patch).length === 0) msg = 'Nothing changed.'
-      else await updateCase(me.auth, id, patch)
+      else skipped = await updateCase(me.auth, id, patch)
     }
   } catch (e) {
     msg = userMessage(e, 'agent')
   }
   if (msg) fail(id, msg, 'details')
+  if (skipped.length) redirect(`${WS}/cases/${id}?ok=edit&tab=details&skipped=${skipped.join(',')}`)
   done(id, 'edit', 'details')
 }
 

@@ -8,6 +8,8 @@ import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { fv, lookup } from '@/lib/dataverse/types'
 import { dmyHm } from '@/lib/support/format'
 import { RFE_STATUS, RFE_TYPE } from '@/lib/support/options'
+import { columnRights } from '@/lib/support/field-security'
+import { LOCKED_HINT, may } from '@/lib/support/field-security-model'
 import { getRfe } from '@/lib/support/rfe'
 import { requireAgent } from '@/lib/support/session'
 
@@ -19,8 +21,9 @@ export default async function RfeDetailPage({ params, searchParams }: { params: 
   const { id } = await params
   const sp = await searchParams
   const me = await requireAgent()
-  const r = await getRfe(me.auth, id).catch(() => null)
+  const [r, rights] = await Promise.all([getRfe(me.auth, id).catch(() => null), columnRights(me.auth, me.userId, 'k7_rfe')])
   if (!r) notFound()
+  const yodizLocked = !may(rights, 'k7_yodizid', 'update')
   const c = lookup(r, 'k7_case') ?? lookup(r, 'k7_associatedcaseno')
   const product = lookup(r, 'k7_product')
   const account = lookup(r, 'k7_account')
@@ -81,8 +84,8 @@ export default async function RfeDetailPage({ params, searchParams }: { params: 
                         <Options items={RFE_STATUS} empty="Not set" />
                       </select>
                     </Field>
-                    <Field id="yodizId" label="YODIZ id">
-                      <input id="yodizId" name="yodizId" defaultValue={String(r.k7_yodizid ?? '')} />
+                    <Field id="yodizId" label="YODIZ id" hint={yodizLocked ? LOCKED_HINT : undefined}>
+                      <input id="yodizId" name="yodizId" defaultValue={String(r.k7_yodizid ?? '')} disabled={yodizLocked} />
                     </Field>
                     <Field id="users" label="Number of users">
                       <input id="users" name="users" inputMode="numeric" defaultValue={String(r.k7_numberofusers ?? '')} />

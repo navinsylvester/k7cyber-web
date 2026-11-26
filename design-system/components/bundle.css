@@ -431,6 +431,23 @@ select option { background: var(--bg, var(--paper)); color: var(--fg, var(--ink)
   /* A placeholder (an empty, disabled first choice: Select, Font, Size) names the field when closed and is not a row in the list. */
   select option[value='']:disabled { display: none; }
 }
+/* ---------- Field: type to filter (filter-select) ----------
+   A long reference list (a state's cities, hundreds of them) as a text field with the select's chevron: typing narrows the list
+   to the entries that contain the text. The list is the select's open list above, drawn the same way in every browser: the
+   field's ground, a 1px ink frame, a row per entry on a hairline, the active row (pointer or arrow keys) inverted on the 240ms
+   curve, the chosen entry marked by the signal pixel before its name. */
+.filter-select input { cursor: text; }
+.filter-list { position: absolute; z-index: 30; left: 0; right: 0; top: 100%; margin: 4px 0 0; padding: 0; list-style: none; border: 1px solid var(--fg); background: var(--bg); color: var(--fg); font: 400 16px/1.35 var(--font-sans); letter-spacing: -.01em; text-transform: none; max-height: min(60vh, 440px); overflow-y: auto; overscroll-behavior: contain; }
+.filter-list[hidden] { display: none; }
+.filter-list > li { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 14px; border-bottom: 1px solid var(--ln); }
+.filter-list > li:last-child { border-bottom: 0; }
+.filter-list [role="option"] { cursor: pointer; transition: background .24s var(--ease), color .24s var(--ease); }
+.filter-list [role="option"]::before { content: ""; flex: none; width: var(--pixel); height: var(--pixel); background: var(--signal); visibility: hidden; }
+.filter-list [role="option"][data-chosen]::before { visibility: visible; }
+.filter-list [aria-selected="true"] { background: var(--fg); color: var(--bg); }
+.filter-none { color: var(--mu); }
+/* A control the form has switched off (a city before its state, a column Dynamics locks) reads as off, at the disabled opacity. */
+.control:has(> :is(input, select, textarea):disabled) { opacity: var(--disabled); }
 .check { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.45; cursor: pointer; }
 .check input { appearance: none; -webkit-appearance: none; flex: none; width: 18px; height: 18px; margin: 1px 0 0; border: 1px solid var(--fg); cursor: pointer; background: none; }
 .check input:checked { background: var(--signal); border-color: var(--signal); box-shadow: inset 0 0 0 4px var(--bg); }

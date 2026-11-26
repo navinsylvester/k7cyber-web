@@ -11,6 +11,8 @@ import { fv } from '@/lib/dataverse/types'
 import { contactsOfAccount, getAccount, getContact, searchAccounts, searchContacts, type AccountRow, type ContactRow } from '@/lib/support/customers'
 import { CASE_TYPE, CONSIDERED_AS, CUSTOMER_TYPE, ORIGIN, PRIORITY, VERTICAL } from '@/lib/support/options'
 import { getAgents, getCategories, getProducts, getSubcategories } from '@/lib/support/reference'
+import { columnRights } from '@/lib/support/field-security'
+import { LOCKED_HINT, may } from '@/lib/support/field-security-model'
 import { requireAgent } from '@/lib/support/session'
 
 import { createCaseAction } from './actions'
@@ -27,7 +29,7 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
   const q = (sp.customer ?? '').trim()
   const [selKind, selId] = (sp.sel ?? '').split(':')
   const selected = (selKind === 'contact' || selKind === 'account') && isGuid(selId ?? '') ? { kind: selKind as 'contact' | 'account', id: selId! } : null
-  const [contacts, accounts, selectedContact, selectedAccount, agents, products, categories, subcategories] = await Promise.all([
+  const [contacts, accounts, selectedContact, selectedAccount, agents, products, categories, subcategories, rights] = await Promise.all([
     q ? searchContacts(me.auth, q, 10).catch(() => [] as ContactRow[]) : Promise.resolve([] as ContactRow[]),
     q ? searchAccounts(me.auth, q, 10).catch(() => [] as AccountRow[]) : Promise.resolve([] as AccountRow[]),
     selected?.kind === 'contact' ? getContact(me.auth, selected.id).catch(() => null) : Promise.resolve(null),
@@ -36,7 +38,10 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
     getProducts(me.auth).catch(() => []),
     getCategories(me.auth).catch(() => []),
     getSubcategories(me.auth).catch(() => []),
+    columnRights(me.auth, me.userId, 'incident'),
   ])
+  // Fields Dynamics field security does not let this agent set on a new case are shown locked (field-security-model.ts).
+  const canSet = (col: string) => may(rights, col, 'create')
   const accountContacts = selectedAccount ? await contactsOfAccount(me.auth, selectedAccount.accountid).catch(() => [] as ContactRow[]) : []
   const families = new Map<string, typeof products>()
   for (const p of products) families.set(p.family, [...(families.get(p.family) ?? []), p])
@@ -219,8 +224,8 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
             <h2 className="block-title label span-2" style={{ marginTop: 24 }}>
               3 · Product details
             </h2>
-            <Field id="productVersion" label="Product version">
-              <input id="productVersion" name="productVersion" placeholder="16.0.1234" />
+            <Field id="productVersion" label="Product version" hint={canSet('k7_productversion') ? undefined : LOCKED_HINT}>
+              <input id="productVersion" name="productVersion" placeholder="16.0.1234" disabled={!canSet('k7_productversion')} />
             </Field>
             <Field id="osVersion" label="OS version">
               <input id="osVersion" name="osVersion" maxLength={100} placeholder="Windows 11 23H2" />
@@ -228,14 +233,14 @@ export default async function NewCasePage({ searchParams }: { searchParams: Prom
             <Field id="serial" label="Serial key">
               <input id="serial" name="serial" spellCheck={false} />
             </Field>
-            <Field id="incidentId" label="Incident ID">
-              <input id="incidentId" name="incidentId" spellCheck={false} />
+            <Field id="incidentId" label="Incident ID" hint={canSet('k7_incidentid') ? undefined : LOCKED_HINT}>
+              <input id="incidentId" name="incidentId" spellCheck={false} disabled={!canSet('k7_incidentid')} />
             </Field>
-            <Field id="module" label="Module">
-              <input id="module" name="module" />
+            <Field id="module" label="Module" hint={canSet('k7_module') ? undefined : LOCKED_HINT}>
+              <input id="module" name="module" disabled={!canSet('k7_module')} />
             </Field>
-            <Field id="submodule" label="Sub module">
-              <input id="submodule" name="submodule" />
+            <Field id="submodule" label="Sub module" hint={canSet('k7_submodule') ? undefined : LOCKED_HINT}>
+              <input id="submodule" name="submodule" disabled={!canSet('k7_submodule')} />
             </Field>
 
             <h2 className="block-title label span-2" style={{ marginTop: 24 }}>
