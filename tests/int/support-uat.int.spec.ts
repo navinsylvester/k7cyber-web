@@ -49,7 +49,7 @@ describe.skipIf(!enabled)('UAT: the agent actions behind the case panels', () =>
     expect(tl.some((e) => e.kind === 'task')).toBe(true)
 
     // RFE linked to the case.
-    const rfeId = await createRfe(auth, { title: 'Portal integration test RFE', type: 100000001, caseId: id })
+    const { id: rfeId } = await createRfe(auth, { title: 'Portal integration test RFE', type: 100000001, caseId: id })
     expect((await rfesOfCase(auth, id)).some((r) => r.k7_rfeid === rfeId)).toBe(true)
 
     // Resolve through CloseIncident, reopen, then cancel to leave the case closed.

@@ -2,6 +2,10 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
+import { uniqueByName } from '@/lib/support/filter-options'
+
+import { FilterSelect } from './FilterSelect.client'
+
 type Cat = { id: string; name: string; label?: string }
 type Sub = { id: string; name: string; categoryId: string }
 
@@ -78,7 +82,8 @@ export const CategoryPicker: React.FC<{
   )
 }
 
-/** State → city cascade for contact and account forms. Cities load from the server per state. */
+/** State → city cascade for contact and account forms. Cities load from the server per state. Both are type-to-filter fields
+    (FilterSelect): a state can have 453 cities, which a select only lets the reader jump through by first letters. */
 export const GeoPicker: React.FC<{
   states: { id: string; name: string; regionId: string }[]
   regions: { id: string; name: string }[]
@@ -92,6 +97,9 @@ export const GeoPicker: React.FC<{
   const [list, setList] = useState<{ id: string; name: string }[]>(cities)
   const [loading, setLoading] = useState(false)
   const region = states.find((s) => s.id === state)?.regionId ?? ''
+  // A name listed twice (UAT's two city sets) shows once, the record's own choice kept; the server still accepts either record.
+  const stateOptions = useMemo(() => uniqueByName(states, initialState), [states, initialState])
+  const cityOptions = useMemo(() => uniqueByName(list, initialCity), [list, initialCity])
   const onState = async (v: string) => {
     setState(v)
     setList([])
@@ -110,31 +118,22 @@ export const GeoPicker: React.FC<{
         <label className="label" htmlFor="f-state">
           State
         </label>
-        <span className="control is-select">
-          <select id="f-state" name="stateId" value={state} onChange={(e) => onState(e.target.value)}>
-            <option value="">Select a state</option>
-            {states.map((s) => (
-              <option value={s.id} key={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </span>
+        <FilterSelect id="f-state" name="stateId" options={stateOptions} defaultValue={initialState} onChange={onState} placeholder="Type or pick a state" />
       </div>
       <div className={`field${bad.includes('cityId') ? ' is-invalid' : ''}`}>
         <label className="label" htmlFor="f-city">
           City
         </label>
-        <span className="control is-select">
-          <select id="f-city" name="cityId" defaultValue={initialCity} disabled={!state || loading}>
-            <option value="">{loading ? 'Loading…' : state ? 'Select a city' : 'Choose a state first'}</option>
-            {list.map((c) => (
-              <option value={c.id} key={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </span>
+        {/* A new state is a new list: the city starts empty (TR-05). */}
+        <FilterSelect
+          key={state}
+          id="f-city"
+          name="cityId"
+          options={cityOptions}
+          defaultValue={state === initialState ? initialCity : ''}
+          disabled={!state || loading}
+          placeholder={loading ? 'Loading…' : state ? 'Type or pick a city' : 'Choose a state first'}
+        />
       </div>
       <input type="hidden" name="regionId" value={region} />
       <div className="field">

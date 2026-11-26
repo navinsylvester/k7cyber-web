@@ -34,7 +34,7 @@ export async function createCaseAction(form: FormData): Promise<void> {
   if ((kind !== 'contact' && kind !== 'account') || !isGuid(custId ?? '')) back('Choose the customer first: search above and pick a contact or an account.')
   if (title.length < 3) back('The title needs at least three characters.')
   let msg: string | null = null
-  let created: { id: string; ticket: string } | null = null
+  let created: { id: string; ticket: string; skipped: string[] } | null = null
   // A contact picked with the email left blank: the case takes the contact's address, as the form shows it (TR-06).
   const customerEmail = str(form, 'customerEmail') || (kind === 'contact' ? String((await getContact(me.auth, custId!).catch(() => null))?.emailaddress1 ?? '') : '')
   try {
@@ -70,5 +70,6 @@ export async function createCaseAction(form: FormData): Promise<void> {
     msg = userMessage(e, 'agent')
   }
   if (msg || !created) back(msg ?? 'The case was not created.')
-  redirect(`${WS}/cases/${created!.id}?ok=created`)
+  // A value field security kept out (Incident ID, Module, …) is named on the case rather than costing the case (field-security-model.ts).
+  redirect(`${WS}/cases/${created!.id}?ok=created${created!.skipped.length ? `&skipped=${created!.skipped.join(',')}` : ''}`)
 }

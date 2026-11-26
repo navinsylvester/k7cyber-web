@@ -129,6 +129,22 @@ helpers), `src/lib/support/` (one file per area; `session.ts` gives `requireAgen
 - *OS version* (2026-11-18) is the case's `new_linuxosversion` (the Hub labels it "Linux( O.S & Version)"; 100 characters, used for
   any OS, e.g. "win8", "Ubuntu OS"): on Details, in Edit details and on both new case forms (the customer's reads *Operating system*).
   No schema change: production has the same column.
+- Field security (2026-11-26, testers' note: the Bug ID not saved in *Incident ID*): Dynamics secures some columns for chosen
+  field security profiles. On UAT: the case's `k7_incidentid`, `k7_module`, `k7_submodule` (profile *Level 2 Users*, one member)
+  and `k7_productversion` (*Level 1 users* and *Level 2 Users*), and the RFE's and defect's `k7_yodizid` (System Administrators
+  only; Level 1/2 read it). An agent outside them reads those columns empty and Dynamics refuses the whole write that carries one
+  (`0x8004f502` create, `0x8004f507` update). `src/lib/support/field-security.ts` reads the agent's rights
+  (`systemusers(<id>)/RetrievePrincipalAttributePrivileges()`, five minutes; the secured columns from metadata, an hour): the case
+  sheet's Edit details, the new case form and the RFE forms show a column the agent may not set switched off with a hint, Details
+  names the columns hidden from them, and a disabled field is not posted, so an edit never reads it as cleared (the RFE save had sent
+  an unchanged YODIZ id every time). If the rights cannot be read, nothing is locked and `writeAroundSecured` sends a refused write
+  again without the entity's secured columns; the flash names what was not saved, the product desk's log says *left out*. A
+  customer's *Product version* the service user may not set goes into the description instead. Who should hold which profile is
+  the support lead's call (production has the same columns); the portal changes nothing in Dynamics.
+- State and City (2026-11-26, testers' note: not filtered by letter) on the contact and account forms are type-to-filter fields
+  (`FilterSelect`, Field *Type to filter*, SupportParts S33): typing narrows the list to the entries containing the text. UAT carries
+  most cities twice (its own 2,091 next to the 2,202 the seed copied from production, the same names); the field offers each name once
+  (the newest record, or the one the record already has) and the server still accepts either.
 - Email from the case sheet (2026-11-18, testers' notes of 29-10): the composer (`EmailComposer.client.tsx`) posts the formatted
   body as `html` and its words as `text`; the server keeps only what `cleanEmailHtml` (`src/lib/support/email-html.ts`) allows
   (paragraphs and line divs, bold, italic, underline, strike, lists, links to http(s) and mailto styled in Outlook's blue, and

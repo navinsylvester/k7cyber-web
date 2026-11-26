@@ -2,6 +2,8 @@ import 'server-only'
 
 import { and, bind, buildQuery, create, entity, guid, isGuid, list, or, retrieve, str, update, type DataverseAuth, type Row } from '@/lib/dataverse'
 
+import { writeAroundSecured } from './field-security'
+
 /* RFEs and defects (01-requirements.md §4.5): list, create, update, link to a case. Since the product desk (10-product-desk.md §6) both rows
    are mirrors of an item: created at raise, their status, priority and YODIZ id written as the item moves. */
 
@@ -43,7 +45,7 @@ export const defectsOfCase = async (auth: DataverseAuth, incidentId: string): Pr
 export type NewRfe = { title: string; type: number; status?: number; receivedFrom?: number; yodizId?: string; users?: string; serial?: string; caseId?: string; productId?: string; accountId?: string; vertical?: number }
 
 /** Creates the RFE and, when a case is given, links it from both sides (k7_rfe on the case is set by the caller through updateCase). */
-export const createRfe = async (auth: DataverseAuth, r: NewRfe): Promise<string> => {
+export const createRfe = async (auth: DataverseAuth, r: NewRfe): Promise<{ id: string; skipped: string[] }> => {
   const b: Row = { k7_rfetitle: r.title.trim().slice(0, 200), k7_rfetype: r.type, k7_rfestatus: r.status ?? 696720001 }
   if (r.receivedFrom) b.k7_rfereceivedfrom = r.receivedFrom
   if (r.yodizId) b.k7_yodizid = r.yodizId
@@ -56,17 +58,21 @@ export const createRfe = async (auth: DataverseAuth, r: NewRfe): Promise<string>
   }
   if (r.productId) b['k7_Product@odata.bind'] = bind('products', r.productId)
   if (r.accountId) b['k7_Account@odata.bind'] = bind('accounts', r.accountId)
-  return create(auth, 'k7_rfes', b)
+  // The YODIZ id is writable by System Administrators only (field-security-model.ts): without it the row is still created.
+  const { result: id, skipped } = await writeAroundSecured(auth, 'k7_rfe', b, (x) => create(auth, 'k7_rfes', x))
+  return { id, skipped }
 }
 
-export const updateRfe = async (auth: DataverseAuth, id: string, r: Partial<NewRfe>): Promise<void> => {
+/** Returns the secured columns left out (the YODIZ id, for anyone but a System Administrator). */
+export const updateRfe = async (auth: DataverseAuth, id: string, r: Partial<NewRfe>): Promise<string[]> => {
   const b: Row = {}
   if (r.title !== undefined) b.k7_rfetitle = r.title.trim().slice(0, 200)
   if (r.type !== undefined) b.k7_rfetype = r.type
   if (r.status !== undefined) b.k7_rfestatus = r.status
   if (r.yodizId !== undefined) b.k7_yodizid = r.yodizId
   if (r.users !== undefined) b.k7_numberofusers = r.users
-  if (Object.keys(b).length) await update(auth, entity('k7_rfes', id), b)
+  if (!Object.keys(b).length) return []
+  return (await writeAroundSecured(auth, 'k7_rfe', b, (x) => update(auth, entity('k7_rfes', id), x))).skipped
 }
 
 export const getDefect = async (auth: DataverseAuth, id: string): Promise<DefectRow | null> => {
@@ -77,23 +83,25 @@ export const getDefect = async (auth: DataverseAuth, id: string): Promise<Defect
 export type NewDefect = { title: string; status?: number; priority?: number; yodizId?: string; caseId?: string; incidentNo?: string; customer?: { kind: 'account' | 'contact'; id: string } }
 
 /** Creates the defect row the Hub's list and the Defect dashboard read; the product desk links it to the first case of an item. */
-export const createDefect = async (auth: DataverseAuth, d: NewDefect): Promise<string> => {
+export const createDefect = async (auth: DataverseAuth, d: NewDefect): Promise<{ id: string; skipped: string[] }> => {
   const b: Row = { k7_defecttitle: d.title.trim().slice(0, 100), k7_defectstatus: d.status ?? 696720000 }
   if (d.priority) b.k7_priority = d.priority
   if (d.yodizId) b.k7_yodizid = d.yodizId
   if (d.incidentNo) b.k7_incidentid = d.incidentNo
   if (d.caseId) b['k7_AssociatedCaseNo@odata.bind'] = bind('incidents', d.caseId)
   if (d.customer) b[d.customer.kind === 'account' ? 'k7_Customer_account@odata.bind' : 'k7_Customer_contact@odata.bind'] = bind(d.customer.kind === 'account' ? 'accounts' : 'contacts', d.customer.id)
-  return create(auth, 'k7_defects', b)
+  const { result: id, skipped } = await writeAroundSecured(auth, 'k7_defect', b, (x) => create(auth, 'k7_defects', x))
+  return { id, skipped }
 }
 
-export const updateDefect = async (auth: DataverseAuth, id: string, d: Partial<NewDefect>): Promise<void> => {
+export const updateDefect = async (auth: DataverseAuth, id: string, d: Partial<NewDefect>): Promise<string[]> => {
   const b: Row = {}
   if (d.title !== undefined) b.k7_defecttitle = d.title.trim().slice(0, 100)
   if (d.status !== undefined) b.k7_defectstatus = d.status
   if (d.priority !== undefined) b.k7_priority = d.priority
   if (d.yodizId !== undefined) b.k7_yodizid = d.yodizId
-  if (Object.keys(b).length) await update(auth, entity('k7_defects', id), b)
+  if (!Object.keys(b).length) return []
+  return (await writeAroundSecured(auth, 'k7_defect', b, (x) => update(auth, entity('k7_defects', id), x))).skipped
 }
 
 export const activeRfeFilter = and('statecode eq 0')

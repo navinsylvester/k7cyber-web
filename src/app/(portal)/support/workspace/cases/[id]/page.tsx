@@ -15,6 +15,8 @@ import { isGuid } from '@/lib/dataverse/odata'
 import { fv, lookup } from '@/lib/dataverse/types'
 import { getCase, getCaseParties, otherActiveCases } from '@/lib/support/cases'
 import { careForCustomer, causeOf, csatForCase, followUpState, isUnhappy } from '@/lib/support/csat'
+import { columnRights } from '@/lib/support/field-security'
+import { CASE_LOCKABLE, columnList, LOCKED_HINT, may, notSaved, skippedFrom } from '@/lib/support/field-security-model'
 import { dmy, dmyHm } from '@/lib/support/format'
 import { getSettings } from '@/lib/support/kpi-config'
 import { EMAIL_FILES_MAX, EMAIL_TOTAL_MAX } from '@/lib/support/limits'
@@ -55,7 +57,7 @@ const OK: Record<string, string> = {
 }
 
 type Tab = 'timeline' | 'details' | 'related'
-type SP = { tab?: string; ok?: string; error?: string; from?: string }
+type SP = { tab?: string; ok?: string; error?: string; from?: string; skipped?: string }
 
 /* The case sheet: number and title, the facts on the right, the timeline in the middle, every action on the side. */
 export default async function CasePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<SP> }) {
@@ -70,7 +72,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   const active = c.statecode === STATE.ACTIVE
   const merged = c.statuscode === STATUS.MERGED
   const masterId = typeof c._masterid_value === 'string' && isGuid(c._masterid_value) ? c._masterid_value : null
-  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care, parties, others, blocked, master] = await Promise.all([
+  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care, parties, others, blocked, master, rights] = await Promise.all([
     getTimeline(me.auth, id, 'agent').catch(() => []),
     rfesOfCase(me.auth, id).catch(() => []),
     defectsOfCase(me.auth, id).catch(() => []),
@@ -87,7 +89,11 @@ export default async function CasePage({ params, searchParams }: { params: Promi
     active && customerLookup ? otherActiveCases(me.auth, customerLookup.id, id).catch(() => []) : Promise.resolve([]),
     blockedExtensions(me.auth),
     merged && masterId ? getCase(me.auth, masterId).catch(() => null) : Promise.resolve(null),
+    // Dynamics field security on Incident ID, Module, Sub module and Product version (field-security-model.ts).
+    columnRights(me.auth, me.userId, 'incident'),
   ])
+  const canEdit = (col: string) => may(rights, col, 'update')
+  const hidden = CASE_LOCKABLE.filter((col) => !may(rights, col, 'read'))
   const tab: Tab = sp.tab === 'details' || sp.tab === 'related' ? sp.tab : 'timeline'
   // The customer's rating sits in the timeline where it happened, as the one entry that is neither email nor note.
   const entries: TimelineEntry[] =
@@ -180,7 +186,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
         {sp.ok === 'merged' ? (
           <Flash>{`${/^[A-Z]+-[0-9A-Z-]+$/.test(sp.from ?? '') ? sp.from : 'The other case'} was merged into this case: its notes, emails and activities are here now, and it is closed as Merged.`}</Flash>
         ) : (
-          sp.ok && <Flash>{OK[sp.ok] ?? sp.ok}</Flash>
+          sp.ok && <Flash>{[OK[sp.ok] ?? sp.ok, notSaved(skippedFrom(sp.skipped))].filter(Boolean).join(' ')}</Flash>
         )}
         {sp.error && <Flash kind="error">{sp.error}</Flash>}
 
@@ -316,6 +322,11 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                     ]}
                   />
                 </div>
+                {hidden.length > 0 && (
+                  <p className="hint" style={{ marginTop: 16 }}>
+                    Not shown to your user by Dynamics field security: {columnList([...hidden])}.
+                  </p>
+                )}
                 {txt('adx_stepstoreproduce') ? (
                   <div style={{ marginTop: 32 }}>
                     <h2 className="block-title label">Steps to reproduce</h2>
@@ -384,8 +395,8 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                         <Options items={CATEGORY} empty="Not set" />
                       </select>
                     </Field>
-                    <Field id="e-version" label="Product version">
-                      <input id="e-version" name="productVersion" defaultValue={txt('k7_productversion')} />
+                    <Field id="e-version" label="Product version" hint={canEdit('k7_productversion') ? undefined : LOCKED_HINT}>
+                      <input id="e-version" name="productVersion" defaultValue={txt('k7_productversion')} disabled={!canEdit('k7_productversion')} />
                     </Field>
                     <Field id="e-os" label="OS version" hint="The customer's operating system and its version, e.g. Windows 11 23H2.">
                       <input id="e-os" name="osVersion" defaultValue={txt('new_linuxosversion')} maxLength={100} />
@@ -393,14 +404,14 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                     <Field id="e-serial" label="Serial key">
                       <input id="e-serial" name="serial" defaultValue={serial} spellCheck={false} />
                     </Field>
-                    <Field id="e-incident" label="Incident ID">
-                      <input id="e-incident" name="incidentId" defaultValue={txt('k7_incidentid')} spellCheck={false} />
+                    <Field id="e-incident" label="Incident ID" hint={canEdit('k7_incidentid') ? undefined : LOCKED_HINT}>
+                      <input id="e-incident" name="incidentId" defaultValue={txt('k7_incidentid')} spellCheck={false} disabled={!canEdit('k7_incidentid')} />
                     </Field>
-                    <Field id="e-module" label="Module">
-                      <input id="e-module" name="module" defaultValue={txt('k7_module')} />
+                    <Field id="e-module" label="Module" hint={canEdit('k7_module') ? undefined : LOCKED_HINT}>
+                      <input id="e-module" name="module" defaultValue={txt('k7_module')} disabled={!canEdit('k7_module')} />
                     </Field>
-                    <Field id="e-submodule" label="Sub module">
-                      <input id="e-submodule" name="submodule" defaultValue={txt('k7_submodule')} />
+                    <Field id="e-submodule" label="Sub module" hint={canEdit('k7_submodule') ? undefined : LOCKED_HINT}>
+                      <input id="e-submodule" name="submodule" defaultValue={txt('k7_submodule')} disabled={!canEdit('k7_submodule')} />
                     </Field>
                     <Field id="e-email" label="Customer email">
                       <input id="e-email" name="customerEmail" type="email" defaultValue={txt('k7_customeremail')} />

@@ -116,7 +116,7 @@ export const getStates = (auth: DataverseAuth): Promise<State[]> =>
   memo('ref:states', HOUR, async () => (await all(auth, buildQuery('k7_states', { select: ['k7_stateid', 'k7_state', '_k7_region_value'], filter: 'statecode eq 0', orderby: 'k7_state' }))).map((r) => ({ id: String(r.k7_stateid), name: String(r.k7_state ?? ''), regionId: String(r._k7_region_value ?? '') })))
 
 export const getCities = (auth: DataverseAuth, stateId: string): Promise<City[]> =>
-  memo(`ref:cities:${guid(stateId)}`, HOUR, async () => (await all(auth, buildQuery('alletec_cities', { select: ['alletec_cityid', 'alletec_name', '_alletec_state_value'], filter: `_alletec_state_value eq ${guid(stateId)} and statecode eq 0`, orderby: 'alletec_name' }), 1000)).map((r) => ({ id: String(r.alletec_cityid), name: String(r.alletec_name ?? ''), stateId: String(r._alletec_state_value ?? '') })))
+  memo(`ref:cities:${guid(stateId)}`, HOUR, async () => (await all(auth, buildQuery('alletec_cities', { select: ['alletec_cityid', 'alletec_name', '_alletec_state_value'], filter: `_alletec_state_value eq ${guid(stateId)} and statecode eq 0`, orderby: 'alletec_name,createdon desc' }), 1000)).map((r) => ({ id: String(r.alletec_cityid), name: String(r.alletec_name ?? ''), stateId: String(r._alletec_state_value ?? '') })))
 
 export type Agent = { id: string; name: string; email: string }
 export const getAgents = (auth: DataverseAuth): Promise<Agent[]> =>

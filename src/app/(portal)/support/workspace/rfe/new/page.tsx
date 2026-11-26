@@ -6,6 +6,8 @@ import { Crumbs, Field, Flash, Options } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { getCase } from '@/lib/support/cases'
 import { RFE_STATUS, RFE_TYPE } from '@/lib/support/options'
+import { columnRights } from '@/lib/support/field-security'
+import { LOCKED_HINT, may } from '@/lib/support/field-security-model'
 import { requireAgent } from '@/lib/support/session'
 
 import { createRfeAction } from './actions'
@@ -17,7 +19,8 @@ type SP = { error?: string; title?: string; yodizId?: string; users?: string; se
 export default async function NewRfePage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams
   const me = await requireAgent()
-  const linked = sp.case ? await getCase(me.auth, sp.case).catch(() => null) : null
+  const [linked, rights] = await Promise.all([sp.case ? getCase(me.auth, sp.case).catch(() => null) : Promise.resolve(null), columnRights(me.auth, me.userId, 'k7_rfe')])
+  const yodizLocked = !may(rights, 'k7_yodizid', 'create')
   return (
     <>
       <WorkspaceBar active="product" />
@@ -48,8 +51,8 @@ export default async function NewRfePage({ searchParams }: { searchParams: Promi
                 <Options items={RFE_STATUS} />
               </select>
             </Field>
-            <Field id="yodizId" label="YODIZ id" hint="Once the product team has logged it.">
-              <input id="yodizId" name="yodizId" defaultValue={sp.yodizId ?? ''} placeholder="K7-1234" />
+            <Field id="yodizId" label="YODIZ id" hint={yodizLocked ? LOCKED_HINT : 'Once the product team has logged it.'}>
+              <input id="yodizId" name="yodizId" defaultValue={sp.yodizId ?? ''} placeholder={yodizLocked ? undefined : 'K7-1234'} disabled={yodizLocked} />
             </Field>
             <Field id="users" label="Number of users">
               <input id="users" name="users" inputMode="numeric" defaultValue={sp.users ?? ''} placeholder="250" />

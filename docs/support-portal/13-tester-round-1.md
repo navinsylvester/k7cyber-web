@@ -50,10 +50,13 @@ design language's rule, not a defect.
 | TR-19 | Email: attach files | gap | P2 | done 2026-11-18 |
 | TR-20 | Operating system version field | gap | P2 | done 2026-11-18 |
 | TR-21 | Merge one case into another | gap | P2 | done 2026-11-18 |
+| TR-22 | Bug ID not saved in Incident ID | bug | P1 | done 2026-11-26 (the CRM's field security; who may set it is D-5) |
+| TR-23 | State and City not filtered by letter | gap | P2 | done 2026-11-26 |
 | D-1 | Fill the customer and serial key from the registered mobile | request | — | decide |
 | D-2 | "Customer type: consumer or enterprise" on the case | request | — | decide |
 | D-3 | Rename field titles | request | — | decide |
 | D-4 | Smaller text, denser layout | request | — | decided 2026-10-24: labels now (TR-13), Compact density later |
+| D-5 | Who may set Incident ID, Module, Sub module, Product version (field security profiles) | request | — | decide (support lead; `11-staging-readiness.md` item 29b) |
 | U-1 | Seven agents without a role in UAT, their cases owned by Navin | UAT | — | open (`11-staging-readiness.md` item 29) |
 
 ## 2. Entries
@@ -337,6 +340,29 @@ new case form; *Operating system* (optional) on the customer's. No schema change
 number is asked, not guessed. A merged case shows *Merged into* and a *Merged* panel instead of *Reopen*; a customer's link to it
 lands on the surviving case.
 
+### TR-22 · Bug ID not saved in Incident ID (P1, reported 2026-11-26)
+**Testers said:** "BUG ID not getting added" (field: Incident ID).
+**Verified:** Incident ID (`k7_incidentid`) is a secured column in Dynamics: only the field security profiles *Level 2 Users* (one
+member) and System Administrator may read, create or update it. Abeed Shaik is in neither; the server log has his create refused
+(`0x8004f502`) and the edit after it (`0x8004f507`), and his CS-01224-S2H6 (11:27 IST) has no Incident ID. The whole save was refused
+with "Your Dynamics role does not allow this." Module and Sub module are secured the same way, Product version for Level 1 and 2, and
+the RFE's YODIZ id for System Administrators only (the RFE edit sent it, unchanged, on every save, so any other agent's RFE save failed).
+**Done 2026-11-26:** the portal reads the agent's field rights and switches those fields off with a hint (case Edit details, new case,
+RFE forms), names the columns hidden from them under the case facts, never posts a disabled field, and retries a refused write without
+the secured columns, naming what was not saved (SupportParts S34; `09` §3, *Field security*). Checked in Chrome on a local instance:
+as an admin, *TEST-BG-1* saved on CS-01195-B0Q3; with Abeed's rights, the four fields locked, an OS version change saved and Incident ID
+kept, an unchanged save said *Nothing changed.*; the new case and new RFE forms locked; the test values cleared again. Whether agents
+should set the Bug ID is D-5: the fix in Dynamics is the profile, not the portal.
+
+### TR-23 · State and City not filtered by letter (P2, reported 2026-11-26)
+**Testers said:** "State and City name not filtered with Letter."
+**Verified:** both were selects: a letter jumps to the first entry that starts with it, the list never narrows (Tamil Nadu 291 cities,
+Andhra Pradesh 453; "che" lands on Chengalpattu). Not caused by the 2026-11-21 select change: the jump works the same in both modes.
+UAT also lists most cities twice (its own set and the seeded production set).
+**Done 2026-11-26:** State and City are type-to-filter fields (Field *Type to filter*, SupportParts S33): typing narrows the list,
+arrows and Enter pick, leaving the field settles on an exact or single match; each city name shows once. Checked in Chrome: "chen" →
+Chengalpattu, Chennai, Tiruchendur, Tiruchengode; batman K saved as Tamil Nadu / Chennai (region South) and cleared again in UAT.
+
 ## 6. Session log
 - **2026-10-24 (1)** — Tester notes triaged against code, UAT and the live portal. TR-01 and TR-02 found while
   checking the theme claim. CS-01194-B4N9 moved to In Progress-Support and back to In Progress-Lab to prove status
@@ -383,3 +409,10 @@ lands on the surviving case.
   07:05:01Z, 07:15:40 to 07:16:15Z, 07:22:22 to 07:22:54Z). 111 support tests pass (`support-email` new), `tsc` and lint clean.
   Left in UAT: CS-01217-D4L9 (open), CS-01218-X5C4 and CS-01219-T7R8 (Merged), CS-01220-W4G6 (open), the two Pending Send emails to
   `tr06.test@example.com`. Not committed. **Next:** the reply to the testers for TR-16 to TR-21; D-1 to D-3; U-1.
+- **2026-11-26** — Two new tester notes, TR-22 and TR-23, both valid. TR-22 is Dynamics field security (Incident ID, Module, Sub
+  module, Product version on the case; YODIZ id on RFEs and defects): fields locked for agents without the profile, the refused write
+  retried without the secured columns, the RFE save no longer sends an unchanged YODIZ id. TR-23: State and City as type-to-filter
+  fields, each UAT city name once. Checked on a local probe instance (127.0.0.1:3200, stopped afterwards; Abeed's rights through a
+  temporary local override, removed): CS-01195-B0Q3 Incident ID set and cleared (07:18:01Z, 07:19:11Z), OS version set and cleared,
+  batman K's state and city set and cleared (07:17:00Z, 07:17:03Z). New tests `support-field-security`, `support-filter-options`.
+  **Next:** D-5 with the support lead (`11` item 29b); tell the testers.

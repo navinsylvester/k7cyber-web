@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 import { ProductionWriteRefused, WritesDisabled, type DataverseAuth } from '@/lib/dataverse'
 
 import { getCase, setStatusReason } from './cases'
+import { columnList } from './field-security-model'
 import { STATE } from './options'
 import type { MirrorOp, ProductSettings } from './product-model'
 import { createDefect, createRfe, updateDefect, updateRfe, type NewDefect, type NewRfe } from './rfe'
@@ -46,24 +47,27 @@ const errorCode = (e: unknown): string => {
 }
 
 /** Runs one operation as the given identity. Returns the outcome, a short line for the activity, and the id of a row it created. */
+/** Columns field security kept out of a row write (the YODIZ id, for anyone but a System Administrator). */
+const leftOut = (skipped: string[]): string => (skipped.length ? ` (${columnList(skipped)} left out: field security)` : '')
+
 const runOp = async (auth: DataverseAuth, op: MirrorOp): Promise<{ outcome: MirrorOutcome; line: string; createdId?: string }> => {
   try {
     switch (op.op) {
       case 'rfe': {
         if (op.action === 'create') {
-          const id = await createRfe(auth, op.body as NewRfe)
-          return { outcome: 'done', line: `${op.ticket}: RFE row created`, createdId: id }
+          const { id, skipped } = await createRfe(auth, op.body as NewRfe)
+          return { outcome: 'done', line: `${op.ticket}: RFE row created${leftOut(skipped)}`, createdId: id }
         }
-        await updateRfe(auth, op.rowId, op.body as Partial<NewRfe>)
-        return { outcome: 'done', line: `${op.ticket}: RFE row updated` }
+        const skipped = await updateRfe(auth, op.rowId, op.body as Partial<NewRfe>)
+        return { outcome: 'done', line: `${op.ticket}: RFE row updated${leftOut(skipped)}` }
       }
       case 'defect': {
         if (op.action === 'create') {
-          const id = await createDefect(auth, op.body as NewDefect)
-          return { outcome: 'done', line: `${op.ticket}: defect row created`, createdId: id }
+          const { id, skipped } = await createDefect(auth, op.body as NewDefect)
+          return { outcome: 'done', line: `${op.ticket}: defect row created${leftOut(skipped)}`, createdId: id }
         }
-        await updateDefect(auth, op.rowId, op.body as Partial<NewDefect>)
-        return { outcome: 'done', line: `${op.ticket}: defect row updated` }
+        const skipped = await updateDefect(auth, op.rowId, op.body as Partial<NewDefect>)
+        return { outcome: 'done', line: `${op.ticket}: defect row updated${leftOut(skipped)}` }
       }
       case 'status': {
         const c = await getCase(auth, op.caseId)

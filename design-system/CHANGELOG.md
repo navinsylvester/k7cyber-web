@@ -2,6 +2,12 @@
 
 Newest first. Each entry names the rule, the reference CSS and the parts it touched, so the system describes the site as built (README.md, "Keeping it current"). Until 2026-10-15 the folder mirrored the Design System artifact unchanged (SOURCE.md).
 
+## 2026-11-26
+
+- **Field, type to filter** (support testers: State and City not filtered by letter): a new Field variant for reference lists a select cannot search (`filter-select`, `filter-list` in `bundle.css`): a text field with the select's chevron whose list narrows to the entries containing the typed text, drawn as the select's open list in every browser (1px ink frame, hairline rows, the active row inverted, the signal pixel on the choice). The one exception to *never a widget*, used by the support portal's State and City (SupportParts S33, `FilterSelect.client.tsx`). Checked in Chrome on the new contact form and a contact's edit (Tamil Nadu → Chennai saved to UAT and cleared again), both themes. Field README and `preview.html`.
+- **Field, a switched-off control reads as off**: a disabled input, select or textarea sits at the disabled opacity (`--disabled`, as a disabled button), where it looked the same as an enabled one: the city before its state, the sub category without a category, the Labs product filter while a CVE is typed, and the fields Dynamics locks (SupportParts S34). `bundle.css`; Field README.
+- **Section 09 · Support, S33 State and City; S34 locked by Dynamics field security** (support testers: the Bug ID not saved in Incident ID): the contact and account forms' state and city as type-to-filter fields; the case's Incident ID, Module, Sub module and Product version and the RFE's YODIZ id switched off with a hint for agents whose field security profile does not grant them, a muted line naming the columns Dynamics hides from them, and the flash naming any value Dynamics refused. No artboard: the workspace has none. SupportParts README.
+
 ## 2026-11-21
 
 - **HomeLanding, Support as the orange cut button** (Navin: Support in the top menu as our orange cut button): on the homepage the menu's last item, Support, is the artboard header's action button (44px, `logo-orange`, bold caps, the right edge cut at the 7's angle; brighter on hover, a ring inside on focus since the cut clips an outline), its cut on the column's right edge; the menu's gaps close to 18px so the eight items still fit beside the logo down to 1040px. Other pages keep SiteHeader's Request demo. `Component.client.tsx` (`nav-cta`), `home.css`; SiteHeader and HomeLanding READMEs.

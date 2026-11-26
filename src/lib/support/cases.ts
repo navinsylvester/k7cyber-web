@@ -2,6 +2,7 @@ import 'server-only'
 
 import { action, and, bind, buildQuery, callDataverse, create, entity, guid, isGuid, list, nextPage, or, retrieve, str, update, type DataverseAuth, type Page, type Row } from '@/lib/dataverse'
 
+import { writeAroundSecured } from './field-security'
 import { ORIGIN_WEB, STATE, STATUS } from './options'
 import { CUSTOMER_VISIBLE_FILTER } from './status'
 
@@ -173,18 +174,23 @@ const caseBody = (c: Partial<NewCase>): Row => {
   return b
 }
 
-/** Creates a case and returns its id and number (autonumber assigned by Dataverse). */
-export const createCase = async (auth: DataverseAuth, input: NewCase): Promise<{ id: string; ticket: string }> => {
+/** Creates a case and returns its id and number (autonumber assigned by Dataverse). A column the user's field security does not
+    let them set (Incident ID, Module, Sub module, Product version; field-security-model.ts) is left out rather than losing the
+    case, and named in `skipped`. */
+export const createCase = async (auth: DataverseAuth, input: NewCase): Promise<{ id: string; ticket: string; skipped: string[] }> => {
   const body = Object.fromEntries(Object.entries(caseBody(input)).filter(([, v]) => v !== null))
-  const r = await callDataverse<{ incidentid: string; ticketnumber: string }>(auth, 'POST', 'incidents', { body, prefer: ['return=representation'] })
-  return { id: r.incidentid, ticket: r.ticketnumber }
+  const { result: r, skipped } = await writeAroundSecured(auth, 'incident', body, (b) =>
+    callDataverse<{ incidentid: string; ticketnumber: string }>(auth, 'POST', 'incidents', { body: b, prefer: ['return=representation'] }),
+  )
+  return { id: r.incidentid, ticket: r.ticketnumber, skipped }
 }
 
-/** Only the fields given are sent (07-production-safety.md §3). */
-export const updateCase = async (auth: DataverseAuth, id: string, patch: Partial<NewCase> & { statuscode?: number }, etag = '*'): Promise<void> => {
+/** Only the fields given are sent (07-production-safety.md §3). Returns the secured columns left out, as createCase does. */
+export const updateCase = async (auth: DataverseAuth, id: string, patch: Partial<NewCase> & { statuscode?: number }, etag = '*'): Promise<string[]> => {
   const body = caseBody(patch)
   if (patch.statuscode !== undefined) body.statuscode = patch.statuscode
-  await update(auth, entity('incidents', id), body, etag)
+  const { skipped } = await writeAroundSecured(auth, 'incident', body, (b) => update(auth, entity('incidents', id), b, etag))
+  return skipped
 }
 
 export type ResolveInput = { status: typeof STATUS.CLOSED_CALL | typeof STATUS.CLOSED_REMOTE; subject: string; remarks?: string; minutes?: number }
@@ -288,8 +294,8 @@ export type CustomerNewCase = { title: string; description: string; productId?: 
 
 /** A case raised from the portal: origin Web, case type Case (the saved views filter on it: a case without a type is invisible to
    agents), customer = the contact (or their account), attribution in adx_createdbyusername. */
-export const createCustomerCase = async (auth: DataverseAuth, scope: CustomerScope, c: CustomerNewCase): Promise<{ id: string; ticket: string }> =>
-  createCase(auth, {
+export const createCustomerCase = async (auth: DataverseAuth, scope: CustomerScope, c: CustomerNewCase): Promise<{ id: string; ticket: string }> => {
+  const created = await createCase(auth, {
     title: c.title,
     description: c.description,
     caseType: 1,
@@ -308,6 +314,12 @@ export const createCustomerCase = async (auth: DataverseAuth, scope: CustomerSco
     createdBy: scope.email,
     status: STATUS.OPEN,
   })
+  // The portal's service user may lack the field security for Product version; the customer's answer then goes into the
+  // description, so the desk still reads it.
+  if (c.productVersion && created.skipped.includes('k7_productversion'))
+    await updateCase(auth, created.id, { description: `${c.description}\n\nProduct version: ${c.productVersion}` }).catch(() => null)
+  return { id: created.id, ticket: created.ticket }
+}
 
 /** A merged case is hidden from customers, but their emails still link to it: the number of the case it was merged into, when
    that case is theirs and visible (followed through up to three merges), else null. */
