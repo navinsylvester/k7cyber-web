@@ -4,13 +4,15 @@ import React from 'react'
 import { auth } from '@/auth'
 import { Logo } from '@/components/Logo/Logo'
 import { initials } from '@/lib/support/format'
+import { unreadCount } from '@/lib/support/notify'
 
 import { signOutAction } from '@/app/(portal)/support/actions'
 
 import { HeaderShell } from './Header.client'
+import { Bell } from './Parts'
 
 /* The portal header (SiteHeader shape): brand, the audience's three links, the theme toggle and the account.
-   Agents see the workspace strip beneath it (WorkspaceBar) on workspace pages. */
+   Agents see the bell (S35) before their name and the workspace strip beneath the header (WorkspaceBar) on workspace pages. */
 export const PortalHeader: React.FC = async () => {
   const session = await auth()
   // A partner-portal session belongs to the other side of the house; here it reads as signed out.
@@ -26,7 +28,8 @@ export const PortalHeader: React.FC = async () => {
         { href: '/support/cases', label: 'My cases' },
         { href: '/support/kb', label: 'Knowledge base' },
       ]
-  const mobileExtra = user ? (agent ? [] : [{ href: '/support/profile', label: 'My details' }]) : [{ href: '/support/sign-in', label: 'Sign in' }, { href: '/support/register', label: 'Create account' }]
+  const mobileExtra = user ? (agent ? [{ href: '/support/workspace/notifications', label: 'Notifications' }] : [{ href: '/support/profile', label: 'My details' }]) : [{ href: '/support/sign-in', label: 'Sign in' }, { href: '/support/register', label: 'Create account' }]
+  const unread = agent && user?.userId ? await unreadCount(user.userId) : 0
   return (
     <>
       {user?.dev && (
@@ -49,6 +52,7 @@ export const PortalHeader: React.FC = async () => {
         account={
           user ? (
             <form action={signOutAction}>
+              {agent && <Bell href="/support/workspace/notifications" unread={unread} />}
               <Link className="who" href={agent ? '/support/workspace' : '/support/profile'} title={user.email ?? undefined}>
                 <span className="avatar" aria-hidden="true">
                   {initials(user.name || user.email || '?')}

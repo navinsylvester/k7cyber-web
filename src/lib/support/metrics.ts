@@ -6,10 +6,12 @@ import { csatInPeriod, openFollowUps } from './csat'
 import { causeOf, facetLines, isUnhappy, summarise, type CsatRow, type CsatSummary } from './csat-model'
 import type { ChartSeries } from './dashboards'
 import { KPI_DEFS, kpiDef, periodBounds, resolveTarget, type KpiKey, type KpiSetting, type Period, type Settings, type TargetRule } from './kpi-model'
-import { memo } from './memo'
+import { forget, memo } from './memo'
 import { label as optLabel, ORIGIN, PRIORITY, PRIORITY_CRITICAL, STATE, STATUS, VERTICAL } from './options'
 import { crmKpiState, median, NO_READING, pct, readSla, workingDaysBetween, workingMinutesBetween, type SlaReading, type SlaState } from './sla'
 import { caseStatusLabel } from './status'
+import { followUps, inBin, isAutomated, openFollowUp, type Msg } from './clocks'
+import { activeWatchRows, clockRunsEnded, type ClockRun, type WatchRow } from './watch-store'
 
 /* The manager's numbers (09-portal-guide.md §4c). Raw rows are fetched once per period and memoised for 90 seconds across managers
    (the desk is one desk); every reading is recomputed per request from the current settings, so a changed target applies at once.
@@ -33,6 +35,8 @@ export type CaseLite = {
   onHold: number
   escalated: boolean
   owner: Owner
+  /** Who last changed the case (the watch: an owner who took the case themselves needs no telling). */
+  modifiedById: string
   product: string
   issue: string
   customer: string
@@ -53,6 +57,18 @@ export type CaseLite = {
   waiting: boolean
   resolve: SlaReading
   response: SlaReading
+  /** The customer's last message and the last answer (active cases; automatic mail left out). */
+  lastInAt: Date | null
+  lastOutAt: Date | null
+  /** The follow-up waiting for an answer, from the customer's message (clocks.ts). */
+  followUpSince: Date | null
+  followUp: SlaReading
+  /** In a bin (not owned by an engineer) since. */
+  binSince: Date | null
+  pickup: SlaReading
+  /** Sample with the Lab since (first seen In Progress-Lab), until the case is resolved. */
+  labSince: Date | null
+  lab: SlaReading
 }
 
 type RawDesk = {
@@ -67,6 +83,13 @@ type RawDesk = {
   touchesByOwner: Map<string, { emails: number; notes: number }>
   crm: Map<string, { name: string; status: number; failure: Date | null }>
   crmBreachesInPeriod: number
+  /** Active cases: the customer's last message and the last answer, automatic mail left out. */
+  lastIn: Map<string, Date>
+  lastOut: Map<string, Date>
+  /** Active cases: when the case entered its current queue (the owner's queue on assignment). */
+  queueSince: Map<string, Date>
+  /** Messages each way from a week before the period to its end, per case: the follow-ups the period answered. */
+  messages: Map<string, Msg[]>
   warnings: string[]
   truncated: boolean
 }
@@ -85,11 +108,13 @@ export type Desk = RawDesk & {
   /** Low scores whose follow-up is still open, whatever the period. */
   followUps: CsatRow[]
   csatSummary: CsatSummary
+  /** Pick-up and Lab runs the watch saw finish in the period (watch-store.ts). */
+  clockRuns: ClockRun[]
 }
 
 const SELECT = [
   'incidentid', 'ticketnumber', 'title', 'createdon', 'modifiedon', 'statecode', 'statuscode', 'prioritycode', 'caseorigincode', 'new_verticaltype', 'k7_caseconsideredas',
-  'onholdtime', 'isescalated', '_ownerid_value', '_productid_value', '_new_issue_value', '_customerid_value', '_primarycontactid_value', 'k7_customeremail', 'adx_createdbyusername',
+  'onholdtime', 'isescalated', '_ownerid_value', '_modifiedby_value', '_productid_value', '_new_issue_value', '_customerid_value', '_primarycontactid_value', 'k7_customeremail', 'adx_createdbyusername',
 ] as const
 
 const PAGE = 500
@@ -131,11 +156,49 @@ const ownerOf = (r: Row): Owner => {
 
 /* ---------- Raw fetch (memoised) ---------- */
 
-const fetchRaw = async (auth: DataverseAuth, from: Date, to: Date): Promise<RawDesk> => {
+const xmlEsc = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+/** A subject prefix as a LIKE pattern: the wildcards in it are literal. */
+const likePrefix = (p: string) => `${xmlEsc(p.replace(/[[\]%_]/g, (c) => `[${c}]`))}%`
+/** FetchXML: the email is not the CRM's automatic mail (an empty subject is not automatic). */
+const notAutomated = (prefixes: string[]) =>
+  prefixes.length ? `<filter type="or"><condition attribute="subject" operator="null" /><filter type="and">${prefixes.map((p) => `<condition attribute="subject" operator="not-like" value="${likePrefix(p)}" />`).join('')}</filter></filter>` : ''
+const ACTIVE_CASE = (to: string) => `<link-entity name="incident" from="incidentid" to="${to}" link-type="inner"><filter><condition attribute="statecode" operator="eq" value="0" /></filter></link-entity>`
+const maxBy = (rows: Row[], into: Map<string, Date>) => {
+  for (const r of rows) {
+    const id = String(r.c ?? '')
+    const d = dateOf(r.last)
+    if (!id || !d) continue
+    const cur = into.get(id)
+    if (!cur || d > cur) into.set(id, d)
+  }
+}
+
+const fetchRaw = async (auth: DataverseAuth, from: Date, to: Date, automated: string[]): Promise<RawDesk> => {
   const warnings: string[] = []
   const fromIso = iso(from)
   const toIso = iso(to)
   const resolvedFilter = and(`statecode eq ${STATE.RESOLVED}`, `modifiedon ge ${fromIso}`, `modifiedon lt ${toIso}`)
+  const windowIso = iso(new Date(from.getTime() - 7 * 864e5))
+  const auto = notAutomated(automated)
+  const none = { value: [] as Row[] }
+  const soft = (what: string) => (e: unknown) => {
+    warnings.push(`${what} unavailable: ${(e as Error).message}`)
+    return none
+  }
+  const [lastInEmails, lastOutEmails, lastInNotes, lastOutNotes, queueItems, windowEmails, windowNotes] = await Promise.all([
+    // The clocks added on 2026-11-27: the last message each way on active cases, the queue each case sits in, and the
+    // messages of the period (with a week before it) for the follow-up card.
+    fetchXml<Row>(auth, 'emails', `<fetch aggregate="true"><entity name="email"><attribute name="createdon" aggregate="max" alias="last" /><attribute name="regardingobjectid" groupby="true" alias="c" /><filter><condition attribute="directioncode" operator="eq" value="0" /><condition attribute="regardingobjecttypecode" operator="eq" value="112" /></filter>${ACTIVE_CASE('regardingobjectid')}</entity></fetch>`).catch(soft('Customer emails')),
+    fetchXml<Row>(auth, 'emails', `<fetch aggregate="true"><entity name="email"><attribute name="createdon" aggregate="max" alias="last" /><attribute name="regardingobjectid" groupby="true" alias="c" /><filter><condition attribute="directioncode" operator="eq" value="1" /><condition attribute="statecode" operator="eq" value="1" /><condition attribute="regardingobjecttypecode" operator="eq" value="112" />${auto}</filter>${ACTIVE_CASE('regardingobjectid')}</entity></fetch>`).catch(soft('Answers (emails)')),
+    fetchXml<Row>(auth, 'annotations', `<fetch aggregate="true"><entity name="annotation"><attribute name="createdon" aggregate="max" alias="last" /><attribute name="objectid" groupby="true" alias="c" /><filter><condition attribute="objecttypecode" operator="eq" value="112" /><condition attribute="subject" operator="like" value="Portal:%" /></filter>${ACTIVE_CASE('objectid')}</entity></fetch>`).catch(soft('Portal replies')),
+    fetchXml<Row>(auth, 'annotations', `<fetch aggregate="true"><entity name="annotation"><attribute name="createdon" aggregate="max" alias="last" /><attribute name="objectid" groupby="true" alias="c" /><filter><condition attribute="objecttypecode" operator="eq" value="112" /><condition attribute="subject" operator="like" value="Reply to customer%" /></filter>${ACTIVE_CASE('objectid')}</entity></fetch>`).catch(soft('Answers (portal)')),
+    walk(auth, buildQuery('queueitems', { select: ['enteredon', '_objectid_value'], filter: 'objecttypecode eq 112 and statecode eq 0' }), warnings, 'Queue items').catch((e) => {
+      warnings.push(`Queue items unavailable: ${(e as Error).message}`)
+      return { rows: [] as Row[], truncated: false }
+    }),
+    fetchXml<Row>(auth, 'emails', `<fetch count="5000"><entity name="email"><attribute name="createdon" /><attribute name="directioncode" /><attribute name="statecode" /><attribute name="subject" /><attribute name="regardingobjectid" /><filter><condition attribute="regardingobjecttypecode" operator="eq" value="112" /><condition attribute="createdon" operator="ge" value="${windowIso}" /><condition attribute="createdon" operator="lt" value="${toIso}" /></filter></entity></fetch>`).catch(soft('Emails of the period')),
+    fetchXml<Row>(auth, 'annotations', `<fetch count="5000"><entity name="annotation"><attribute name="createdon" /><attribute name="subject" /><attribute name="objectid" /><filter><condition attribute="objecttypecode" operator="eq" value="112" /><condition attribute="createdon" operator="ge" value="${windowIso}" /><condition attribute="createdon" operator="lt" value="${toIso}" /><filter type="or"><condition attribute="subject" operator="like" value="Portal:%" /><condition attribute="subject" operator="like" value="Reply to customer%" /></filter></filter></entity></fetch>`).catch(soft('Portal messages of the period')),
+  ])
   const [active, resolved, res, reopened, touchEmails, touchNotes, perOwnerEmails, perOwnerNotes, crm] = await Promise.all([
     walk(auth, buildQuery('incidents', { select: [...SELECT], filter: `statecode eq ${STATE.ACTIVE}`, orderby: 'createdon asc' }), warnings, 'Active cases'),
     walk(auth, buildQuery('incidents', { select: [...SELECT], filter: resolvedFilter, orderby: 'modifiedon desc' }), warnings, 'Resolved cases'),
@@ -148,7 +211,7 @@ const fetchRaw = async (auth: DataverseAuth, from: Date, to: Date): Promise<RawD
     fetchXml<Row>(
       auth,
       'emails',
-      `<fetch aggregate="true"><entity name="email"><attribute name="createdon" aggregate="min" alias="first" /><attribute name="regardingobjectid" groupby="true" alias="c" /><filter><condition attribute="directioncode" operator="eq" value="1" /><condition attribute="regardingobjecttypecode" operator="eq" value="112" /></filter><link-entity name="incident" from="incidentid" to="regardingobjectid" link-type="inner"><filter type="or"><condition attribute="statecode" operator="eq" value="0" /><condition attribute="modifiedon" operator="on-or-after" value="${fromIso}" /></filter></link-entity></entity></fetch>`,
+      `<fetch aggregate="true"><entity name="email"><attribute name="createdon" aggregate="min" alias="first" /><attribute name="regardingobjectid" groupby="true" alias="c" /><filter><condition attribute="directioncode" operator="eq" value="1" /><condition attribute="statecode" operator="ne" value="2" /><condition attribute="regardingobjecttypecode" operator="eq" value="112" />${auto}</filter><link-entity name="incident" from="incidentid" to="regardingobjectid" link-type="inner"><filter type="or"><condition attribute="statecode" operator="eq" value="0" /><condition attribute="modifiedon" operator="on-or-after" value="${fromIso}" /></filter></link-entity></entity></fetch>`,
     ).catch((e) => {
       warnings.push(`First response (emails) unavailable: ${(e as Error).message}`)
       return { value: [] as Row[] }
@@ -157,7 +220,7 @@ const fetchRaw = async (auth: DataverseAuth, from: Date, to: Date): Promise<RawD
     fetchXml<Row>(
       auth,
       'annotations',
-      `<fetch aggregate="true"><entity name="annotation"><attribute name="createdon" aggregate="min" alias="first" /><attribute name="objectid" groupby="true" alias="c" /><filter><condition attribute="objecttypecode" operator="eq" value="112" /><condition attribute="subject" operator="not-like" value="Portal:%" /></filter><link-entity name="incident" from="incidentid" to="objectid" link-type="inner"><filter type="or"><condition attribute="statecode" operator="eq" value="0" /><condition attribute="modifiedon" operator="on-or-after" value="${fromIso}" /></filter></link-entity></entity></fetch>`,
+      `<fetch aggregate="true"><entity name="annotation"><attribute name="createdon" aggregate="min" alias="first" /><attribute name="objectid" groupby="true" alias="c" /><filter><condition attribute="objecttypecode" operator="eq" value="112" /><filter type="or"><condition attribute="subject" operator="null" /><condition attribute="subject" operator="not-like" value="Portal:%" /></filter></filter><link-entity name="incident" from="incidentid" to="objectid" link-type="inner"><filter type="or"><condition attribute="statecode" operator="eq" value="0" /><condition attribute="modifiedon" operator="on-or-after" value="${fromIso}" /></filter></link-entity></entity></fetch>`,
     ).catch((e) => {
       warnings.push(`First response (notes) unavailable: ${(e as Error).message}`)
       return { value: [] as Row[] }
@@ -224,10 +287,46 @@ const fetchRaw = async (auth: DataverseAuth, from: Date, to: Date): Promise<RawD
     const rank = (s: number) => (s === 1 ? 3 : s === 2 ? 2 : s === 0 ? 1 : 0)
     if (!cur || rank(status) > rank(cur.status)) crmMap.set(id, { name: String(r.name ?? 'KPI'), status, failure: dateOf(r.failuretime) })
   }
+  const lastIn = new Map<string, Date>()
+  const lastOut = new Map<string, Date>()
+  maxBy(lastInEmails.value, lastIn)
+  maxBy(lastInNotes.value, lastIn)
+  maxBy(lastOutEmails.value, lastOut)
+  maxBy(lastOutNotes.value, lastOut)
+  const queueSince = new Map<string, Date>()
+  for (const q of queueItems.rows) {
+    const id = String(q._objectid_value ?? '')
+    const d = dateOf(q.enteredon)
+    if (id && d && (!queueSince.has(id) || d > queueSince.get(id)!)) queueSince.set(id, d)
+  }
+  const messages = new Map<string, Msg[]>()
+  const push = (id: string, m: Msg) => {
+    if (!id) return
+    const list = messages.get(id) ?? []
+    list.push(m)
+    messages.set(id, list)
+  }
+  for (const e of windowEmails.value) {
+    const at = dateOf(e.createdon)
+    if (!at) continue
+    const incoming = e.directioncode === false
+    // An answer is an email that went (completed) and is not the CRM's own mail; a customer's email always counts.
+    if (!incoming && (Number(e.statecode) !== 1 || isAutomated(String(e.subject ?? ''), automated))) continue
+    push(String(e._regardingobjectid_value ?? ''), { at, dir: incoming ? 'in' : 'out' })
+  }
+  for (const n of windowNotes.value) {
+    const at = dateOf(n.createdon)
+    if (at) push(String(n._objectid_value ?? ''), { at, dir: String(n.subject ?? '').startsWith('Portal:') ? 'in' : 'out' })
+  }
+  if (windowEmails.value.length >= 5000) warnings.push('Follow-ups: only the first 5,000 emails of the period were read; shorten the period.')
   return {
     fetchedAt: new Date(),
     from,
     to,
+    lastIn,
+    lastOut,
+    queueSince,
+    messages,
     active: active.rows,
     resolved: resolved.rows,
     resolutions,
@@ -241,12 +340,15 @@ const fetchRaw = async (auth: DataverseAuth, from: Date, to: Date): Promise<RawD
   }
 }
 
-const rawDesk = (auth: DataverseAuth, period: Period, from: Date, to: Date, shifted: boolean): Promise<RawDesk> =>
-  memo(`desk:${period}:${shifted ? 'prev' : 'now'}`, 90_000, () => fetchRaw(auth, from, to))
+const rawDesk = (auth: DataverseAuth, period: Period, from: Date, to: Date, shifted: boolean, automated: string[], fresh = false): Promise<RawDesk> => {
+  const key = `desk:${period}:${shifted ? 'prev' : 'now'}:${automated.join('|')}`
+  if (fresh) forget(key)
+  return memo(key, 90_000, () => fetchRaw(auth, from, to, automated))
+}
 
 /* ---------- Readings ---------- */
 
-const toLite = (r: Row, raw: RawDesk, s: Settings, now: Date): CaseLite => {
+const toLite = (r: Row, raw: RawDesk, s: Settings, now: Date, watch: Map<string, WatchRow>): CaseLite => {
   const id = String(r.incidentid)
   const createdon = dateOf(r.createdon) ?? now
   const modifiedon = dateOf(r.modifiedon) ?? createdon
@@ -267,6 +369,19 @@ const toLite = (r: Row, raw: RawDesk, s: Settings, now: Date): CaseLite => {
   const response = statecode === STATE.ACTIVE || firstResponseAt
     ? readSla({ start: createdon, end: firstResponseAt ?? (statecode !== STATE.ACTIVE ? resolvedAt : null), now, targetMinutes: target.responseMinutes, warnAtPercent: s.warnAtPercent, hours: s.hours, paused })
     : NO_READING
+  const owner = ownerOf(r)
+  const active = statecode === STATE.ACTIVE
+  const w = watch.get(id.toLowerCase())
+  const lastInAt = active ? (raw.lastIn.get(id) ?? null) : null
+  const lastOutAt = active ? (raw.lastOut.get(id) ?? null) : null
+  const followUpSince = active ? openFollowUp({ lastIn: lastInAt, lastOut: lastOutAt, firstAnswer: firstResponseAt }) : null
+  const followUp = followUpSince ? readSla({ start: followUpSince, now, targetMinutes: target.followUpMinutes, warnAtPercent: s.warnAtPercent, hours: s.hours }) : NO_READING
+  // In a bin since: the watch saw it land; else the queue it entered on assignment; else its creation (a case created into the bin).
+  const binSince = active && inBin(owner.kind) ? (w?.binSince ?? raw.queueSince.get(id) ?? createdon) : null
+  const pickup = binSince ? readSla({ start: binSince, now, targetMinutes: target.pickupMinutes, warnAtPercent: s.warnAtPercent, hours: s.hours }) : NO_READING
+  // With the Lab since: the watch saw the status change; a case already there when the watch first saw it counts from its last change.
+  const labSince = active ? (w?.labSince ?? (statuscode === STATUS.IN_PROGRESS_LAB ? modifiedon : null)) : null
+  const lab = labSince ? readSla({ start: labSince, now, targetMinutes: target.labMinutes, warnAtPercent: s.warnAtPercent, hours: s.hours }) : NO_READING
   const c = raw.crm.get(id)
   return {
     id,
@@ -283,7 +398,8 @@ const toLite = (r: Row, raw: RawDesk, s: Settings, now: Date): CaseLite => {
     fcr,
     onHold,
     escalated: r.isescalated === true,
-    owner: ownerOf(r),
+    owner,
+    modifiedById: String(r._modifiedby_value ?? ''),
     product: fv(r, '_productid_value'),
     issue: fv(r, '_new_issue_value'),
     customer: fv(r, '_customerid_value'),
@@ -301,28 +417,42 @@ const toLite = (r: Row, raw: RawDesk, s: Settings, now: Date): CaseLite => {
     waiting,
     resolve,
     response,
+    lastInAt,
+    lastOutAt,
+    followUpSince,
+    followUp,
+    binSince,
+    pickup,
+    labSince,
+    lab,
   }
 }
 
-export const loadDesk = async (auth: DataverseAuth, settings: Settings, period: Period, o: { previous?: boolean; now?: Date } = {}): Promise<Desk> => {
+export const loadDesk = async (auth: DataverseAuth, settings: Settings, period: Period, o: { previous?: boolean; now?: Date; /** Skip the 90-second memo (the notification watch). */ fresh?: boolean } = {}): Promise<Desk> => {
   const now = o.now ?? new Date()
   const b = periodBounds(period, now, settings.hours.timeZone)
   const from = o.previous ? new Date(b.from.getTime() - (b.to.getTime() - b.from.getTime())) : b.from
   const to = o.previous ? b.from : b.to
-  const [raw, csat, followUps] = await Promise.all([rawDesk(auth, period, from, to, Boolean(o.previous)), settings.csat.enabled ? csatInPeriod(from, to) : Promise.resolve([] as CsatRow[]), settings.csat.enabled && !o.previous ? openFollowUps() : Promise.resolve([] as CsatRow[])])
-  const activeCases = o.previous ? [] : raw.active.map((r) => toLite(r, raw, settings, now))
-  const resolvedCases = raw.resolved.map((r) => toLite(r, raw, settings, now))
+  const [raw, csat, csatFollowUps, watch, clockRuns] = await Promise.all([
+    rawDesk(auth, period, from, to, Boolean(o.previous), settings.automatedSubjects, o.fresh),
+    settings.csat.enabled ? csatInPeriod(from, to) : Promise.resolve([] as CsatRow[]),
+    settings.csat.enabled && !o.previous ? openFollowUps() : Promise.resolve([] as CsatRow[]),
+    o.previous ? Promise.resolve(new Map<string, WatchRow>()) : activeWatchRows(),
+    clockRunsEnded(from, to),
+  ])
+  const activeCases = o.previous ? [] : raw.active.map((r) => toLite(r, raw, settings, now, watch))
+  const resolvedCases = raw.resolved.map((r) => toLite(r, raw, settings, now, watch))
   const cases = [...activeCases, ...resolvedCases]
   const createdCases = cases.filter((c) => c.createdon >= from && c.createdon < to)
-  return { ...raw, from, to, period, now, settings, cases, activeCases, resolvedCases, createdCases, workingDays: workingDaysBetween(from, to, settings.hours), csat, followUps, csatSummary: summarise(csat, settings.csat, settings.hours, now) }
+  return { ...raw, from, to, period, now, settings, cases, activeCases, resolvedCases, createdCases, workingDays: workingDaysBetween(from, to, settings.hours), csat, followUps: csatFollowUps, csatSummary: summarise(csat, settings.csat, settings.hours, now), clockRuns }
 }
 
 /* ---------- Summaries ---------- */
 
-export type SlaNow = { ok: number; atRisk: number; breached: number; paused: number; responsePending: number; responseBreached: number }
+export type SlaNow = { ok: number; atRisk: number; breached: number; paused: number; responsePending: number; responseBreached: number; followUps: number; followUpsLate: number; inBin: number; inBinLate: number; withLab: number; withLabLate: number }
 
 export const slaNow = (d: Desk): SlaNow => {
-  const n: SlaNow = { ok: 0, atRisk: 0, breached: 0, paused: 0, responsePending: 0, responseBreached: 0 }
+  const n: SlaNow = { ok: 0, atRisk: 0, breached: 0, paused: 0, responsePending: 0, responseBreached: 0, followUps: 0, followUpsLate: 0, inBin: 0, inBinLate: 0, withLab: 0, withLabLate: 0 }
   for (const c of d.activeCases) {
     if (c.resolve.state === 'ok') n.ok++
     else if (c.resolve.state === 'at-risk') n.atRisk++
@@ -331,6 +461,18 @@ export const slaNow = (d: Desk): SlaNow => {
     if (!c.firstResponseAt && c.response.state !== 'paused') {
       n.responsePending++
       if (c.response.state === 'breached') n.responseBreached++
+    }
+    if (c.followUpSince) {
+      n.followUps++
+      if (c.followUp.state === 'breached') n.followUpsLate++
+    }
+    if (c.binSince) {
+      n.inBin++
+      if (c.pickup.state === 'breached') n.inBinLate++
+    }
+    if (c.labSince) {
+      n.withLab++
+      if (c.lab.state === 'breached') n.withLabLate++
     }
   }
   return n
@@ -349,6 +491,15 @@ const kpiRaw = (d: Desk, key: KpiKey): { value: number | null; n: number } => {
       // Cases created in the period: answered within target counts; still unanswered past target counts against.
       const pool = d.createdCases.filter((c) => c.firstResponseAt || c.response.state === 'breached')
       return { value: pct(pool.filter((c) => c.response.state === 'met').length, pool.length), n: pool.length }
+    }
+    case 'followup-sla': {
+      const f = followUpsAnswered(d)
+      return { value: pct(f.filter((x) => x.met).length, f.length), n: f.length }
+    }
+    case 'pickup-sla':
+    case 'lab-sla': {
+      const runs = d.clockRuns.filter((r) => r.clock === (key === 'pickup-sla' ? 'pickup' : 'lab'))
+      return { value: pct(runs.filter((r) => r.met).length, runs.length), n: runs.length }
     }
     case 'median-resolution': {
       const m = median(resolved.map((c) => c.resolve.elapsed))
@@ -392,8 +543,25 @@ const kpiRaw = (d: Desk, key: KpiKey): { value: number | null; n: number } => {
   }
 }
 
+/** The customer's follow-ups answered in the period, each against its case's follow-up target in working minutes. Cases the
+    period does not know (resolved before it) are left out. */
+export const followUpsAnswered = (d: Desk, ownerId?: string): { caseId: string; minutes: number; target: number; met: boolean }[] => {
+  const byId = new Map(d.cases.map((c) => [c.id.toLowerCase(), c]))
+  const out: { caseId: string; minutes: number; target: number; met: boolean }[] = []
+  for (const [id, msgs] of d.messages) {
+    const c = byId.get(id.toLowerCase())
+    if (!c || (ownerId && c.owner.id !== ownerId)) continue
+    for (const f of followUps(msgs, c.firstResponseAt)) {
+      if (!f.end || f.end < d.from || f.end >= d.to) continue
+      const minutes = workingMinutesBetween(f.start, f.end, d.settings.hours)
+      out.push({ caseId: c.id, minutes, target: c.target.followUpMinutes, met: minutes <= c.target.followUpMinutes })
+    }
+  }
+  return out
+}
+
 /** Only period-based KPIs have a previous value; the point-in-time ones (backlog, at risk, oldest) do not. */
-const PERIOD_KPIS = new Set<KpiKey>(['resolution-sla', 'response-sla', 'median-resolution', 'median-response', 'fcr', 'throughput', 'reopen-rate', 'csat', 'csat-average', 'csat-response-rate', 'csat-followup'])
+const PERIOD_KPIS = new Set<KpiKey>(['resolution-sla', 'response-sla', 'followup-sla', 'pickup-sla', 'lab-sla', 'median-resolution', 'median-response', 'fcr', 'throughput', 'reopen-rate', 'csat', 'csat-average', 'csat-response-rate', 'csat-followup'])
 
 /** Cards that need the CSAT feature on; hidden when it is off. */
 const CSAT_KPIS = new Set<KpiKey>(['csat', 'csat-average', 'csat-response-rate', 'csat-unhappy', 'csat-followup'])
@@ -411,23 +579,7 @@ export const kpiValues = (d: Desk, prev?: Desk | null): KpiValue[] =>
       return { def, setting, value, target, met, previous, delta, n }
     })
 
-export const fmtKpi = (v: KpiValue['def'], value: number | null): string => {
-  if (value === null) return '—'
-  switch (v.unit) {
-    case '%':
-      return `${value.toLocaleString('en-IN', { maximumFractionDigits: 1 })}%`
-    case 'h':
-      return `${value.toLocaleString('en-IN', { maximumFractionDigits: 1 })} h`
-    case 'min':
-      return `${Math.round(value).toLocaleString('en-IN')} min`
-    case 'per-day':
-      return value.toLocaleString('en-IN', { maximumFractionDigits: 1 })
-    case 'score':
-      return `${value.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} / 5`
-    default:
-      return Math.round(value).toLocaleString('en-IN')
-  }
-}
+export { fmtKpi } from './kpi-model'
 
 /* ---------- Engineers ---------- */
 
@@ -683,13 +835,32 @@ export const violations = (d: Desk): Violation[] => {
 }
 
 /** Active cases that need attention, most urgent first: breached, then at risk by time left, then unanswered responses. */
+/** Every clock running on a case now, with its reading: what the board and the watch look at. */
+export const runningClocks = (c: CaseLite): { clock: 'response' | 'follow-up' | 'pickup' | 'lab' | 'resolution'; reading: SlaReading }[] => [
+  ...(c.binSince ? [{ clock: 'pickup' as const, reading: c.pickup }] : []),
+  ...(!c.firstResponseAt && c.response.state !== 'none' ? [{ clock: 'response' as const, reading: c.response }] : []),
+  ...(c.followUpSince ? [{ clock: 'follow-up' as const, reading: c.followUp }] : []),
+  ...(c.labSince ? [{ clock: 'lab' as const, reading: c.lab }] : []),
+  { clock: 'resolution' as const, reading: c.resolve },
+]
+
+/** The case's worst clock: past target before at risk, then the least time left. */
+export const worstClock = (c: CaseLite): { rank: number; left: number } => {
+  let best = { rank: 3, left: Number.POSITIVE_INFINITY }
+  for (const { reading } of runningClocks(c)) {
+    const rank = reading.state === 'breached' ? 0 : reading.state === 'at-risk' ? 1 : 3
+    if (rank < best.rank || (rank === best.rank && reading.left < best.left)) best = { rank, left: reading.left }
+  }
+  return best
+}
+
+/** Cases with any clock at risk or past target, the most urgent first. */
 export const atRiskBoard = (d: Desk): CaseLite[] =>
   d.activeCases
-    .filter((c) => c.resolve.state === 'breached' || c.resolve.state === 'at-risk' || (!c.firstResponseAt && (c.response.state === 'breached' || c.response.state === 'at-risk')))
-    .sort((a, b) => {
-      const rank = (c: CaseLite) => (c.resolve.state === 'breached' ? 0 : c.response.state === 'breached' && !c.firstResponseAt ? 1 : c.resolve.state === 'at-risk' ? 2 : 3)
-      return rank(a) - rank(b) || a.resolve.left - b.resolve.left
-    })
+    .map((c) => ({ c, w: worstClock(c) }))
+    .filter((x) => x.w.rank < 3)
+    .sort((a, b) => a.w.rank - b.w.rank || a.w.left - b.w.left)
+    .map((x) => x.c)
 
 export const csvEscape = (v: unknown): string => {
   const s = v === null || v === undefined ? '' : String(v)

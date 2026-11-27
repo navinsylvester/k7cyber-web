@@ -14,20 +14,7 @@
 .pstrip dd .tag { vertical-align: 2px; }
 @container (max-width: 520px) { .pstrip > div + div { box-shadow: none; padding-left: 0; border-top: 1px solid var(--ln); } }
 
-/* ---------- P4 The bell and its rows ---------- */
-.bell { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; text-decoration: none; white-space: nowrap; }
-.bell:hover span:first-child { text-decoration: underline; text-underline-offset: 3px; }
-.bell-n { display: inline-block; min-width: 22px; padding: 2px 5px; text-align: center; background: var(--signal); color: var(--contrast-ink, #0a0a09); font: 500 11px/1.4 var(--font-mono); letter-spacing: .04em; }
-@container (max-width: 760px) { .bell span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
-.ntf { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--fg); }
-.ntf li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px 24px; padding: 18px 0; border-bottom: 1px solid var(--ln); }
-.ntf-when { font: 400 12px/1.6 var(--font-mono); color: var(--mu); white-space: nowrap; }
-.ntf-body strong { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
-.ntf-body strong a { text-decoration: none; }
-.ntf-body strong a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.ntf-body p { margin: 6px 0 0; font-size: 15px; color: var(--mu); max-width: 66ch; }
-.ntf li:not(.is-unread) .ntf-body strong { font-weight: 500; }
-@container (min-width: 760px) { .ntf li { grid-template-columns: 120px minmax(0, 1fr); } }
+/* ---------- P4 The bell and its rows: in portal.css since 2026-11-27 (SupportParts S35), shared with the support workspace. */
 
 /* ---------- P5 Role tags ---------- */
 .roles { display: inline-flex; flex-wrap: wrap; gap: 6px; }

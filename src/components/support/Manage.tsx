@@ -101,6 +101,18 @@ export const SlaStrip: React.FC<{ n: SlaNow; href: string }> = ({ n, href }) => 
       <span className="n">{n.responsePending}</span>
       <span className="label">Unanswered{n.responseBreached ? ` · ${n.responseBreached} late` : ''}</span>
     </Link>
+    <Link href={`${href}?state=follow-up`} className={n.followUpsLate ? 'is-signal' : undefined}>
+      <span className="n">{n.followUps}</span>
+      <span className="label">Follow-ups waiting{n.followUpsLate ? ` · ${n.followUpsLate} late` : ''}</span>
+    </Link>
+    <Link href={`${href}?state=pickup`} className={n.inBinLate ? 'is-signal' : undefined}>
+      <span className="n">{n.inBin}</span>
+      <span className="label">In the bin{n.inBinLate ? ` · ${n.inBinLate} late` : ''}</span>
+    </Link>
+    <Link href={`${href}?state=lab`} className={n.withLabLate ? 'is-signal' : undefined}>
+      <span className="n">{n.withLab}</span>
+      <span className="label">With the Lab{n.withLabLate ? ` · ${n.withLabLate} late` : ''}</span>
+    </Link>
   </div>
 )
 
@@ -193,7 +205,7 @@ export const Trend2: React.FC<{ days: { day: string; a: number; b: number }[]; a
 }
 
 /** The manager's sub-navigation: overview, engineers, SLA report, CSAT, unhappy customers, at-risk board, KPI settings. */
-export const ManageNav: React.FC<{ active: 'overview' | 'engineers' | 'sla' | 'csat' | 'unhappy' | 'at-risk' | 'kpis'; period: Period }> = ({ active, period }) => {
+export const ManageNav: React.FC<{ active: 'overview' | 'engineers' | 'sla' | 'csat' | 'unhappy' | 'at-risk' | 'kpis' | 'notifications'; period: Period }> = ({ active, period }) => {
   const q = `?period=${period}`
   const items: { key: typeof active; label: string; href: string }[] = [
     { key: 'overview', label: 'Overview', href: `${MANAGE}${q}` },
@@ -203,6 +215,7 @@ export const ManageNav: React.FC<{ active: 'overview' | 'engineers' | 'sla' | 'c
     { key: 'unhappy', label: 'Unhappy customers', href: `${MANAGE}/unhappy${q}` },
     { key: 'at-risk', label: 'At risk', href: `${MANAGE}/at-risk` },
     { key: 'kpis', label: 'KPI settings', href: `${MANAGE}/kpis` },
+    { key: 'notifications', label: 'Notifications', href: `${MANAGE}/notifications` },
   ]
   return (
     <nav className="seg seg-l manage-nav" aria-label="Manager view">

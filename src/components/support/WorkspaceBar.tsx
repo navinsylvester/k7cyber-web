@@ -3,7 +3,7 @@ import React from 'react'
 
 import { sessionIsManager } from '@/lib/support/session'
 
-export type WsSection = 'home' | 'cases' | 'queues' | 'customers' | 'kb' | 'products' | 'product' | 'rfe' | 'dashboards' | 'search' | 'manage'
+export type WsSection = 'home' | 'cases' | 'queues' | 'customers' | 'kb' | 'products' | 'product' | 'rfe' | 'dashboards' | 'search' | 'manage' | 'notifications'
 
 export const WS = '/support/workspace'
 

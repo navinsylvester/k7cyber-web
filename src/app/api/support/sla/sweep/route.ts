@@ -4,7 +4,7 @@ import { cronAuthorised } from '@/lib/cron-auth'
 import { getSettings } from '@/lib/support/kpi-config'
 import { runSweep } from '@/lib/support/prevention'
 
-/* The scheduled prevention sweep (09-portal-guide.md §4c). Called by a scheduler with `Authorization: Bearer <CRON_SECRET>`;
+/* The scheduled sweep: the CSAT pass (09-portal-guide.md §4d). Called by a scheduler with `Authorization: Bearer <CRON_SECRET>`;
    runs as the service identity. `{ "live": true }` in the body asks for a live run, which still needs the settings switch on. */
 
 export const dynamic = 'force-dynamic'

@@ -183,3 +183,34 @@ export const Options: React.FC<{ items: { value: string | number; label: string 
     ))}
   </>
 )
+
+/** S35 The bell (`bell`, `bell-n`): the word *Notifications* in the header with the unread count as a signal block, zero-padded,
+    only while something is unread. Shared with the partner portal (PartnerParts P4). */
+export const Bell: React.FC<{ href: string; unread: number }> = ({ href, unread }) => (
+  <Link className="bell" href={href} aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}>
+    <span>Notifications</span>
+    {unread > 0 && <span className="bell-n">{unread > 99 ? '99+' : String(unread).padStart(2, '0')}</span>}
+  </Link>
+)
+
+/** S35 Notification rows (`ntf`): relative time in mono, the subject (the pixel while unread), the body in muted, the case
+    number as a tag. A row opens through `open(id)`, which marks it read on the way. */
+export const NotificationList: React.FC<{ rows: { id: string; at: string; subject: string; body: string; href: string; ticket?: string; readAt: string | null }[]; open: (id: string) => string }> = ({ rows, open }) => (
+  <ol className="ntf">
+    {rows.map((r) => (
+      <li key={r.id} className={r.readAt ? undefined : 'is-unread'}>
+        <span className="ntf-when" title={dmyHm(r.at)}>
+          {relative(r.at)}
+        </span>
+        <div className="ntf-body">
+          <strong>
+            {!r.readAt && <i className="pixel" aria-label="Unread" />}
+            {/* A plain link: the open route marks the row read, and a full load lets the header's bell recount. */}
+            {r.href ? <a href={open(r.id)}>{r.subject}</a> : r.subject}
+          </strong>
+          {r.body && <p>{r.body}</p>}
+        </div>
+      </li>
+    ))}
+  </ol>
+)

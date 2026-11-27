@@ -170,8 +170,8 @@ Customer Service Manager, Service Manager) or listed by email on the KPI page; d
 
 What it measures. Dataverse's own SLA columns on the case read "In Progress" on every row of this org and its KPI instances cover a
 fraction of cases, so the portal computes compliance itself (`src/lib/support/sla.ts`, pure and unit-tested in
-`tests/int/support-sla.int.spec.ts`): working minutes between timestamps under configurable business hours (09:00–18:00 IST Mon–Sat
-by default), a target per case from the most specific matching row of the targets matrix (vertical > priority > origin; defaults
+`tests/int/support-sla.int.spec.ts`): working minutes between timestamps under the desk's shifts (since 2026-11-27: the union of
+the configured shifts, an overnight shift running into the next morning; one shift 09:00–18:00 IST Mon–Sat by default), a target per case from the most specific matching row of the targets matrix (vertical > priority > origin; defaults
 mirror the CRM's VOICE/EMAIL SLAs at 240 minutes and the "<2 h Consumer" view), "at risk" from a configurable share of the target,
 paused while In Progress-Customer, Dataverse on-hold minutes subtracted. Resolution ends at the `incidentresolution` of the period
 (else the resolved case's modifiedon); first response is the earliest outgoing email or desk note (notes starting `Portal:` are the
@@ -183,12 +183,20 @@ Where it is stored. Settings live in the Payload global `support-settings` (`src
 the KPI page through the local API; raw form at /admin), the sweep log in the collection `support-sla-events`. Nothing is written to
 Dynamics by configuration.
 
-Prevention. Five rules (`src/lib/support/prevention.ts`): at risk and not owned by an engineer, at risk with fewer than N minutes left,
-past target, no activity for N minutes, waiting on the customer for N minutes. Each carries actions (flag, internal note, add to a
-queue, email the owner, email the managers) and a cooldown per case. The at-risk board shows every verdict live and offers reassign,
-remind and queue on the spot (as the signed-in manager). The sweep (cron endpoint, or "Dry run now" / "Run live" on the board) records
-every verdict; a live run also applies the actions, only when the settings switch is on and, by the production guard, never on
-production. Mail goes through `SMTP_URL`, else the server log.
+Five clocks (since 2026-11-27; `src/lib/support/clocks.ts`, `metrics.ts`): first response and resolution as above; **follow-up
+reply**, from a customer's email or portal reply on a case already answered to the next answer (an email sent from the case or a
+reply posted to the portal; the CRM's automatic mail, recognised by the subject prefixes on the KPI page, never counts, and since then
+it no longer counts as a first response either); **pick-up**, while a case sits in a bin (owned by a shared account such as Support #,
+a team or nobody), from when it landed (the watch, else its queue item, else its creation) to an engineer owning it; **Lab sample**,
+from the case moving to In Progress-Lab to the case being resolved (moving it back to support does not stop it). Each has its own
+column in the targets matrix (defaults 30, 5 and 180 working minutes, from the desk's request of 2026-11-26) and a KPI card (Reply SLA,
+Pick-up SLA, Lab SLA). Pick-up and Lab runs are recorded by the watch (`support-clock-runs`), so their cards count from the day the watch
+was switched on.
+
+The at-risk board shows every case with a clock at risk or past target, a meter per running clock, and offers reassign, remind and queue
+on the spot (as the signed-in manager), *Check now* (one watch pass) and the CSAT pass. The fixed prevention rules (stale, waiting,
+nudge, unowned, escalate) were removed on 2026-11-27: who is told what is now the notifications of §4g, on the targets alone. The sweep
+endpoint runs only the CSAT pass (§4d); `support-sla-events` keeps the old rules' history.
 
 Known UAT artefacts (not bugs): the seed resolved every case on 12-10-2026, so resolution times in UAT read as the gap between the
 real creation date and the seed date (almost everything "late"); the seed's notes carry its author, so "touches" credit the seed
@@ -307,6 +315,54 @@ read "done" in the thread. Mail went to the server log (no `SMTP_URL`). PD-0001 
 `k7_rfe`/`k7_defect` rows and `k7_yodizid`, the sweep's outbox drain, the manager numbers and the `with-product` SLA state, the customer's
 hint, the sample script, the engineering door (phases B and C of the design).
 
+## 4g. Notifications (built 2026-11-27)
+What the workspace tells people, on the partner portal's pattern (`src/lib/support/notify.ts`, `notify-model.ts`): one bell row per
+person in `support-notifications`, and by the entry's delivery an email at once or in the digest at the end of the shift, through
+`SMTP_URL` and `SUPPORT_MAIL_ALLOWLIST`. Without `SMTP_URL` the bell works and each row records why no email went. Agents see
+*Notifications* with the unread count in the header (S35) and `/support/workspace/notifications`; opening a row marks it read.
+
+What notifies. Only the configured targets and important case events, nothing ad hoc:
+- **SLA clocks**: each of the five clocks (§4c) at risk and past target, told once per run of the clock (a new follow-up or a new
+  landing in the bin is a new run). A case first seen already past target is not told: the watch does not replay the desk's past.
+- **KPI targets**: at the end of the day's last shift, the desk's cards off target over the KPI period (managers); at the end of each
+  shift, each member's own figures off target (Resolution, Response, Reply SLA, the medians, FCR, CSAT).
+- **Case events**: assigned to you (in the portal or in Dynamics; not when the engineer took it themselves), the customer wrote (an
+  email or a portal reply; a burst within half an hour is one), escalated to an internal team (In Progress-Lab or Principal Support,
+  or escalated to product), a low rating, an unhappy customer past the follow-up target.
+
+Who. Each entry's audiences and delivery are set on `/support/workspace/manage/notifications`: the case owner, the engineers on shift
+(members of the shifts working at the time, or opening next), the managers (a list of work emails on that page; other addresses get the
+email only). A case in a bin has no owner, so what would go to its owner goes to the engineers on shift. Whoever made a change is not
+told about it: the portal knows the actor, the watch reads it from the case's audit (Dynamics' own accounts such as K7 Computing touch a
+case after an assignment, so "modified by" is not the person).
+
+The watch (`src/lib/support/watch.ts`, decisions pure in `watch-model.ts`, memory in `support-case-watch` and `support-clock-runs`).
+`POST /api/support/notify/watch` with `Authorization: Bearer $CRON_SECRET` every minute, as the service identity; *Check now* on the
+at-risk board runs the same pass as the manager. It reads the live desk (about 1.5 s for 221 active cases on UAT), compares each case
+with what it saw last, tells, and at a shift's end sends the KPI reports, the digest and clears read rows past the retention. It writes
+only Payload rows and mail, never Dynamics. Changes made in the portal are told at once (`case-notify.ts`) and the watch's later sight of
+the same change is deduplicated.
+
+Verified 2026-11-27 on a local instance against UAT, with the watch called every minute: CS-01195-B0Q3 moved to In Progress-Lab
+(06:55:19Z) and to the K7 Level2 team (06:55:24Z), a customer-style portal note added (06:55:30Z): the next pass told the escalation and
+the customer's message, the pick-up clock went at risk at 06:59:54Z and past target at 07:00:56Z, each once, to the shift member and
+manager set for the test; reassigned to Faridha Banu (07:03:17Z) told her once (the watch's own sight deduplicated) and recorded an 8-minute
+pick-up run; status back to Open (07:03:19Z), the note deleted, the test rows removed from Payload. Unit tests:
+`tests/int/support-notify.int.spec.ts`, shifts in `support-sla.int.spec.ts`.
+
+Verified again in Chrome the same day, every notification end to end (local probe instance for the screens, the testers' server's
+watch doing the telling, a temporary target row Pro32 · Low · Email with targets of 3, 6, 3, 3 and 4 minutes so only the test case
+matched; SRN # as a second manager and Channel Support as an assignee, since nobody is told of their own action). CS-01225-H8W2 created on
+TEST TR06 (07:46:24Z): first response past target (07:49:38Z), resolution at risk (07:51:46Z) and past target (07:52:47Z); agent reply
+(07:53:17Z), the customer's portal reply (07:54:35Z) told at once and not again by the watch, follow-up at risk (07:56:53Z) and past
+target (07:57:54Z); to the K7 Level2 team (07:58:19Z) and In Progress-Lab (07:58:33Z): the escalation to SRN # only, pick-up past target
+(08:02:00Z), Lab at risk (08:02:00Z) and past target (08:03:02Z); assigned to Channel Support (08:03:22Z) and told; the pick-up run
+(5 of 3 min) recorded; the Day shift's end moved to 13:37 IST: the desk report to both managers (08:07:08Z) and, once the case was
+resolved (08:07:55Z, Lab run 8 of 4 min), the probe user's own report (08:08:10Z); a rating of 1 recorded (08:07:57Z): the low rating to
+SRN #; a 13:41–13:44 test shift: the shift's own report (08:14:21Z). The bell, the notifications page, the at-risk board's list and the
+Pick-up and Lab cards (0 %, n = 1) showed each. Afterwards the settings were put back through the same pages and the test rows, runs and
+rating removed from Payload; CS-01225-H8W2 stays in UAT, Closed-Remote, with its three notes.
+
 ## 4b. Verified on 2026-10-13 (UAT, development sign-ins)
 - Agent: workspace home, My Active Cases view (columns from the view's layoutxml, sort, search), a case sheet
   (timeline with emails and notes, details, related), one internal note added on the test case CS-431163-Y0L7,
@@ -351,8 +407,11 @@ hint, the sample script, the engineering door (phases B and C of the design).
 - Approved page designs in `designs/` (the portal was built straight on the design system).
 - Production: `(Prod)` registrations, `DATAVERSE_URL` switch, read-only week, feature flags
   (`SUPPORT_PORTAL_WRITES` is read nowhere yet).
-- Manager view: a scheduler for the sweep (nothing calls the endpoint yet, so emailed surveys and reminders only go out on a manual
-  "Run live"); per-status durations (the portal has no audit history, so "waiting on customer" pauses are coarse); reopen-by-customer
-  signals, which the CRM does not record; the composite score weights are fixed in code (`engineerStats`).
+- Manager view: a scheduler for the CSAT sweep (nothing calls the endpoint yet, so emailed surveys and reminders only go out on a manual
+  "CSAT pass, live"); per-status durations (the portal reads the audit only to name who changed a case, so "waiting on customer" pauses
+  are coarse); reopen-by-customer signals, which the CRM does not record; the composite score weights are fixed in code (`engineerStats`).
+- Notifications (§4g): a hosted scheduler for the watch (locally `scripts/serve.sh up` runs `scripts/support-watch.sh`); `SMTP_URL` for
+  the emails; the shifts' members and the managers, which nobody has set yet (`11` item 29c); the customer has no bell (their emails are
+  unchanged); the product desk's own emails (§4f) do not ring the bell yet.
 - CSAT (§4d): `SMTP_URL` before any survey reaches a customer; a scheduler for the sweep; ratings stay in Payload (no CRM column) and
   one rating per case (a re-rating replaces it); the care band has no per-contact override on account cases; no survey on cancelled cases.

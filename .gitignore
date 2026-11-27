@@ -37,3 +37,4 @@ scripts/__pycache__/
 
 # scripts/backup.sh output
 backups/
+scripts/.watch.log

@@ -78,6 +78,9 @@ export interface Config {
     'report-files': ReportFile;
     'report-leads': ReportLead;
     'support-sla-events': SupportSlaEvent;
+    'support-notifications': SupportNotification;
+    'support-case-watch': SupportCaseWatch;
+    'support-clock-runs': SupportClockRun;
     'support-csat': SupportCsat;
     'support-care-flags': SupportCareFlag;
     'product-items': ProductItem;
@@ -149,6 +152,9 @@ export interface Config {
     'report-files': ReportFilesSelect<false> | ReportFilesSelect<true>;
     'report-leads': ReportLeadsSelect<false> | ReportLeadsSelect<true>;
     'support-sla-events': SupportSlaEventsSelect<false> | SupportSlaEventsSelect<true>;
+    'support-notifications': SupportNotificationsSelect<false> | SupportNotificationsSelect<true>;
+    'support-case-watch': SupportCaseWatchSelect<false> | SupportCaseWatchSelect<true>;
+    'support-clock-runs': SupportClockRunsSelect<false> | SupportClockRunsSelect<true>;
     'support-csat': SupportCsatSelect<false> | SupportCsatSelect<true>;
     'support-care-flags': SupportCareFlagsSelect<false> | SupportCareFlagsSelect<true>;
     'product-items': ProductItemsSelect<false> | ProductItemsSelect<true>;
@@ -2190,6 +2196,86 @@ export interface SupportSlaEvent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-notifications".
+ */
+export interface SupportNotification {
+  id: number;
+  agentId: string;
+  agentEmail?: string | null;
+  agentName?: string | null;
+  event: string;
+  dedupe?: string | null;
+  subject: string;
+  body?: string | null;
+  href?: string | null;
+  caseId?: string | null;
+  ticket?: string | null;
+  delivery: 'immediate' | 'digest' | 'bell';
+  readAt?: string | null;
+  emailedAt?: string | null;
+  digestAt?: string | null;
+  emailTo?: string | null;
+  emailError?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-case-watch".
+ */
+export interface SupportCaseWatch {
+  id: number;
+  caseId: string;
+  ticket?: string | null;
+  ownerId?: string | null;
+  ownerName?: string | null;
+  ownerKind?: string | null;
+  statecode?: number | null;
+  statuscode?: number | null;
+  binSince?: string | null;
+  labSince?: string | null;
+  lastInAt?: string | null;
+  /**
+   * SLA states already told: clock:state:start.
+   */
+  notified?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  active?: boolean | null;
+  seenAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-clock-runs".
+ */
+export interface SupportClockRun {
+  id: number;
+  caseId: string;
+  ticket?: string | null;
+  clock: 'pickup' | 'lab';
+  ownerId?: string | null;
+  ownerName?: string | null;
+  startedAt: string;
+  endedAt: string;
+  /**
+   * Working minutes.
+   */
+  minutes?: number | null;
+  target?: number | null;
+  met?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "support-csat".
  */
 export interface SupportCsat {
@@ -4174,6 +4260,18 @@ export interface PayloadLockedDocument {
         value: number | SupportSlaEvent;
       } | null)
     | ({
+        relationTo: 'support-notifications';
+        value: number | SupportNotification;
+      } | null)
+    | ({
+        relationTo: 'support-case-watch';
+        value: number | SupportCaseWatch;
+      } | null)
+    | ({
+        relationTo: 'support-clock-runs';
+        value: number | SupportClockRun;
+      } | null)
+    | ({
         relationTo: 'support-csat';
         value: number | SupportCsat;
       } | null)
@@ -5298,6 +5396,69 @@ export interface SupportSlaEventsSelect<T extends boolean = true> {
   detail?: T;
   runId?: T;
   actor?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-notifications_select".
+ */
+export interface SupportNotificationsSelect<T extends boolean = true> {
+  agentId?: T;
+  agentEmail?: T;
+  agentName?: T;
+  event?: T;
+  dedupe?: T;
+  subject?: T;
+  body?: T;
+  href?: T;
+  caseId?: T;
+  ticket?: T;
+  delivery?: T;
+  readAt?: T;
+  emailedAt?: T;
+  digestAt?: T;
+  emailTo?: T;
+  emailError?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-case-watch_select".
+ */
+export interface SupportCaseWatchSelect<T extends boolean = true> {
+  caseId?: T;
+  ticket?: T;
+  ownerId?: T;
+  ownerName?: T;
+  ownerKind?: T;
+  statecode?: T;
+  statuscode?: T;
+  binSince?: T;
+  labSince?: T;
+  lastInAt?: T;
+  notified?: T;
+  active?: T;
+  seenAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-clock-runs_select".
+ */
+export interface SupportClockRunsSelect<T extends boolean = true> {
+  caseId?: T;
+  ticket?: T;
+  clock?: T;
+  ownerId?: T;
+  ownerName?: T;
+  startedAt?: T;
+  endedAt?: T;
+  minutes?: T;
+  target?: T;
+  met?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -6753,7 +6914,7 @@ export interface Footer {
   createdAt?: string | null;
 }
 /**
- * Targets, business hours, KPI cards and prevention rules for the manager view. Edited from the portal; this is the raw form.
+ * SLA targets, shifts, KPI cards and notifications for the manager view. Edited from the portal; this is the raw form.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "support-settings".
@@ -6770,6 +6931,18 @@ export interface SupportSetting {
         origin: 'any' | '1' | '2' | '3' | '696720000';
         responseMinutes: number;
         resolveMinutes: number;
+        /**
+         * Follow-up reply (working minutes).
+         */
+        followUpMinutes?: number | null;
+        /**
+         * Pick-up from the bin.
+         */
+        pickupMinutes?: number | null;
+        /**
+         * Lab sample.
+         */
+        labMinutes?: number | null;
         id?: string | null;
       }[]
     | null;
@@ -6789,17 +6962,41 @@ export interface SupportSetting {
    * Subtract Dataverse's on-hold minutes (onholdtime) from the elapsed time.
    */
   subtractOnHold?: boolean | null;
+  /**
+   * One per line: outgoing emails whose subject starts with one of these are automatic and never answer the customer.
+   */
+  automatedSubjects?: string | null;
   hours: {
     mode: 'business' | 'always';
-    /**
-     * HH:MM
-     */
-    start: string;
-    /**
-     * HH:MM
-     */
-    end: string;
     timeZone: string;
+    /**
+     * The desk works the union of its shifts; every SLA clock counts only those minutes. An overnight shift ends after midnight (end before start).
+     */
+    shifts?:
+      | {
+          key?: string | null;
+          name: string;
+          /**
+           * HH:MM
+           */
+          start: string;
+          /**
+           * HH:MM
+           */
+          end: string;
+          days?: ('1' | '2' | '3' | '4' | '5' | '6' | '0')[] | null;
+          /**
+           * Work emails of the engineers on this shift, one per line.
+           */
+          members?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Before 2026-11-27: the one business-hours window. Read only when no shift is set.
+     */
+    start?: string | null;
+    end?: string | null;
     days?: ('1' | '2' | '3' | '4' | '5' | '6' | '0')[] | null;
   };
   kpis?:
@@ -6807,6 +7004,9 @@ export interface SupportSetting {
         key:
           | 'resolution-sla'
           | 'response-sla'
+          | 'followup-sla'
+          | 'pickup-sla'
+          | 'lab-sla'
           | 'median-resolution'
           | 'median-response'
           | 'fcr'
@@ -6830,6 +7030,38 @@ export interface SupportSetting {
       }[]
     | null;
   defaultPeriod?: ('7d' | '30d' | '90d' | 'mtd') | null;
+  /**
+   * What the workspace tells people (09-portal-guide.md §4g). Edited from /support/workspace/manage/notifications.
+   */
+  notify?: {
+    enabled?: boolean | null;
+    /**
+     * 7d, 30d, 90d or mtd.
+     */
+    kpiPeriod?: string | null;
+    /**
+     * Days a read notification is kept.
+     */
+    retentionDays?: number | null;
+    /**
+     * Who "Managers" means for notifications: work emails, one per line. Empty: the manager view’s list.
+     */
+    managers?: string | null;
+    rules?:
+      | {
+          key: string;
+          /**
+           * owner, shift, managers
+           */
+          audiences?: string | null;
+          /**
+           * immediate, digest, bell or off
+           */
+          delivery?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
   rules?:
     | {
         key: 'unowned-at-risk' | 'nudge-at-risk' | 'escalate-breach' | 'stale' | 'waiting-followup';
@@ -6852,15 +7084,15 @@ export interface SupportSetting {
     | null;
   sweep?: {
     /**
-     * The scheduled sweep (POST /api/support/sla/sweep with the cron secret) evaluates the rules.
+     * The scheduled sweep (POST /api/support/sla/sweep with the cron secret) runs the CSAT pass: surveys, reminders, overdue follow-ups.
      */
     enabled?: boolean | null;
     /**
-     * Off: the sweep only records what it would do. On: it writes notes, queues items and sends mail (UAT only; production is read-only in code).
+     * Off: the CSAT pass only counts what it would send. On: it emails surveys and reminders to customers.
      */
     live?: boolean | null;
     /**
-     * Comma-separated recipients for "Email the managers".
+     * Before 2026-11-27. Now Notifications → managers.
      */
     managerEmails?: string | null;
   };
@@ -7400,19 +7632,34 @@ export interface SupportSettingsSelect<T extends boolean = true> {
         origin?: T;
         responseMinutes?: T;
         resolveMinutes?: T;
+        followUpMinutes?: T;
+        pickupMinutes?: T;
+        labMinutes?: T;
         id?: T;
       };
   warnAtPercent?: T;
   phoneCountsAsResponded?: T;
   pauseWhileWaiting?: T;
   subtractOnHold?: T;
+  automatedSubjects?: T;
   hours?:
     | T
     | {
         mode?: T;
+        timeZone?: T;
+        shifts?:
+          | T
+          | {
+              key?: T;
+              name?: T;
+              start?: T;
+              end?: T;
+              days?: T;
+              members?: T;
+              id?: T;
+            };
         start?: T;
         end?: T;
-        timeZone?: T;
         days?: T;
       };
   kpis?:
@@ -7424,6 +7671,22 @@ export interface SupportSettingsSelect<T extends boolean = true> {
         id?: T;
       };
   defaultPeriod?: T;
+  notify?:
+    | T
+    | {
+        enabled?: T;
+        kpiPeriod?: T;
+        retentionDays?: T;
+        managers?: T;
+        rules?:
+          | T
+          | {
+              key?: T;
+              audiences?: T;
+              delivery?: T;
+              id?: T;
+            };
+      };
   rules?:
     | T
     | {

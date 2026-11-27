@@ -52,6 +52,9 @@ design language's rule, not a defect.
 | TR-21 | Merge one case into another | gap | P2 | done 2026-11-18 |
 | TR-22 | Bug ID not saved in Incident ID | bug | P1 | done 2026-11-26 (the CRM's field security; who may set it is D-5) |
 | TR-23 | State and City not filtered by letter | gap | P2 | done 2026-11-26 |
+| TR-24 | Case summary with the existing notes | gap | P2 | planned: the CRM's Copilot case summary on the timeline (verified callable 2026-11-27) |
+| TR-25 | Select a template in the email | gap | P2 | planned: the CRM's email templates in the composer (verified 2026-11-27) |
+| TR-26 | Notify managers: overdue emails, the bin, pending cases, escalations, Lab samples | request | P1 | done 2026-11-27 as the notification system (09 §4g) |
 | D-1 | Fill the customer and serial key from the registered mobile | request | — | decide |
 | D-2 | "Customer type: consumer or enterprise" on the case | request | — | decide |
 | D-3 | Rename field titles | request | — | decide |
@@ -297,6 +300,19 @@ design; open a new item if it is not.
   says how many there are; labels are larger and darker; required fields carry an orange asterisk, with a note at the top of the form.
 - **Speed, case assignment.** Reported as working; nothing to do.
 
+**Reply for the notes of 2026-11-26 (TR-22, TR-23):**
+- **"BUG ID not getting added" (Incident ID).** Incident ID is a locked field in the CRM: only users in its *Level 2 Users*
+  group (and administrators) may fill it in or see it, and the Hub works the same way. Your user is not in that group, so the CRM
+  refused the save, and the portal dropped everything else you had changed along with it. Since 26 November the portal shows
+  Incident ID greyed out with the note *Locked: Dynamics field security does not let your user set this.*, and the rest of what you
+  change saves. Module, Sub module and Product version are locked the same way, and so is the YODIZ id on RFEs. The Details tab
+  says which of these fields are hidden from you, so a case can have a Bug ID you cannot see. Until the support lead decides who
+  should set the Bug ID (D-5), ask a Level 2 colleague to add it, or put it in a note on the case.
+- **"State and City name not filtered with Letter".** Fixed on 26 November. On the contact and account forms, State and City are
+  now fields you type into: a few letters from anywhere in the name narrow the list ("chen" leaves Chengalpattu, Chennai,
+  Tiruchendur and Tiruchengode), then pick with the mouse, or the arrow keys and Enter. Choose the state first; the cities follow it.
+  The test CRM listed most cities twice; each now appears once.
+
 ## 5. Evidence kept
 UAT counts used above, read with the probe on 2026-10-24: 1,438 cases, 214 active; 1,370 with a case email; 1,198
 contact customers whose contact has an account; 142 cases (22 active) owned by Navin through the seed's owner
@@ -363,6 +379,38 @@ UAT also lists most cities twice (its own set and the seeded production set).
 arrows and Enter pick, leaving the field settles on an exact or single match; each city name shows once. Checked in Chrome: "chen" →
 Chengalpattu, Chennai, Tiruchendur, Tiruchengode; batman K saved as Tamil Nadu / Chennai (region South) and cleared again in UAT.
 
+### TR-24 · Case summary with the existing notes (P2, Faridha, 26-11)
+**Testers said:** "Case summary should be added" (existing notes).
+**Verified:** the CRM's case forms carry a *Copilot Summary Section*, and Copilot case summary is on in this CRM (enabled, consent
+2024-01-16): it summarises the title, description, product, notes and emails. The portal has no summary. The summary API answers from
+outside: `msdyn_CustomApiCustomerServiceCaseSummary` on CS-01195-B0Q3 returned four sentences in 8 s (06:14:57Z), nothing changed.
+**Plan:** a *Case summary* block at the top of the timeline with *Summarise* (on demand, 8 s), kept until a new note or email, and
+*Save as note*; checked as an agent without admin rights. Production's Copilot setting to be confirmed at go-live.
+
+### TR-25 · Select a template in the email (P2, Farhin, 26-11)
+**Testers said:** "Select template option" (email template).
+**Verified:** the Hub's email has *Insert Template*; the portal's composer has none. UAT holds five case templates, all Microsoft's from
+2018 (New Case Acknowledgement, Closed Case Acknowledgement, Case Auto Response, Case Escalation, Case resolution survey invite).
+`InstantiateTemplate` fills one for a case (customer, title, owner, number) without creating a record (06:17:41Z).
+**Plan:** a *Template* field on *Email the customer* filling subject and message, editable; the templates written in Dynamics so the
+Hub and the portal share them. Needs the desk's real templates (ask Farhin which they use).
+
+### TR-26 · Notify managers (P1, 26-11)
+**Testers said:** six notifications: a fresh email not answered in 4 hours; a pending reply not sent in 30 minutes; a case not picked
+from the bin or queue in 5 minutes; a case pending more than 12 hours; a case escalated to an internal team; a Lab sample not closed
+in 3 hours.
+**Navin decided (2026-11-27):** a notification system like the partner portal's, for every user, not only managers; on the SLA and
+KPI targets configured in the portal, no other ad hoc rules; counted in shift working hours; "pending reply" is the customer's
+follow-up waiting for our answer; a Lab sample is submitted when the case goes to In Progress-Lab, and leaving the Lab does not close
+it; the 12 hours is the SLA's and the KPIs'; email once `SMTP_URL` is set, the bell in the console now.
+**Done 2026-11-27** (`09-portal-guide.md` §4c, §4g): shifts replace the business hours; three new clocks with their targets and cards
+(follow-up reply 30 min, pick-up from the bin 5 min, Lab sample 180 min); the notification catalogue set per entry on
+`/manage/notifications`; the bell and `/support/workspace/notifications`; the watch every minute (`scripts/serve.sh` starts it). How
+the six map: fresh email → the first-response clock (its target is the 4 hours, set on the KPI page; automatic acknowledgements no
+longer count as an answer); pending reply → the follow-up clock; the bin → the pick-up clock; 12 hours → the resolution clock and the
+KPI reports; escalated → *Escalated to an internal team*; Lab → the Lab clock. The fixed prevention rules are gone. To set by the
+support lead: the first-response target (60 minutes now), the shifts and their members, the managers on the notifications page.
+
 ## 6. Session log
 - **2026-10-24 (1)** — Tester notes triaged against code, UAT and the live portal. TR-01 and TR-02 found while
   checking the theme claim. CS-01194-B4N9 moved to In Progress-Support and back to In Progress-Lab to prove status
@@ -415,4 +463,17 @@ Chengalpattu, Chennai, Tiruchendur, Tiruchengode; batman K saved as Tamil Nadu /
   fields, each UAT city name once. Checked on a local probe instance (127.0.0.1:3200, stopped afterwards; Abeed's rights through a
   temporary local override, removed): CS-01195-B0Q3 Incident ID set and cleared (07:18:01Z, 07:19:11Z), OS version set and cleared,
   batman K's state and city set and cleared (07:17:00Z, 07:17:03Z). New tests `support-field-security`, `support-filter-options`.
-  **Next:** D-5 with the support lead (`11` item 29b); tell the testers.
+  The reply to the testers is in §4. **Next:** D-5 with the support lead (`11` item 29b).
+- **2026-11-27** — Three new notes: TR-24 (case summary) and TR-25 (email templates) checked and planned, not built; TR-26 built as
+  the support notification system on Navin's answers (see the entry). Checked on a local probe instance (127.0.0.1:3200, stopped
+  afterwards) against UAT with the watch called every minute: CS-01195-B0Q3 to In Progress-Lab (06:55:19Z) and the K7 Level2 team
+  (06:55:24Z), a portal-reply note added (06:55:30Z); the escalation, the customer's message, the pick-up clock at risk (06:59:54Z) and
+  past target (07:00:56Z) were each told once; back to Faridha Banu (07:03:17Z) and Open (07:03:19Z), the note deleted (07:03:23Z), the
+  test rows and settings cleared in Payload. Summary and template APIs called once each on UAT (06:14:57Z, 06:17:41Z), nothing written.
+  New tests `support-notify`, shift tests in `support-sla`. **Next:** TR-25 and TR-24; the support lead sets the shifts, their
+  members, the managers and the first-response target.
+- **2026-11-27 (2)** — Every TR-26 notification verified in Chrome end to end (`09-portal-guide.md` §4g has the times): first response,
+  resolution, follow-up, pick-up and Lab clocks at risk and past target; the customer wrote; escalated; assigned; low rating; the desk and
+  personal KPI reports at a shift's end. Found and fixed on the way: notifications of a clock just past its deadline read "overdue 0 min"
+  (now "just overdue"); the at-risk board listed only SLA notifications (now everything told, to whom). Left in UAT: CS-01225-H8W2
+  (TEST TR06, Closed-Remote). Testers' server rebuilt (down 08:16:19 to 08:16:47Z).

@@ -6,33 +6,32 @@ import { MANAGE, ManageNav, SlaMeter, SlaStrip, SlaTag } from '@/components/supp
 import { Flash, Options, PageHead, Pager, qs, Tid, When } from '@/components/support/Parts'
 import { WS, WorkspaceBar } from '@/components/support/WorkspaceBar'
 import { getSettings } from '@/lib/support/kpi-config'
-import { ACTION_LABEL, ruleDef } from '@/lib/support/kpi-model'
-import { atRiskBoard, loadDesk, slaNow, type CaseLite } from '@/lib/support/metrics'
+import { atRiskBoard, loadDesk, runningClocks, slaNow, worstClock, type CaseLite } from '@/lib/support/metrics'
+import { clockDef, notifyDef } from '@/lib/support/notify-model'
+import { recentSent } from '@/lib/support/notify'
 import { label as optLabel, PRIORITY, VERTICAL } from '@/lib/support/options'
-import { evaluateRules, recentEvents, verdictsByCase } from '@/lib/support/prevention'
 import { getAgents, getPublicQueues } from '@/lib/support/reference'
 import { requireManager } from '@/lib/support/session'
 import { dmyHm } from '@/lib/support/format'
 import { fmtMinutes } from '@/lib/support/sla'
 
-import { nudgeAction, queueAction, reassignAction, sweepAction } from './actions'
+import { checkAction, nudgeAction, queueAction, reassignAction, sweepAction } from './actions'
 
 export const metadata: Metadata = { title: 'At risk' }
 
-type SP = { state?: string; owner?: string; page?: string; ok?: string; error?: string; run?: string; fired?: string; done?: string; skipped?: string; failed?: string; mode?: string; csatInvited?: string; csatReminded?: string; csatOverdue?: string }
+type SP = { state?: string; owner?: string; page?: string; ok?: string; error?: string; mode?: string; csatInvited?: string; csatReminded?: string; csatOverdue?: string; cases?: string; first?: string; events?: string; told?: string; runs?: string; closed?: string; ms?: string }
 
 const PATH = `${MANAGE}/at-risk`
 const PAGE = 40
 
-/* The prevention board: every active case the rules worry about, most urgent first, with the verdicts the rules reach now,
-   the actions a manager can take on the spot, and what the sweep did last. */
+/* Before it breaches: every active case with an SLA clock at risk or past target, most urgent first, each running clock as a
+   meter, the actions a manager can take on the spot, and what the notification watch told lately (09-portal-guide.md §4c, §4g). */
 export default async function AtRiskPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams
   const me = await requireManager()
   const settings = await getSettings()
-  const [desk, agents, queues, events] = await Promise.all([loadDesk(me.auth, settings, '7d'), getAgents(me.auth).catch(() => []), getPublicQueues(me.auth).catch(() => []), recentEvents({ limit: 30 })])
+  const [desk, agents, queues, sent] = await Promise.all([loadDesk(me.auth, settings, '7d'), getAgents(me.auth).catch(() => []), getPublicQueues(me.auth).catch(() => []), recentSent({ limit: 40 })])
   const now = slaNow(desk)
-  const verdicts = verdictsByCase(evaluateRules(desk, settings))
   const state = sp.state
   let rows: CaseLite[]
   let heading: string
@@ -45,6 +44,15 @@ export default async function AtRiskPage({ searchParams }: { searchParams: Promi
   } else if (state === 'response') {
     rows = desk.activeCases.filter((c) => !c.firstResponseAt && c.response.state !== 'paused').sort((a, b) => a.response.left - b.response.left)
     heading = 'No first response yet, least time left first'
+  } else if (state === 'follow-up') {
+    rows = desk.activeCases.filter((c) => c.followUpSince).sort((a, b) => a.followUp.left - b.followUp.left)
+    heading = 'The customer wrote and waits for an answer, least time left first'
+  } else if (state === 'pickup') {
+    rows = desk.activeCases.filter((c) => c.binSince).sort((a, b) => a.pickup.left - b.pickup.left)
+    heading = 'In the bin, waiting to be picked, longest first'
+  } else if (state === 'lab') {
+    rows = desk.activeCases.filter((c) => c.labSince).sort((a, b) => a.lab.left - b.lab.left)
+    heading = 'With the Lab, least time left first'
   } else if (state === 'breached' || state === 'at-risk') {
     rows = desk.activeCases.filter((c) => c.resolve.state === state).sort((a, b) => a.resolve.left - b.resolve.left)
     heading = state === 'breached' ? 'Past target' : 'At risk, least time left first'
@@ -58,8 +66,7 @@ export default async function AtRiskPage({ searchParams }: { searchParams: Promi
   const slice = rows.slice((page - 1) * PAGE, page * PAGE)
   const base = { state, owner: sp.owner, page: page > 1 ? page : undefined }
   const ret = PATH + qs(base)
-  const lastRun = events[0]
-  const enabledRules = settings.rules.filter((r) => r.enabled)
+  const last = sent[0]
   return (
     <>
       <WorkspaceBar active="manage" />
@@ -69,43 +76,55 @@ export default async function AtRiskPage({ searchParams }: { searchParams: Promi
           title="Before it breaches"
           lede={
             <>
-              {now.breached} active cases are past target, {now.atRisk} are at risk and {now.responsePending} have had no first response. Rules below say what should happen; the sweep applies them.
+              {now.breached} active cases are past their resolution target, {now.atRisk} are at risk, {now.responsePending} have had no first response, {now.followUps} have a customer waiting for an answer, {now.inBin} sit in a bin and {now.withLab} are with the Lab. The watch tells people as clocks turn; who hears what is on the notifications page.
             </>
           }
           actions={
-            <Link className="btn btn-line btn-sm" href={`${MANAGE}/kpis#prevention`}>
-              Prevention rules →
+            <Link className="btn btn-line btn-sm" href={`${MANAGE}/notifications`}>
+              Notifications →
             </Link>
           }
         />
         <ManageNav active="at-risk" period={settings.defaultPeriod} />
-        {sp.ok === 'sweep' && (
+        {sp.ok === 'watch' && (
           <Flash>
-            Sweep {sp.run} ran in {sp.mode === 'live' ? 'live' : 'dry-run'} mode: {sp.fired} verdicts, {sp.done} recorded{sp.mode === 'live' ? ' and applied' : ''}, {sp.skipped} within cooldown, {sp.failed} failed.
-            {sp.csatInvited !== undefined ? ` CSAT: ${sp.csatInvited} surveys ${sp.mode === 'live' ? 'sent' : 'to send'}, ${sp.csatReminded} reminders, ${sp.csatOverdue} follow-ups overdue.` : ''}
+            The watch read {sp.cases} active cases in {Math.round(Number(sp.ms ?? 0) / 100) / 10} s: {sp.first} seen for the first time, {sp.events} events and {sp.told} clock states told, {sp.runs} pick-up or Lab runs finished, {sp.closed} cases left the desk.
           </Flash>
         )}
-        {sp.ok && sp.ok !== 'sweep' && <Flash>{sp.ok === 'reassigned' ? 'Case reassigned.' : sp.ok === 'nudged' ? 'Reminder posted on the case.' : 'Case added to the queue.'}</Flash>}
+        {sp.ok === 'csat' && (
+          <Flash>
+            CSAT pass ({sp.mode === 'live' ? 'live' : 'dry run'}): {sp.csatInvited ?? 0} surveys {sp.mode === 'live' ? 'sent' : 'to send'}, {sp.csatReminded ?? 0} reminders, {sp.csatOverdue ?? 0} follow-ups overdue.
+          </Flash>
+        )}
+        {sp.ok && sp.ok !== 'watch' && sp.ok !== 'csat' && <Flash>{sp.ok === 'reassigned' ? 'Case reassigned.' : sp.ok === 'nudged' ? 'Reminder posted on the case.' : 'Case added to the queue.'}</Flash>}
         {sp.error && <Flash kind="error">{sp.error}</Flash>}
 
         <SlaStrip n={now} href={PATH} />
 
         <div className="sweep-box">
           <p>
-            {enabledRules.length} rules on: {enabledRules.map((r) => ruleDef(r.key).label).join('; ')}. Mode: <strong>{settings.sweep.live ? 'live' : 'dry run'}</strong>.
-            {lastRun ? ` Last sweep ${dmyHm(lastRun.createdAt)} by ${lastRun.actor || 'cron'}.` : ' No sweep has run yet.'}
+            Notifications {settings.notify.enabled ? 'on' : <strong>off</strong>}: the watch reads the desk every minute and tells the people each notification&apos;s rule names; the list below is everything told, to whom.
+            {last ? ` Last told ${dmyHm(last.at)}.` : ' Nothing told yet.'}
           </p>
-          <form action={sweepAction}>
+          <form action={checkAction}>
             <input type="hidden" name="return" value={ret} />
-            <button className="btn btn-line btn-sm" type="submit" name="live" value="0">
-              Dry run now
+            <button className="btn btn-line btn-sm" type="submit">
+              Check now
             </button>
-            {settings.sweep.live && (
-              <button className="btn btn-primary btn-sm" type="submit" name="live" value="1">
-                Run live →
-              </button>
-            )}
           </form>
+          {settings.csat.enabled && (
+            <form action={sweepAction}>
+              <input type="hidden" name="return" value={ret} />
+              <button className="btn btn-line btn-sm" type="submit" name="live" value="0">
+                CSAT pass, dry run
+              </button>
+              {settings.sweep.live && (
+                <button className="btn btn-primary btn-sm" type="submit" name="live" value="1">
+                  CSAT pass, live →
+                </button>
+              )}
+            </form>
+          )}
         </div>
 
         <form className="filters-inline" action={PATH} method="get" aria-label="Filter the board">
@@ -139,9 +158,9 @@ export default async function AtRiskPage({ searchParams }: { searchParams: Promi
         <div className="board">
           {rows.length === 0 && <p className="hint" style={{ padding: '24px 0' }}>Nothing here. Every active case is inside its target.</p>}
           {slice.map((c) => {
-            const vs = verdicts.get(c.id) ?? []
+            const clocks = runningClocks(c)
             return (
-              <article className={`board-row${c.resolve.state === 'breached' ? ' is-breached' : ''}`} key={c.id}>
+              <article className={`board-row${worstClock(c).rank === 0 ? ' is-breached' : ''}`} key={c.id}>
                 <div>
                   <div className="t">
                     <Link href={`${WS}/cases/${c.id}`}>{c.title || '(no title)'}</Link>
@@ -160,24 +179,15 @@ export default async function AtRiskPage({ searchParams }: { searchParams: Promi
                       changed <When date={c.modifiedon.toISOString()} />
                     </span>
                   </div>
-                  {vs.length > 0 && (
-                    <div className="verdicts" style={{ marginTop: 8 }}>
-                      {vs.map((v) => (
-                        <span className="tag tag-dashed" key={v.rule} title={`${v.reason}. ${v.actions.map((a) => ACTION_LABEL[a]).join(', ')}`}>
-                          {v.label}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
                 <div className="m">
-                  <SlaMeter r={c.resolve} label={`Resolution · target ${fmtMinutes(c.target.resolveMinutes)}`} />
-                  {c.firstResponseAt ? (
+                  {clocks.map(({ clock, reading }) => (
+                    <SlaMeter r={reading} label={`${clockDef(clock).label} · target ${fmtMinutes(reading.target)}`} key={clock} />
+                  ))}
+                  {c.firstResponseAt && (
                     <span className="label muted">
                       Response <SlaTag state={c.response.state} />
                     </span>
-                  ) : (
-                    <SlaMeter r={c.response} label={`First response · target ${fmtMinutes(c.target.responseMinutes)}`} />
                   )}
                   {c.crm && (
                     <span className="label muted">
@@ -241,21 +251,26 @@ export default async function AtRiskPage({ searchParams }: { searchParams: Promi
         </div>
 
         <h2 className="sub-head" style={{ marginTop: 'clamp(32px, 4cqw, 48px)' }}>
-          What the sweep did
-          <span className="label">last {events.length}</span>
+          What the workspace told
+          <span className="label">last {sent.length}</span>
         </h2>
-        {events.length === 0 ? (
-          <p className="hint">No sweep has run yet. Run a dry run above, or schedule POST /api/support/sla/sweep.</p>
+        {sent.length === 0 ? (
+          <p className="hint">Nothing yet. People are told when a clock goes at risk or past its target, when a KPI misses its target at the end of a shift, and when something important happens on a case; schedule POST /api/support/notify/watch every minute, or press Check now.</p>
         ) : (
           <div className="events">
-            {events.map((e) => (
-              <div className="event" key={e.id}>
-                <span className="when">{dmyHm(e.createdAt)}</span>
+            {sent.map((e) => (
+              <div className="event" key={e.key}>
+                <span className="when">{dmyHm(e.at)}</span>
                 <span>
-                  <Tid ticket={e.ticket} href={`${WS}/cases/${e.caseId}`} /> · {ruleDef(e.rule as never)?.label ?? e.rule} · <span className={`tag${e.mode === 'live' ? ' tag-solid' : ' tag-dashed'}`}>{e.mode}</span>{' '}
-                  <span className={`tag${e.outcome === 'failed' ? ' tag-signal' : ''}`}>{e.outcome}</span>
+                  {e.caseId ? (
+                    <>
+                      <Tid ticket={e.ticket} href={`${WS}/cases/${e.caseId}`} /> ·{' '}
+                    </>
+                  ) : null}
+                  {notifyDef(e.event)?.label ?? e.event}
+                  {e.emailed > 0 ? <span className="tag tag-solid">emailed</span> : null}
                   <span className="d" style={{ display: 'block' }}>
-                    {e.actions}. {e.detail}
+                    To {e.to.join(', ')}.{e.emailed === 0 && e.emailError ? ` No email: ${e.emailError}.` : ''}
                   </span>
                 </span>
               </div>

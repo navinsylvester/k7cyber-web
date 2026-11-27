@@ -4,6 +4,7 @@
 #   scripts/serve.sh down      stop it (SIGTERM, then SIGKILL after 10 s: next start can sit on open connections)
 #   scripts/serve.sh rebuild   down, pnpm build, up
 #   scripts/serve.sh status
+# `up` also starts the notification watch's scheduler (scripts/support-watch.sh, log scripts/.watch.log); `down` stops it.
 # Use it instead of `pkill -f "next …"`, which also matches the shell that runs it.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -11,8 +12,17 @@ LOG=scripts/.server.log
 
 pids() { pgrep -f '^next-server' || true; pgrep -f 'cross-env\.js NODE_OPTIONS=--no-deprecation next (start|dev)' || true; }
 running() { [ -n "$(pids)" ]; }
+watch_pids() { pgrep -f 'scripts/support-watch\.sh' || true; }
+
+watch_up() {
+  [ -n "$(watch_pids)" ] && return
+  (setsid nohup scripts/support-watch.sh >> scripts/.watch.log 2>&1 < /dev/null &)
+  echo "notification watch every 60 s (log: scripts/.watch.log)"
+}
+watch_down() { [ -n "$(watch_pids)" ] && kill $(watch_pids) 2>/dev/null && echo "notification watch stopped" || true; }
 
 down() {
+  watch_down
   if ! running; then echo "not running"; return; fi
   kill $(pids) 2>/dev/null || true
   for _ in $(seq 1 10); do running || break; sleep 1; done
@@ -28,7 +38,7 @@ up() {
   (setsid nohup pnpm start > "$LOG" 2>&1 < /dev/null &)
   for _ in $(seq 1 30); do
     sleep 1
-    if curl -s -o /dev/null --max-time 5 http://localhost:3000/support/sign-in; then echo "serving on :3000 (build $(cat .next/BUILD_ID))"; return; fi
+    if curl -s -o /dev/null --max-time 5 http://localhost:3000/support/sign-in; then echo "serving on :3000 (build $(cat .next/BUILD_ID))"; watch_up; return; fi
   done
   echo "did not answer within 30 s; see $LOG" >&2; exit 1
 }
@@ -37,6 +47,9 @@ case "${1:-status}" in
   up) up ;;
   down) down ;;
   rebuild) down; pnpm build; up ;;
-  status) if running; then echo "running (pids $(pids | tr '\n' ' '))"; else echo "not running"; fi ;;
+  status)
+    if running; then echo "running (pids $(pids | tr '\n' ' '))"; else echo "not running"; fi
+    if [ -n "$(watch_pids)" ]; then echo "notification watch running; last pass: $(tail -n 1 scripts/.watch.log 2>/dev/null | cut -c1-160)"; else echo "notification watch not running"; fi
+    ;;
   *) echo "usage: $0 up|down|rebuild|status" >&2; exit 2 ;;
 esac

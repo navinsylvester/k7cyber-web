@@ -1,4 +1,4 @@
-import { addWorkingMinutes, DEFAULT_HOURS, workingMinutesBetween, type BusinessHours } from '@/lib/support/sla'
+import { addWorkingMinutes, DEFAULT_WINDOW, windowHours, workingMinutesBetween, type WindowHours } from '@/lib/support/sla'
 
 import type { Application } from './registration-model'
 import type { Deal } from './deals-model'
@@ -8,9 +8,9 @@ import type { Deal } from './deals-model'
    settings) against `deals.approvalSlaHours`. The clock restarts when the item comes back after a request for information,
    so a partner's delay is never K7's breach. Pure; the sweep in `sla.ts` sends the notice once per clock. */
 
-export type SlaSettings = { hours: BusinessHours; warnShare: number; escalateTo: string[] }
+export type SlaSettings = { hours: WindowHours; warnShare: number; escalateTo: string[] }
 
-export const DEFAULT_SLA_SETTINGS: SlaSettings = { hours: { ...DEFAULT_HOURS }, warnShare: 0.75, escalateTo: [] }
+export const DEFAULT_SLA_SETTINGS: SlaSettings = { hours: { ...DEFAULT_WINDOW }, warnShare: 0.75, escalateTo: [] }
 
 export type SlaClock = { kind: 'deal' | 'application'; id: string; number: string; label: string; orgId: string; orgName: string; orgPartnerId: string; startedAt: string; href: string }
 
@@ -37,8 +37,8 @@ export type SlaReading = { startedAt: string; dueAt: string; targetMinutes: numb
 /** Where a clock stands now: the due instant, the working minutes used and left, and the state against the warning share. */
 export const readClock = (startedAt: string, hours: number, sla: SlaSettings, now: Date = new Date()): SlaReading => {
   const targetMinutes = Math.max(1, Math.round(hours * 60))
-  const dueAt = addWorkingMinutes(startedAt, targetMinutes, sla.hours).toISOString()
-  const elapsedMinutes = Math.round(workingMinutesBetween(startedAt, now, sla.hours))
+  const dueAt = addWorkingMinutes(startedAt, targetMinutes, windowHours(sla.hours)).toISOString()
+  const elapsedMinutes = Math.round(workingMinutesBetween(startedAt, now, windowHours(sla.hours)))
   const leftMinutes = targetMinutes - elapsedMinutes
   const share = Math.min(1, elapsedMinutes / targetMinutes)
   const state: SlaState = leftMinutes < 0 ? 'breached' : share >= sla.warnShare ? 'at-risk' : 'ok'
@@ -76,7 +76,7 @@ export const WEEKDAYS = [
   { n: 0, label: 'Sun' },
 ] as const
 
-export const hoursText = (h: BusinessHours): string => (h.mode === 'always' ? 'around the clock' : `${h.start}–${h.end} ${h.days.map((d) => WEEKDAYS.find((w) => w.n === d)?.label ?? d).join(' ')} (${h.timeZone})`)
+export const hoursText = (h: WindowHours): string => (h.mode === 'always' ? 'around the clock' : `${h.start}–${h.end} ${h.days.map((d) => WEEKDAYS.find((w) => w.n === d)?.label ?? d).join(' ')} (${h.timeZone})`)
 
 /* ---------- Decision times, for the report ---------- */
 
@@ -87,7 +87,7 @@ export const dealDecisionMinutes = (d: Pick<Deal, 'thread' | 'status' | 'decided
   const before = d.thread.filter((t) => t.to === 'submitted' && t.at <= decision.at)
   const start = before[before.length - 1]?.at
   if (!start) return null
-  return Math.round(workingMinutesBetween(start, decision.at, sla.hours))
+  return Math.round(workingMinutesBetween(start, decision.at, windowHours(sla.hours)))
 }
 
 export const applicationDecisionMinutes = (a: Pick<Application, 'decisions'>, sla: SlaSettings): number | null => {
@@ -96,5 +96,5 @@ export const applicationDecisionMinutes = (a: Pick<Application, 'decisions'>, sl
   const before = a.decisions.filter((x) => x.to === 'submitted' && x.at <= decision.at)
   const start = before[before.length - 1]?.at
   if (!start) return null
-  return Math.round(workingMinutesBetween(start, decision.at, sla.hours))
+  return Math.round(workingMinutesBetween(start, decision.at, windowHours(sla.hours)))
 }

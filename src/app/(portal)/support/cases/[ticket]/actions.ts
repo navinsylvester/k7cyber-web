@@ -10,6 +10,7 @@ import { STATE, STATUS } from '@/lib/support/options'
 import { requireCustomer } from '@/lib/support/session'
 import { canReopen } from '@/lib/support/status'
 import { NOTE_FROM_CUSTOMER, addNote } from '@/lib/support/timeline'
+import { tellCustomerWrote } from '@/lib/support/case-notify'
 
 /* A customer's replies and reopen requests. Every action re-reads the case through the customer's scope first,
    so a guessed case number never reaches a write. */
@@ -41,6 +42,7 @@ export async function replyToCase(form: FormData): Promise<void> {
 
   try {
     await addNote(ctx.auth, c.incidentid, { subject: NOTE_FROM_CUSTOMER, text: text || `Attached: ${attachment?.name ?? 'file'}`, file: attachment })
+    await tellCustomerWrote(ctx.auth, c)
     // A resolved case that gets a reply within the window comes back to the desk; a case waiting on the customer goes back to support.
     if (c.statecode === STATE.RESOLVED && canReopen(c.statecode, c.modifiedon)) {
       await reopenCustomerCase(ctx.auth, ctx.scope, ticket)

@@ -82,18 +82,6 @@ export const csatInviteMail = (ticket: string, title: string, url: string, o: { 
   }
 }
 
-/** To the managers when a low score arrives. */
-export const csatLowScoreMail = (p: { ticket: string; title: string; score: number; comment: string; customer: string; owner: string; product?: string; reason?: string; url: string }): Omit<Mail, 'to'> => ({
-  subject: `[CSAT ${p.score}/5] ${p.ticket}: ${p.customer || 'a customer'} needs a call back`,
-  text: `${p.customer || 'A customer'} rated case ${p.ticket} "${p.title}" ${p.score}/5.${p.comment ? `\n\n"${p.comment}"` : ''}${p.reason ? `\n\nThey say it was about: ${p.reason.toLowerCase()}.` : ''}\n\nHandled by ${p.owner || 'unassigned'}${p.product ? ` · ${p.product}` : ''}. Follow up from the manager view:\n${p.url}\n\nK7 Support portal`,
-})
-
-/** To the managers when an unhappy customer has waited past the follow-up target. */
-export const csatOverdueMail = (rows: { ticket: string; customer: string; score: number; waited: string }[], url: string): Omit<Mail, 'to'> => ({
-  subject: `[CSAT] ${rows.length} unhappy ${rows.length === 1 ? 'customer is' : 'customers are'} past the follow-up target`,
-  text: `${rows.map((r) => `${r.ticket}  ${r.customer || 'customer'}  ${r.score}/5  waiting ${r.waited}`).join('\n')}\n\nFollow up from the manager view:\n${url}\n\nK7 Support portal`,
-})
-
 /* ---------- Product desk (10-product-desk.md §9): number, title, state and the link; never the hand-off. ---------- */
 
 export const productRaisedMail = (p: { number: string; title: string; kind: string; ticket: string; by: string; url: string }): Omit<Mail, 'to'> => ({

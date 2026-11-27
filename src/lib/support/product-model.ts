@@ -1,4 +1,4 @@
-import { addWorkingMinutes, readSla, workingMinutesBetween, type BusinessHours, type SlaReading } from './sla'
+import { addWorkingMinutes, minutesPerWorkingDay, readSla, workingMinutesBetween, type BusinessHours, type SlaReading } from './sla'
 
 /* The product desk's pure model (docs/support-portal/10-product-desk.md §3, §7): kinds, teams, the bridge states and who may move
    them, the priorities with their clocks, the settings block, and the CRM mirror operations a state change implies. No I/O here;
@@ -288,12 +288,7 @@ export type ItemEvent = {
 /* ---------- Clocks (§7) ---------- */
 
 /** Working minutes in one business day: what "every N working days" means in minutes. */
-export const minutesPerDay = (bh: BusinessHours): number => {
-  const [sh, sm] = bh.start.split(':').map(Number)
-  const [eh, em] = bh.end.split(':').map(Number)
-  const m = (eh ?? 18) * 60 + (em ?? 0) - ((sh ?? 9) * 60 + (sm ?? 0))
-  return m > 0 ? m : 540
-}
+export const minutesPerDay = (bh: BusinessHours): number => minutesPerWorkingDay(bh)
 
 /** The triage clock: working hours since the item was raised against the priority's triage target. Stops when triage happened. */
 export const triageReading = (item: Pick<ItemRow, 'raisedAt' | 'triagedAt' | 'priority' | 'state'>, s: ProductSettings, bh: BusinessHours, now: Date): SlaReading => {

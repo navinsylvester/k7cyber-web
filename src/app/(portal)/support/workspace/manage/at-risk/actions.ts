@@ -4,13 +4,15 @@ import { redirect } from 'next/navigation'
 
 import { userMessage } from '@/lib/dataverse/errors'
 import { isGuid } from '@/lib/dataverse/odata'
+import { tellAssigned } from '@/lib/support/case-notify'
 import { addCaseToQueue, assignCase, getCase } from '@/lib/support/cases'
 import { getSettings } from '@/lib/support/kpi-config'
 import { runSweep } from '@/lib/support/prevention'
+import { runWatch } from '@/lib/support/watch'
 import { requireManager } from '@/lib/support/session'
 import { addNote } from '@/lib/support/timeline'
 
-/* Quick actions on the at-risk board (09-portal-guide.md §4c): reassign, remind, queue, and run the sweep by hand.
+/* Quick actions on the at-risk board (09-portal-guide.md §4c): reassign, remind, queue, run the watch or the CSAT pass by hand.
    Every write runs as the signed-in manager through the domain layer, so Dynamics rights and the production guard apply. */
 
 const PATH = '/support/workspace/manage/at-risk'
@@ -30,6 +32,10 @@ export async function reassignAction(form: FormData): Promise<void> {
   let msg: string | null = null
   try {
     await assignCase(me.auth, id, { kind: kind as 'user' | 'team', id: ownerId! })
+    if (kind === 'user' && ownerId!.toLowerCase() !== me.userId.toLowerCase()) {
+      const c = await getCase(me.auth, id)
+      if (c) await tellAssigned(me.auth, c, ownerId!, { id: me.userId, name: me.name })
+    }
   } catch (e) {
     msg = (e as { status?: number }).status === 403 ? 'That agent or team cannot own cases in this environment (no security role).' : userMessage(e, 'agent')
   }
@@ -69,15 +75,29 @@ export async function queueAction(form: FormData): Promise<void> {
   back(form, 'ok=queued')
 }
 
+/** The CSAT pass by hand: surveys, one reminder, the overdue follow-ups (dry run unless live runs are allowed and asked for). */
 export async function sweepAction(form: FormData): Promise<void> {
   const me = await requireManager()
   const live = form.get('live') === '1'
   const settings = await getSettings()
-  if (live && !settings.sweep.live) back(form, 'error=Live%20sweeps%20are%20switched%20off%20in%20KPI%20settings.')
+  if (live && !settings.sweep.live) back(form, 'error=Live%20CSAT%20passes%20are%20switched%20off%20in%20KPI%20settings.')
   let q: string
   try {
     const r = await runSweep(me.auth, { actor: me.email || me.name || 'manager', live })
-    q = `ok=sweep&run=${encodeURIComponent(r.runId)}&fired=${r.fired}&done=${r.done}&skipped=${r.skipped}&failed=${r.failed}&mode=${r.mode}${r.csat ? `&csatInvited=${r.csat.invited}&csatReminded=${r.csat.reminded}&csatOverdue=${r.csat.overdue}` : ''}`
+    q = `ok=csat&mode=${r.mode}${r.csat ? `&csatInvited=${r.csat.invited}&csatReminded=${r.csat.reminded}&csatOverdue=${r.csat.overdue}` : ''}`
+  } catch (e) {
+    q = `error=${encodeURIComponent(userMessage(e, 'agent'))}`
+  }
+  back(form, q)
+}
+
+/** One pass of the notification watch now, as the manager: what the scheduler runs every minute. */
+export async function checkAction(form: FormData): Promise<void> {
+  const me = await requireManager()
+  let q: string
+  try {
+    const r = await runWatch(me.auth)
+    q = r.enabled ? `ok=watch&cases=${r.cases}&first=${r.firstSeen}&events=${r.events}&told=${r.told}&runs=${r.runs}&closed=${r.closed}&ms=${r.ms}` : 'error=Notifications%20are%20switched%20off.'
   } catch (e) {
     q = `error=${encodeURIComponent(userMessage(e, 'agent'))}`
   }

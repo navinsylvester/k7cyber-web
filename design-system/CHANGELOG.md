@@ -2,6 +2,10 @@
 
 Newest first. Each entry names the rule, the reference CSS and the parts it touched, so the system describes the site as built (README.md, "Keeping it current"). Until 2026-10-15 the folder mirrored the Design System artifact unchanged (SOURCE.md).
 
+## 2026-11-27
+
+- **Section 09 · Support, S35 the bell and S36 shifts and notification rules** (Navin: a notification system like the partner portal's, for every user, on the SLA and KPI targets, configurable; shift working hours): the bell and its rows move from `partner.css` to `portal.css` and appear in the support header for agents, with a notifications page (`ntf`, the body keeping its line breaks); the KPI settings gain the shifts table (`shifts`, `shift-days`, `settings-sub`) and three target columns; the notifications page reuses the `rules` rows (`ntf-rules`, `ntf-aud`, `ntf-fixed`). S13 the at-risk board shows a meter per running clock; S14 the strip adds follow-ups waiting, in the bin and with the Lab. PartnerParts P4 notes the move.
+
 ## 2026-11-26
 
 - **Field, type to filter** (support testers: State and City not filtered by letter): a new Field variant for reference lists a select cannot search (`filter-select`, `filter-list` in `bundle.css`): a text field with the select's chevron whose list narrows to the entries containing the typed text, drawn as the select's open list in every browser (1px ink frame, hairline rows, the active row inverted, the signal pixel on the choice). The one exception to *never a widget*, used by the support portal's State and City (SupportParts S33, `FilterSelect.client.tsx`). Checked in Chrome on the new contact form and a contact's edit (Tamil Nadu → Chennai saved to UAT and cleared again), both themes. Field README and `preview.html`.

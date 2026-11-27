@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 
 import { userMessage } from '@/lib/dataverse/errors'
 import { isGuid } from '@/lib/dataverse/odata'
+import { tellAssigned, tellEscalated } from '@/lib/support/case-notify'
 import { addCaseToQueue, assignCase, cancelCase, getCase, getCaseByTicket, mergeCase, reopenCase, resolveCase, setStatusReason, updateCase, type CaseRow, type NewCase } from '@/lib/support/cases'
 import { asReason, asScore, closeFollowUp, csatForCase, inviteSurvey, recordResponse, snapshotOf } from '@/lib/support/csat'
 import { columnRights } from '@/lib/support/field-security'
@@ -103,7 +104,11 @@ export async function statusAction(form: FormData): Promise<void> {
     const c = await getCase(me.auth, id)
     if (!c) msg = 'That case no longer exists.'
     else if (c.statecode !== STATE.ACTIVE) msg = 'Reopen the case before changing its status reason.'
-    else await setStatusReason(me.auth, id, code!)
+    else {
+      await setStatusReason(me.auth, id, code!)
+      // Moving a case to the Lab or principal support escalates it to an internal team (notify-model.ts case.escalated).
+      if (c.statuscode !== code && (code === STATUS.IN_PROGRESS_LAB || code === STATUS.IN_PROGRESS_PRINCIPLE)) await tellEscalated(me.auth, c, code === STATUS.IN_PROGRESS_LAB ? 'lab' : 'principal', { id: me.userId, name: me.name })
+    }
   } catch (e) {
     msg = userMessage(e, 'agent')
   }
@@ -122,6 +127,10 @@ export async function assignAction(form: FormData): Promise<void> {
   if (msg) fail(id, msg)
   try {
     await assignCase(me.auth, id, { kind: kind as 'user' | 'team', id: ownerId! })
+    if (kind === 'user' && ownerId!.toLowerCase() !== me.userId.toLowerCase()) {
+      const c = await getCase(me.auth, id)
+      if (c) await tellAssigned(me.auth, c, ownerId!, { id: me.userId, name: me.name })
+    }
   } catch (e) {
     // A 403 here is almost always the assignee: seven UAT agents have no security role and cannot own cases.
     msg = (e as { status?: number }).status === 403 ? 'That agent or team cannot own cases in this environment (no security role). Pick another.' : userMessage(e, 'agent')
@@ -507,6 +516,7 @@ export async function escalateAction(form: FormData): Promise<void> {
       const caseChoice = c.statecode === STATE.ACTIVE ? asCaseChoice(str(form, 'caseChoice')) : 'workaround-resolved'
       const r = await raiseItem({ id: me.userId, name: me.name || me.email, email: me.email, auth: me.auth }, c, { kind: kind!, title, summary, severityHint: severity, customerImpact: impact, caseChoice, evidence: files as EvidenceFile[] })
       number = r.item.number
+      await tellEscalated(me.auth, c, 'product', { id: me.userId, name: me.name }, `${number}: ${title}.`)
     }
   } catch (e) {
     msg = userMessage(e, 'agent')

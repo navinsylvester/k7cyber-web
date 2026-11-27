@@ -30,6 +30,9 @@ export const ORIGIN_OPTIONS = [
 export const KPI_OPTIONS = [
   { label: 'Resolution within target (%)', value: 'resolution-sla' },
   { label: 'First response within target (%)', value: 'response-sla' },
+  { label: 'Follow-ups answered within target (%)', value: 'followup-sla' },
+  { label: 'Picked up from the bin within target (%)', value: 'pickup-sla' },
+  { label: 'Lab samples closed within target (%)', value: 'lab-sla' },
   { label: 'Median resolution time (working hours)', value: 'median-resolution' },
   { label: 'Median first response (working minutes)', value: 'median-response' },
   { label: 'First-contact resolution (%)', value: 'fcr' },
@@ -64,7 +67,7 @@ export const SupportSettings: GlobalConfig = {
   slug: 'support-settings',
   label: 'Support KPIs and SLAs',
   access: { read: roleAccess('admin'), update: roleAccess('admin') },
-  admin: { group: 'Support portal', description: 'Targets, business hours, KPI cards and prevention rules for the manager view. Edited from the portal; this is the raw form.' },
+  admin: { group: 'Support portal', description: 'SLA targets, shifts, KPI cards and notifications for the manager view. Edited from the portal; this is the raw form.' },
   fields: [
     {
       type: 'tabs',
@@ -88,28 +91,69 @@ export const SupportSettings: GlobalConfig = {
                     { name: 'resolveMinutes', type: 'number', min: 1, required: true, defaultValue: 240, admin: { width: '15%' } },
                   ],
                 },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'followUpMinutes', type: 'number', min: 1, defaultValue: 30, admin: { width: '33%', description: 'Follow-up reply (working minutes).' } },
+                    { name: 'pickupMinutes', type: 'number', min: 1, defaultValue: 5, admin: { width: '33%', description: 'Pick-up from the bin.' } },
+                    { name: 'labMinutes', type: 'number', min: 1, defaultValue: 180, admin: { width: '34%', description: 'Lab sample.' } },
+                  ],
+                },
               ],
             },
             { name: 'warnAtPercent', type: 'number', min: 10, max: 99, defaultValue: 75, admin: { description: 'A case is "at risk" once this share of its target has elapsed.' } },
             { name: 'phoneCountsAsResponded', type: 'checkbox', defaultValue: true, admin: { description: 'Phone-origin cases are answered on the call: count them as responded at creation.' } },
             { name: 'pauseWhileWaiting', type: 'checkbox', defaultValue: true, admin: { description: 'Cases In Progress-Customer are paused: never at risk, excluded from response/resolution timing while waiting.' } },
             { name: 'subtractOnHold', type: 'checkbox', defaultValue: true, admin: { description: "Subtract Dataverse's on-hold minutes (onholdtime) from the elapsed time." } },
+            { name: 'automatedSubjects', type: 'textarea', admin: { description: 'One per line: outgoing emails whose subject starts with one of these are automatic and never answer the customer.' } },
           ],
         },
         {
-          label: 'Business hours',
+          label: 'Shifts',
           fields: [
             {
               name: 'hours',
               type: 'group',
               fields: [
-                { name: 'mode', type: 'select', options: [{ label: 'Business hours', value: 'business' }, { label: 'Around the clock', value: 'always' }], defaultValue: 'business', required: true },
+                { name: 'mode', type: 'select', options: [{ label: 'Shift hours', value: 'business' }, { label: 'Around the clock', value: 'always' }], defaultValue: 'business', required: true },
+                { name: 'timeZone', type: 'text', defaultValue: 'Asia/Kolkata', required: true },
+                {
+                  name: 'shifts',
+                  type: 'array',
+                  labels: { singular: 'Shift', plural: 'Shifts' },
+                  admin: { description: 'The desk works the union of its shifts; every SLA clock counts only those minutes. An overnight shift ends after midnight (end before start).' },
+                  fields: [
+                    {
+                      type: 'row',
+                      fields: [
+                        { name: 'key', type: 'text', admin: { width: '20%' } },
+                        { name: 'name', type: 'text', required: true, admin: { width: '30%' } },
+                        { name: 'start', type: 'text', required: true, admin: { width: '25%', description: 'HH:MM' } },
+                        { name: 'end', type: 'text', required: true, admin: { width: '25%', description: 'HH:MM' } },
+                      ],
+                    },
+                    {
+                      name: 'days',
+                      type: 'select',
+                      hasMany: true,
+                      options: [
+                        { label: 'Monday', value: '1' },
+                        { label: 'Tuesday', value: '2' },
+                        { label: 'Wednesday', value: '3' },
+                        { label: 'Thursday', value: '4' },
+                        { label: 'Friday', value: '5' },
+                        { label: 'Saturday', value: '6' },
+                        { label: 'Sunday', value: '0' },
+                      ],
+                    },
+                    { name: 'members', type: 'textarea', admin: { description: 'Work emails of the engineers on this shift, one per line.' } },
+                  ],
+                },
                 {
                   type: 'row',
                   fields: [
-                    { name: 'start', type: 'text', defaultValue: '09:00', required: true, admin: { width: '30%', description: 'HH:MM' } },
-                    { name: 'end', type: 'text', defaultValue: '18:00', required: true, admin: { width: '30%', description: 'HH:MM' } },
-                    { name: 'timeZone', type: 'text', defaultValue: 'Asia/Kolkata', required: true, admin: { width: '40%' } },
+                    { name: 'start', type: 'text', defaultValue: '09:00', admin: { width: '50%', description: 'Before 2026-11-27: the one business-hours window. Read only when no shift is set.' } },
+                    { name: 'end', type: 'text', defaultValue: '18:00', admin: { width: '50%' } },
                   ],
                 },
                 {
@@ -153,7 +197,43 @@ export const SupportSettings: GlobalConfig = {
           ],
         },
         {
-          label: 'Prevention',
+          label: 'Notifications',
+          fields: [
+            {
+              name: 'notify',
+              type: 'group',
+              admin: { description: 'What the workspace tells people (09-portal-guide.md §4g). Edited from /support/workspace/manage/notifications.' },
+              fields: [
+                { name: 'enabled', type: 'checkbox', defaultValue: true },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'kpiPeriod', type: 'text', defaultValue: '7d', admin: { width: '33%', description: '7d, 30d, 90d or mtd.' } },
+                    { name: 'retentionDays', type: 'number', min: 1, max: 365, defaultValue: 30, admin: { width: '33%', description: 'Days a read notification is kept.' } },
+                  ],
+                },
+                { name: 'managers', type: 'textarea', admin: { description: 'Who "Managers" means for notifications: work emails, one per line. Empty: the manager view’s list.' } },
+                {
+                  name: 'rules',
+                  type: 'array',
+                  labels: { singular: 'Notification', plural: 'Notifications' },
+                  fields: [
+                    {
+                      type: 'row',
+                      fields: [
+                        { name: 'key', type: 'text', required: true, admin: { width: '40%' } },
+                        { name: 'audiences', type: 'text', admin: { width: '35%', description: 'owner, shift, managers' } },
+                        { name: 'delivery', type: 'text', admin: { width: '25%', description: 'immediate, digest, bell or off' } },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Prevention (before 2026-11-27)',
           fields: [
             {
               name: 'rules',
@@ -182,9 +262,9 @@ export const SupportSettings: GlobalConfig = {
               name: 'sweep',
               type: 'group',
               fields: [
-                { name: 'enabled', type: 'checkbox', defaultValue: true, admin: { description: 'The scheduled sweep (POST /api/support/sla/sweep with the cron secret) evaluates the rules.' } },
-                { name: 'live', type: 'checkbox', defaultValue: false, admin: { description: 'Off: the sweep only records what it would do. On: it writes notes, queues items and sends mail (UAT only; production is read-only in code).' } },
-                { name: 'managerEmails', type: 'text', admin: { description: 'Comma-separated recipients for "Email the managers".' } },
+                { name: 'enabled', type: 'checkbox', defaultValue: true, admin: { description: 'The scheduled sweep (POST /api/support/sla/sweep with the cron secret) runs the CSAT pass: surveys, reminders, overdue follow-ups.' } },
+                { name: 'live', type: 'checkbox', defaultValue: false, admin: { description: 'Off: the CSAT pass only counts what it would send. On: it emails surveys and reminders to customers.' } },
+                { name: 'managerEmails', type: 'text', admin: { description: 'Before 2026-11-27. Now Notifications → managers.' } },
               ],
             },
           ],

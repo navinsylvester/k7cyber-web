@@ -3,17 +3,35 @@
    cover a fraction of cases, so the manager view computes compliance itself from the configured targets and business hours,
    and shows the CRM's KPI instance beside it as evidence when one exists. Everything here is unit-tested without a tenant. */
 
-export type BusinessHours = {
-  mode: 'business' | 'always'
-  /** HH:MM, local to `timeZone`. */
+/** A shift: the hours one group of engineers works, on the weekdays it starts. An overnight shift ends after midnight
+    (`end` at or before `start`) and counts into the next morning. `members` are work emails: who is "on shift" for a
+    notification (notify-model.ts); empty means the shift counts for the clock but names nobody. */
+export type Shift = {
+  key: string
+  name: string
+  /** HH:MM, local to the desk's `timeZone`. */
   start: string
   end: string
-  /** 0 = Sunday … 6 = Saturday. */
+  /** 0 = Sunday … 6 = Saturday: the days the shift starts on. */
   days: number[]
-  timeZone: string
+  members: string[]
 }
 
-export const DEFAULT_HOURS: BusinessHours = { mode: 'business', start: '09:00', end: '18:00', days: [1, 2, 3, 4, 5, 6], timeZone: 'Asia/Kolkata' }
+/** The desk's working time: the union of its shifts (09-portal-guide.md §4c). Every SLA clock counts only these minutes. */
+export type BusinessHours = {
+  mode: 'business' | 'always'
+  timeZone: string
+  shifts: Shift[]
+}
+
+export const DEFAULT_SHIFT: Shift = { key: 'day', name: 'Day', start: '09:00', end: '18:00', days: [1, 2, 3, 4, 5, 6], members: [] }
+export const DEFAULT_HOURS: BusinessHours = { mode: 'business', timeZone: 'Asia/Kolkata', shifts: [DEFAULT_SHIFT] }
+
+/** One working window a day (the partner portal's approval clock, and the support desk before shifts): `start`–`end` on `days`. */
+export type WindowHours = { mode: 'business' | 'always'; start: string; end: string; days: number[]; timeZone: string }
+export const DEFAULT_WINDOW: WindowHours = { mode: 'business', start: '09:00', end: '18:00', days: [1, 2, 3, 4, 5, 6], timeZone: 'Asia/Kolkata' }
+/** A single window as the engine's hours: one shift. */
+export const windowHours = (w: WindowHours): BusinessHours => ({ mode: w.mode, timeZone: w.timeZone, shifts: [{ key: 'day', name: 'Day', start: w.start, end: w.end, days: w.days, members: [] }] })
 
 const MIN = 60_000
 const DAY = 24 * 60 * MIN
@@ -55,36 +73,68 @@ const localDay = (t: number, tz: string): { dayStart: number; weekday: number; o
   return { dayStart: dayStartShifted - offset * MIN, weekday: shifted.getUTCDay(), offset }
 }
 
-/** The working window of the local day that contains `t`: [open, close] instants, or null on a non-working day. */
-const windowOf = (t: number, bh: BusinessHours): { open: number; close: number; next: number } => {
-  const { dayStart, weekday } = localDay(t, bh.timeZone)
-  const next = dayStart + DAY + 60 * MIN // land safely inside the next local day; realigned on the next call
-  const open = dayStart + hm(bh.start) * MIN
-  const close = dayStart + Math.max(hm(bh.start), hm(bh.end)) * MIN
-  if (!bh.days.includes(weekday) || close <= open) return { open: 0, close: 0, next }
-  return { open, close, next }
+/** The local midnight after the one at `dayStart` (exact across DST changes). */
+const nextDayStart = (dayStart: number, tz: string): number => localDay(dayStart + DAY + 60 * MIN, tz).dayStart
+
+/** The local calendar date of an instant, YYYY-MM-DD: the key a once-a-day notification is filed under. */
+export const localDate = (t: Date | number, tz: string): string => {
+  const { dayStart, offset } = localDay(new Date(t).getTime(), tz)
+  return new Date(dayStart + offset * MIN).toISOString().slice(0, 10)
 }
 
-/** Working minutes between two instants under the business hours (never negative). */
+export type ShiftWindow = { shift: Shift; open: number; close: number }
+
+/** The windows of the shifts that start on the local day beginning at `dayStart` (an overnight one closes the next day). */
+const windowsStarting = (dayStart: number, bh: BusinessHours): ShiftWindow[] => {
+  const { weekday } = localDay(dayStart + 12 * 60 * MIN, bh.timeZone)
+  const out: ShiftWindow[] = []
+  for (const shift of bh.shifts) {
+    if (!shift.days.includes(weekday)) continue
+    const a = hm(shift.start)
+    const b = hm(shift.end)
+    const open = dayStart + a * MIN
+    const close = b > a ? dayStart + b * MIN : nextDayStart(dayStart, bh.timeZone) + b * MIN
+    if (close > open) out.push({ shift, open, close })
+  }
+  return out.sort((x, y) => x.open - y.open)
+}
+
+/** Every shift window that is open at some point at or after `from`, in order of opening, starting with the day before
+    (an overnight shift from yesterday may still be open). Bounded by MAX_DAYS. */
+function* shiftWindows(from: number, bh: BusinessHours): Generator<ShiftWindow> {
+  if (!bh.shifts.some((s) => s.days.length)) return
+  let day = localDay(localDay(from, bh.timeZone).dayStart - 12 * 60 * MIN, bh.timeZone).dayStart
+  for (let i = 0; i < MAX_DAYS; i++) {
+    for (const w of windowsStarting(day, bh)) if (w.close > from) yield w
+    day = nextDayStart(day, bh.timeZone)
+  }
+}
+
+/** The working time from `from` on as merged intervals: overlapping shifts count once. */
+function* workingIntervals(from: number, bh: BusinessHours): Generator<[number, number]> {
+  let cur: [number, number] | null = null
+  for (const w of shiftWindows(from, bh)) {
+    if (cur && w.open <= cur[1]) cur[1] = Math.max(cur[1], w.close)
+    else {
+      if (cur) yield cur
+      cur = [w.open, w.close]
+    }
+  }
+  if (cur) yield cur
+}
+
+/** Working minutes between two instants under the desk's shifts (never negative). */
 export const workingMinutesBetween = (from: Date | string | number, to: Date | string | number, bh: BusinessHours): number => {
   const a = new Date(from).getTime()
   const b = new Date(to).getTime()
   if (!Number.isFinite(a) || !Number.isFinite(b) || b <= a) return 0
   if (bh.mode === 'always') return (b - a) / MIN
   let total = 0
-  let cursor = a
-  for (let i = 0; i < MAX_DAYS && cursor < b; i++) {
-    const w = windowOf(cursor, bh)
-    if (w.close > 0) {
-      const lo = Math.max(a, w.open, cursor)
-      const hi = Math.min(b, w.close)
-      if (hi > lo) total += (hi - lo) / MIN
-    }
-    const { dayStart } = localDay(cursor, bh.timeZone)
-    cursor = Math.max(w.next, dayStart + DAY)
-    // Realign to the exact next local midnight so DST shifts do not skip or double a day.
-    cursor = localDay(cursor, bh.timeZone).dayStart
-    if (cursor <= a && i > 0) break
+  for (const [open, close] of workingIntervals(a, bh)) {
+    if (open >= b) break
+    const lo = Math.max(a, open)
+    const hi = Math.min(b, close)
+    if (hi > lo) total += (hi - lo) / MIN
   }
   return total
 }
@@ -94,19 +144,62 @@ export const addWorkingMinutes = (from: Date | string | number, minutes: number,
   const a = new Date(from).getTime()
   if (bh.mode === 'always' || minutes <= 0) return new Date(a + Math.max(0, minutes) * MIN)
   let left = minutes
-  let cursor = a
-  for (let i = 0; i < MAX_DAYS; i++) {
-    const w = windowOf(cursor, bh)
-    if (w.close > 0 && cursor < w.close) {
-      const start = Math.max(cursor, w.open)
-      const capacity = (w.close - start) / MIN
-      if (left <= capacity) return new Date(start + left * MIN)
-      left -= capacity
-    }
-    const { dayStart } = localDay(cursor, bh.timeZone)
-    cursor = localDay(dayStart + DAY + 60 * MIN, bh.timeZone).dayStart
+  let last = a
+  for (const [open, close] of workingIntervals(a, bh)) {
+    const start = Math.max(a, open)
+    const capacity = (close - start) / MIN
+    if (left <= capacity) return new Date(start + left * MIN)
+    left -= capacity
+    last = close
   }
-  return new Date(cursor)
+  return new Date(last)
+}
+
+/** The shifts working at `t` (a shift that has just closed is not on). Around the clock, every shift is on. */
+export const shiftsOn = (t: Date | number, bh: BusinessHours): Shift[] => {
+  const x = new Date(t).getTime()
+  if (bh.mode === 'always') return bh.shifts
+  const on: Shift[] = []
+  for (const w of shiftWindows(x, bh)) {
+    if (w.open > x) break
+    if (w.open <= x && x < w.close && !on.includes(w.shift)) on.push(w.shift)
+  }
+  return on
+}
+
+/** The shifts working at `t`; when none is (a night, a holiday), the shifts that open next: who "on shift" means for a
+    notification that cannot wait for a person. */
+export const shiftsOnOrNext = (t: Date | number, bh: BusinessHours): Shift[] => {
+  const on = shiftsOn(t, bh)
+  if (on.length || bh.mode === 'always') return on
+  const x = new Date(t).getTime()
+  let first: number | null = null
+  const next: Shift[] = []
+  for (const w of shiftWindows(x, bh)) {
+    if (w.open <= x) continue
+    if (first === null) first = w.open
+    if (w.open !== first) break
+    if (!next.includes(w.shift)) next.push(w.shift)
+  }
+  return next
+}
+
+/** The shifts that closed in (from, to], with the instant each closed, the local date it opened and whether it was the last
+    shift of that date to close: what the shift-end pass (KPI reports, digests) works through. */
+export const shiftEndsBetween = (from: Date | number, to: Date | number, bh: BusinessHours): { shift: Shift; close: Date; date: string; lastOfDay: boolean }[] => {
+  const a = new Date(from).getTime()
+  const b = new Date(to).getTime()
+  const out: { shift: Shift; close: Date; date: string; lastOfDay: boolean }[] = []
+  if (!(b > a) || bh.mode === 'always') return out
+  for (const w of shiftWindows(a, bh)) {
+    if (w.open > b) break
+    if (w.close > a && w.close <= b) {
+      const day = localDay(w.open, bh.timeZone).dayStart
+      const lastOfDay = Math.max(...windowsStarting(day, bh).map((x) => x.close)) === w.close
+      out.push({ shift: w.shift, close: new Date(w.close), date: localDate(w.open, bh.timeZone), lastOfDay })
+    }
+  }
+  return out.sort((x, y) => x.close.getTime() - y.close.getTime())
 }
 
 export type SlaState = 'ok' | 'at-risk' | 'breached' | 'met' | 'paused' | 'none'
@@ -170,7 +263,7 @@ export const fmtLeft = (r: SlaReading): string => {
   if (r.state === 'none') return ''
   if (r.state === 'met') return `met in ${fmtMinutes(r.elapsed)}`
   if (r.state === 'paused') return `paused · ${fmtMinutes(r.left)} left`
-  if (r.left < 0) return `overdue ${fmtMinutes(-r.left)}`
+  if (r.left < 0) return Math.round(-r.left) < 1 ? 'just overdue' : `overdue ${fmtMinutes(-r.left)}`
   return `${fmtMinutes(r.left)} left`
 }
 
@@ -207,15 +300,25 @@ export const percentile = (xs: number[], p: number): number | null => {
 
 export const pct = (part: number, whole: number): number | null => (whole > 0 ? Math.round((part / whole) * 1000) / 10 : null)
 
-/** Working days in a period, for throughput per working day. */
+/** The working minutes of an average working day under the shifts: what "every N working days" means in minutes. */
+export const minutesPerWorkingDay = (bh: BusinessHours): number => {
+  if (bh.mode === 'always') return 24 * 60
+  const days = new Set(bh.shifts.flatMap((x) => x.days)).size
+  if (!days) return 540
+  const from = Date.UTC(2026, 0, 4, 12) // a reference week, Sunday noon UTC to the next
+  return Math.max(60, Math.round(workingMinutesBetween(from, from + 7 * DAY, bh) / days))
+}
+
+/** Working days in a period (days on which a shift starts), for throughput per working day. */
 export const workingDaysBetween = (from: Date, to: Date, bh: BusinessHours): number => {
   if (bh.mode === 'always') return Math.max(1, (to.getTime() - from.getTime()) / DAY)
+  const days = new Set(bh.shifts.flatMap((s) => s.days))
   let n = 0
   let cursor = localDay(from.getTime(), bh.timeZone).dayStart
   const end = to.getTime()
   for (let i = 0; i < MAX_DAYS && cursor < end; i++) {
-    if (bh.days.includes(localDay(cursor + 12 * 60 * MIN, bh.timeZone).weekday)) n++
-    cursor = localDay(cursor + DAY + 60 * MIN, bh.timeZone).dayStart
+    if (days.has(localDay(cursor + 12 * 60 * MIN, bh.timeZone).weekday)) n++
+    cursor = nextDayStart(cursor, bh.timeZone)
   }
   return Math.max(1, n)
 }

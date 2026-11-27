@@ -10,8 +10,9 @@ import { fv, lookup } from '@/lib/dataverse/types'
 import { asReason, careFrom, causeOf, flagActive, isUnhappy, NO_CARE, readFollowUp, type Care, type CareFlag, type CsatRow, type CsatScore, type CsatSettings, type CsatSource, type FollowUpStatus } from './csat-model'
 import { getSettings } from './kpi-config'
 import type { Settings } from './kpi-model'
-import { csatInviteMail, csatLowScoreMail, csatOverdueMail, sendMail } from './mail'
+import { csatInviteMail, sendMail } from './mail'
 import { forget, memo } from './memo'
+import { notify } from './notify'
 import type { Desk } from './metrics'
 import { ORIGIN_WEB } from './options'
 import { fmtMinutes } from './sla'
@@ -344,9 +345,21 @@ export const recordResponse = async (c: CaseSnapshot, input: ResponseInput, o: {
   forget(`care:${c.customerId}`)
   if (c.contactId) forget(`care:${c.contactId}`)
   if (low && (!existing || existing.score === null || !isUnhappy(existing.score, settings.csat) || existing.followUp === 'done')) {
-    if (settings.csat.notifyManagersOnLow && settings.sweep.managerEmails.length) {
+    // The low-score notification (notify-model.ts csat.low): to the owner and the managers by default, set on the notifications page.
+    {
       const cause = causeOf(row)
-      await sendMail({ to: settings.sweep.managerEmails.join(', '), ...csatLowScoreMail({ ticket: c.ticket, title: c.title, score: input.score, comment: row.comment, customer: c.customerName, owner: c.ownerName, product: c.product, reason: cause.key ? cause.label : '', url: manageUrl() }) }).catch((e) => console.error(`[csat] manager mail failed: ${(e as Error).message}`))
+      await notify(o.auth ?? { kind: 'service' }, {
+        key: 'csat.low',
+        caseId: c.caseId,
+        ticket: c.ticket,
+        href: `/support/workspace/cases/${c.caseId}`,
+        owner: c.ownerId ? { id: c.ownerId, name: c.ownerName, email: '' } : null,
+        actorId: o.by?.id,
+        dedupe: `csat.low:${row.id}:${input.score}`.toLowerCase(),
+        dedupeHours: 24 * 30,
+        subject: `[CSAT ${input.score}/5] ${c.ticket}: ${c.customerName || 'a customer'} needs a call back`,
+        body: `${c.customerName || 'A customer'} rated case ${c.ticket} "${c.title}" ${input.score}/5.${row.comment ? `\n\n"${row.comment}"` : ''}${cause.key ? `\n\nThey say it was about: ${cause.label.toLowerCase()}.` : ''}\n\nHandled by ${c.ownerName || 'nobody'}${c.product ? ` · ${c.product}` : ''}. Follow it up on the CSAT page: ${manageUrl()}`,
+      })
     }
     if (o.auth) {
       const cause = causeOf(row)
@@ -443,8 +456,19 @@ export const csatSweep = async (desk: Desk, o: { live: boolean; settings?: Setti
   const open = await openFollowUps()
   const overdue = open.filter((r) => readFollowUp(r, cs, settings.hours, desk.now).state === 'overdue')
   out.overdue = overdue.length
-  if (o.live && overdue.length && settings.sweep.managerEmails.length) {
-    await sendMail({ to: settings.sweep.managerEmails.join(', '), ...csatOverdueMail(overdue.map((r) => ({ ticket: r.ticket, customer: r.customerName, score: r.score ?? 0, waited: fmtMinutes(readFollowUp(r, cs, settings.hours, desk.now).minutes) })), manageUrl()) }).catch((e) => out.notes.push(`overdue mail failed: ${(e as Error).message.slice(0, 100)}`))
+  // Each overdue follow-up is told once (notify-model.ts csat.followup-overdue), whatever the CSAT pass's live switch: it goes to
+  // people inside K7, never to a customer.
+  for (const r of overdue) {
+    await notify({ kind: 'service' }, {
+      key: 'csat.followup-overdue',
+      caseId: r.caseId,
+      ticket: r.ticket,
+      href: '/support/workspace/manage/csat',
+      dedupe: `csat.overdue:${r.id}`.toLowerCase(),
+      dedupeHours: 24 * 90,
+      subject: `[CSAT] ${r.ticket}: ${r.customerName || 'an unhappy customer'} past the follow-up target`,
+      body: `${r.customerName || 'The customer'} rated case ${r.ticket} ${r.score ?? '?'}/5 and has waited ${fmtMinutes(readFollowUp(r, cs, settings.hours, desk.now).minutes)} (working time) for a call back. Follow it up on the CSAT page.`,
+    })
   }
   return out
 }
