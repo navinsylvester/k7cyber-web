@@ -687,3 +687,9 @@ details.classify[open] summary::after { content: "close"; }
 .ntf-rules .rule .label.muted { display: block; margin-top: 8px; }
 .ntf-aud { display: flex; flex-wrap: wrap; gap: 8px 18px; padding-top: 8px; }
 .ntf-fixed { display: block; padding-top: 8px; font-size: 14px; }
+
+/* ---------- S31 The email composer's template picker (2026-11-27, TR-25) ---------- */
+.tpl-pick .tpl-row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
+.tpl-pick .tpl-row .control { flex: 1 1 220px; min-width: 0; }
+.tpl-pick .tpl-row .btn { flex: 0 0 auto; }
+

@@ -155,6 +155,13 @@ helpers), `src/lib/support/` (one file per area; `session.ts` gives `requireAgen
   draft again. Server actions take 16 MB and `proxyClientMaxBodySize` matches it, because `src/proxy.ts` runs on `/support` and
   Next buffers a proxied body only to 10 MB by default. The timeline shows the email's text, links and attachments; colour, size
   and font stay in the email (the portal's `sanitizeHtml` drops styles).
+- Email templates (2026-11-27, TR-25): *Email the customer* opens with a *Template* field listing the templates Dynamics keeps for cases,
+  then the general ones (the Hub's *Insert template* list, read as the agent so personal templates come too, `src/lib/support/templates.ts`).
+  *Use template* asks Dynamics to fill it for the case (`InstantiateTemplate`: customer, case title and number, owner…; it creates
+  nothing) and replaces the subject and the message; *Undo* puts back what was there. The body is made fit for the composer
+  (`templateToComposer` in `email-html.ts`): the head goes, a table becomes its rows as lines, images go, white text whose coloured cell is
+  gone loses its colour, and the rest passes the same allowlist; the line under the picker says what was left out. Templates are written
+  in Dynamics (Settings → Templates → Email templates); their attachments do not come along.
 - Merge (2026-11-18): *Merge into another case* on an active case calls the platform's `Merge` message (`mergeCase`; `UpdateContent`
   is required and ignored for cases, `PerformParentingChecks` false). The subordinate closes as Merged (state 2, status 2000) with
   `masterid` set, and its notes, emails, activities and child cases move to the target. It cannot be undone, so the panel picks

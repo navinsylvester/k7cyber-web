@@ -277,3 +277,52 @@ export const hasText = (html: string): boolean =>
   decodeEntities(html.replace(/<[^>]*>/g, ''))
     .replace(/[\s ]+/g, '')
     .length > 1
+
+/** True for a colour too light to read on the white an email is read on: white text whose coloured cell the composer drops. */
+export const isLightColour = (v: string): boolean => {
+  const c = v.trim().toLowerCase()
+  if (c === 'white') return true
+  let r: number, g: number, b: number
+  const hex = c.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/)
+  const rgb = c.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/)
+  if (hex) {
+    const h = hex[1]!.length === 3 ? hex[1]!.replace(/./g, (x) => x + x) : hex[1]!
+    r = parseInt(h.slice(0, 2), 16)
+    g = parseInt(h.slice(2, 4), 16)
+    b = parseInt(h.slice(4, 6), 16)
+  } else if (rgb) {
+    r = Number(rgb[1])
+    g = Number(rgb[2])
+    b = Number(rgb[3])
+  } else return false
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.85
+}
+
+/** Text colours a template set for a coloured background the composer will not keep: dropped, so the words stay readable. */
+const withoutLightText = (html: string): string =>
+  html
+    .replace(/(style\s*=\s*")([^"]*)(")/gi, (_m, a: string, css: string, z: string) => a + css.replace(/(^|;)\s*color\s*:\s*([^;]+)/gi, (d, sep: string, v: string) => (isLightColour(v) ? sep : d)) + z)
+    .replace(/(<font\b[^>]*?)\scolor\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, (m, tag: string, v: string) => (isLightColour(v.replace(/^["']|["']$/g, '')) ? tag : m))
+
+/**
+ * A Dynamics email template's body, filled for a case (InstantiateTemplate), as the composer can hold it (TR-25): the head and
+ * its styles go, a table becomes its rows as lines (cells side by side), images go, and what is left passes the same allowlist as
+ * the agent's own formatting. `left` names what could not come along, for the line under the template picker.
+ */
+export const templateToComposer = (input: string): { html: string; left: string[] } => {
+  const raw = input.slice(0, EMAIL_HTML_MAX)
+  const left: string[] = []
+  if (/<table\b/i.test(raw)) left.push('tables')
+  if (/<img\b/i.test(raw)) left.push('images')
+  const prepared = withoutLightText(raw)
+    .replace(/<head\b[\s\S]*?<\/head>/gi, '')
+    .replace(/<\/t[dh]>\s*(?=<t[dh]\b)/gi, ' ')
+    .replace(/<\/tr>/gi, '<br>')
+    .replace(/<\/?(?:table|tbody|thead|tfoot|tr|td|th|html|body)\b[^>]*>/gi, '')
+  const html = cleanEmailHtml(prepared)
+    // Trailing and doubled breaks a table leaves behind.
+    .replace(/(?:<br>\s*){3,}/g, '<br><br>')
+    .replace(/^(?:\s*<br>)+|(?:<br>\s*)+$/g, '')
+    .trim()
+  return { html, left }
+}

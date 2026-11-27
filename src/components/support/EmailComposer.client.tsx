@@ -112,6 +112,20 @@ export const RichText: React.FC<{ id: string; label: string; required?: boolean;
     if (el.innerText.replace(/\s+/g, '').length >= 2) setError('')
   }
 
+  // A template (TemplatePick) sets the message through an event on the editor, so the composer stays the one owner of its state.
+  useEffect(() => {
+    const el = ed.current
+    if (!hydrated || !el) return
+    const onSet = (e: Event) => {
+      el.innerHTML = (e as CustomEvent<{ html: string }>).detail.html
+      setHtml(el.innerHTML)
+      setText(el.innerText)
+      if (el.innerText.replace(/\s+/g, '').length >= 2) setError('')
+    }
+    el.addEventListener('rt:set', onSet)
+    return () => el.removeEventListener('rt:set', onSet)
+  }, [hydrated])
+
   // Back to where the agent was. The selection is set again only when it has left the editor: setting it clears the browser's
   // pending style at the caret, so Size then Font with nothing selected would keep only the font.
   const restore = () => {
@@ -405,6 +419,96 @@ export const FilePick: React.FC<{ id: string; name: string; label: string; hint:
         </ul>
       )}
       {error ? <span className="field-error">{error}</span> : <span className="hint">{hint}</span>}
+    </div>
+  )
+}
+
+export type TemplateOption = { id: string; title: string; group: 'case' | 'general'; personal: boolean }
+type Filled = { subject: string; html: string; left: string[] }
+
+/** The template picker on *Email the customer* (TR-25, SupportParts S31): a Dynamics email template filled for the case replaces
+    the subject and the message; *Undo* puts back what was there. `fill` is the server action that asks Dynamics to fill it. */
+export const TemplatePick: React.FC<{ id: string; templates: TemplateOption[]; subjectId: string; editorId: string; fill: (templateId: string) => Promise<Filled | { error: string }> }> = ({ id, templates, subjectId, editorId, fill }) => {
+  const [choice, setChoice] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+  const [undo, setUndo] = useState<{ subject: string; html: string } | null>(null)
+  const parts = () => ({ subject: document.getElementById(subjectId) as HTMLInputElement | null, editor: document.getElementById(editorId) })
+  const put = (subject: string, html: string) => {
+    const p = parts()
+    if (p.subject) p.subject.value = subject
+    p.editor?.dispatchEvent(new CustomEvent('rt:set', { detail: { html } }))
+  }
+  const use = async () => {
+    if (!choice || busy) return
+    const p = parts()
+    setBusy(true)
+    setNote(null)
+    try {
+      const r = await fill(choice)
+      if ('error' in r) {
+        setNote({ kind: 'error', text: r.error })
+        return
+      }
+      setUndo({ subject: p.subject?.value ?? '', html: p.editor?.innerHTML ?? '' })
+      put(r.subject || p.subject?.value || '', r.html)
+      const title = templates.find((t) => t.id === choice)?.title ?? 'the template'
+      setNote({ kind: 'ok', text: `Filled from “${title}”.${r.left.length ? ` Its ${r.left.join(' and ')} were left out: the editor cannot hold them.` : ''} Check the words before you send.` })
+    } catch {
+      setNote({ kind: 'error', text: 'Dynamics did not answer. Try again.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+  const groups = (['case', 'general'] as const).map((g) => ({ g, items: templates.filter((t) => t.group === g) })).filter((x) => x.items.length)
+  return (
+    <div className="field tpl-pick">
+      <label className="label" htmlFor={id}>
+        Template
+      </label>
+      <span className="tpl-row">
+        <span className="control is-select">
+          <select id={id} value={choice} onChange={(e) => setChoice(e.target.value)} disabled={busy}>
+            <option value="">No template</option>
+            {groups.map(({ g, items }) => (
+              <optgroup label={g === 'case' ? 'Case templates' : 'General templates'} key={g}>
+                {items.map((t) => (
+                  <option value={t.id} key={t.id}>
+                    {t.title}
+                    {t.personal ? ' (yours)' : ''}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </span>
+        <button type="button" className="btn btn-line btn-sm" onClick={use} disabled={!choice || busy}>
+          {busy ? 'Filling…' : 'Use template'}
+        </button>
+      </span>
+      {note ? (
+        <span className={note.kind === 'error' ? 'field-error' : 'hint'} role="status">
+          {note.text}
+          {note.kind === 'ok' && undo && (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="link-u textbtn"
+                onClick={() => {
+                  put(undo.subject, undo.html)
+                  setUndo(null)
+                  setNote(null)
+                }}
+              >
+                Undo
+              </button>
+            </>
+          )}
+        </span>
+      ) : (
+        <span className="hint">The subject and the message from a Dynamics email template, filled with this case&apos;s details; they replace what is there.</span>
+      )}
     </div>
   )
 }

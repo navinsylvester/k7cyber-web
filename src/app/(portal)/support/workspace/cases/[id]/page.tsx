@@ -5,7 +5,7 @@ import React from 'react'
 
 import { SubmitButton } from '@/components/partner/SubmitButton.client'
 import { CategoryPicker } from '@/components/support/CasePickers.client'
-import { FilePick, RichText } from '@/components/support/EmailComposer.client'
+import { FilePick, RichText, TemplatePick } from '@/components/support/EmailComposer.client'
 import { CareBand, CareTag, CauseTag, FollowUpTag, RateScale, ReasonSelect, ScoreTag } from '@/components/support/Csat'
 import { Empty, Field, Flash, MetaRows, Options, Sla, StatusTag, Tid } from '@/components/support/Parts'
 import { Pid, ProductBand, PRODUCT } from '@/components/support/Product'
@@ -26,10 +26,11 @@ import { getAgents, getCategories, getProducts, getPublicQueues, getSubcategorie
 import { defectsOfCase, rfesOfCase } from '@/lib/support/rfe'
 import { requireAgent } from '@/lib/support/session'
 import { blockedExtensions, getTimeline, type TimelineEntry } from '@/lib/support/timeline'
+import { emailTemplates } from '@/lib/support/templates'
 import { caseStatusLabel } from '@/lib/support/status'
 
 import { answerAction, toldAction } from '../../../product/items/[number]/actions'
-import { addNoteAction, assignAction, callAction, cancelAction, csatFollowUpAction, csatInviteAction, csatRecordAction, editAction, emailAction, escalateAction, linkItemAction, mergeAction, queueAction, reopenAction, replyAction, resolveAction, statusAction, taskAction } from './actions'
+import { addNoteAction, assignAction, callAction, cancelAction, csatFollowUpAction, csatInviteAction, csatRecordAction, editAction, emailAction, escalateAction, linkItemAction, mergeAction, queueAction, reopenAction, replyAction, resolveAction, statusAction, taskAction, templateAction } from './actions'
 
 export const metadata: Metadata = { title: 'Case' }
 
@@ -72,7 +73,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   const active = c.statecode === STATE.ACTIVE
   const merged = c.statuscode === STATUS.MERGED
   const masterId = typeof c._masterid_value === 'string' && isGuid(c._masterid_value) ? c._masterid_value : null
-  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care, parties, others, blocked, master, rights] = await Promise.all([
+  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care, parties, others, blocked, master, rights, templates] = await Promise.all([
     getTimeline(me.auth, id, 'agent').catch(() => []),
     rfesOfCase(me.auth, id).catch(() => []),
     defectsOfCase(me.auth, id).catch(() => []),
@@ -91,6 +92,8 @@ export default async function CasePage({ params, searchParams }: { params: Promi
     merged && masterId ? getCase(me.auth, masterId).catch(() => null) : Promise.resolve(null),
     // Dynamics field security on Incident ID, Module, Sub module and Product version (field-security-model.ts).
     columnRights(me.auth, me.userId, 'incident'),
+    // The email templates Dynamics keeps for cases and the general ones, as the Hub's Insert template offers them (TR-25).
+    emailTemplates(me.auth, me.userId).catch(() => []),
   ])
   const canEdit = (col: string) => may(rights, col, 'update')
   const hidden = CASE_LOCKABLE.filter((col) => !may(rights, col, 'read'))
@@ -552,6 +555,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   <form action={emailAction} className="act-body">
                     <input type="hidden" name="id" value={id} />
                     <p>An outgoing email on the case, from you. It shows in the timeline and on the portal, attachments too.</p>
+                    {templates.length > 0 && <TemplatePick id="em-template" templates={templates.map((t) => ({ id: t.id, title: t.title, group: t.group, personal: t.personal }))} subjectId="em-subject" editorId="em-text" fill={templateAction.bind(null, id)} />}
                     <Field id="em-to" label="To" required>
                       <input id="em-to" name="to" type="email" required defaultValue={txt('k7_customeremail')} />
                     </Field>

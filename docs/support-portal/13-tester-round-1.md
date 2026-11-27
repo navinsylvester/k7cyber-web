@@ -53,7 +53,7 @@ design language's rule, not a defect.
 | TR-22 | Bug ID not saved in Incident ID | bug | P1 | done 2026-11-26 (the CRM's field security; who may set it is D-5) |
 | TR-23 | State and City not filtered by letter | gap | P2 | done 2026-11-26 |
 | TR-24 | Case summary with the existing notes | gap | P2 | planned: the CRM's Copilot case summary on the timeline (verified callable 2026-11-27) |
-| TR-25 | Select a template in the email | gap | P2 | planned: the CRM's email templates in the composer (verified 2026-11-27) |
+| TR-25 | Select a template in the email | gap | P2 | done 2026-11-27 (templates are written in Dynamics; the desk's own still to add) |
 | TR-26 | Notify managers: overdue emails, the bin, pending cases, escalations, Lab samples | request | P1 | done 2026-11-27 as the notification system (09 §4g) |
 | D-1 | Fill the customer and serial key from the registered mobile | request | — | decide |
 | D-2 | "Customer type: consumer or enterprise" on the case | request | — | decide |
@@ -392,8 +392,13 @@ outside: `msdyn_CustomApiCustomerServiceCaseSummary` on CS-01195-B0Q3 returned f
 **Verified:** the Hub's email has *Insert Template*; the portal's composer has none. UAT holds five case templates, all Microsoft's from
 2018 (New Case Acknowledgement, Closed Case Acknowledgement, Case Auto Response, Case Escalation, Case resolution survey invite).
 `InstantiateTemplate` fills one for a case (customer, title, owner, number) without creating a record (06:17:41Z).
-**Plan:** a *Template* field on *Email the customer* filling subject and message, editable; the templates written in Dynamics so the
-Hub and the portal share them. Needs the desk's real templates (ask Farhin which they use).
+**Done 2026-11-27** (`09` §3, *Email templates*; SupportParts S31): a *Template* field at the top of *Email the customer*, case templates
+first, then the general ones; *Use template* has Dynamics fill it for the case and replaces the subject and the message, *Undo* puts back
+what was there; tables become lines, images and unreadable white text go, and the line under the picker says so. Checked in Chrome on
+CS-01220-W4G6 (nothing sent): New Case Acknowledgement filled "A case has been opened for your request" with TEST TR06, the case title,
+the owner, the follow-up address as a link and the case number; *Undo* brought back the draft; the survey invite's table came through as
+lines with "Support feedback" readable. **Still needed:** the desk's own templates in Dynamics (UAT has only Microsoft's five from 2018):
+ask Farhin which replies they send most, write them once in Dynamics, and both the Hub and the portal offer them.
 
 ### TR-26 · Notify managers (P1, 26-11)
 **Testers said:** six notifications: a fresh email not answered in 4 hours; a pending reply not sent in 30 minutes; a case not picked
@@ -477,3 +482,7 @@ support lead: the first-response target (60 minutes now), the shifts and their m
   personal KPI reports at a shift's end. Found and fixed on the way: notifications of a clock just past its deadline read "overdue 0 min"
   (now "just overdue"); the at-risk board listed only SLA notifications (now everything told, to whom). Left in UAT: CS-01225-H8W2
   (TEST TR06, Closed-Remote). Testers' server rebuilt (down 08:16:19 to 08:16:47Z).
+- **2026-11-27 (3)** — TR-25 built: email templates on *Email the customer* (see the entry). The five UAT case templates filled once each
+  for CS-01225-H8W2 to take the real HTML as test data (08:28Z, nothing created); checked in Chrome on CS-01220-W4G6, nothing sent. Found on
+  the way: the survey invite's white banner text vanished once its blue cell was dropped (now its colour goes). `support-email` +4 tests.
+  **Next:** the desk's templates in Dynamics (Farhin); TR-24.

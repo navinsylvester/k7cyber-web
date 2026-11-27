@@ -17,6 +17,7 @@ import { requireAgent } from '@/lib/support/session'
 import { cleanEmailHtml, EMAIL_HTML_MAX, hasText, textToEmailHtml, wrapEmail } from '@/lib/support/email-html'
 import { EMAIL_FILES_MAX, EMAIL_TOTAL_MAX } from '@/lib/support/limits'
 import { addNote, addPhoneCall, addTask, blockedExtensions, extensionOf, NOTE_TO_CUSTOMER, sendEmailReply } from '@/lib/support/timeline'
+import { fillTemplate, type FilledTemplate } from '@/lib/support/templates'
 
 /* Every case action: validate, call the domain layer as the signed-in agent, then redirect back to the case with
    `?ok=` or `?error=`. `redirect` throws, so it is called outside the try blocks. */
@@ -546,4 +547,18 @@ export async function linkItemAction(form: FormData): Promise<void> {
   }
   if (msg) fail(id, msg)
   redirect(`${WS}/cases/${id}?ok=${encodeURIComponent(`Linked to ${number}. Product sees one more case behind it.`)}`)
+}
+
+/** An email template filled for this case by Dynamics (TR-25), for the composer to hold; nothing is written. Called from the
+    template picker on *Email the customer*. */
+export async function templateAction(id: string, templateId: string): Promise<FilledTemplate | { error: string }> {
+  const me = await requireAgent()
+  if (!isGuid(id) || !isGuid(templateId)) return { error: 'Pick a template.' }
+  try {
+    const t = await fillTemplate(me.auth, templateId, id)
+    if (!t.html && !t.subject) return { error: 'That template is empty.' }
+    return t
+  } catch (e) {
+    return { error: userMessage(e, 'agent') }
+  }
 }

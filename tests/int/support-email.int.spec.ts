@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { linkTarget } from '@/components/support/EmailComposer.client'
-import { cleanEmailHtml, hasText, linkify, LINK_STYLE, safeHref, safeStyle, textToEmailHtml, wrapEmail } from '@/lib/support/email-html'
+import { cleanEmailHtml, hasText, linkify, LINK_STYLE, safeHref, safeStyle, isLightColour, templateToComposer, textToEmailHtml, wrapEmail } from '@/lib/support/email-html'
 
 /* The email body an agent sends from the case sheet (tester items of 2026-10-29: formatting, links that read as links). */
 
@@ -100,5 +100,39 @@ describe('linkTarget: what the agent types in the link box', () => {
   })
   it('refuses what is not a link', () => {
     for (const v of ['', 'not a link', 'javascript:alert(1)', 'localhost', 'ftp://x.example']) expect(linkTarget(v)).toBeNull()
+  })
+})
+
+describe('a Dynamics email template in the composer (TR-25)', () => {
+  // As InstantiateTemplate returned it on UAT for CS-01225-H8W2 (2026-11-27).
+  const ack = '<html> <head> <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> </head> <body> <p>Dear TEST TR06,</p> <p>We have opened a case TR-26 notification test in response to your request and assigned it to Navin Sylvester. Please send e-mail to navin.sylvester@k7support.onmicrosoft.com with this reference CS-01225-H8W2.</p> <p>Thank you.</p> </body> </html> '
+  it('keeps the paragraphs, drops the head and links the address', () => {
+    const r = templateToComposer(ack)
+    expect(r.left).toEqual([])
+    expect(r.html).not.toMatch(/<(html|head|meta|body)/)
+    expect(r.html.startsWith('<p>Dear TEST TR06,</p>')).toBe(true)
+    expect(r.html).toContain('<a href="mailto:navin.sylvester@k7support.onmicrosoft.com"')
+    // What the composer then posts passes the send-time cleaning unchanged.
+    expect(cleanEmailHtml(r.html)).toBe(r.html)
+  })
+  it('turns a table into lines and says what it left out', () => {
+    const r = templateToComposer('<table border="1"><tbody><tr><td style="background-color:#3366ff"><div><span style="color:#ffffff">Support feedback</span></div></td></tr><tr><td>Case</td><td>CS-1</td></tr></tbody></table><p><img src="https://x/logo.png">Dear TEST TR06,</p>')
+    expect(r.left).toEqual(['tables', 'images'])
+    expect(r.html).not.toMatch(/<(table|tr|td|img)/)
+    expect(r.html).toContain('Support feedback')
+    expect(r.html).toMatch(/Case CS-1/)
+    expect(r.html).toContain('<p>Dear TEST TR06,</p>')
+  })
+  it('drops white text whose coloured cell is gone, keeps the rest', () => {
+    const r = templateToComposer('<table><tr><td style="background-color:#3366ff"><span style="color:#ffffff">Support feedback</span></td></tr></table><p><span style="color:#c00000">Urgent</span> <font color="white">hidden</font></p>')
+    expect(r.html).toContain('Support feedback')
+    expect(r.html).not.toMatch(/#ffffff|#fff\b|white/i)
+    expect(r.html).toMatch(/color:#c00000/)
+    expect(isLightColour('#FFF')).toBe(true)
+    expect(isLightColour('rgb(250, 250, 250)')).toBe(true)
+    expect(isLightColour('#6b6b6b')).toBe(false)
+  })
+  it('is empty for an empty template', () => {
+    expect(templateToComposer('<html><head><title>x</title></head><body></body></html>')).toEqual({ html: '', left: [] })
   })
 })
