@@ -52,7 +52,7 @@ design language's rule, not a defect.
 | TR-21 | Merge one case into another | gap | P2 | done 2026-11-18 |
 | TR-22 | Bug ID not saved in Incident ID | bug | P1 | done 2026-11-26 (the CRM's field security; who may set it is D-5) |
 | TR-23 | State and City not filtered by letter | gap | P2 | done 2026-11-26 |
-| TR-24 | Case summary with the existing notes | gap | P2 | planned: the CRM's Copilot case summary on the timeline (verified callable 2026-11-27) |
+| TR-24 | Case summary with the existing notes | gap | P2 | done 2026-11-27 (Copilot's summary on the timeline; production's setting to confirm, `11` item 29d) |
 | TR-25 | Select a template in the email | gap | P2 | done 2026-11-27 (templates are written in Dynamics; the desk's own still to add) |
 | TR-26 | Notify managers: overdue emails, the bin, pending cases, escalations, Lab samples | request | P1 | done 2026-11-27 as the notification system (09 §4g) |
 | D-1 | Fill the customer and serial key from the registered mobile | request | — | decide |
@@ -313,6 +313,30 @@ design; open a new item if it is not.
   Tiruchendur and Tiruchengode), then pick with the mouse, or the arrow keys and Enter. Choose the state first; the cities follow it.
   The test CRM listed most cities twice; each now appears once.
 
+**Reply for the notes of 2026-11-26 (TR-24, TR-25, TR-26):**
+- **"Case summary should be added" (existing notes).** Done on 27 November. A case's timeline now opens with *Case summary*. Press
+  *Summarise the case* and the CRM's Copilot sums the case up from its title, description, notes and emails, the same summary the
+  case form in Dynamics shows; it takes about ten seconds. The summary stays on the case for everyone who opens it, with who asked and
+  when, and says so when newer notes or emails have come in, so you can summarise again. *Save as a note* keeps it on the case as an
+  internal note. A machine writes it: check it before you rely on it.
+- **"Select template option" (email template).** Done on 27 November. *Email the customer* now starts with *Template*: pick one and
+  press *Use template*, and the subject and message are filled with the case's details (customer name, case number, owner). Edit
+  them before you send; *Undo* puts back what you had. The list is the CRM's own email templates, so a template written once in
+  Dynamics (Settings → Templates → Email Templates) appears in both. The test CRM has only Microsoft's five standard ones: tell us which
+  replies you send most and we will add them.
+- **Manager notifications** (fresh email not answered, pending reply, case not picked from the bin, pending for long, escalated,
+  Lab sample). Done on 27 November, for everyone, not only managers. *Notifications* next to your name lists what concerns you; it
+  is emailed too once the mail server is set up. You are told when one of your cases is at risk of missing its target, or past it:
+  - the first answer to a new case;
+  - the answer to the customer's follow-up;
+  - picking a case up from the bin;
+  - a Lab sample;
+  - the resolution.
+  You are also told when a case is assigned to you, when the customer writes, when a case is escalated to the Lab, principal support
+  or product, and at the end of your shift, if any of your figures miss the desk's targets. Managers get the same for the whole desk.
+  The targets, the shifts and who receives what are set by the support lead in the manager view; until then the targets are the current
+  ones (for example 30 minutes for a follow-up, 5 minutes to pick a case from the bin, 3 hours for a Lab sample).
+
 ## 5. Evidence kept
 UAT counts used above, read with the probe on 2026-10-24: 1,438 cases, 214 active; 1,370 with a case email; 1,198
 contact customers whose contact has an account; 142 cases (22 active) owned by Navin through the seed's owner
@@ -384,8 +408,11 @@ Chengalpattu, Chennai, Tiruchendur, Tiruchengode; batman K saved as Tamil Nadu /
 **Verified:** the CRM's case forms carry a *Copilot Summary Section*, and Copilot case summary is on in this CRM (enabled, consent
 2024-01-16): it summarises the title, description, product, notes and emails. The portal has no summary. The summary API answers from
 outside: `msdyn_CustomApiCustomerServiceCaseSummary` on CS-01195-B0Q3 returned four sentences in 8 s (06:14:57Z), nothing changed.
-**Plan:** a *Case summary* block at the top of the timeline with *Summarise* (on demand, 8 s), kept until a new note or email, and
-*Save as note*; checked as an agent without admin rights. Production's Copilot setting to be confirmed at go-live.
+**Done 2026-11-27** (`09` §3, *Case summary*; SupportParts S37): *Case summary* at the top of the timeline; *Summarise the case* asks
+Copilot as the agent (about ten seconds), the summary is kept for every agent who opens the case with who asked and when, flagged when
+the case has moved on since, and *Save as a note* keeps it in Dynamics as an internal note. Checked in Chrome on CS-01225-H8W2: summary
+at 14:08 IST, saved as a note (08:39:14Z), a new note (08:39:30Z) flagged it as moved on, *Summarise again* (08:39:51Z) took the new note
+in. Asking sets *Copilot engaged* on the case (by SYSTEM, 08:38:44Z), as the Hub does.
 
 ### TR-25 · Select a template in the email (P2, Farhin, 26-11)
 **Testers said:** "Select template option" (email template).
@@ -486,3 +513,7 @@ support lead: the first-response target (60 minutes now), the shifts and their m
   for CS-01225-H8W2 to take the real HTML as test data (08:28Z, nothing created); checked in Chrome on CS-01220-W4G6, nothing sent. Found on
   the way: the survey invite's white banner text vanished once its blue cell was dropped (now its colour goes). `support-email` +4 tests.
   **Next:** the desk's templates in Dynamics (Farhin); TR-24.
+- **2026-11-27 (4)** — TR-24 built: the case summary on the timeline (see the entry), checked in Chrome on CS-01225-H8W2 (two notes
+  added there, the summary kept in Payload). A Dataverse read timed out once from this machine during the check (the network, not the
+  code; the page rendered). New tests `support-summary`. **Next:** production's Copilot setting and an agent's rights (`11` item 29d);
+  the desk's email templates in Dynamics; the tester reply for TR-24 to TR-26.

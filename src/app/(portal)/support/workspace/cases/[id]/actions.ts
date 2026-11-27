@@ -18,6 +18,8 @@ import { cleanEmailHtml, EMAIL_HTML_MAX, hasText, textToEmailHtml, wrapEmail } f
 import { EMAIL_FILES_MAX, EMAIL_TOTAL_MAX } from '@/lib/support/limits'
 import { addNote, addPhoneCall, addTask, blockedExtensions, extensionOf, NOTE_TO_CUSTOMER, sendEmailReply } from '@/lib/support/timeline'
 import { fillTemplate, type FilledTemplate } from '@/lib/support/templates'
+import { getSummary, summarise, SummaryUnavailable } from '@/lib/support/summary'
+import { SUMMARY_NOTE_SUBJECT } from '@/lib/support/summary-model'
 
 /* Every case action: validate, call the domain layer as the signed-in agent, then redirect back to the case with
    `?ok=` or `?error=`. `redirect` throws, so it is called outside the try blocks. */
@@ -561,4 +563,36 @@ export async function templateAction(id: string, templateId: string): Promise<Fi
   } catch (e) {
     return { error: userMessage(e, 'agent') }
   }
+}
+
+/** The case summary (TR-24): Dynamics' Copilot sums the case up as the agent; the portal keeps it for everyone who opens the case. */
+export async function summariseAction(form: FormData): Promise<void> {
+  const me = await requireAgent()
+  const id = caseId(form)
+  let msg: string | null = null
+  try {
+    const c = await getCase(me.auth, id)
+    if (!c) msg = 'That case no longer exists.'
+    else await summarise(me.auth, c, { id: me.userId, name: me.name || me.email })
+  } catch (e) {
+    msg = e instanceof SummaryUnavailable ? e.message : `Copilot did not answer: ${userMessage(e, 'agent')}`
+  }
+  if (msg) fail(id, msg)
+  done(id, 'summary')
+}
+
+/** The kept summary as an internal note on the case, for the record in Dynamics. */
+export async function summaryNoteAction(form: FormData): Promise<void> {
+  const me = await requireAgent()
+  const id = caseId(form)
+  let msg: string | null = null
+  try {
+    const s = await getSummary(id)
+    if (!s) msg = 'There is no summary to save yet.'
+    else await addNote(me.auth, id, { subject: SUMMARY_NOTE_SUBJECT, text: `${s.summary}\n\nWritten by Dynamics' Copilot from the case's notes and emails; saved from the support portal by ${me.name || me.email}.` })
+  } catch (e) {
+    msg = userMessage(e, 'agent')
+  }
+  if (msg) fail(id, msg)
+  done(id, 'summary-note')
 }

@@ -81,6 +81,7 @@ export interface Config {
     'support-notifications': SupportNotification;
     'support-case-watch': SupportCaseWatch;
     'support-clock-runs': SupportClockRun;
+    'support-case-summaries': SupportCaseSummary;
     'support-csat': SupportCsat;
     'support-care-flags': SupportCareFlag;
     'product-items': ProductItem;
@@ -155,6 +156,7 @@ export interface Config {
     'support-notifications': SupportNotificationsSelect<false> | SupportNotificationsSelect<true>;
     'support-case-watch': SupportCaseWatchSelect<false> | SupportCaseWatchSelect<true>;
     'support-clock-runs': SupportClockRunsSelect<false> | SupportClockRunsSelect<true>;
+    'support-case-summaries': SupportCaseSummariesSelect<false> | SupportCaseSummariesSelect<true>;
     'support-csat': SupportCsatSelect<false> | SupportCsatSelect<true>;
     'support-care-flags': SupportCareFlagsSelect<false> | SupportCareFlagsSelect<true>;
     'product-items': ProductItemsSelect<false> | ProductItemsSelect<true>;
@@ -2276,6 +2278,22 @@ export interface SupportClockRun {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-case-summaries".
+ */
+export interface SupportCaseSummary {
+  id: number;
+  caseId: string;
+  ticket?: string | null;
+  summary: string;
+  madeAt: string;
+  partial?: boolean | null;
+  byId?: string | null;
+  byName?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "support-csat".
  */
 export interface SupportCsat {
@@ -4272,6 +4290,10 @@ export interface PayloadLockedDocument {
         value: number | SupportClockRun;
       } | null)
     | ({
+        relationTo: 'support-case-summaries';
+        value: number | SupportCaseSummary;
+      } | null)
+    | ({
         relationTo: 'support-csat';
         value: number | SupportCsat;
       } | null)
@@ -5459,6 +5481,21 @@ export interface SupportClockRunsSelect<T extends boolean = true> {
   minutes?: T;
   target?: T;
   met?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "support-case-summaries_select".
+ */
+export interface SupportCaseSummariesSelect<T extends boolean = true> {
+  caseId?: T;
+  ticket?: T;
+  summary?: T;
+  madeAt?: T;
+  partial?: T;
+  byId?: T;
+  byName?: T;
   updatedAt?: T;
   createdAt?: T;
 }

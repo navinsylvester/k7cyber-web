@@ -162,6 +162,14 @@ helpers), `src/lib/support/` (one file per area; `session.ts` gives `requireAgen
   (`templateToComposer` in `email-html.ts`): the head goes, a table becomes its rows as lines, images go, white text whose coloured cell is
   gone loses its colour, and the rest passes the same allowlist; the line under the picker says what was left out. Templates are written
   in Dynamics (Settings → Templates → Email templates); their attachments do not come along.
+- Case summary (2026-11-27, TR-24): the timeline opens with *Case summary*. *Summarise the case* asks Dynamics' Copilot, as the agent,
+  for the summary the Hub's case form shows (`msdyn_CustomApiCustomerServiceCaseSummary`: title, description, product, notes and
+  emails; switched on in this CRM since 2024-01-16); it takes about ten seconds. The latest summary per case is kept in Payload
+  (`support-case-summaries`, `src/lib/support/summary.ts`) for every agent who opens the case, with who asked and when; a note, email or
+  activity newer than it marks it *moved on since* (the summary's own note does not). *Save as a note* writes it as an internal note
+  "Case summary (Copilot)". Asking marks the case *Copilot engaged* (`msdyn_copilotengaged`, set by SYSTEM), as using the summary in the
+  Hub does, so the case's modified time moves. Production's Copilot setting, and whether agents without an admin role may call it, are
+  to confirm at go-live (`11` item 29d).
 - Merge (2026-11-18): *Merge into another case* on an active case calls the platform's `Merge` message (`mergeCase`; `UpdateContent`
   is required and ignored for cases, `PerformParentingChecks` false). The subordinate closes as Merged (state 2, status 2000) with
   `masterid` set, and its notes, emails, activities and child cases move to the target. It cannot be undone, so the panel picks

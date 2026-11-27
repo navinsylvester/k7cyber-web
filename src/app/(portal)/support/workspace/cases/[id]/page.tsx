@@ -27,10 +27,12 @@ import { defectsOfCase, rfesOfCase } from '@/lib/support/rfe'
 import { requireAgent } from '@/lib/support/session'
 import { blockedExtensions, getTimeline, type TimelineEntry } from '@/lib/support/timeline'
 import { emailTemplates } from '@/lib/support/templates'
+import { getSummary } from '@/lib/support/summary'
+import { summaryStale } from '@/lib/support/summary-model'
 import { caseStatusLabel } from '@/lib/support/status'
 
 import { answerAction, toldAction } from '../../../product/items/[number]/actions'
-import { addNoteAction, assignAction, callAction, cancelAction, csatFollowUpAction, csatInviteAction, csatRecordAction, editAction, emailAction, escalateAction, linkItemAction, mergeAction, queueAction, reopenAction, replyAction, resolveAction, statusAction, taskAction, templateAction } from './actions'
+import { addNoteAction, assignAction, callAction, cancelAction, csatFollowUpAction, csatInviteAction, csatRecordAction, editAction, emailAction, escalateAction, linkItemAction, mergeAction, queueAction, reopenAction, replyAction, resolveAction, statusAction, summariseAction, summaryNoteAction, taskAction, templateAction } from './actions'
 
 export const metadata: Metadata = { title: 'Case' }
 
@@ -54,6 +56,8 @@ const OK: Record<string, string> = {
   'csat-sent': 'Survey emailed to the customer.',
   'csat-logged': 'Survey prepared but not emailed: no SMTP_URL is set in this environment. The customer can still rate the case on the portal.',
   'csat-recorded': 'Rating recorded on the case.',
+  summary: 'Case summary written by Copilot. Check it before you rely on it.',
+  'summary-note': 'The case summary is saved as an internal note.',
   'csat-followup': 'Follow-up closed. Thank you for calling the customer back.',
 }
 
@@ -73,7 +77,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   const active = c.statecode === STATE.ACTIVE
   const merged = c.statuscode === STATUS.MERGED
   const masterId = typeof c._masterid_value === 'string' && isGuid(c._masterid_value) ? c._masterid_value : null
-  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care, parties, others, blocked, master, rights, templates] = await Promise.all([
+  const [timeline, rfes, defects, agents, teams, queues, products, categories, subcategories, rating, care, parties, others, blocked, master, rights, templates, summary] = await Promise.all([
     getTimeline(me.auth, id, 'agent').catch(() => []),
     rfesOfCase(me.auth, id).catch(() => []),
     defectsOfCase(me.auth, id).catch(() => []),
@@ -94,6 +98,8 @@ export default async function CasePage({ params, searchParams }: { params: Promi
     columnRights(me.auth, me.userId, 'incident'),
     // The email templates Dynamics keeps for cases and the general ones, as the Hub's Insert template offers them (TR-25).
     emailTemplates(me.auth, me.userId).catch(() => []),
+    // The case summary Copilot wrote last, kept for every agent (TR-24).
+    getSummary(id),
   ])
   const canEdit = (col: string) => may(rights, col, 'update')
   const hidden = CASE_LOCKABLE.filter((col) => !may(rights, col, 'read'))
@@ -281,6 +287,48 @@ export default async function CasePage({ params, searchParams }: { params: Promi
               ))}
             </nav>
 
+            {tab === 'timeline' && (
+              <section className="case-sum" aria-labelledby="case-sum-h">
+                <div className="case-sum-head">
+                  <h2 className="label" id="case-sum-h">
+                    Case summary
+                  </h2>
+                  {summary && (
+                    <span className="label muted">
+                      Copilot · {dmyHm(summary.madeAt)}
+                      {summary.byName ? ` · asked by ${summary.byName}` : ''}
+                    </span>
+                  )}
+                </div>
+                {summary ? (
+                  <>
+                    <p className="case-sum-text">{summary.summary}</p>
+                    {(summaryStale(summary.madeAt, timeline) || summary.partial) && (
+                      <p className="hint case-sum-note">{summary.partial ? 'Copilot read only part of the case. ' : ''}{summaryStale(summary.madeAt, timeline) ? 'The case has moved on since; summarise again to include it.' : ''}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="hint">Dynamics&apos; Copilot can sum this case up from its title, description, notes and emails, the summary the case form in Dynamics shows. It takes about ten seconds.</p>
+                )}
+                <div className="case-sum-acts">
+                  <form action={summariseAction}>
+                    <input type="hidden" name="id" value={id} />
+                    <SubmitButton className="btn btn-line btn-sm" pendingLabel="Summarising… about ten seconds">
+                      {summary ? 'Summarise again' : 'Summarise the case'}
+                    </SubmitButton>
+                  </form>
+                  {summary && (
+                    <form action={summaryNoteAction}>
+                      <input type="hidden" name="id" value={id} />
+                      <SubmitButton className="link-u textbtn" pendingLabel="Saving…">
+                        Save as a note
+                      </SubmitButton>
+                    </form>
+                  )}
+                  {summary && <span className="hint">Written by a machine: check it before you rely on it.</span>}
+                </div>
+              </section>
+            )}
             {tab === 'timeline' &&
               (entries.length === 0 ? (
                 <Empty label="Timeline">Nothing on this case yet. Add a note, log a call or reply to the customer from the panel.</Empty>

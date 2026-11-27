@@ -693,3 +693,13 @@ details.classify[open] summary::after { content: "close"; }
 .tpl-pick .tpl-row .control { flex: 1 1 220px; min-width: 0; }
 .tpl-pick .tpl-row .btn { flex: 0 0 auto; }
 
+/* ---------- S37 The case summary (2026-11-27, TR-24) ---------- */
+.case-sum { margin: 0 0 clamp(24px, 3cqw, 36px); padding: 16px 0 18px; border-top: 1px solid var(--fg); border-bottom: 1px solid var(--ln); }
+.case-sum-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; margin-bottom: 10px; }
+.case-sum-head h2 { margin: 0; }
+.case-sum-text { margin: 0; font-size: 16px; line-height: 1.55; max-width: 72ch; }
+.case-sum-note { margin: 10px 0 0; }
+.case-sum-acts { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-top: 14px; }
+.case-sum-acts form { display: contents; }
+.case-sum-acts .hint { margin: 0; }
+

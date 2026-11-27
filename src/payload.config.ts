@@ -52,6 +52,7 @@ import { SupportSlaEvents } from './collections/support/SupportSlaEvents'
 import { SupportNotifications } from './collections/support/SupportNotifications'
 import { SupportCaseWatch } from './collections/support/SupportCaseWatch'
 import { SupportClockRuns } from './collections/support/SupportClockRuns'
+import { SupportCaseSummaries } from './collections/support/SupportCaseSummaries'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
@@ -105,7 +106,7 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportNotifications, SupportCaseWatch, SupportClockRuns, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, PartnerOrgs, PartnerUsers, PartnerApplications, PartnerAudit, PartnerNotifications, PartnerOutbox, PartnerCounters, PartnerProducts, PartnerDeals, PartnerDealFiles, PartnerSyncRuns, PartnerCollateral, PartnerCollateralFiles, PartnerSchemes, PartnerSchemeFiles, PartnerSchemeRegistrations, PartnerEligibility, PartnerMailTemplates, PartnerJobRuns, PartnerTracks, PartnerCourses, PartnerModules, PartnerQuestions, PartnerTrainingFiles, PartnerProgress, PartnerAttempts, PartnerCertificates, PartnerCertificateFiles, Media, Users],
+  collections: [Pages, Posts, Categories, Authors, Vulnerabilities, Products, Threats, ThreatReports, ReportFiles, ReportLeads, SupportSlaEvents, SupportNotifications, SupportCaseWatch, SupportClockRuns, SupportCaseSummaries, SupportCsat, SupportCareFlags, ProductItems, ProductItemCases, ProductItemEvents, ProductEvidence, ProductMirror, PartnerOrgs, PartnerUsers, PartnerApplications, PartnerAudit, PartnerNotifications, PartnerOutbox, PartnerCounters, PartnerProducts, PartnerDeals, PartnerDealFiles, PartnerSyncRuns, PartnerCollateral, PartnerCollateralFiles, PartnerSchemes, PartnerSchemeFiles, PartnerSchemeRegistrations, PartnerEligibility, PartnerMailTemplates, PartnerJobRuns, PartnerTracks, PartnerCourses, PartnerModules, PartnerQuestions, PartnerTrainingFiles, PartnerProgress, PartnerAttempts, PartnerCertificates, PartnerCertificateFiles, Media, Users],
   // One limit for every upload (Payload's multipart parser reads only this): the partner collateral's 200 MB (FR-MKT-02, decision 13).
   // The other upload collections keep their own smaller caps through `maxUpload` in src/collections/uploadLimit.ts.
   upload: { limits: { fileSize: 200 * 1024 * 1024 }, requestSizeLimit: 201 * 1024 * 1024 },

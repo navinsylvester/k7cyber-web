@@ -4,6 +4,7 @@ Newest first. Each entry names the rule, the reference CSS and the parts it touc
 
 ## 2026-11-27
 
+- **Section 09 · Support, S37 the case summary** (testers' note: case summary with the existing notes): a band at the top of the timeline (`case-sum` in `portal.css`) with Copilot's summary, who asked and when, the moved-on hint, *Summarise again* and *Save as a note*.
 - **Section 09 · Support, S31 the template picker** (testers' note: select a template in the email): *Email the customer* opens with a Template field and *Use template* on one row (`tpl-pick`, `tpl-row` in `portal.css`), a status line naming the template and what was left out, with *Undo*.
 - **Section 09 · Support, S35 the bell and S36 shifts and notification rules** (Navin: a notification system like the partner portal's, for every user, on the SLA and KPI targets, configurable; shift working hours): the bell and its rows move from `partner.css` to `portal.css` and appear in the support header for agents, with a notifications page (`ntf`, the body keeping its line breaks); the KPI settings gain the shifts table (`shifts`, `shift-days`, `settings-sub`) and three target columns; the notifications page reuses the `rules` rows (`ntf-rules`, `ntf-aud`, `ntf-fixed`). S13 the at-risk board shows a meter per running clock; S14 the strip adds follow-ups waiting, in the bin and with the Lab. PartnerParts P4 notes the move.
 
